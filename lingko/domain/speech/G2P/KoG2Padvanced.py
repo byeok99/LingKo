@@ -197,7 +197,7 @@ def KoG2Padvanced(Sentence):
     nInsertDic = {}
     nInsertList = []
     try:
-        nInsertionFile = "malppot/domain/speech/G2P/Dic/nSheetWords.csv"
+        nInsertionFile = "lingko/domain/speech/G2P/Dic/nSheetWords.csv"
         with open(nInsertionFile, 'r', encoding='utf-8') as f:
             nInsertionContent = f.readlines()
 
@@ -253,7 +253,7 @@ def KoG2Padvanced(Sentence):
     # G2P dictionary (KoG2PDic.txt는 g2pk 사용 시 불필요하므로 이 부분은 삭제하거나 주석 처리)
     # 하지만 원본 코드의 흐름을 유지하기 위해 예외 처리만 남겨둡니다.
     # g2pk는 내부적으로 표준 발음 규칙과 사전을 가지고 있습니다.
-    fileDir = "malppot/domain/speech/G2P/Dic/KoG2PDic.txt"  # 이 파일은 g2pk 사용 시 직접적으로 사용되지 않습니다.
+    fileDir = "lingko/domain/speech/G2P/Dic/KoG2PDic.txt"  # 이 파일은 g2pk 사용 시 직접적으로 사용되지 않습니다.
     KoG2PDic = {}  # 빈 딕셔너리로 초기화
     try:
         with open(fileDir, 'r', encoding='utf-8') as fr:

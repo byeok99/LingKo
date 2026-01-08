@@ -3,18 +3,18 @@ import os
 
 from fastapi import APIRouter, Depends, UploadFile, File, Form, status
 
-from malppot.common.dependencies import get_current_user
-from malppot.common.di_providers import get_speech_service_from_di
-from malppot.common.errors import (
+from lingko.common.dependencies import get_current_user
+from lingko.common.di_providers import get_speech_service_from_di
+from lingko.common.errors import (
     SpeechEvaluationException,
     SpeechAudioProcessingException,
     CustomException,
     UserNotFoundException
 )
-from malppot.domain.models import User
-from malppot.domain.speech.schema import ConvertResponse, ConvertRequest, SyllableDetailResponse
-from malppot.domain.speech.service import SpeechService
-from malppot.utils.audio_utils import convert_upload_to_wav
+from lingko.domain.models import User
+from lingko.domain.speech.schema import ConvertResponse, ConvertRequest, SyllableDetailResponse
+from lingko.domain.speech.service import SpeechService
+from lingko.utils.audio_utils import convert_upload_to_wav
 
 logger = logging.getLogger(__name__)
 

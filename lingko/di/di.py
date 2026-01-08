@@ -1,15 +1,14 @@
 from dependency_injector import containers, providers
-
-from malppot.common.gpt_service import GPTService
-from malppot.common.jwt_service import JWTService
-from malppot.conf.db import DatabaseSession
-from malppot.di.auth import _AuthContainer
-from malppot.di.config import ConfigContainer
-from malppot.di.game import _GameContainer
-from malppot.di.malbeot import _MalbeotContainer
-from malppot.di.mypage import _MyPageContainer
-from malppot.di.recommendation import _RecommendationContainer
-from malppot.di.speech import _SpeechContainer
+from lingko.common.gpt_service import GPTService
+from lingko.common.jwt_service import JWTService
+from lingko.conf.db import DatabaseSession
+from lingko.di.auth import _AuthContainer
+from lingko.di.config import ConfigContainer
+from lingko.di.game import _GameContainer
+from lingko.di.malbeot import _MalbeotContainer
+from lingko.di.mypage import _MyPageContainer
+from lingko.di.recommendation import _RecommendationContainer
+from lingko.di.speech import _SpeechContainer
 
 
 class DI(containers.DeclarativeContainer):

@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-from malppot.conf.settings import DBConfig
+from lingko.conf.settings import DBConfig
 
 
 class DatabaseSession:

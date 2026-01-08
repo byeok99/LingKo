@@ -7,15 +7,15 @@ from typing import Dict, List, Optional, DefaultDict
 
 from sqlalchemy import func
 
-from malppot.common.errors import UserNotFoundException
-from malppot.domain.models import (
+from lingko.common.errors import UserNotFoundException
+from lingko.domain.models import (
     User,
     PracticeSession,
     PracticeWord,
     JamoStatistic,
     PronunciationScore,
 )
-from malppot.domain.mypage.schema import (
+from lingko.domain.mypage.schema import (
     MyPageResponse,
     MyPageUserData,
     Accuracy,
@@ -30,8 +30,8 @@ from malppot.domain.mypage.schema import (
     PhonemeDetailResponse,
     PatientReport
 )
-from malppot.domain.recommendation.service import RecommendationService
-from malppot.utils.datetime_utils import today_kst
+from lingko.domain.recommendation.service import RecommendationService
+from lingko.utils.datetime_utils import today_kst
 
 _ERR_ENG2KOR = {
     "Omission": "생략",
@@ -404,7 +404,7 @@ class MyPageService:
     def _collect_word_records(
             self, s, user_idx: int, phoneme: str
     ) -> list[MyPageDetailedAnalysisItem]:
-        from malppot.domain.models import Word  # 반드시 import
+        from lingko.domain.models import Word  # 반드시 import
         session_dates = dict(
             s.query(PracticeSession.session_idx, PracticeSession.created_at)
             .filter(PracticeSession.user_idx == user_idx)

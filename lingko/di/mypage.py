@@ -1,8 +1,8 @@
 from dependency_injector import containers, providers
 
-from malppot.conf.db import DatabaseSession
-from malppot.domain.mypage.service import MyPageService
-from malppot.domain.recommendation.service import RecommendationService
+from lingko.conf.db import DatabaseSession
+from lingko.domain.mypage.service import MyPageService
+from lingko.domain.recommendation.service import RecommendationService
 
 
 class _MyPageContainer(containers.DeclarativeContainer):

@@ -5,7 +5,7 @@ from dependency_injector import (
     providers
 )
 
-from malppot.conf.settings import (
+from lingko.conf.settings import (
     DBConfig,
     JWTConfig,
     OpenAIConfig,

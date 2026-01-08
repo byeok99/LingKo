@@ -1,7 +1,7 @@
 from openai import OpenAI
 
-from malppot.conf.settings import OpenAIConfig
-from malppot.utils.text_utils import extract_word_list
+from lingko.conf.settings import OpenAIConfig
+from lingko.utils.text_utils import extract_word_list
 
 
 class GPTService:

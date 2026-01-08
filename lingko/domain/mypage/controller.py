@@ -3,19 +3,19 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
-from malppot.common.dependencies import get_current_user
-from malppot.common.di_providers import (
+from lingko.common.dependencies import get_current_user
+from lingko.common.di_providers import (
     get_mypage_service_from_di
 )
-from malppot.common.errors import UserNotFoundException
-from malppot.domain.models import User
-from malppot.domain.mypage.schema import (
+from lingko.common.errors import UserNotFoundException
+from lingko.domain.models import User
+from lingko.domain.mypage.schema import (
     MyPageResponse,
     SummaryResponse,
     PhonemeDetailResponse,
     PatientReport
 )
-from malppot.domain.mypage.service import MyPageService
+from lingko.domain.mypage.service import MyPageService
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ async def get_mypage_data(
         )
 
 
-# malppot/domain/mypage/controller.py
+# lingko/domain/mypage/controller.py
 @router.get("/summary", response_model=SummaryResponse)
 async def get_summary(
         user: User = Depends(get_current_user),

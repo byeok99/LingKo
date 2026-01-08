@@ -4,16 +4,16 @@ from sqlalchemy import select, func
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import Session, joinedload
 
-from malppot.common.errors import CustomException
-from malppot.common.gpt_service import GPTService
-from malppot.domain.game.schema import StageData
-from malppot.domain.models import (
+from lingko.common.errors import CustomException
+from lingko.common.gpt_service import GPTService
+from lingko.domain.game.schema import StageData
+from lingko.domain.models import (
     UserStageProgress,
     EndlessScores,
     StageInfo,
     GameWord
 )
-from malppot.utils.datetime_utils import now_kst
+from lingko.utils.datetime_utils import now_kst
 
 
 class GameService:

@@ -289,6 +289,6 @@ def KoG2P(graph):
 
         return prono
 
-    sentenceG2P = runKoG2P(graph, 'malppot/domain/speech/G2P/Dic/rulebook.txt')
+    sentenceG2P = runKoG2P(graph, 'lingko/domain/speech/G2P/Dic/rulebook.txt')
 
     return sentenceG2P

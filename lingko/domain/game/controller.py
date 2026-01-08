@@ -3,21 +3,21 @@ import os
 
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 
-from malppot.common.dependencies import get_current_user
-from malppot.common.di_providers import (
+from lingko.common.dependencies import get_current_user
+from lingko.common.di_providers import (
     get_game_service_from_di,
     get_recommendation_service_from_di,
     get_speech_service_from_di,
 )
-from malppot.common.errors import (
+from lingko.common.errors import (
     CustomException
 )
-from malppot.domain.game.schema import SaveBestScoreRequest, StageClearReq
-from malppot.domain.game.service import GameService
-from malppot.domain.models import User
-from malppot.domain.recommendation.service import RecommendationService
-from malppot.domain.speech.service import SpeechService
-from malppot.utils.audio_utils import convert_upload_to_wav
+from lingko.domain.game.schema import SaveBestScoreRequest, StageClearReq
+from lingko.domain.game.service import GameService
+from lingko.domain.models import User
+from lingko.domain.recommendation.service import RecommendationService
+from lingko.domain.speech.service import SpeechService
+from lingko.utils.audio_utils import convert_upload_to_wav
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

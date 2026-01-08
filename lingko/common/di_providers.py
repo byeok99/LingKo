@@ -1,12 +1,12 @@
-from malppot.common.gpt_service import GPTService
-from malppot.common.jwt_service import JWTService
-from malppot.di import DI
-from malppot.domain.auth.service import AuthService
-from malppot.domain.game.service import GameService
-from malppot.domain.malbeot.service import MalbeotService
-from malppot.domain.mypage.service import MyPageService
-from malppot.domain.recommendation.service import RecommendationService
-from malppot.domain.speech.service import SpeechService
+from lingko.common.gpt_service import GPTService
+from lingko.common.jwt_service import JWTService
+from lingko.di import DI
+from lingko.domain.auth.service import AuthService
+from lingko.domain.game.service import GameService
+from lingko.domain.malbeot.service import MalbeotService
+from lingko.domain.mypage.service import MyPageService
+from lingko.domain.recommendation.service import RecommendationService
+from lingko.domain.speech.service import SpeechService
 
 
 def get_auth_service_from_di() -> AuthService:

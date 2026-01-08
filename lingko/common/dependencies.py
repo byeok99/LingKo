@@ -1,13 +1,13 @@
 from fastapi import Request, Depends
 from fastapi import WebSocket
 
-from malppot.common.di_providers import get_jwt_service_from_di, get_auth_service_from_di
-from malppot.common.errors import (
+from lingko.common.di_providers import get_jwt_service_from_di, get_auth_service_from_di
+from lingko.common.errors import (
     InvalidTokenException,
     UserNotFoundException,
     AuthenticationTokenMissingException,
 )
-from malppot.domain.models import User
+from lingko.domain.models import User
 
 
 def get_current_user(

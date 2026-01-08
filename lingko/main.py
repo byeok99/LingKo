@@ -7,8 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from malppot.common.errors import CustomException
-from malppot.di import DI
+from lingko.common.errors import CustomException
+from lingko.di import DI
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.append(str(PROJECT_ROOT))
@@ -17,7 +17,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5174",
-        "https://www.malppot.com",
+        "https://www.lingko.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -25,26 +25,26 @@ app.add_middleware(
 )
 # app.add_middleware(JWTMiddleware)
 
-app.mount("/static", StaticFiles(directory=f"{PROJECT_ROOT}/malppot/static"), name="static")
+app.mount("/static", StaticFiles(directory=f"{PROJECT_ROOT}/lingko/static"), name="static")
 
 container = DI()
 
-import malppot.domain.auth.controller
-import malppot.common.dependencies
-import malppot.domain.malbeot.controller
-import malppot.domain.speech.controller
-import malppot.domain.mypage.controller
-import malppot.domain.game.controller
+import lingko.domain.auth.controller
+import lingko.common.dependencies
+import lingko.domain.malbeot.controller
+import lingko.domain.speech.controller
+import lingko.domain.mypage.controller
+import lingko.domain.game.controller
 
 wiring.wire(
     container=container,
     modules=[
-        malppot.common.dependencies,
-        malppot.domain.auth.controller,
-        malppot.domain.malbeot.controller,
-        malppot.domain.speech.controller,
-        malppot.domain.mypage.controller,
-        malppot.domain.game.controller,
+        lingko.common.dependencies,
+        lingko.domain.auth.controller,
+        lingko.domain.malbeot.controller,
+        lingko.domain.speech.controller,
+        lingko.domain.mypage.controller,
+        lingko.domain.game.controller,
     ]
 )
 
@@ -58,11 +58,11 @@ async def custom_exception_handler(request: Request, exc: CustomException):
 
 
 # 라우터 연결 (이전 제안과 동일)
-from malppot.domain.auth.controller import router as auth_router
-from malppot.domain.malbeot.controller import router as malbeot_router
-from malppot.domain.speech.controller import router as speech_router
-from malppot.domain.mypage.controller import router as mypage_router
-from malppot.domain.game.controller import router as game_router
+from lingko.domain.auth.controller import router as auth_router
+from lingko.domain.malbeot.controller import router as malbeot_router
+from lingko.domain.speech.controller import router as speech_router
+from lingko.domain.mypage.controller import router as mypage_router
+from lingko.domain.game.controller import router as game_router
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(malbeot_router, prefix="/malbeot", tags=["malbeot"])

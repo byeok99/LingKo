@@ -1,8 +1,8 @@
 from dependency_injector import containers, providers
 
-from malppot.common.gpt_service import GPTService
-from malppot.conf.db import DatabaseSession
-from malppot.domain.speech.service import SpeechService
+from lingko.common.gpt_service import GPTService
+from lingko.conf.db import DatabaseSession
+from lingko.domain.speech.service import SpeechService
 
 
 class _SpeechContainer(containers.DeclarativeContainer):

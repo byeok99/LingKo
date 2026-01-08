@@ -2,9 +2,9 @@ from typing import AsyncIterator
 
 from fastapi import WebSocket
 
-from malppot.conf.settings import OpenAIConfig
-from malppot.domain.malbeot.agent import OpenAIVoiceReactAgent
-from malppot.domain.mypage.service import MyPageService
+from lingko.conf.settings import OpenAIConfig
+from lingko.domain.malbeot.agent import OpenAIVoiceReactAgent
+from lingko.domain.mypage.service import MyPageService
 
 
 class MalbeotService:

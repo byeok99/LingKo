@@ -2,7 +2,7 @@ import datetime
 
 import jwt
 
-from malppot.conf.settings import JWTConfig
+from lingko.conf.settings import JWTConfig
 
 
 class JWTService:

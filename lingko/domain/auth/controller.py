@@ -1,19 +1,19 @@
 import httpx
 from fastapi import APIRouter, Request, Response, Depends
 
-from malppot.common.di_providers import (
+from lingko.common.di_providers import (
     get_auth_service_from_di,
     get_jwt_service_from_di,
     get_speech_service_from_di
 )
-from malppot.common.errors import (
+from lingko.common.errors import (
     MissingAuthCodeException,
     FailedGoogleAccessTokenException,
     FailedGoogleUserInfoException,
     InvalidCredentialsException,
     InvalidTokenException
 )
-from malppot.domain.auth.schema import LoginResponse
+from lingko.domain.auth.schema import LoginResponse
 
 router = APIRouter()
 

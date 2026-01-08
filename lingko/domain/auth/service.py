@@ -2,8 +2,8 @@ from typing import Optional
 
 from passlib.context import CryptContext
 
-from malppot.conf.settings import GoogleConfig
-from malppot.domain.models import User
+from lingko.conf.settings import GoogleConfig
+from lingko.domain.models import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

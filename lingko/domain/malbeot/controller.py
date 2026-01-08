@@ -2,8 +2,8 @@ import logging
 
 from fastapi import APIRouter, WebSocket, Depends, status, Query
 
-from malppot.common.dependencies import get_current_user_ws
-from malppot.common.di_providers import (
+from lingko.common.dependencies import get_current_user_ws
+from lingko.common.di_providers import (
     get_malbeot_service_from_di
 )
 

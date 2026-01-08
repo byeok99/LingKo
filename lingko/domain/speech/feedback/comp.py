@@ -28,8 +28,8 @@ CODA_LIST = (
 )
 
 # CSV에서 viseme 경로를 읽는 함수
-KO2PIC_CSV_PATH = 'malppot/domain/speech/feedback/ko2pic.csv'
-LIPS_TABLE_CSV_PATH = 'malppot/domain/speech/feedback/lips_table.csv'
+KO2PIC_CSV_PATH = 'lingko/domain/speech/feedback/ko2pic.csv'
+LIPS_TABLE_CSV_PATH = 'lingko/domain/speech/feedback/lips_table.csv'
 
 
 def load_viseme_table():
@@ -120,7 +120,7 @@ def tag_jamo_roles(hangul: str) -> list[dict]:
 #                 file_name = get_filename_from_url(frame1)  # 예: 'ㅏ.png'
 #                 jobs.append({
 #                     "letter": ch,
-#                     "frame1": f"https://api.malppot.com/static/images/{frame1}",
+#                     "frame1": f"https://api.lingko.com/static/images/{frame1}",
 #                     "frame2": None,
 #                     "segment": "단독",
 #                     "type": "image",
@@ -130,8 +130,8 @@ def tag_jamo_roles(hangul: str) -> list[dict]:
 #                 file_name = f"{get_filename_from_url(frame1)}_{get_filename_from_url(frame2)}.mp4"
 #                 jobs.append({
 #                     "letter": ch,
-#                     "frame1": f"https://api.malppot.com/static/images/{frame1}",
-#                     "frame2": f"https://api.malppot.com/static/images/{frame2}",
+#                     "frame1": f"https://api.lingko.com/static/images/{frame1}",
+#                     "frame2": f"https://api.lingko.com/static/images/{frame2}",
 #                     "segment": "초성중성",
 #                     "type": "video",
 #                     "output": file_name
@@ -145,7 +145,7 @@ def tag_jamo_roles(hangul: str) -> list[dict]:
 #             file_name = get_filename_from_url(frame1)
 #             jobs.append({
 #                 "letter": ch,
-#                 "frame": f"https://api.malppot.com/static/images/{frame1}",
+#                 "frame": f"https://api.lingko.com/static/images/{frame1}",
 #                 "segment": "중성종성",
 #                 "type": "image",
 #                 "output": file_name
@@ -154,8 +154,8 @@ def tag_jamo_roles(hangul: str) -> list[dict]:
 #             file_name = f"{get_filename_from_url(frame1)}_{get_filename_from_url(frame2)}.mp4"
 #             jobs.append({
 #                 "letter": ch,
-#                 "frame1": f"https://api.malppot.com/static/images/{frame1}",
-#                 "frame2": f"https://api.malppot.com/static/images/{frame2}",
+#                 "frame1": f"https://api.lingko.com/static/images/{frame1}",
+#                 "frame2": f"https://api.lingko.com/static/images/{frame2}",
 #                 "segment": "중성종성",
 #                 "type": "video",
 #                 "output": file_name
@@ -200,7 +200,7 @@ def make_tongue_jobs_for_syllable(ch: str) -> list[dict]:
             file_name = get_filename_from_url(frame2)
             jobs.append({
                 "letter": ch,
-                "frame": f"https://api.malppot.com/static/images/{frame2}",
+                "frame": f"https://api.lingko.com/static/images/{frame2}",
                 "segment": "단독",
                 "type": "image",
                 "output": file_name
@@ -209,8 +209,8 @@ def make_tongue_jobs_for_syllable(ch: str) -> list[dict]:
             file_name = f"{get_filename_from_url(frame1)}_{get_filename_from_url(frame2)}.mp4"
             jobs.append({
                 "letter": ch,
-                "frame1": f"https://api.malppot.com/static/images/{frame1}",
-                "frame2": f"https://api.malppot.com/static/images/{frame2}",
+                "frame1": f"https://api.lingko.com/static/images/{frame1}",
+                "frame2": f"https://api.lingko.com/static/images/{frame2}",
                 "segment": "초성중성",
                 "type": "video",
                 "output": file_name
@@ -228,7 +228,7 @@ def make_tongue_jobs_for_syllable(ch: str) -> list[dict]:
             file_name = get_filename_from_url(frame1)
             jobs.append({
                 "letter": ch,
-                "frame": f"https://api.malppot.com/static/images/{frame1}",
+                "frame": f"https://api.lingko.com/static/images/{frame1}",
                 "segment": "중성종성",
                 "type": "image",
                 "output": file_name
@@ -237,8 +237,8 @@ def make_tongue_jobs_for_syllable(ch: str) -> list[dict]:
             file_name = f"{get_filename_from_url(frame1)}_{get_filename_from_url(frame2)}.mp4"
             jobs.append({
                 "letter": ch,
-                "frame1": f"https://api.malppot.com/static/images/{frame1}",
-                "frame2": f"https://api.malppot.com/static/images/{frame2}",
+                "frame1": f"https://api.lingko.com/static/images/{frame1}",
+                "frame2": f"https://api.lingko.com/static/images/{frame2}",
                 "segment": "중성종성",
                 "type": "video",
                 "output": file_name
@@ -258,7 +258,7 @@ def make_lips_jobs_from_sequence(seq: list) -> list[dict]:
 
     def lips_path(jamo):
         frame = LIPS_TABLE.get(jamo, "")
-        return f"https://api.malppot.com/static/images/lips/{frame}" if frame else ""
+        return f"https://api.lingko.com/static/images/lips/{frame}" if frame else ""
 
     # 1개만: 단독 프레임 job
     if len(seq) == 1:

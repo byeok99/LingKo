@@ -4,10 +4,10 @@ from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
-from malppot.common.gpt_service import GPTService
-from malppot.domain.models import RecommendationsWords
-from malppot.domain.speech.service import SpeechService
-from malppot.utils.datetime_utils import now_kst
+from lingko.common.gpt_service import GPTService
+from lingko.domain.models import RecommendationsWords
+from lingko.domain.speech.service import SpeechService
+from lingko.utils.datetime_utils import now_kst
 
 
 class RecommendationService:

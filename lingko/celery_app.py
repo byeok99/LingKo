@@ -1,6 +1,6 @@
 from celery import Celery
 
-from malppot.di import DI
+from lingko.di import DI
 
 container = DI()
 
@@ -8,7 +8,7 @@ container = DI()
 redis_url = config.get_redis_url()
 
 celery_app = Celery(
-    'malppot',
+    'lingko',
     broker=redis_url,
     backend=redis_url
 )
@@ -27,8 +27,8 @@ celery_app.conf.update(
 
 # 태스크 자동 발견
 celery_app.autodiscover_tasks([
-    'malppot.domain.speech',
+    'lingko.domain.speech',
     # 나중에 다른 도메인 추가 가능
-    # 'malppot.domain.game',
-    # 'malppot.domain.recommendation',
+    # 'lingko.domain.game',
+    # 'lingko.domain.recommendation',
 ])

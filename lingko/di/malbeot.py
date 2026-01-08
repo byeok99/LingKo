@@ -1,8 +1,8 @@
 from dependency_injector import containers, providers
 
-from malppot.conf.db import DatabaseSession
-from malppot.domain.malbeot.service import MalbeotService
-from malppot.domain.mypage.service import MyPageService
+from lingko.conf.db import DatabaseSession
+from lingko.domain.malbeot.service import MalbeotService
+from lingko.domain.mypage.service import MyPageService
 
 
 class _MalbeotContainer(containers.DeclarativeContainer):

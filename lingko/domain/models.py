@@ -7,7 +7,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.mysql import CHAR, INTEGER, JSON, TINYINT, DECIMAL, BIGINT
 from sqlalchemy.orm import declarative_base, relationship
 
-from malppot.utils.datetime_utils import now_kst
+from lingko.utils.datetime_utils import now_kst
 
 Base = declarative_base()
 

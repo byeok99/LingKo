@@ -1,8 +1,8 @@
 from dependency_injector import containers, providers
 
-from malppot.common.gpt_service import GPTService
-from malppot.conf.db import DatabaseSession
-from malppot.domain.game.service import GameService
+from lingko.common.gpt_service import GPTService
+from lingko.conf.db import DatabaseSession
+from lingko.domain.game.service import GameService
 
 
 class _GameContainer(containers.DeclarativeContainer):

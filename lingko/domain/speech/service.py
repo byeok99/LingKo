@@ -11,9 +11,9 @@ import requests
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from malppot.common.gpt_service import GPTService
-from malppot.conf.settings import AzureSpeechConfig
-from malppot.domain.models import (
+from lingko.common.gpt_service import GPTService
+from lingko.conf.settings import AzureSpeechConfig
+from lingko.domain.models import (
     User,
     PracticeSession,
     PracticeWord,
@@ -23,16 +23,16 @@ from malppot.domain.models import (
     PracticeWordPosition,
     Syllable
 )
-from malppot.domain.speech.G2P.KoG2Padvanced import KoG2Padvanced
-from malppot.domain.speech.feedback.comp import (
+from lingko.domain.speech.G2P.KoG2Padvanced import KoG2Padvanced
+from lingko.domain.speech.feedback.comp import (
     map_jamos_with_scores,
     VISEME_TABLE,
     make_tongue_jobs_for_syllable,
     extract_lip_movement_sequence,
     make_lips_jobs_from_sequence
 )
-from malppot.utils.datetime_utils import now_kst, today_kst
-from malppot.utils.text_utils import extract_unique_syllables
+from lingko.utils.datetime_utils import now_kst, today_kst
+from lingko.utils.text_utils import extract_unique_syllables
 
 
 class SpeechService:
@@ -154,9 +154,9 @@ class SpeechService:
         client = replicate.Client()
 
         if type == 'tongue':
-            save_dir = os.path.join("malppot", "static", "tongue")
+            save_dir = os.path.join("lingko", "static", "tongue")
         else:
-            save_dir = os.path.join("malppot", "static", "lips")
+            save_dir = os.path.join("lingko", "static", "lips")
 
         os.makedirs(save_dir, exist_ok=True)
 
