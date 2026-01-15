@@ -1,8 +1,8 @@
-package com.lingko.lingko.infra.speech;
+package com.lingko.lingko.infra.pronunciation;
 
 import com.lingko.lingko.core.config.AzureSettings;
-import com.lingko.lingko.core.domain.speech.SpeechEvaluator;
-import com.lingko.lingko.core.domain.speech.dto.AssessmentResult;
+import com.lingko.lingko.core.domain.pronunciation.dto.AssessmentResult;
+import com.lingko.lingko.core.domain.pronunciation.service.SpeechEvaluator;
 import com.microsoft.cognitiveservices.speech.*;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 import com.microsoft.cognitiveservices.speech.PronunciationAssessmentConfig;

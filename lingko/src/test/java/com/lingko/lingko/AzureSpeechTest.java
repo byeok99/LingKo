@@ -1,7 +1,7 @@
 package com.lingko.lingko;
 
-import com.lingko.lingko.core.domain.speech.SpeechEvaluator;
-import com.lingko.lingko.core.domain.speech.dto.AssessmentResult;
+import com.lingko.lingko.core.domain.pronunciation.service.SpeechEvaluator;
+import com.lingko.lingko.core.domain.pronunciation.dto.AssessmentResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
