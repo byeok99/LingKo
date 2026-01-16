@@ -1,4 +1,4 @@
-package com.lingko.lingko.core.domain.speech.dto;
+package com.lingko.lingko.core.domain.pronunciation.dto;
 
 import lombok.Builder;
 import lombok.Getter;
