@@ -3,12 +3,11 @@ package com.lingko.lingko.core.util;
 import java.util.*;
 
 /**
- * 한국어 음소 분리 및 발음 변환 유틸리티
+ * 한국어 표준발음 변환 및 음소 추출 유틸리티
  *
- * 주요 기능:
- * - 표준발음 변환 (연음화, 비음화, 경음화 등)
- * - 음소 분리 (자음/모음 분해)
- * - 한글 분해/조합
+ * 핵심 기능:
+ * - 표준발음 변환 (연음화, 비음화, 경음화, 구개음화)
+ * - 음소 추출 (초성, 중성, 종성)
  */
 public class KoreanPhonemeUtil {
 
@@ -28,34 +27,6 @@ public class KoreanPhonemeUtil {
             "ㄻ", "ㄼ", "ㄽ", "ㄾ", "ㄿ", "ㅀ", "ㅁ", "ㅂ", "ㅄ", "ㅅ",
             "ㅆ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"
     };
-
-    // 복합 모음 분해
-    private static final Map<String, String[]> COMPLEX_JUNGSUNG = new HashMap<>();
-    static {
-        COMPLEX_JUNGSUNG.put("ㅘ", new String[]{"ㅗ", "ㅏ"});
-        COMPLEX_JUNGSUNG.put("ㅙ", new String[]{"ㅗ", "ㅐ"});
-        COMPLEX_JUNGSUNG.put("ㅚ", new String[]{"ㅗ", "ㅣ"});
-        COMPLEX_JUNGSUNG.put("ㅝ", new String[]{"ㅜ", "ㅓ"});
-        COMPLEX_JUNGSUNG.put("ㅞ", new String[]{"ㅜ", "ㅔ"});
-        COMPLEX_JUNGSUNG.put("ㅟ", new String[]{"ㅜ", "ㅣ"});
-        COMPLEX_JUNGSUNG.put("ㅢ", new String[]{"ㅡ", "ㅣ"});
-    }
-
-    // 복합 자음 분해
-    private static final Map<String, String[]> COMPLEX_JONGSUNG = new HashMap<>();
-    static {
-        COMPLEX_JONGSUNG.put("ㄳ", new String[]{"ㄱ", "ㅅ"});
-        COMPLEX_JONGSUNG.put("ㄵ", new String[]{"ㄴ", "ㅈ"});
-        COMPLEX_JONGSUNG.put("ㄶ", new String[]{"ㄴ", "ㅎ"});
-        COMPLEX_JONGSUNG.put("ㄺ", new String[]{"ㄹ", "ㄱ"});
-        COMPLEX_JONGSUNG.put("ㄻ", new String[]{"ㄹ", "ㅁ"});
-        COMPLEX_JONGSUNG.put("ㄼ", new String[]{"ㄹ", "ㅂ"});
-        COMPLEX_JONGSUNG.put("ㄽ", new String[]{"ㄹ", "ㅅ"});
-        COMPLEX_JONGSUNG.put("ㄾ", new String[]{"ㄹ", "ㅌ"});
-        COMPLEX_JONGSUNG.put("ㄿ", new String[]{"ㄹ", "ㅍ"});
-        COMPLEX_JONGSUNG.put("ㅀ", new String[]{"ㄹ", "ㅎ"});
-        COMPLEX_JONGSUNG.put("ㅄ", new String[]{"ㅂ", "ㅅ"});
-    }
 
     // 종성을 초성으로 변환 (연음화용)
     private static final Map<String, String> JONGSUNG_TO_CHOSUNG = new HashMap<>();
@@ -90,7 +61,7 @@ public class KoreanPhonemeUtil {
     }
 
     /**
-     * 한글 글자 분해 결과를 담는 클래스
+     * 한글 글자 분해 결과
      */
     public static class HangulChar {
         String chosung;
@@ -113,36 +84,7 @@ public class KoreanPhonemeUtil {
             return (char) (0xAC00 + cho * 588 + jung * 28 + jong);
         }
 
-        /**
-         * 음소(자음+모음) 리스트로 분해
-         */
-        public List<String> toPhonemes(boolean separateComplex) {
-            List<String> phonemes = new ArrayList<>();
-
-            // 초성 추가 (ㅇ 제외)
-            if (!chosung.equals("ㅇ")) {
-                phonemes.add(chosung);
-            }
-
-            // 중성 추가
-            if (separateComplex && COMPLEX_JUNGSUNG.containsKey(jungsung)) {
-                phonemes.addAll(Arrays.asList(COMPLEX_JUNGSUNG.get(jungsung)));
-            } else {
-                phonemes.add(jungsung);
-            }
-
-            // 종성 추가
-            if (!jongsung.isEmpty()) {
-                if (separateComplex && COMPLEX_JONGSUNG.containsKey(jongsung)) {
-                    phonemes.addAll(Arrays.asList(COMPLEX_JONGSUNG.get(jongsung)));
-                } else {
-                    phonemes.add(jongsung);
-                }
-            }
-
-            return phonemes;
-        }
-
+        // Getter 메서드 추가
         public String getChosung() { return chosung; }
         public String getJungsung() { return jungsung; }
         public String getJongsung() { return jongsung; }
@@ -165,22 +107,33 @@ public class KoreanPhonemeUtil {
     /**
      * 문자열을 음소(자음+모음) 리스트로 분리
      *
+     * 예: "한" → ["ㅎ", "ㅏ", "ㄴ"]
+     * 예: "밥이" → ["ㅂ", "ㅏ", "ㅂ", "ㅇ", "ㅣ"]
+     *
      * @param text 입력 텍스트
-     * @param separateComplex 복합 모음/자음도 분리할지 여부
      * @return 음소 리스트
      */
-    public static List<String> toPhonemeList(String text, boolean separateComplex) {
+    public static List<String> toPhonemeList(String text) {
         List<String> phonemes = new ArrayList<>();
 
         for (char ch : text.toCharArray()) {
             HangulChar hc = decompose(ch);
             if (hc != null) {
-                phonemes.addAll(hc.toPhonemes(separateComplex));
-            } else {
-                // 한글이 아닌 문자는 공백이 아니면 추가
-                if (!Character.isWhitespace(ch)) {
-                    phonemes.add(String.valueOf(ch));
+                // 초성 추가 (ㅇ 제외)
+                if (!hc.chosung.equals("ㅇ")) {
+                    phonemes.add(hc.chosung);
                 }
+
+                // 중성 추가
+                phonemes.add(hc.jungsung);
+
+                // 종성 추가 (있을 경우)
+                if (!hc.jongsung.isEmpty()) {
+                    phonemes.add(hc.jongsung);
+                }
+            } else if (!Character.isWhitespace(ch)) {
+                // 한글이 아닌 문자 (공백 제외)
+                phonemes.add(String.valueOf(ch));
             }
         }
 
@@ -188,30 +141,10 @@ public class KoreanPhonemeUtil {
     }
 
     /**
-     * 문자열을 음소로 분리하여 문자열로 반환
-     *
-     * @param text 입력 텍스트
-     * @param separator 구분자
-     * @param separateComplex 복합 모음/자음도 분리할지 여부
-     * @return 음소 문자열
-     */
-    public static String toPhonemeString(String text, String separator, boolean separateComplex) {
-        List<String> phonemes = toPhonemeList(text, separateComplex);
-        return String.join(separator, phonemes);
-    }
-
-    /**
-     * 쉼표로 구분된 음소 문자열 반환 (편의 메서드)
-     */
-    public static String toPhonemeString(String text) {
-        return toPhonemeString(text, ",", false);
-    }
-
-    /**
      * 표준 발음으로 변환
      *
      * @param text 입력 텍스트
-     * @return 표준 발음으로 변환된 텍스트
+     * @return 표준 발음
      */
     public static String toPronunciation(String text) {
         List<HangulChar> chars = new ArrayList<>();

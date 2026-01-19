@@ -1,0 +1,166 @@
+{
+  "ㄱ": {
+    "lips_url": "",
+    "tongue_url": "ㄱㄲㅋㅇ.png"
+  },
+  "ㄲ": {
+    "lips_url": "",
+    "tongue_url": "ㄱㄲㅋㅇ.png"
+  },
+  "ㄴ": {
+    "lips_url": "",
+    "tongue_url": "ㄴㄷㄸㅌ.png"
+  },
+  "ㄷ": {
+    "lips_url": "",
+    "tongue_url": "ㄴㄷㄸㅌ.png"
+  },
+  "ㄸ": {
+    "lips_url": "",
+    "tongue_url": "ㄴㄷㄸㅌ.png"
+  },
+  "ㄹ": {
+    "lips_url": "",
+    "tongue_url": "ㄹ.png"
+  },
+  "ㅁ": {
+    "lips_url": "ㅁㅂㅃㅍ.png",
+    "tongue_url": "ㅁㅂㅃㅍ.png"
+  },
+  "ㅂ": {
+    "lips_url": "ㅁㅂㅃㅍ.png",
+    "tongue_url": "ㅁㅂㅃㅍ.png"
+  },
+  "ㅃ": {
+    "lips_url": "ㅁㅂㅃㅍ.png",
+    "tongue_url": "ㅁㅂㅃㅍ.png"
+  },
+  "ㅅ": {
+    "lips_url": "",
+    "tongue_url": "ㅅㅆ.png"
+  },
+  "ㅆ": {
+    "lips_url": "",
+    "tongue_url": "ㅅㅆ.png"
+  },
+  "변이음ㅅ": {
+    "lips_url": "",
+    "tongue_url": "변이음ㅅㅆ.png"
+  },
+  "변이음ㅆ": {
+    "lips_url": "",
+    "tongue_url": "변이음ㅅㅆ.png"
+  },
+  "ㅇ": {
+    "lips_url": "",
+    "tongue_url": "ㄱㄲㅋㅇ.png"
+  },
+  "ㅈ": {
+    "lips_url": "",
+    "tongue_url": "ㅈㅉㅊ.png"
+  },
+  "ㅉ": {
+    "lips_url": "",
+    "tongue_url": "ㅈㅉㅊ.png"
+  },
+  "ㅊ": {
+    "lips_url": "",
+    "tongue_url": "ㅈㅉㅊ.png"
+  },
+  "ㅋ": {
+    "lips_url": "",
+    "tongue_url": "ㄱㄲㅋㅇ.png"
+  },
+  "ㅌ": {
+    "lips_url": "",
+    "tongue_url": "ㄴㄷㄸㅌ.png"
+  },
+  "ㅍ": {
+    "lips_url": "ㅁㅂㅃㅍ.png",
+    "tongue_url": "ㅁㅂㅃㅍ.png"
+  },
+  "ㅏ": {
+    "lips_url": "ㅏ.png",
+    "tongue_url": "ㅏ.png"
+  },
+  "ㅐ": {
+    "lips_url": "y.png",
+    "tongue_url": "ㅔㅐ.png"
+  },
+  "ㅑ": {
+    "lips_url": "y.png",
+    "tongue_url": "y.png"
+  },
+  "ㅒ": {
+    "lips_url": "y.png",
+    "tongue_url": "y.png"
+  },
+  "ㅓ": {
+    "lips_url": "ㅓ.png",
+    "tongue_url": "ㅓㅗ.png"
+  },
+  "ㅔ": {
+    "lips_url": "ㅔ.png",
+    "tongue_url": "ㅔㅐ.png"
+  },
+  "ㅕ": {
+    "lips_url": "y.png",
+    "tongue_url": "y.png"
+  },
+  "ㅖ": {
+    "lips_url": "y.png",
+    "tongue_url": "y.png"
+  },
+  "ㅗ": {
+    "lips_url": "ㅗ.png",
+    "tongue_url": "ㅓㅗ.png"
+  },
+  "ㅘ": {
+    "lips_url": "w.png",
+    "tongue_url": "w.png"
+  },
+  "ㅙ": {
+    "lips_url": "w.png",
+    "tongue_url": "w.png"
+  },
+  "ㅚ": {
+    "lips_url": "w.png",
+    "tongue_url": "w.png"
+  },
+  "ㅛ": {
+    "lips_url": "w.png",
+    "tongue_url": "y.png"
+  },
+  "ㅜ": {
+    "lips_url": "ㅜ.png",
+    "tongue_url": "w.png"
+  },
+  "ㅝ": {
+    "lips_url": "w.png",
+    "tongue_url": "w.png"
+  },
+  "ㅞ": {
+    "lips_url": "w.png",
+    "tongue_url": "w.png"
+  },
+  "ㅟ": {
+    "lips_url": "",
+    "tongue_url": "w.png"
+  },
+  "ㅠ": {
+    "lips_url": "w.png",
+    "tongue_url": "y.png"
+  },
+  "ㅡ": {
+    "lips_url": "ㅡ.png",
+    "tongue_url": "w.png"
+  },
+  "ㅢ": {
+    "lips_url": "y.png",
+    "tongue_url": "y.png"
+  },
+  "ㅣ": {
+    "lips_url": "ㅣ.png",
+    "tongue_url": "y.png"
+  }
+}
