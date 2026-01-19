@@ -1,4 +1,4 @@
-package com.lingko.lingko.core.domain.pronunciation.service;
+package com.lingko.lingko.core.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -16,7 +16,7 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-public class SyllableMappingLoader {
+public class SyllableMappingUtil {
     
     private Map<String, SyllableMapping> mappingTable = new HashMap<>();
     
