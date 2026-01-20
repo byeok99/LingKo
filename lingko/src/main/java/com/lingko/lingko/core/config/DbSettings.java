@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "db")
 @Getter @Setter
-public class DbSettings {
+public class DBSettings {
     private String host;
     private Integer port;
     private String user;
