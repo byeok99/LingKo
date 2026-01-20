@@ -33,6 +33,7 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'com.microsoft.cognitiveservices.speech:client-sdk:1.47.0@jar'
     implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 tasks.named('test') {
