@@ -6,13 +6,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "db")
+@ConfigurationProperties(prefix = "google")
 @Getter @Setter
-public class DBSettings {
-    private String host;
-    private Integer port;
-    private String user;
-    private String username;
-    private String password;
-    private String driver;
+public class GoogleSettings {
+    private String client_id;
+    private String client_secret;
+    private String redirect_uri;
 }
