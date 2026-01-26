@@ -1,4 +1,4 @@
-package com.lingko.lingko.api.pronunciation.dto;
+package com.lingko.lingko.api.practice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
