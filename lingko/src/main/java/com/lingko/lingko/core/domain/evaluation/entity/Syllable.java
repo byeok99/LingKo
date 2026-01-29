@@ -1,4 +1,4 @@
-package com.lingko.lingko.core.domain.practice.entity;
+package com.lingko.lingko.core.domain.evaluation.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

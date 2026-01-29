@@ -1,5 +1,6 @@
-package com.lingko.lingko.core.domain.practice.entity;
+package com.lingko.lingko.core.domain.evaluation.entity;
 
+import com.lingko.lingko.core.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,7 +11,7 @@ import java.util.List;
 
 @Entity
 @Table(
-        name = "practice_log",
+        name = "evaluation_log",
         indexes = {
                 @Index(name = "idx_user_created", columnList = "user_idx, created_at")
         }
@@ -19,11 +20,11 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class PracticeLog {
+public class EvaluationLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "practice_log_idx")
-    private Long practiceLogIdx;
+    @Column(name = "evaluation_log_idx")
+    private Long evaluationLogIdx;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_idx", nullable = false)
@@ -39,12 +40,12 @@ public class PracticeLog {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "practiceLog", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "evaluationLog", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<PracticeSyllable> syllableList = new ArrayList<>();
+    private List<EvaluationSyllable> syllableList = new ArrayList<>();
 
-    public void addSyllable(PracticeSyllable syllable) {
-        syllable.add(syllable);
-        syllable.setPracticeLog(this);
+    public void addSyllable(EvaluationSyllable syllable) {
+//        syllable.add(syllable);
+        syllable.setEvaluationLog(this);
     }
 }

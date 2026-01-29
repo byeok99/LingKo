@@ -1,25 +1,25 @@
-package com.lingko.lingko.core.domain.practice.entity;
+package com.lingko.lingko.core.domain.evaluation.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "practice_syllable")
+@Table(name = "evaluation_syllable")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class PracticeSyllable {
+public class EvaluationSyllable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "practice_syllables_idx")
+    @Column(name = "evaluation_syllables_idx")
     private Long practiceSyllablesIdx;
 
     @Setter
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "practice_log_idx", nullable = false)
-    private PracticeLog practiceLog;
+    @JoinColumn(name = "evaluation_log_idx", nullable = false)
+    private EvaluationLog evaluationLog;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "syllable_char", nullable = false)

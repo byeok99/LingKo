@@ -1,8 +1,8 @@
-package com.lingko.lingko.api.practice;
+package com.lingko.lingko.api.evaluation;
 
-import com.lingko.lingko.api.practice.dto.StandardPronunciationRequest;
-import com.lingko.lingko.api.practice.dto.StandardPronunciationResponse;
-import com.lingko.lingko.core.domain.practice.service.PracticeService;
+import com.lingko.lingko.api.evaluation.dto.StandardPronunciationRequest;
+import com.lingko.lingko.api.evaluation.dto.StandardPronunciationResponse;
+import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -13,8 +13,8 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/pronunciation")
 @RequiredArgsConstructor
 @Slf4j
-public class PracticeController {
-    private final PracticeService service;
+public class EvaluationController {
+    private final EvaluationService service;
 
     /**
      * 표준발음 변환

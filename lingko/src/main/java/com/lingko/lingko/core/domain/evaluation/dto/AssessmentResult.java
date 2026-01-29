@@ -1,4 +1,4 @@
-package com.lingko.lingko.core.domain.practice.dto;
+package com.lingko.lingko.core.domain.evaluation.dto;
 
 import lombok.Builder;
 import lombok.Getter;

@@ -1,6 +1,6 @@
-package com.lingko.lingko.core.domain.practice.repository;
+package com.lingko.lingko.core.domain.evaluation.repository;
 
-import com.lingko.lingko.core.domain.practice.entity.Syllable;
+import com.lingko.lingko.core.domain.evaluation.entity.Syllable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

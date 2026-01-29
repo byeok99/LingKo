@@ -1,15 +1,15 @@
-package com.lingko.lingko.core.domain.practice.repository;
+package com.lingko.lingko.core.domain.evaluation.repository;
 
-import com.lingko.lingko.core.domain.practice.entity.PracticeLog;
+import com.lingko.lingko.core.domain.evaluation.entity.EvaluationLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PracticeLogRepository extends JpaRepository<PracticeLog, Long> {
+public interface EvaluationLogRepository extends JpaRepository<EvaluationLog, Long> {
 
-    Page<PracticeLog> findByUser_UserIdxOrderByCreatedAtDesc(
+    Page<EvaluationLog> findByUser_UserIdxOrderByCreatedAtDesc(
             Long userIdx,
             Pageable pageable
     );

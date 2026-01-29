@@ -1,4 +1,4 @@
-package com.lingko.lingko.api.practice.dto;
+package com.lingko.lingko.api.evaluation.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
