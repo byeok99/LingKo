@@ -48,7 +48,7 @@ public class User {
     @UpdateTimestamp
     @Column(name = "last_login_at", nullable = false)
     private LocalDateTime lastLoginAt;
-    
+
     public enum SocialType {
         GOOGLE, APPLE, KAKAO
     }
