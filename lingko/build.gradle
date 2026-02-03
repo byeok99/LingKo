@@ -38,6 +38,8 @@ dependencies {
     implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
     testImplementation 'com.h2database:h2'
+	implementation platform('software.amazon.awssdk:bom:2.20.26')
+	implementation 'software.amazon.awssdk:s3'
 }
 
 tasks.named('test') {
