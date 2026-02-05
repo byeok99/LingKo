@@ -19,11 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * FrameInterpolationVideoGenerator 통합 테스트
- *
- * ✅ SyllableMappingUtil만 사용 (PhonemeImageMapper 제거)
  */
 @SpringBootTest
-@ActiveProfiles("test")
 class FrameInterpolationVideoGeneratorTest {
 
     @Autowired
@@ -184,7 +181,7 @@ class FrameInterpolationVideoGeneratorTest {
         assertThat(s3Url).contains("밥");
         assertThat(s3Url).endsWith(".mp4");
 
-        System.out.println("\n✅ 전체 플로우 성공!");
+        System.out.println("\n전체 플로우 성공!");
     }
 
     @Test
