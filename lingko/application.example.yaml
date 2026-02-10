@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: lingko
+
+logging:
+  file:
+    name: logs/lingko.log
+    level:
+      com.lingko.lingko: DEBUG
+
+db:
+  host:
+  port:
+  user:
+  password:
+  name:
+  driver:
+
+jwt:
+  secret-key:
+  access-token-expire-minutes:
+  refresh-token-expire-days:
+  algorithm:
+
+openai:
+  api-key:
+  text-model:
+
+azure:
+  secret-key:
+  region:
+
+google:
+  client-id:
+  client-secret:
+  redirect-uri:
+
+replicate:
+  api-key:
+  version:
+  max-poll-attempts:
+  poll-interval-ms:
+  frame-rate:
+
+aws:
+  s3:
+    bucket:
+    region:
+  credentials:
+    access-key:
+    secret-key:
+
+ffmpeg:
+  path:
+

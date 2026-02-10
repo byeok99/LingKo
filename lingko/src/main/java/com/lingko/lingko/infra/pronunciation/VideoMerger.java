@@ -1,5 +1,6 @@
 package com.lingko.lingko.infra.pronunciation;
 
+import com.lingko.lingko.core.config.FfmpegSettings;
 import com.lingko.lingko.core.config.ReplicateSettings;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class VideoMerger {
+    private final FfmpegSettings ffmpegSettings;
     private final ReplicateSettings replicateSettings;
 
     /**
@@ -97,9 +99,14 @@ public class VideoMerger {
 
         int frameRate = replicateSettings.getFrameRate();
 
+        String ffmpegPath = ffmpegSettings.getPath();
+        if (ffmpegPath == null || ffmpegPath.isBlank()) {
+            ffmpegPath = "ffmpeg";
+        }
+
         // FFmpeg 명령어
         ProcessBuilder pb = new ProcessBuilder(
-                "ffmpeg",
+                ffmpegPath,
                 "-f", "concat",              // concat demuxer 사용
                 "-safe", "0",                // 절대 경로 허용
                 "-i", concatFile.toString(), // 입력 concat 파일
