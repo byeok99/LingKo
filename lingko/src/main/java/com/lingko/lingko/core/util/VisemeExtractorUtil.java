@@ -163,13 +163,13 @@ public class VisemeExtractorUtil {
         }
 
         // URL 반환
-        String url = isTongue ? mapping.getTongueUrl() : mapping.getLipsUrl();
+        String url = isTongue ? mapping.getTongueUrl() : mapping.getMouthUrl();
 
         // 변이음 URL이 없으면 기본 자음으로 폴백
         if ((url == null || url.isEmpty()) && !key.equals(phoneme)) {
             mapping = syllableMappingUtil.getMapping(phoneme);
             url = mapping != null ?
-                    (isTongue ? mapping.getTongueUrl() : mapping.getLipsUrl()) :
+                    (isTongue ? mapping.getTongueUrl() : mapping.getMouthUrl()):
                     null;
         }
 

@@ -1,9 +1,8 @@
-package com.lingko.lingko.api.pronunciation;
+package com.lingko.lingko.api.evaluation;
 
-import com.lingko.lingko.api.pronunciation.dto.StandardPronunciationRequest;
-import com.lingko.lingko.api.pronunciation.dto.StandardPronunciationResponse;
-import com.lingko.lingko.core.domain.pronunciation.service.PronunciationService;
-import com.lingko.lingko.core.util.KoreanPhonemeUtil;
+import com.lingko.lingko.api.evaluation.dto.StandardPronunciationRequest;
+import com.lingko.lingko.api.evaluation.dto.StandardPronunciationResponse;
+import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +13,8 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/pronunciation")
 @RequiredArgsConstructor
 @Slf4j
-public class PronunciationController {
-    private final PronunciationService service;
+public class EvaluationController {
+    private final EvaluationService service;
 
     /**
      * 표준발음 변환
@@ -38,4 +37,7 @@ public class PronunciationController {
 
         return ResponseEntity.ok(response);
     }
+
+//    @PostMapping("/videos")
+//    public
 }

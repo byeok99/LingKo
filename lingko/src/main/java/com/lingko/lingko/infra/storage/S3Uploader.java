@@ -1,0 +1,210 @@
+package com.lingko.lingko.infra.storage;
+
+import com.lingko.lingko.core.config.AwsSettings;
+import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+
+/**
+ * S3 업로더
+ *
+ * 역할:
+ * - 로컬 파일을 S3에 업로드
+ * - URL에서 다운로드 후 S3에 업로드
+ */
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class S3Uploader {
+
+    private final S3Client s3Client;
+    private final AwsSettings awsSettings;
+
+    /**
+     * 로컬 파일을 S3에 업로드
+     *
+     * @param filePath 로컬 파일 경로
+     * @param s3Key S3 키
+     * @return S3 URL
+     */
+    public String upload(String filePath, String s3Key) {
+        try {
+            String bucketName = awsSettings.getS3().getBucket();
+            String region = awsSettings.getS3().getRegion();
+
+            log.info("S3 업로드 시작: {} -> s3://{}/{}", filePath, bucketName, s3Key);
+
+            Path path = Paths.get(filePath);
+
+            if (!Files.exists(path)) {
+                throw new VideoGenerationException("업로드할 파일이 존재하지 않음: " + filePath);
+            }
+
+            long fileSize = Files.size(path);
+            log.debug("파일 크기: {} bytes ({} MB)", fileSize, fileSize / 1024 / 1024);
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .contentType(getContentType(filePath))
+                    .build();
+
+            s3Client.putObject(
+                    putObjectRequest,
+                    RequestBody.fromFile(path)
+            );
+
+            String s3Url = String.format("https://%s.s3.%s.amazonaws.com/%s",
+                    bucketName, region, s3Key);
+
+            log.info("S3 업로드 완료: {}", s3Url);
+            return s3Url;
+
+        } catch (S3Exception e) {
+            log.error("S3 업로드 실패: {}", filePath, e);
+            throw new VideoGenerationException("S3 업로드 실패: " + e.getMessage(), e);
+        } catch (IOException e) {
+            log.error("파일 읽기 실패: {}", filePath, e);
+            throw new VideoGenerationException("파일 읽기 실패: " + filePath, e);
+        }
+    }
+
+    /**
+     * File 객체를 S3에 업로드
+     *
+     * @param file File 객체
+     * @param s3Key S3 키
+     * @return S3 URL
+     */
+    public String upload(File file, String s3Key) {
+        return upload(file.getAbsolutePath(), s3Key);
+    }
+
+    /**
+     * URL에서 다운로드 후 S3에 업로드
+     *
+     * @param sourceUrl 다운로드할 URL
+     * @param s3Key S3 키
+     * @return S3 URL
+     */
+    public String uploadFromUrl(String sourceUrl, String s3Key) {
+        Path tempFile = null;
+
+        try {
+            log.info("URL → S3 업로드: {} -> {}", sourceUrl, s3Key);
+
+            // 1. URL에서 임시 파일로 다운로드
+            tempFile = downloadFromUrl(sourceUrl);
+
+            // 2. 임시 파일을 S3에 업로드
+            String s3Url = upload(tempFile.toString(), s3Key);
+
+            log.info("URL → S3 완료: {}", s3Url);
+            return s3Url;
+
+        } finally {
+            // 3. 임시 파일 삭제
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                    log.debug("임시 파일 삭제: {}", tempFile);
+                } catch (IOException e) {
+                    log.warn("임시 파일 삭제 실패: {}", tempFile, e);
+                }
+            }
+        }
+    }
+
+    /**
+     * URL에서 파일 다운로드
+     *
+     * @param url 다운로드할 URL
+     * @return 다운로드된 임시 파일 경로
+     */
+    private Path downloadFromUrl(String url) {
+        try {
+            log.debug("다운로드 시작: {}", url);
+
+            // 확장자 추출
+            String extension = extractExtension(url);
+
+            // 임시 파일 생성
+            Path tempFile = Files.createTempFile("download_", extension);
+
+            // URL에서 다운로드
+            try (InputStream in = new URL(url).openStream()) {
+                Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            long fileSize = Files.size(tempFile);
+            log.debug("다운로드 완료: {} ({} bytes)", tempFile, fileSize);
+
+            return tempFile;
+
+        } catch (IOException e) {
+            log.error("URL 다운로드 실패: {}", url, e);
+            throw new VideoGenerationException("URL 다운로드 실패: " + url, e);
+        }
+    }
+
+    /**
+     * URL에서 확장자 추출
+     *
+     * @param url URL
+     * @return 확장자 (예: .mp4, .png)
+     */
+    private String extractExtension(String url) {
+        // 쿼리 파라미터 제거
+        String cleanUrl = url.split("\\?")[0];
+
+        // 확장자 추출
+        int lastDot = cleanUrl.lastIndexOf('.');
+        if (lastDot > 0) {
+            return cleanUrl.substring(lastDot);  // .mp4, .png 등
+        }
+
+        return ".mp4";  // 기본값
+    }
+
+    /**
+     * 파일 확장자로 Content-Type 추론
+     *
+     * @param filePath 파일 경로
+     * @return Content-Type
+     */
+    private String getContentType(String filePath) {
+        String lowerPath = filePath.toLowerCase();
+
+        if (lowerPath.endsWith(".mp4")) {
+            return "video/mp4";
+        } else if (lowerPath.endsWith(".avi")) {
+            return "video/x-msvideo";
+        } else if (lowerPath.endsWith(".mov")) {
+            return "video/quicktime";
+        } else if (lowerPath.endsWith(".webm")) {
+            return "video/webm";
+        } else if (lowerPath.endsWith(".png")) {
+            return "image/png";
+        } else if (lowerPath.endsWith(".jpg") || lowerPath.endsWith(".jpeg")) {
+            return "image/jpeg";
+        } else if (lowerPath.endsWith(".gif")) {
+            return "image/gif";
+        }
+
+        return "application/octet-stream";  // 기본값
+    }
+}

@@ -1,17 +1,17 @@
 package com.lingko.lingko.infra.pronunciation;
 
 import com.lingko.lingko.core.config.AzureSettings;
-import com.lingko.lingko.core.domain.pronunciation.dto.AssessmentResult;
-import com.lingko.lingko.core.domain.pronunciation.service.SpeechEvaluator;
+import com.lingko.lingko.core.domain.evaluation.dto.AssessmentResult;
+import com.lingko.lingko.core.domain.evaluation.service.SpeechEvaluator;
 import com.microsoft.cognitiveservices.speech.*;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 import com.microsoft.cognitiveservices.speech.PronunciationAssessmentConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
 public class AzureSpeechEvaluator implements SpeechEvaluator {
     private final AzureSettings settings;

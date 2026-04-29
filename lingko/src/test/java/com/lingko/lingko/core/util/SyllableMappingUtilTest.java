@@ -18,6 +18,6 @@ public class SyllableMappingUtilTest {
         var mapping = util.getMapping("ㄱ");
 
         assertThat(mapping).isNotNull();
-        assertThat(mapping.hasLips() || mapping.hasTongue()).isTrue();
+        assertThat(mapping.hasMouth() || mapping.hasTongue()).isTrue();
     }
 }
