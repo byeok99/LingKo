@@ -685,15 +685,184 @@ MVP에서는 지나치게 복잡하게 가지 않는다.
 - 경쟁 서비스와 차별화 포인트가 선명하다.
 - 작은 팀으로도 더 뚜렷한 MVP를 만들 수 있다.
 
-## 다음 액션
+## 실행 작업 순서
 
-기획 다음 단계로 바로 이어질 수 있는 실행 순서는 아래가 적절하다.
+현재 저장소는 Spring Boot 백엔드만 실질 구현되어 있고, Flutter 앱은 아직 없다. 따라서 다음 작업 순서는 "운영 위험 제거 -> 백엔드 MVP API 안정화 -> Flutter 앱 생성 -> 학습 루프 연결" 순서로 진행한다.
 
-1. MVP 사용자 플로우를 확정한다.
-2. 문장/코스/학습기록 데이터 모델을 확정한다.
-3. 첫 화면과 학습 화면 와이어프레임을 그린다.
-4. 백엔드 API 명세를 만든다.
-5. 현재 코드베이스를 MVP 기준으로 재정렬한다.
+### 0단계. 저장소와 보안 정리
+
+가장 먼저 처리한다. 이 단계가 끝나기 전에는 새 기능을 붙이지 않는다.
+
+- `application.yaml`에 들어간 실제 비밀값 제거
+- 노출된 DB, JWT, OpenAI, Azure, Google OAuth, AWS, Replicate 키 폐기 및 재발급
+- 실제 실행값은 `.env` 또는 배포 환경 변수로 이동
+- `application.example.yaml`에는 placeholder만 유지
+- `application.yaml`, `application.example.yaml`, `@ConfigurationProperties` 필드 구조 통일
+- AWS 설정은 `aws.s3.*`, `aws.credentials.*` 구조로 통일
+- Replicate 설정은 `replicate.*` 블록으로 분리
+- DB 설정은 Spring Boot `spring.datasource.*` 또는 명확한 커스텀 DataSource 설정 중 하나로 통일
+
+완료 기준:
+
+- 저장소에 실제 secret이 없다.
+- 로컬 실행 설정과 예제 설정의 키 이름이 일치한다.
+- S3, Azure, Replicate 설정 바인딩이 테스트로 검증된다.
+
+### 1단계. 테스트 복구
+
+현재 테스트는 레거시 데모 테스트가 삭제된 클래스를 참조해 컴파일부터 실패한다. 먼저 회귀 방어선을 회복한다.
+
+- `Visemeextractiondemotest`, `Syllablemappingloadertest`를 현재 구조 기준으로 수정하거나 제거
+- 순수 단위 테스트와 외부 API 통합 테스트 분리
+- Azure, Replicate, S3를 호출하는 테스트는 `integration` profile 또는 tag로 격리
+- 기본 `./gradlew test`는 네트워크와 실제 키 없이 통과하게 만든다.
+
+완료 기준:
+
+- `./gradlew test`가 로컬에서 통과한다.
+- 외부 서비스 테스트는 명시적으로 실행할 때만 돈다.
+
+### 2단계. 백엔드 프로젝트 구조 정리
+
+현재 `EvaluationService`는 이름에 비해 책임이 너무 작고, 평가/가이드/저장 흐름이 API에 연결되어 있지 않다. MVP 유스케이스 중심으로 패키지를 재정렬한다.
+
+- `EvaluationService`의 책임을 표준 발음 변환, 평가 요청, 결과 저장 중 어디까지 둘지 결정
+- 공개 API 이름은 제품 용어에 맞춰 `pronunciation`, `practice` 중심으로 정리
+- 기존 `evaluation_*` 엔티티는 유지할지, `practice_*` 모델로 마이그레이션할지 결정
+- `EvaluationLog.addSyllable()`의 양방향 연관관계 버그 수정
+- `SyllableMappingUtil`과 `VisemeExtractorUtil`의 반환 계약 통일
+
+완료 기준:
+
+- 표준 발음 변환 API가 안정적으로 동작한다.
+- 가이드 URL 생성 흐름이 하나의 계약으로 정리된다.
+- 평가 결과 저장 모델의 명명과 책임이 정해진다.
+
+### 3단계. 추천 문장 MVP API
+
+자유 입력보다 추천 문장을 먼저 완성한다. 추천 문장은 품질 통제가 가능하고 앱 첫 경험을 만들기 쉽다.
+
+- 추천 문장 20~30개 seed 작성
+- 문장 원문, 표준 발음, 영어 번역, 학습 포인트 저장
+- `GET /api/sentences/recommended`
+- `GET /api/sentences/{id}`
+- 추천 문장 오디오는 사전 생성 URL을 우선 사용
+
+완료 기준:
+
+- 앱이 홈에서 추천 문장 목록을 받을 수 있다.
+- 문장 상세에서 원문, 표준 발음, 번역, 설명, 오디오 URL을 받을 수 있다.
+
+### 4단계. 발음 평가 API
+
+MVP의 핵심 루프인 녹음 평가를 연결한다.
+
+- 녹음 파일 업로드 방식 결정: multipart 업로드 우선
+- `POST /api/pronunciation/evaluate`
+- Azure 평가 결과를 `AssessmentResult`로 반환
+- 원문, 표준 발음, recognized text, overall/accuracy/fluency/completeness 저장
+- 실패 시 사용자 메시지와 기술 로그 분리
+
+완료 기준:
+
+- 앱에서 녹음 파일을 보내면 점수를 받을 수 있다.
+- 성공한 평가 결과가 DB에 저장된다.
+
+### 5단계. 글자별 가이드 연결
+
+처음부터 모든 비디오를 실시간 생성하지 않는다. MVP에서는 이미 존재하는 자모/가이드 자산을 먼저 조합해 제공하고, 무거운 비디오 생성은 후순위로 둔다.
+
+- 표준 발음 기준으로 글자 리스트 생성
+- 각 글자별 mouth/tongue guide URL 제공
+- `POST /api/pronunciation/guides` 또는 문장 상세 응답에 포함
+- 실시간 Replicate/FFmpeg 생성은 job 기반 후속 과제로 분리
+
+완료 기준:
+
+- 결과 화면에서 낮은 점수 글자를 눌렀을 때 입/혀 가이드로 이동할 수 있다.
+- 가이드 생성 때문에 학습 API 응답이 장시간 막히지 않는다.
+
+### 6단계. Flutter 앱 생성
+
+백엔드 기본 API가 잡힌 뒤 Flutter 앱을 만든다. 첫 앱은 전체 기능이 아니라 학습 루프 하나만 구현한다.
+
+- 로그인 없는 내부 프로토타입 모드로 시작
+- 홈: 추천 문장 목록
+- 문장 상세: 원문, 표준 발음, 번역, 듣기, 녹음
+- 결과: 점수, recognized text, 글자별 가이드 진입
+- 기록/프로필/광고는 이후 단계로 둔다.
+
+완료 기준:
+
+- 실제 기기 또는 에뮬레이터에서 `추천 문장 선택 -> 녹음 -> 점수 확인 -> 가이드 보기`가 가능하다.
+
+### 7단계. 인증과 사용자 기록
+
+학습 루프가 돈 뒤 계정 기반 기록을 붙인다.
+
+- Google OAuth
+- Apple Sign in
+- JWT access/refresh token
+- `GET /api/me`
+- 사용자별 practice session 조회
+- locale, native language, target level 저장
+
+완료 기준:
+
+- 로그인 사용자의 연습 결과가 계정에 누적된다.
+
+### 8단계. 사용량 제한과 광고 보상
+
+클라우드 평가 비용을 제어하기 위한 단계다. 학습 루프와 기록이 안정화된 뒤 붙인다.
+
+- 하루 5회 무료 평가 제한
+- 평가 성공 시점에 quota 차감
+- 보상형 광고 검증 API
+- 광고 1회당 추가 연습권 1회 지급
+
+완료 기준:
+
+- 서버가 사용자별 연습 가능 횟수를 신뢰성 있게 통제한다.
+- 광고 보상은 학습 결과 확인 흐름을 방해하지 않는다.
+
+## 저장소 구조 결정
+
+초기에는 별도 레포보다 하나의 레포 안에서 백엔드와 앱을 나누는 모노레포가 적합하다.
+
+권장 구조:
+
+```text
+LingKo/
+├── backend/        # 기존 Spring Boot 프로젝트
+├── app/            # 신규 Flutter 앱
+├── docs/
+├── plan.md
+└── README.md
+```
+
+현재 Spring Boot 백엔드는 `backend/`에 두고, Flutter 프로젝트는 `app/`에 만든다.
+
+모노레포를 권장하는 이유:
+
+- MVP 단계에서는 백엔드 API와 앱 화면이 함께 자주 바뀐다.
+- API 계약, seed 데이터, 디자인 정책, 앱 구현을 한 PR에서 맞추기 쉽다.
+- 초기 배포/문서/환경변수 관리가 단순하다.
+- 팀이 작을 때 레포 분리로 얻는 이점보다 동기화 비용이 더 크다.
+
+별도 레포가 더 나은 시점:
+
+- 백엔드와 앱 배포/릴리즈 주기가 명확히 분리될 때
+- 앱 팀과 백엔드 팀의 권한 관리가 달라질 때
+- 공개 SDK, 외부 협업, 독립 CI/CD가 필요해질 때
+- 저장소 크기나 빌드 시간이 실제 병목이 될 때
+
+따라서 현재 결정은 다음과 같다.
+
+- 지금은 모노레포 유지
+- Spring Boot 백엔드는 `backend/`에서 관리
+- Flutter 앱은 `app/`으로 신규 생성
+- 공통 문서는 `docs/`와 `plan.md`에서 관리
+- API 계약은 `docs/api.md`로 별도 작성
 
 ## 결론
 

@@ -1,4 +1,4 @@
-lingko/HELP.md
+backend/HELP.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
