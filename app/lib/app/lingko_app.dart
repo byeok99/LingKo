@@ -1,0 +1,132 @@
+import 'package:flutter/material.dart';
+
+import '../data/mock_sentences.dart';
+import '../models/practice_sentence.dart';
+import '../screens/home_screen.dart';
+import '../screens/practice_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/result_screen.dart';
+import 'app_theme.dart';
+
+// 앱 전체 설정을 담당하는 최상위 위젯입니다.
+// 여기서는 앱 이름, 테마 색상, 기본 글자 스타일, 첫 화면을 정합니다.
+class LingKoApp extends StatelessWidget {
+  const LingKoApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'LingKo',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
+      // LingKoShell은 하단 탭과 현재 선택된 화면 상태를 관리합니다.
+      home: const LingKoShell(),
+    );
+  }
+}
+
+class LingKoShell extends StatefulWidget {
+  const LingKoShell({super.key});
+
+  @override
+  State<LingKoShell> createState() => _LingKoShellState();
+}
+
+class _LingKoShellState extends State<LingKoShell> {
+  // 하단 탭 index입니다. 0: Home, 1: Practice, 2: Profile.
+  int selectedTab = 0;
+
+  // 사용자가 홈에서 고르거나 직접 입력한 현재 연습 문장입니다.
+  // 아직 아무 문장도 선택하지 않은 Practice 탭 진입 상태는 null입니다.
+  PracticeSentence? selectedSentence;
+
+  // Practice 탭 안에서 연습 화면을 보여줄지, 결과 화면을 보여줄지 결정합니다.
+  bool hasResult = false;
+
+  // 홈에서 문장을 선택하면 Practice 탭으로 이동합니다.
+  void openPractice(PracticeSentence sentence) {
+    setState(() {
+      selectedSentence = sentence;
+      selectedTab = 1;
+      hasResult = false;
+    });
+  }
+
+  // 실제 앱에서는 녹음 업로드와 평가 API 호출이 끝난 뒤 이 상태로 바뀝니다.
+  // 지금은 디자인 확인용이라 버튼을 누르면 바로 결과 화면으로 전환합니다.
+  void showResult() {
+    setState(() {
+      hasResult = true;
+    });
+  }
+
+  // Practice 탭에서 사용자가 직접 입력한 문장으로 현재 연습 대상을 교체합니다.
+  void useCustomSentence(PracticeSentence sentence) {
+    setState(() {
+      selectedSentence = sentence;
+      hasResult = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Flutter는 화면도 모두 Widget입니다. 조건에 따라 Practice 탭의 내용을
+    // 연습 화면 또는 결과 화면으로 바꿔 끼웁니다.
+    final pages = [
+      HomeScreen(sentences: mockSentences, onSelect: openPractice),
+      hasResult && selectedSentence != null
+          ? ResultScreen(
+            sentence: selectedSentence!,
+            onTryAgain: () {
+              setState(() {
+                hasResult = false;
+              });
+            },
+          )
+          : PracticeScreen(
+            sentence: selectedSentence,
+            onResult: showResult,
+            onCustomSentence: useCustomSentence,
+          ),
+      const ProfileScreen(),
+    ];
+
+    // Scaffold는 일반적인 앱 화면 뼈대입니다.
+    // body에는 현재 화면, bottomNavigationBar에는 하단 탭을 둡니다.
+    return Scaffold(
+      body: SafeArea(child: pages[selectedTab]),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: selectedTab,
+        backgroundColor: AppColors.background,
+        indicatorColor: AppColors.brandSoft,
+        onDestinationSelected: (index) {
+          setState(() {
+            selectedTab = index;
+            // 결과 화면은 Practice 탭 안에서만 유지합니다.
+            // Home/Profile로 이동했다가 돌아오면 다시 연습 화면부터 시작합니다.
+            if (index != 1) {
+              hasResult = false;
+            }
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.mic_none),
+            selectedIcon: Icon(Icons.mic),
+            label: 'Practice',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}

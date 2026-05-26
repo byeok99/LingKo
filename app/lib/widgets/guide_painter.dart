@@ -1,0 +1,74 @@
+import 'package:flutter/material.dart';
+
+import '../app/app_theme.dart';
+
+class GuidePainter extends CustomPainter {
+  const GuidePainter(this.kind);
+
+  final String kind;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 임시 조음 가이드 그림입니다.
+    // 나중에는 S3 이미지/영상 URL을 받아 Image 또는 Video 위젯으로 교체합니다.
+    final outline =
+        Paint()
+          ..color = AppColors.brandStrong
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 5
+          ..strokeCap = StrokeCap.round;
+    final fill =
+        Paint()
+          ..color = AppColors.brandSoft
+          ..style = PaintingStyle.fill;
+    final accent =
+        Paint()
+          ..color = AppColors.info
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4
+          ..strokeCap = StrokeCap.round;
+
+    final mouth =
+        Path()
+          ..moveTo(size.width * .18, size.height * .5)
+          ..quadraticBezierTo(
+            size.width * .5,
+            size.height * .28,
+            size.width * .82,
+            size.height * .5,
+          )
+          ..quadraticBezierTo(
+            size.width * .5,
+            size.height * .76,
+            size.width * .18,
+            size.height * .5,
+          );
+
+    canvas.drawPath(mouth, fill);
+    canvas.drawPath(mouth, outline);
+
+    if (kind == 'Tongue') {
+      final tongue =
+          Path()
+            ..moveTo(size.width * .31, size.height * .62)
+            ..quadraticBezierTo(
+              size.width * .5,
+              size.height * .45,
+              size.width * .7,
+              size.height * .62,
+            );
+      canvas.drawPath(tongue, accent);
+    } else {
+      canvas.drawLine(
+        Offset(size.width * .32, size.height * .5),
+        Offset(size.width * .68, size.height * .5),
+        accent,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant GuidePainter oldDelegate) {
+    return oldDelegate.kind != kind;
+  }
+}
