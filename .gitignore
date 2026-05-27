@@ -39,3 +39,7 @@ out/
 .vscode/
 
 application.yaml
+
+# Local planning and reference docs
+docs/
+app/docs/
