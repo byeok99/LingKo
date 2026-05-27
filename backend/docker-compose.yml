@@ -45,7 +45,7 @@ services:
       DB_NAME: "${DB_NAME:-lingko}"
       DB_USER: "${DB_USER:-lingko}"
       DB_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required in .env}"
-      DB_DRIVER: "${DB_DRIVER:-mysql+pymysql}"
+      DB_DRIVER: "${DB_DRIVER:-com.mysql.cj.jdbc.Driver}"
       FFMPEG_PATH: ffmpeg
 
 volumes:
