@@ -1,4 +1,4 @@
-lingko/HELP.md
+backend/HELP.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -39,3 +39,7 @@ out/
 .vscode/
 
 application.yaml
+
+# Local planning and reference docs
+docs/
+app/docs/
