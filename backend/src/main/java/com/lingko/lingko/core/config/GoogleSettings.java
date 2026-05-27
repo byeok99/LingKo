@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "google")
 @Getter @Setter
 public class GoogleSettings {
-    private String client_id;
-    private String client_secret;
-    private String redirect_uri;
+    private String clientId;
+    private String clientSecret;
+    private String redirectUri;
 }

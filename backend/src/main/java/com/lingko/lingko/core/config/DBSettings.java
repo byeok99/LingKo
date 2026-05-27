@@ -12,7 +12,7 @@ public class DBSettings {
     private String host;
     private Integer port;
     private String user;
-    private String username;
     private String password;
+    private String name;
     private String driver;
 }
