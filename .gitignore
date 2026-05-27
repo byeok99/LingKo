@@ -39,6 +39,9 @@ out/
 .vscode/
 
 application.yaml
+.env
+.env.*
+!.env.example
 
 # Local planning and reference docs
 docs/
