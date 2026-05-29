@@ -1,10 +1,8 @@
 package com.lingko.lingko.core.util;
 
-import com.lingko.lingko.core.util.VisemeExtractorUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
@@ -17,11 +15,16 @@ import static org.assertj.core.api.Assertions.*;
  * - 입 모양: 입술 변화만 (ㄱ, ㄷ, ㅅ 등은 입술 변화 없음)
  * - 혀 모양: 혀 위치 변화 (대부분 자음에서 혀 변화 있음)
  */
-@SpringBootTest
 class visumeExtractorUtilTest {
 
-    @Autowired
     private VisemeExtractorUtil visumeExtractorUtil;
+
+    @BeforeEach
+    void setUp() {
+        SyllableMappingUtil syllableMappingUtil = new SyllableMappingUtil();
+        syllableMappingUtil.loadMapping();
+        visumeExtractorUtil = new VisemeExtractorUtil(syllableMappingUtil);
+    }
 
     @Test
     @DisplayName("'한' - 혀 모양 (ㅎ 제외, ㅏ, ㄴ)")
@@ -32,15 +35,15 @@ class visumeExtractorUtilTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).hasSize(2);
-        assertThat(result.get(0).get(0)).contains("ㅏ");
-        assertThat(result.get(0).get(1)).contains("ㄴ");
+        assertThat(result.get(0).get(0)).contains("vowel-a");
+        assertThat(result.get(0).get(1)).contains("alveolar-consonants");
     }
 
     @Test
     @DisplayName("'밥' - 입 모양 (ㅂ, ㅏ, ㅂ 모두 입술 변화)")
     void testExtractLipsUrls_밥() {
-        // ㅂ: lips_url = "ㅁㅂㅃㅍ.png" 
-        // ㅏ: lips_url = "ㅏ.png" 
+        // ㅂ: lips_url = "bilabial-consonants.png"
+        // ㅏ: lips_url = "vowel-a.png"
 
         // when
         List<List<String>> result = visumeExtractorUtil.extractLipsUrls("밥");
@@ -50,8 +53,8 @@ class visumeExtractorUtilTest {
         assertThat(result.get(0)).hasSize(2); // [ㅂ, ㅏ]
         assertThat(result.get(1)).hasSize(2); // [ㅏ, ㅂ]
 
-        assertThat(result.get(0).get(0)).contains("ㅁㅂㅃㅍ");
-        assertThat(result.get(0).get(1)).contains("ㅏ");
+        assertThat(result.get(0).get(0)).contains("bilabial-consonants");
+        assertThat(result.get(0).get(1)).contains("vowel-a");
     }
 
     @Test
@@ -62,15 +65,15 @@ class visumeExtractorUtilTest {
         // then - ㅜ만 있어야 정상!
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).hasSize(1);
-        assertThat(result.get(0).get(0)).isEqualTo("ㅜ.png");
+        assertThat(result.get(0).get(0)).isEqualTo("vowel-u.png");
     }
 
     @Test
     @DisplayName("'국' - 혀 모양 (ㄱ, ㅜ 모두 혀 변화)")
     void testExtractTongueUrls_국() {
-        // ㄱ: tongue_url = "ㄱㄲㅋㅇ.png" 
-        // ㅜ: tongue_url = "w.png" 
-        // ㄱ: tongue_url = "ㄱㄲㅋㅇ.png" 
+        // ㄱ: tongue_url = "velar-consonants.png"
+        // ㅜ: tongue_url = "semi-vowel-w.png"
+        // ㄱ: tongue_url = "velar-consonants.png"
 
         // when
         List<List<String>> result = visumeExtractorUtil.extractTongueUrls("국");
@@ -80,17 +83,17 @@ class visumeExtractorUtilTest {
         assertThat(result.get(0)).hasSize(2); // [ㄱ, ㅜ]
         assertThat(result.get(1)).hasSize(2); // [ㅜ, ㄱ]
 
-        assertThat(result.get(0).get(0)).contains("ㄱ");
-        assertThat(result.get(0).get(1)).contains("w");
-        assertThat(result.get(1).get(0)).contains("w");
-        assertThat(result.get(1).get(1)).contains("ㄱ");
+        assertThat(result.get(0).get(0)).contains("velar-consonants");
+        assertThat(result.get(0).get(1)).contains("semi-vowel-w");
+        assertThat(result.get(1).get(0)).contains("semi-vowel-w");
+        assertThat(result.get(1).get(1)).contains("velar-consonants");
     }
 
     @Test
     @DisplayName("'사' - 입 모양 (ㅅ은 입술 변화 없음, ㅏ만)")
     void testExtractLipsUrls_사() {
         // ㅅ: lips_url = "" 
-        // ㅏ: lips_url = "ㅏ.png" 
+        // ㅏ: lips_url = "vowel-a.png"
 
         // when
         List<List<String>> result = visumeExtractorUtil.extractLipsUrls("사");
@@ -98,14 +101,14 @@ class visumeExtractorUtilTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).hasSize(1);
-        assertThat(result.get(0).get(0)).isEqualTo("ㅏ.png");
+        assertThat(result.get(0).get(0)).isEqualTo("vowel-a.png");
     }
 
     @Test
     @DisplayName("'사' - 혀 모양 (ㅅ, ㅏ 모두)")
     void testExtractTongueUrls_사() {
-        // ㅅ: tongue_url = "ㅅㅆ.png" 
-        // ㅏ: tongue_url = "ㅏ.png" 
+        // ㅅ: tongue_url = "alveolar-fricative.png"
+        // ㅏ: tongue_url = "vowel-a.png"
 
         // when
         List<List<String>> result = visumeExtractorUtil.extractTongueUrls("사");
@@ -113,8 +116,8 @@ class visumeExtractorUtilTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).hasSize(2);
-        assertThat(result.get(0).get(0)).contains("ㅅ");
-        assertThat(result.get(0).get(1)).contains("ㅏ");
+        assertThat(result.get(0).get(0)).contains("alveolar-fricative");
+        assertThat(result.get(0).get(1)).contains("vowel-a");
     }
 
     @Test
