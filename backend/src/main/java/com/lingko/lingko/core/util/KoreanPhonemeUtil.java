@@ -172,6 +172,19 @@ public class KoreanPhonemeUtil {
             HangulChar current = chars.get(i);
             HangulChar next = (i + 1 < chars.size()) ? chars.get(i + 1) : null;
 
+            // 구개음화
+            if (!current.jongsung.isEmpty() && next != null) {
+                if (current.jongsung.equals("ㄷ") && next.chosung.equals("ㅇ")
+                        && next.jungsung.equals("ㅣ")) {
+                    next.chosung = "ㅈ";
+                    current.jongsung = "";
+                } else if (current.jongsung.equals("ㅌ") && next.chosung.equals("ㅇ")
+                        && next.jungsung.equals("ㅣ")) {
+                    next.chosung = "ㅊ";
+                    current.jongsung = "";
+                }
+            }
+
             // 연음화
             if (next != null && !current.jongsung.isEmpty() && next.chosung.equals("ㅇ")) {
                 String transferSound = JONGSUNG_TO_CHOSUNG.get(current.jongsung);
@@ -212,19 +225,6 @@ public class KoreanPhonemeUtil {
                     else if (next.chosung.equals("ㅂ")) next.chosung = "ㅃ";
                     else if (next.chosung.equals("ㅅ")) next.chosung = "ㅆ";
                     else if (next.chosung.equals("ㅈ")) next.chosung = "ㅉ";
-                }
-            }
-
-            // 구개음화
-            if (!current.jongsung.isEmpty() && next != null) {
-                if (current.jongsung.equals("ㄷ") && next.chosung.equals("ㅇ")
-                        && next.jungsung.equals("ㅣ")) {
-                    next.chosung = "ㅈ";
-                    current.jongsung = "";
-                } else if (current.jongsung.equals("ㅌ") && next.chosung.equals("ㅇ")
-                        && next.jungsung.equals("ㅣ")) {
-                    next.chosung = "ㅊ";
-                    current.jongsung = "";
                 }
             }
 
