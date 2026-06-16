@@ -1,173 +1,97 @@
 # LingKo 프로젝트 리서치
 
-작성 기준: 2026-05-27
+확인일: 2026-06-16
 
-## 1. 한 줄 결론
+## 1. 목적
 
-LingKo는 "한국어 문장을 선택하거나 직접 입력하고, 표준 발음과 조음 가이드를 확인한 뒤, 직접 말해 점수와 교정 피드백을 받는 외국인 대상 한국어 발음 학습 앱"이다.
+이 문서는 LingKo의 제품 의도, 현재 코드 구현 상태, MVP 대비 갭, 기술 리스크, 다음 구현 우선순위를 한곳에 정리한다.
 
-현재 저장소는 제품 아이디어를 검증할 수 있는 Flutter 앱 프로토타입과, 발음 변환/평가/가이드 생성 실험 코드가 있는 Spring Boot 백엔드로 나뉘어 있다.
+분석 기준 파일:
 
-가장 중요한 판단은 다음과 같다.
+- `plan.md`
+- `.codex/AGENTS.md`
+- `backend/build.gradle`
+- `backend/src/main/java/com/lingko/lingko/**`
+- `backend/src/test/java/com/lingko/lingko/**`
+- `backend/src/integrationTest/java/com/lingko/lingko/**`
+- `app/pubspec.yaml`
+- `app/lib/**`
+- `app/test/widget_test.dart`
 
-- 앱은 MVP 화면 흐름을 확인할 수 있는 수준까지 왔다.
-- 백엔드는 표준 발음 변환 API만 실제 공개되어 있다.
-- Azure 발음 평가, 조음 이미지/영상 생성, S3 업로드 코드는 있지만 아직 제품 API로 묶이지 않았다.
-- 다음 우선순위는 새 화면을 늘리는 것이 아니라 "앱의 Practice 흐름을 실제 백엔드 API와 연결할 수 있는 얇은 MVP 계약"을 만드는 것이다.
+## 2. 제품 정의
 
-## 2. 현재 저장소 구조
+LingKo는 외국인 학습자가 한국어 문장을 듣고, 표준 발음을 이해하고, 직접 말한 뒤, 점수와 입/혀 모양 가이드를 받아 교정하는 발음 특화 한국어 학습 서비스다.
+
+핵심 흐름은 다음과 같다.
+
+1. 사용자가 추천 문장 또는 직접 입력 문장을 선택한다.
+2. 시스템이 원문을 표준 발음으로 변환한다.
+3. 시스템이 번역, 문장 음성, 글자별 조음 가이드를 제공한다.
+4. 사용자가 문장을 녹음한다.
+5. 시스템이 발음 점수와 취약 발음 피드백을 제공한다.
+6. 사용자가 입/혀 가이드를 보며 반복 연습한다.
+
+MVP는 "작은 범위지만 끝까지 되는 경험"에 집중해야 한다. 현재 코드 기준으로는 UI 프로토타입과 표준 발음 변환 API가 가장 앞서 있으며, 인증, 녹음 업로드, 발음 평가, 학습 기록 저장은 아직 제품 흐름으로 연결되지 않았다.
+
+## 3. 현재 저장소 구조
 
 ```text
 LingKo/
-├── app/                 # Flutter iOS/Android 앱
-├── backend/             # Spring Boot 백엔드
-├── docs/                # 제품/기술 문서
-├── plan.md              # 제품 계획
-└── docs/research.md     # 현재 문서
+├── plan.md
+├── docs/
+│   └── research.md
+├── backend/
+│   ├── build.gradle
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   ├── application.example.yaml
+│   ├── .env.example
+│   └── src/
+│       ├── main/java/com/lingko/lingko/
+│       ├── main/resources/
+│       ├── test/java/com/lingko/lingko/
+│       └── integrationTest/java/com/lingko/lingko/
+└── app/
+    ├── pubspec.yaml
+    ├── lib/
+    └── test/
 ```
 
-현재 브랜치 구조:
+역할별 관점:
 
-- `chore-monorepo-structure`: 백엔드와 앱을 분리한 구조 변경
-- `feature/flutter-mvp-prototype`: Flutter 앱 MVP 프로토타입 추가
+- 백엔드: Spring Boot 기반 API, 표준 발음 변환, 평가/조음/저장 도메인 골격.
+- 앱: Flutter 기반 추천 문장, 직접 입력, 연습, 결과, 프로필 화면 프로토타입.
+- 인프라: MySQL, S3, Azure Speech, Replicate, ffmpeg 사용을 전제로 한 설정과 일부 구현.
 
-현재 미추적 상태로 남아 있는 파일:
+## 4. 백엔드 분석
 
-- `backend/src/test/java/com/lingko/lingko/Syllablemappingloadertest.java`
-- `backend/src/test/java/com/lingko/lingko/Visemeextractiondemotest.java`
+### 4.1 기술 스택
 
-이 두 파일은 기존 구조와 맞지 않는 레거시 테스트로 보이며, 앱 작업 커밋에는 포함하지 않았다.
-
-## 3. 제품 목표 재정의
-
-LingKo의 핵심 경험은 아래 한 흐름으로 정리된다.
-
-```text
-문장 선택 또는 직접 입력
-  -> 표준 발음 변환
-  -> 문장 듣기
-  -> 글자별 발음 가이드 확인
-  -> 사용자 녹음
-  -> 발음 점수 확인
-  -> 취약 글자별 입/혀 가이드 확인
-  -> 다시 연습
-```
-
-중요한 제품 원칙:
-
-- 발음 교정이 중심이다.
-- 문법/단어장/강의는 MVP 핵심이 아니다.
-- 사용자는 음운 규칙 이름보다 "어떻게 입과 혀를 움직여야 하는지"를 원한다.
-- 앱은 짧은 문장, 빠른 녹음, 즉각적인 피드백, 재도전 루프에 집중해야 한다.
-
-## 4. Flutter 앱 분석
-
-### 4.1 현재 구현된 앱 범위
-
-현재 앱은 백엔드와 연결하지 않은 디자인/흐름 검증용 프로토타입이다.
-
-구현된 흐름:
-
-- 홈에서 추천 문장 선택
-- 하단 `Practice` 탭에서 직접 문장 입력
-- 추천 문장을 누르면 Practice 입력창에 문장이 자동 입력
-- Practice 탭으로 직접 들어가면 빈 입력창 표시
-- 문장이 없으면 연습 상세와 녹음 버튼 숨김
-- 문장이 있으면 원문, 표준 발음, 번역, 듣기 버튼 자리, 글자별 가이드 표시
-- `Record and score`를 누르면 더미 결과 화면 표시
-- 결과 화면에서 취약 글자를 누르면 입/혀 가이드 바텀시트 표시
-- 하단 탭은 `Home`, `Practice`, `Profile`만 유지
-- `Result`와 `Course`는 하단 탭에서 제거
-
-관련 파일:
-
-- `app/lib/app/lingko_app.dart`
-- `app/lib/screens/home_screen.dart`
-- `app/lib/screens/practice_screen.dart`
-- `app/lib/screens/result_screen.dart`
-- `app/lib/models/practice_sentence.dart`
-- `app/lib/data/mock_sentences.dart`
-
-### 4.2 앱 구조 평가
-
-현재 앱은 Flutter 초보자가 읽기 좋은 구조로 나뉘어 있다.
-
-```text
-lib/
-├── main.dart             # 앱 시작점
-├── app/                  # 앱 루트, 테마, 하단 탭
-├── data/                 # 더미 데이터
-├── models/               # 화면 데이터 모델
-├── screens/              # 화면 단위 위젯
-└── widgets/              # 재사용 UI 위젯
-```
-
-좋은 점:
-
-- `main.dart`가 `runApp()`만 담당한다.
-- 화면, 모델, 더미 데이터, 재사용 위젯이 분리되어 있다.
-- `PracticeScreen`은 추천 문장과 직접 입력을 모두 처리한다.
-- `LingKoShell`이 탭 상태와 현재 연습 문장을 중앙에서 관리한다.
-- 위젯 테스트가 추천 문장 흐름과 직접 입력 흐름을 검증한다.
-
-아쉬운 점:
-
-- 아직 상태 관리 라이브러리나 API 계층이 없다.
-- 결과 모델이 없고 `ResultScreen`이 더미 점수와 고정 피드백을 사용한다.
-- `Normal`, `Slow`, `Play`, `Repeat`, 알림/더보기 버튼은 아직 실제 동작이 없다.
-- `pubspec.yaml`은 Flutter 기본 주석이 많이 남아 있어 프로젝트 문서성과 정돈감이 약하다.
-- 앱 패키지명이 아직 `com.example.lingko_app`이다.
-
-### 4.3 앱에서 다음에 필요한 구조
-
-백엔드 연동 전 최소한 아래 구조가 필요하다.
-
-```text
-lib/
-├── api/
-│   ├── api_client.dart
-│   └── pronunciation_api.dart
-├── models/
-│   ├── practice_sentence.dart
-│   └── practice_result.dart
-└── services/
-    └── practice_service.dart
-```
-
-초기에는 Riverpod/Bloc 없이 `FutureBuilder` 또는 단순 `StatefulWidget`으로도 충분하다. 다만 API가 3개 이상 붙고 로그인/토큰이 들어가면 상태 관리 도입을 검토해야 한다.
-
-## 5. 백엔드 분석
-
-### 5.1 기술 스택
-
-`backend/build.gradle` 기준 주요 구성:
+`backend/build.gradle` 기준:
 
 - Java 17
 - Spring Boot 3.4.1
-- Spring MVC
+- Spring Web
 - Spring Validation
 - Spring Data JPA
-- MySQL Connector
-- WebFlux `WebClient`
+- Spring WebFlux
+- MySQL Connector/J
+- Lombok
 - Azure Cognitive Services Speech SDK
-- AWS SDK v2 S3
-- H2 test
+- AWS SDK S3
+- H2 테스트 의존성
+- 별도 `integrationTest` source set
 
-HTTP 서버는 MVC 기반이고, 외부 API 호출은 `WebClient`를 사용한다. 하지만 실제 구현은 `.block()`과 폴링을 쓰는 동기식 흐름에 가깝다.
+### 4.2 현재 공개 API
 
-### 5.2 현재 공개 API
-
-현재 실제로 노출된 API는 하나다.
+현재 실제로 노출된 API는 표준 발음 변환 API 1개다.
 
 ```http
 POST /api/pronunciation/convert
-```
+Content-Type: application/json
 
-요청:
-
-```json
 {
-  "text": "맛있겠다."
+  "text": "밥을 먹었어요."
 }
 ```
 
@@ -175,492 +99,659 @@ POST /api/pronunciation/convert
 
 ```json
 {
-  "originalText": "맛있겠다.",
-  "standardPronunciation": "마싯게따."
+  "originalText": "밥을 먹었어요.",
+  "standardPronunciation": "바블 머거써요."
 }
 ```
 
-흐름:
+구현 근거:
 
-```text
-EvaluationController
-  -> EvaluationService.convertToStandardPronunciation()
-      -> KoreanPhonemeUtil.toPronunciation()
-```
-
-현재 제품 플로우 중 백엔드가 실제로 제공하는 것은 "문장 -> 표준 발음"뿐이다.
-
-### 5.3 이미 있는 핵심 엔진
-
-#### 표준 발음 변환
-
-핵심 클래스:
-
+- `EvaluationController`
+- `StandardPronunciationRequest`
+- `StandardPronunciationResponse`
+- `EvaluationService`
 - `KoreanPhonemeUtil`
 
-역할:
+제약:
 
-- 한글 음절 분해
-- 발음 규칙 적용
-- 음절 재조합
+- `text`는 blank 금지.
+- `text`는 1자 이상 30자 이하.
+- 현재 응답은 원문과 표준 발음만 포함한다.
+- 번역, 음성 URL, 글자별 가이드, 발음 점수는 포함하지 않는다.
 
-반영된 규칙:
+### 4.3 표준 발음 변환
+
+`KoreanPhonemeUtil`은 한글 음절을 초성/중성/종성으로 분해한 뒤 다음 규칙을 적용한다.
 
 - 연음화
 - 비음화
-- 유음화
 - 경음화
 - 구개음화
+- 유음화
 - 격음화
-- 종성 7음 규칙 일부
+- 종성 7음 규칙
 
-이 프로젝트에서 가장 바로 제품화할 수 있는 강한 축이다.
+테스트 근거:
 
-#### 자모/음절 가이드 매핑
+- `KoreanPhonemeUtilTest`
+- `EvaluationServiceTest`
 
-핵심 클래스:
+현재 강점:
 
-- `SyllableMappingUtil`
+- 제품의 핵심인 "글자 그대로가 아닌 실제 발음 표기"의 첫 기능이 구현되어 있다.
+- 대표 음운 규칙 단위 테스트가 존재한다.
+- 공백과 비한글 문자 유지 테스트가 존재한다.
 
-역할:
+주의점:
 
-- `syllable_mapping.json` 로딩
-- 자모별 입/혀 이미지 매핑
-- S3 가이드 URL 생성
-- 프레임 쌍 생성
+- 표준 발음 규칙은 예외가 많으므로, 실제 학습 콘텐츠 품질을 위해 국립국어원식 표준 발음과 비교하는 회귀 테스트 세트가 필요하다.
+- 현재 API는 문장 단위이지만 내부 피드백은 글자/음소 단위가 필요하므로 변환 결과와 음절 매핑을 함께 내려주는 계약이 필요하다.
 
-제품적으로는 "사용자가 어떤 문장을 입력해도 자모 단위 자산을 조합해 가이드를 만들 수 있다"는 방향과 맞다.
+### 4.4 도메인 모델
 
-#### 발음 평가
-
-핵심 클래스:
-
-- `SpeechEvaluator`
-- `AzureSpeechEvaluator`
-- `AssessmentResult`
-
-역할:
-
-- 녹음 파일과 기준 문장 입력
-- Azure Pronunciation Assessment 호출
-- 정확도, 유창성, 완성도, 종합 점수 반환
-
-현재 문제:
-
-- API에 연결되어 있지 않다.
-- 앱에서 녹음 파일을 보내는 엔드포인트가 없다.
-- 결과 저장 모델과 연결되어 있지 않다.
-
-#### 조음 영상 생성
-
-핵심 클래스:
-
-- `VideoGenerator`
-- `FrameInterpolationVideoGenerator`
-- `ReplicateApiClient`
-- `VideoMerger`
-- `S3Uploader`
-
-흐름:
-
-```text
-자모별 이미지 URL
-  -> 프레임 쌍 생성
-  -> Replicate frame interpolation
-  -> FFmpeg 병합
-  -> S3 업로드
-```
-
-이 기능은 흥미롭지만 MVP 1순위는 아니다. 이유는 비용, 응답 시간, 실패 가능성이 높기 때문이다. MVP에서는 먼저 정적 이미지 또는 사전 생성된 가이드 URL을 쓰는 것이 현실적이다.
-
-## 6. 데이터 모델 분석
-
-현재 백엔드에는 다음 엔티티가 있다.
+현재 확인된 주요 엔티티:
 
 - `User`
+  - `socialId`
+  - `socialType`
+  - `email`
+  - `name`
+  - `profileImageUrl`
+  - `createdAt`
+  - `lastLoginAt`
 - `EvaluationLog`
+  - `user`
+  - `originalWord`
+  - `score`
+  - `createdAt`
+  - `syllableList`
 - `EvaluationSyllable`
+  - `evaluationLog`
+  - `syllable`
+  - `score`
 - `Syllable`
+  - `syllableChar`
+  - `mouthUrl`
+  - `tongueUrl`
+
+현재 repository:
+
+- `UserRepository.findBySocialIdAndSocialType`
+- `EvaluationLogRepository.findByUser_UserIdxOrderByCreatedAtDesc`
+- `EvaluationSyllableRepository`
+- `SyllableRepository`
+
+해석:
 
-현재 엔티티의 의도:
+- 소셜 로그인 기반 사용자와 평가 기록 저장의 기본 모델은 준비되어 있다.
+- 다만 인증 API, JWT 발급/검증 필터, 현재 사용자 조회, 평가 저장 API는 아직 공개 API로 연결되어 있지 않다.
+- `EvaluationLog.originalWord`는 길이 50으로 제한되어 있어 MVP의 자유 입력 정책과 맞춰야 한다.
+- `EvaluationLog.addSyllable`은 현재 리스트에 추가하지 않고 `setEvaluationLog`만 호출하는 형태라 추후 저장 흐름 구현 전 점검이 필요하다.
+
+### 4.5 외부 연동 구성
 
-- 사용자 계정
-- 발음 평가 로그
-- 음절별 평가 결과
-- 음절 가이드 URL
+설정 파일과 구현체 기준으로 다음 외부 연동이 전제되어 있다.
+
+- Azure Speech
+  - `AzureSpeechEvaluator`
+  - `SpeechEvaluator`
+  - `AssessmentResult`
+  - 발음 평가 점수: accuracy, fluency, completeness, pronunciation, recognizedText
+- Replicate
+  - `ReplicateApiClient`
+  - frame interpolation prediction 생성/폴링
+- ffmpeg
+  - `VideoMerger`
+  - 여러 영상 세그먼트 병합
+- S3
+  - `S3Uploader`
+  - 생성 이미지/영상 업로드
+- MySQL
+  - `docker-compose.yml`
+  - JPA 기반 영속화
+
+현재 상태:
+
+- 외부 연동 컴포넌트는 존재하지만 사용자 API 흐름과 연결되지 않은 상태다.
+- Azure 평가, Replicate 영상 생성, S3 업로드는 통합 테스트 영역에 분리되어 있다.
+- 운영하려면 API 키, region, bucket, ffmpeg, MySQL 환경 설정이 모두 필요하다.
+
+보안상 주의:
 
-하지만 제품 관점에서는 `evaluation`보다 `practice`가 더 적절하다. 사용자는 평가를 받는 것이 아니라 연습 세션을 수행한다.
-
-권장 방향:
-
-- `EvaluationLog` -> `PracticeSession`
-- `EvaluationSyllable` -> `PracticeCharacterResult`
-- `Syllable` -> `PronunciationGuideAsset`
-
-이미 `docs/database.md`에 더 구체적인 설계가 정리되어 있다. 다음 구현 때는 해당 문서를 기준으로 엔티티를 정리하는 것이 좋다.
-
-## 7. 주요 리스크
-
-### 7.1 보안 정보 관리
-
-가장 먼저 확인해야 할 리스크다.
-
-기존 분석 기준으로 `backend/src/main/resources/application.yaml`에는 실제 키로 보이는 값이 포함되어 있었다.
-
-위험한 값:
-
-- OpenAI API key
-- Azure key
-- Google OAuth secret
-- AWS access key
-- DB password
-
-해야 할 일:
-
-- 실제 키가 커밋된 적이 있다면 폐기/재발급
-- `application.yaml`은 추적 제외
-- 저장소에는 `application.example.yaml`만 유지
-- 로컬 실행은 `.env` 또는 개인 설정 파일 사용
-
-### 7.2 설정 구조 불일치
-
-`application.example.yaml`, 설정 클래스, 실제 런타임 설정의 키 구조가 완전히 통일되어 있지 않다.
-
-대표 예:
-
-- `DBSettings`는 `username`을 기대하지만 예제는 `user`를 쓴다.
-- AWS 설정은 nested 구조를 기대한다.
-- Replicate 설정은 `replicate.*` 구조가 필요하다.
-- Compose는 `DB_*` 환경 변수를 주입하지만 Spring DataSource와 직접 연결되는지 명확하지 않다.
-
-이 문제를 해결하지 않으면 배포나 로컬 실행 시 환경마다 깨질 가능성이 높다.
-
-### 7.3 테스트 신뢰도
-
-현재 백엔드 테스트에는 레거시 파일이 섞여 있다.
-
-문제 파일:
-
-- `Syllablemappingloadertest.java`
-- `Visemeextractiondemotest.java`
-
-이 파일들은 현재 존재하지 않는 클래스/패키지를 참조하는 것으로 보인다.
-
-반면 Flutter 쪽은 다음 검증이 통과했다.
-
-- `dart format lib test`
-- `flutter analyze`
-- `flutter test`
-
-즉 현재 신뢰 가능한 자동 검증은 앱 쪽이 더 낫고, 백엔드는 테스트 정리가 선행되어야 한다.
-
-### 7.4 앱과 백엔드 API 간극
-
-앱은 이미 아래 화면 상태를 갖고 있다.
-
-- 추천 문장
-- 직접 입력 문장
-- 표준 발음 표시
-- 발음 가이드 칩
-- 결과 화면
-- 취약 글자 피드백
-
-하지만 백엔드는 아직 다음 API를 제공하지 않는다.
-
-- 추천 문장 조회
-- 문장 상세/번역 조회
-- 직접 입력 문장의 표준 발음 변환과 가이드 반환
-- 녹음 파일 업로드
-- 발음 평가
-- 평가 결과 저장
-- 결과 조회
-
-따라서 다음 단계는 앱 화면을 더 꾸미는 것이 아니라, 앱이 사용할 최소 API 계약을 먼저 확정하는 것이다.
-
-### 7.5 장시간 작업 처리
-
-비디오 생성은 HTTP 요청 안에서 동기 처리하기에 부적합하다.
-
-문제 요소:
-
-- Replicate prediction 생성
-- 폴링
-- 비디오 다운로드
-- FFmpeg 병합
-- S3 업로드
-
-MVP에서는 이 파이프라인을 실시간 요청에 넣지 않는 것이 좋다.
-
-권장:
-
-- MVP: 사전 생성된 정적 이미지/URL 사용
-- 이후: 비동기 job으로 생성
-- 결과 조회: job status API 또는 캐시된 guide asset 조회
-
-## 8. 현재 가장 강한 자산
-
-프로젝트에서 버리지 말고 살려야 할 부분:
-
-- `KoreanPhonemeUtil`: 표준 발음 변환 엔진
-- `SyllableMappingUtil`: 자모 가이드 자산 매핑
-- `AzureSpeechEvaluator`: 발음 평가 연동 가능성
-- `FrameInterpolationVideoGenerator`: 장기적으로 고급 조음 영상 생성에 활용 가능
-- Flutter 앱의 `Practice` 중심 흐름: MVP 핵심 UX와 잘 맞음
-
-## 9. MVP 재정의
-
-현재 상태를 고려하면 MVP는 너무 많은 것을 포함하면 안 된다.
-
-### MVP 1차 목표
-
-앱에서 한 문장을 선택하거나 직접 입력하고, 백엔드로부터 표준 발음을 받아 표시한 뒤, 더미가 아닌 실제 녹음 평가 결과를 받는 것.
-
-### MVP 1차에 포함
-
-- 추천 문장 목록
-- 직접 문장 입력
-- 표준 발음 변환 API 연결
-- 문장 번역은 초기에는 추천 문장에 한정
-- 녹음 파일 업로드
-- Azure 발음 평가
-- 결과 화면에 실제 점수 표시
-- 취약 글자/음절은 단순 규칙 또는 Azure 결과 기반으로 제한적 표시
-- 학습 결과는 로그인 없이도 로컬 또는 임시 세션 기준으로 먼저 검증 가능
-
-### MVP 1차에서 뒤로 미룰 것
-
-- Google/Apple OAuth
-- 광고 기반 연습권
-- 코스 기능
-- 개인화 추천
-- 장시간 동영상 자동 생성
-- 다국어 전체 확장
-- 결제
-
-이전 계획에는 OAuth, 광고, 학습 기록까지 MVP 필수로 들어가 있었지만, 현재 개발 단계에서는 범위가 너무 넓다. 먼저 "발음 연습 1회가 실제로 끝까지 되는가"를 증명하는 것이 우선이다.
-
-## 10. 내가 해야 할 우선순위
-
-### P0. 보안/설정 정리
-
-목표: 프로젝트를 더 진행해도 위험하지 않은 상태로 만든다.
-
-해야 할 일:
-
-- 실제 비밀값이 커밋되어 있는지 확인
-- 노출된 키 폐기/재발급
-- `backend/src/main/resources/application.yaml` 추적 여부 확인
-- `.gitignore`에 로컬 설정 파일 제외 규칙 점검
-- `application.example.yaml`을 기준 설정으로 삼기
-- `@ConfigurationProperties`와 YAML 키 이름 통일
-
-완료 기준:
-
-- 저장소에 실제 키가 없다.
-- 새 개발자가 `application.example.yaml`을 보고 로컬 설정을 만들 수 있다.
-- 백엔드가 로컬에서 동일한 설정 방식으로 뜬다.
-
-### P1. 백엔드 테스트 복구
-
-목표: 백엔드 변경을 안전하게 할 수 있는 최소 회귀 방어선을 만든다.
-
-해야 할 일:
-
-- 레거시 테스트 2개 삭제 또는 현재 클래스 기준으로 재작성
-- 외부 API 테스트와 단위 테스트 분리
-- `KoreanPhonemeUtil`, `SyllableMappingUtil`, `EvaluationService` 테스트 통과 확인
-- 네트워크/API 키가 필요한 테스트는 별도 profile/tag로 분리
-
-완료 기준:
-
-- `./gradlew test`가 로컬에서 통과한다.
-- 외부 API 키 없이도 단위 테스트는 실행된다.
-
-### P2. 앱-백엔드 최소 API 계약 정의
-
-목표: Flutter 앱이 더미 데이터를 버리고 실제 백엔드와 통신할 수 있게 한다.
-
-먼저 필요한 API:
+- `application.example.yaml`과 `.env.example`은 환경변수 기반이며 키 값은 비어 있다.
+- 실제 `application.yaml`은 존재하지만 민감정보 포함 가능성이 있어 문서에는 값을 기록하지 않는다.
+- `ReplicateApiClient`는 API key 앞 5글자를 로그로 남기는 코드가 있어 운영 전 제거 또는 마스킹 정책 강화가 필요하다.
+
+## 5. 앱 분석
+
+### 5.1 기술 스택
+
+`app/pubspec.yaml` 기준:
+
+- Flutter SDK
+- Dart SDK `^3.7.0`
+- Material UI
+- `cupertino_icons`
+- `flutter_lints`
+- 별도 HTTP, OAuth, audio, recorder, state management 패키지는 아직 없다.
+
+현재 앱은 외부 네트워크 연동 없이 Flutter 기본 위젯과 `setState` 중심으로 구성된 프로토타입이다.
+
+### 5.2 화면 구조
+
+`LingKoShell` 기준 하단 탭 3개:
+
+- Home
+- Practice
+- Profile
+
+주요 화면:
+
+- `HomeScreen`
+  - LingKo 타이틀
+  - 오늘 남은 무료 연습 횟수 문구
+  - 진행 패널
+  - 추천 문장 목록
+- `PracticeScreen`
+  - 직접 문장 입력
+  - 선택 문장의 원문/표준 발음/번역 표시
+  - 일반/느리게 듣기 버튼
+  - 글자별 pronunciation guide chip
+  - 녹음 및 점수 버튼
+- `ResultScreen`
+  - 더미 점수
+  - 취약 발음 목록
+  - 다시 시도 버튼
+- `ProfileScreen`
+  - 표시 언어
+  - 모국어
+  - 목표 레벨
+
+### 5.3 데이터와 상태관리
+
+현재 데이터:
+
+- `mock_sentences.dart`에 추천 문장 3개가 하드코딩되어 있다.
+- `PracticeSentence`와 `CharacterResult`가 앱 내부 임시 모델 역할을 한다.
+- 직접 입력 문장은 `PracticeSentence.custom(text)`로 임시 객체를 만든다.
+
+현재 상태관리:
+
+- `LingKoShell`의 `selectedTab`, `selectedSentence`, `hasResult`.
+- `PracticeScreen`의 `TextEditingController`, `FocusNode`, `canSubmitCustomSentence`.
+
+현재 UX 구현 수준:
+
+- 추천 문장 선택 후 Practice 탭 이동 가능.
+- 직접 입력 문장 사용 가능.
+- 녹음 버튼을 누르면 실제 녹음 없이 Result 화면으로 전환.
+- 글자별 가이드는 `CustomPainter` 임시 그림으로 표현.
+
+아직 없는 것:
+
+- 로그인/회원가입 화면
+- Google OAuth / Apple Sign in
+- API client
+- 로딩/성공/실패 상태
+- 실제 녹음 권한 요청
+- 음성 녹음/파일 업로드
+- 오디오 재생
+- 실제 발음 평가 결과 매핑
+- 학습 기록 조회
+- 광고 시청 후 추가 연습권
+- 다국어 리소스 관리
+
+### 5.4 앱 테스트
+
+`app/test/widget_test.dart`는 다음 플로우를 검증한다.
+
+- 앱 실행 후 추천 문장 노출.
+- 추천 문장 선택 후 Practice 화면 이동.
+- Record and score 버튼 후 Result 화면 이동.
+- Practice 탭에서 직접 문장 입력.
+
+테스트는 현재 프로토타입 UI 흐름에 맞춰져 있으며, API/녹음/인증 검증은 포함하지 않는다.
+
+## 6. MVP 대비 갭
+
+### 6.1 구현됨
+
+- Flutter 앱 기본 화면 구조.
+- 추천 문장 기반 연습 UI.
+- 직접 문장 입력 UI.
+- 결과 화면 UI.
+- 프로필 설정 표시 UI.
+- 백엔드 표준 발음 변환 API.
+- 한국어 표준 발음 변환 유틸리티와 단위 테스트.
+- 사용자/평가 로그/음절/가이드 URL 관련 JPA 모델 초안.
+- Azure Speech, Replicate, S3, ffmpeg 연동 컴포넌트 초안.
+
+### 6.2 부분 구현 또는 내부 준비
+
+- 소셜 로그인 도메인 모델은 있으나 OAuth API와 앱 로그인 화면은 없다.
+- 평가 결과 저장 엔티티와 repository는 있으나 저장 API는 없다.
+- Azure 발음 평가 구현체는 있으나 음성 업로드 API와 연결되지 않았다.
+- 조음 가이드 URL 추출과 영상 생성 인프라는 있으나 사용자 화면/API와 연결되지 않았다.
+- 무료 연습 횟수는 UI 문구만 있고 서버 정책/카운터가 없다.
+
+### 6.3 미구현
+
+- Google OAuth 로그인.
+- Apple Sign in.
+- JWT 발급/갱신/검증.
+- 현재 사용자 프로필 API.
+- 추천 문장 API.
+- 자유 입력 문장 학습 준비 API.
+- 문장 번역.
+- TTS 또는 문장 음성 제공.
+- 앱 오디오 재생.
+- 앱 녹음.
+- 음성 파일 업로드.
+- 발음 평가 실행 API.
+- 글자별 점수/피드백 생성.
+- 학습 기록 저장/조회.
+- 광고 시청 후 추가 연습권.
+- 다국어 UI/피드백 리소스.
+- 운영용 에러 응답 표준화.
+
+## 7. API 계약 후보
+
+아래 계약은 현재 코드와 MVP 목표를 연결하기 위한 후보이며, 구현 전 아키텍트 확정이 필요하다.
+
+### 7.1 인증
 
 ```http
-GET /api/sentences/recommended
-POST /api/pronunciation/prepare
-POST /api/pronunciation/evaluate
+POST /api/auth/oauth/login
 ```
 
-상세 계약 초안은 `docs/api.md`를 기준으로 한다.
-
-권장 응답 모델:
+요청 후보:
 
 ```json
 {
-  "sentenceId": 1,
-  "originalText": "맛있겠다.",
-  "standardPronunciation": "마싯게따.",
-  "translation": "It looks delicious.",
-  "learningPoint": "Final consonant linking and tense sound",
-  "characters": [
+  "provider": "GOOGLE",
+  "idToken": "provider-id-token",
+  "displayLanguage": "en",
+  "nativeLanguage": "en"
+}
+```
+
+응답 후보:
+
+```json
+{
+  "accessToken": "jwt",
+  "refreshToken": "jwt",
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "name": "User",
+    "profileImageUrl": "https://example.com/image.png",
+    "displayLanguage": "en",
+    "nativeLanguage": "en"
+  }
+}
+```
+
+### 7.2 추천 문장 목록
+
+```http
+GET /api/practice/sentences?level=BEGINNER_1&limit=20
+```
+
+응답 후보:
+
+```json
+{
+  "items": [
     {
-      "text": "마",
-      "guideType": "MOUTH",
-      "mouthGuideUrl": "...",
-      "tongueGuideUrl": "..."
+      "id": 1,
+      "text": "맛있겠다.",
+      "standardPronunciation": "마싯게따.",
+      "translation": "It looks delicious.",
+      "level": "BEGINNER_2",
+      "category": "FOOD",
+      "learningPoint": "Final consonant linking and tense sound"
     }
   ]
 }
 ```
 
-완료 기준:
+### 7.3 문장 학습 준비
 
-- 앱의 `PracticeSentence` 모델과 백엔드 응답 DTO가 거의 1:1로 대응된다.
-- 직접 입력 문장도 `prepare` API로 표준 발음과 기본 가이드를 받을 수 있다.
+현재 `/api/pronunciation/convert`는 유지하되 MVP에는 더 풍부한 응답이 필요하다.
 
-### P3. 표준 발음 API를 앱에 연결
-
-목표: 직접 입력 문장이 더미 `Custom sentence`가 아니라 실제 표준 발음으로 바뀌게 한다.
-
-해야 할 일:
-
-- Flutter에 HTTP client 추가
-- Android emulator에서 백엔드 접근 주소 정리
-- `PracticeScreen`에서 직접 입력 제출 시 API 호출
-- 로딩/에러 상태 추가
-- 추천 문장은 더미에서 시작하더라도 표준 발음은 서버 응답으로 교체
-
-완료 기준:
-
-- 앱에서 `맛있겠다.` 입력
-- 서버가 `마싯게따.` 반환
-- 앱 Practice 화면에 실제 변환 결과 표시
-
-### P4. 발음 평가 API 1차 구현
-
-목표: 녹음 후 실제 점수를 받는다.
-
-해야 할 일:
-
-- 앱 녹음 패키지 검토 및 추가
-- 마이크 권한 설정
-- 백엔드 multipart 업로드 API 추가
-- `AzureSpeechEvaluator`를 API에서 호출
-- `AssessmentResult`를 앱 결과 모델로 변환
-
-완료 기준:
-
-- 앱에서 녹음
-- 백엔드로 파일 업로드
-- Azure 평가 점수 반환
-- Result 화면에 실제 점수 표시
-
-### P5. 추천 문장 콘텐츠 API
-
-목표: 홈 추천 문장을 서버 콘텐츠로 바꾼다.
-
-해야 할 일:
-
-- 추천 문장 seed 20개 작성
-- `sentence`/`sentence_translation` 최소 테이블 또는 인메모리 seed 선택
-- `GET /api/sentences/recommended` 구현
-- Flutter `mockSentences` 제거 또는 fallback으로만 유지
-
-완료 기준:
-
-- 홈 추천 문장이 서버에서 내려온다.
-- 앱의 추천 카드 클릭 흐름은 현재 UX 그대로 유지된다.
-
-### P6. 결과 모델과 저장
-
-목표: 더미 결과 화면을 실제 결과 기반으로 바꾼다.
-
-해야 할 일:
-
-- Flutter `PracticeResult` 모델 추가
-- `ResultScreen`이 `PracticeSentence`가 아니라 `PracticeResult`를 받도록 변경
-- 백엔드 `PracticeSession` 저장 API 설계
-- 점수 breakdown을 실제 값으로 표시
-- 취약 글자 기준을 명확히 정의
-
-완료 기준:
-
-- Result 화면의 총점, accuracy, fluency, completeness가 실제 API 값이다.
-- `Good` 같은 고정 문구가 사라지고 점수 기반 메시지가 나온다.
-
-### P7. 조음 가이드 현실화
-
-목표: 바텀시트의 임시 그림을 실제 가이드 자산으로 교체한다.
-
-해야 할 일:
-
-- MVP에서는 정적 이미지 URL 우선
-- S3 guide asset 경로 정책 확정
-- `SyllableMappingUtil` 반환 계약 정리
-- 앱에서 이미지 로딩/에러 상태 처리
-
-완료 기준:
-
-- 취약 글자를 누르면 실제 입/혀 가이드 이미지가 뜬다.
-- 영상 생성은 아직 하지 않아도 된다.
-
-### P8. 로그인/기록/광고
-
-목표: 제품 운영 기능을 붙인다.
-
-순서:
-
-1. Google/Apple OAuth
-2. JWT refresh token
-3. PracticeSession 저장
-4. 프로필/학습 기록
-5. 일일 무료 횟수
-6. 광고 보상
-
-이 단계는 발음 연습 1회가 실제로 동작한 뒤에 진행하는 것이 맞다.
-
-## 11. 권장 작업 순서 요약
-
-가장 현실적인 순서는 다음이다. 우선순위는 [priorities.md](priorities.md)에, 실제 커밋 단위의 더 작은 작업 목록은 [task-breakdown.md](task-breakdown.md)에 따로 정리한다.
-
-```text
-1. 보안/설정 정리
-2. 백엔드 테스트 복구
-3. 앱-백엔드 DTO/API 계약 정의
-4. 표준 발음 API 앱 연결
-5. 녹음/발음 평가 API 연결
-6. 추천 문장 서버화
-7. Result 모델 정리와 결과 저장
-8. 조음 가이드 자산 연결
-9. 로그인/기록/광고
-10. 코스 기능 재도입
+```http
+POST /api/practice/prepare
 ```
 
-코스 기능은 제품적으로 필요하지만 지금 당장은 후순위다. 현재 앱에서 코스를 제거한 판단은 맞다. 먼저 자유 입력과 추천 문장 기반의 짧은 발음 연습이 실제로 끝까지 동작해야 한다.
+요청 후보:
 
-## 12. 이번 주에 할 만한 구체 작업
-
-가장 추천하는 단기 스프린트는 다음 5개다.
-
-1. 백엔드 비밀값과 설정 파일 정리
-2. 백엔드 테스트가 통과하도록 레거시 테스트 정리
-3. `POST /api/pronunciation/prepare` 설계 및 구현
-4. Flutter에서 직접 입력 문장을 `prepare` API에 연결
-5. 앱 Result 화면용 `PracticeResult` 모델 설계
-
-이 5개가 끝나면 LingKo는 "예쁜 목업"에서 "실제 발음 엔진과 연결된 MVP"로 넘어간다.
-
-## 13. 최종 판단
-
-현재 프로젝트는 방향이 좋다. 특히 "직접 입력"과 "추천 문장"을 모두 지원하는 Practice 중심 UX는 LingKo의 제품 핵심과 맞다.
-
-다만 지금부터는 기능을 넓히기보다 깊이를 만들어야 한다.
-
-지금 필요한 것은 코스, 광고, 로그인, 개인화가 아니라 아래 한 줄이다.
-
-```text
-사용자가 문장을 입력한다
-  -> 서버가 표준 발음을 만든다
-      -> 사용자가 녹음한다
-          -> 서버가 실제 점수를 준다
-              -> 앱이 그 결과로 다시 연습하게 만든다
+```json
+{
+  "text": "맛있겠다.",
+  "displayLanguage": "en"
+}
 ```
 
-이 흐름이 실제로 동작하면 나머지 기능은 그 위에 순서대로 얹을 수 있다.
+응답 후보:
+
+```json
+{
+  "originalText": "맛있겠다.",
+  "standardPronunciation": "마싯게따.",
+  "translation": "It looks delicious.",
+  "audioUrl": "https://...",
+  "syllables": [
+    {
+      "text": "마",
+      "mouthGuideUrl": "https://...",
+      "tongueGuideUrl": "https://...",
+      "learningPoint": "Stable vowel shape"
+    }
+  ]
+}
+```
+
+### 7.4 발음 평가
+
+```http
+POST /api/evaluations
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+요청 후보:
+
+- `referenceText`: 원문 또는 표준 발음 기준 문장.
+- `audio`: 사용자 녹음 파일.
+- `practiceSource`: `RECOMMENDED` 또는 `CUSTOM`.
+- `sentenceId`: 추천 문장인 경우 optional.
+
+응답 후보:
+
+```json
+{
+  "evaluationId": 100,
+  "originalText": "맛있겠다.",
+  "standardPronunciation": "마싯게따.",
+  "recognizedText": "마싯게따",
+  "score": 82,
+  "scores": {
+    "accuracy": 80.4,
+    "fluency": 84.0,
+    "completeness": 90.0,
+    "pronunciation": 82.0
+  },
+  "syllables": [
+    {
+      "text": "싯",
+      "score": 68,
+      "feedback": "Keep the tongue closer for the sibilant sound.",
+      "mouthGuideUrl": "https://...",
+      "tongueGuideUrl": "https://..."
+    }
+  ],
+  "remainingFreePractices": 4
+}
+```
+
+### 7.5 학습 기록
+
+```http
+GET /api/evaluations/me?page=0&size=20
+```
+
+응답 후보:
+
+```json
+{
+  "items": [
+    {
+      "evaluationId": 100,
+      "originalText": "맛있겠다.",
+      "score": 82,
+      "createdAt": "2026-06-16T12:00:00"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "hasNext": false
+}
+```
+
+## 8. 데이터 모델 보완 후보
+
+현재 모델에 추가 검토가 필요한 필드:
+
+- `users`
+  - `display_language`
+  - `native_language`
+  - `target_level`
+  - `refresh_token_hash` 또는 별도 token/session 테이블
+- `practice_sentences`
+  - 추천 문장 원문
+  - 표준 발음
+  - 번역
+  - 레벨
+  - 카테고리
+  - 학습 포인트
+  - 활성 여부
+- `evaluation_log`
+  - `standard_pronunciation`
+  - `recognized_text`
+  - `audio_url`
+  - `accuracy_score`
+  - `fluency_score`
+  - `completeness_score`
+  - `pronunciation_score`
+  - `practice_source`
+  - `sentence_id`
+- `evaluation_syllable`
+  - `syllable_text`
+  - `feedback`
+  - `mouth_guide_url`
+  - `tongue_guide_url`
+  - `position`
+- `practice_quota`
+  - 사용자별 일일 무료 횟수
+  - 광고 보상 횟수
+  - reset 기준일
+
+## 9. 우선순위 제안
+
+### 9.1 1단계: 계약 정리
+
+목표: 앱과 백엔드가 함께 볼 API 계약을 먼저 고정한다.
+
+작업:
+
+- 표준 발음 변환 API 유지 여부 결정.
+- `practice/prepare`와 `evaluations` API 응답 모델 확정.
+- 공통 에러 응답 형식 정의.
+- 인증 필요 API와 공개 API 구분.
+
+완료 기준:
+
+- 앱 모델과 백엔드 DTO가 같은 필드명을 사용한다.
+- 실패 응답과 로딩/재시도 UX가 정의된다.
+
+### 9.2 2단계: 표준 발음 기반 학습 준비 API
+
+목표: 직접 입력 문장 하나에 대해 백엔드 결과를 앱에 표시한다.
+
+작업:
+
+- 현재 `/api/pronunciation/convert`를 앱에서 호출하거나, MVP용 `/api/practice/prepare`를 만든다.
+- 앱에 API client를 추가한다.
+- Practice 화면에 loading/error/success 상태를 추가한다.
+- mock sentence와 API sentence 모델을 분리한다.
+
+완료 기준:
+
+- 사용자가 직접 입력한 문장에 대해 서버 표준 발음이 앱 화면에 표시된다.
+
+### 9.3 3단계: 녹음 없는 평가 저장 또는 녹음 평가 중 택일
+
+MVP의 핵심은 실제 발음 평가지만, 구현 위험이 높다. 다음 둘 중 하나를 선택해야 한다.
+
+- 빠른 데모: 표준 발음 변환과 더미 점수 저장으로 기록 흐름 완성.
+- 실제 MVP: 앱 녹음, multipart 업로드, Azure Speech 평가, 결과 저장까지 연결.
+
+권장:
+
+- 제품 검증용이면 빠른 데모 흐름을 먼저 닫는다.
+- 기술 검증용이면 Azure Speech 평가 API를 먼저 수직 구현한다.
+
+### 9.4 4단계: 인증과 기록
+
+목표: 사용자별 학습 기록을 누적한다.
+
+작업:
+
+- Google OAuth 우선 구현.
+- Apple Sign in은 iOS 배포/앱 식별자 준비가 필요하므로 후속.
+- JWT 발급/검증.
+- 평가 로그 저장/조회.
+- 앱 secure storage 도입.
+
+### 9.5 5단계: 조음 가이드 품질화
+
+목표: 글자별 입/혀 가이드를 실제 학습 가치가 있는 콘텐츠로 만든다.
+
+작업:
+
+- 현재 `GuidePainter` 임시 그림을 이미지/영상 URL 기반 위젯으로 교체.
+- `syllable_mapping.json`의 asset coverage 점검.
+- S3 URL 하드코딩 정책 정리.
+- 영상 생성이 실시간인지 사전 생성인지 결정.
+
+권장:
+
+- MVP에서는 실시간 영상 생성보다 사전 생성된 가이드 asset을 쓰는 편이 안정적이다.
+- Replicate frame interpolation은 운영 비용과 지연 시간이 크므로, 관리자/배치 생성 도구로 분리하는 편이 좋다.
+
+## 10. 주요 리스크
+
+### 10.1 제품 리스크
+
+- 발음 평가 점수가 학습자가 납득할 만큼 정확하지 않으면 핵심 가치가 약해진다.
+- 글자별 피드백이 실제 음성 평가 결과와 정렬되지 않으면 "좋아 보이는 UI"에 그칠 수 있다.
+- 다국어 설명과 번역 품질은 MVP 범위를 쉽게 초과할 수 있다.
+
+### 10.2 백엔드 리스크
+
+- Azure Speech 평가 결과를 한국어 글자별 피드백으로 매핑하는 로직이 아직 없다.
+- 외부 연동이 많아 테스트와 운영 안정성이 어렵다.
+- Replicate polling과 ffmpeg 병합은 응답 시간이 길 수 있어 사용자 요청-응답 API에 직접 묶기 어렵다.
+- S3/Replicate/Azure key가 필요한 통합 테스트는 CI에서 별도 프로파일로 분리해야 한다.
+- API key 일부를 로그로 남기는 코드는 운영 전 제거해야 한다.
+
+### 10.3 앱 리스크
+
+- 현재 앱에는 API client, 녹음, 오디오 재생, 인증, secure storage가 없다.
+- `setState`만으로 MVP 초반은 가능하지만 인증/평가/기록이 붙으면 상태 범위가 커진다.
+- 녹음 권한, iOS/Android permission, 파일 포맷, 업로드 실패 UX를 별도로 설계해야 한다.
+- 광고 보상형 연습권은 플랫폼 SDK와 정책 검토가 필요하다.
+
+### 10.4 운영 리스크
+
+- MySQL, S3, Azure, Replicate, ffmpeg가 모두 필요한 구조라 로컬 개발과 배포 문서가 중요하다.
+- 비용이 발생하는 외부 API는 rate limit, timeout, retry, quota 정책이 필요하다.
+- 생성 영상/음성 파일 보관 기간과 삭제 정책이 필요하다.
+
+## 11. 검증 전략
+
+이번 분석에서 실행한 검증:
+
+- `cd backend && ./gradlew test`
+  - 결과: 통과.
+  - 비고: 일반 샌드박스에서는 `~/.gradle` lock 파일 접근 권한 문제로 실패했고, 권한 상승 후 실제 테스트는 성공했다.
+  - Gradle 경고: Gradle 9.0과 호환되지 않는 deprecated feature 사용 경고가 출력됐다.
+- `cd app && flutter test`
+  - 결과: 통과.
+  - 비고: 일반 샌드박스에서는 Flutter SDK cache lockfile 접근 권한 문제로 실패했고, 권한 상승 후 실제 테스트는 성공했다.
+  - Flutter 알림: 새 Flutter 버전 사용 가능 안내가 출력됐다.
+
+### 11.1 백엔드
+
+우선 검증:
+
+```bash
+cd backend
+./gradlew test
+```
+
+외부 연동 검증:
+
+```bash
+cd backend
+./gradlew integrationTest
+```
+
+주의:
+
+- `integrationTest`는 Azure, Replicate, AWS, ffmpeg, DB 설정이 필요할 수 있다.
+- 민감정보는 `.env` 또는 환경변수로만 주입한다.
+
+필요 테스트:
+
+- 표준 발음 변환 회귀 테스트 확대.
+- `/api/pronunciation/convert` controller validation 테스트.
+- 인증 성공/실패 테스트.
+- 평가 저장 transaction 테스트.
+- 외부 API 실패 시 fallback/error response 테스트.
+
+### 11.2 앱
+
+우선 검증:
+
+```bash
+cd app
+flutter test
+```
+
+필요 테스트:
+
+- 직접 문장 입력 후 API 성공/실패 상태.
+- 추천 문장 선택 후 학습 준비 API 표시.
+- 녹음 권한 거부/허용 상태.
+- 평가 결과 화면의 점수/글자별 피드백 렌더링.
+- 프로필 언어 설정 변경.
+
+### 11.3 통합
+
+우선 수직 흐름:
+
+1. 앱 직접 입력.
+2. 백엔드 표준 발음 변환 호출.
+3. 앱 Practice 화면에 표준 발음 표시.
+4. 녹음 없이 결과 화면 이동.
+
+다음 수직 흐름:
+
+1. 앱 녹음.
+2. multipart 업로드.
+3. Azure Speech 평가.
+4. 평가 결과 저장.
+5. Result 화면 표시.
+6. Profile 또는 History에서 기록 조회.
+
+## 12. 다음 액션
+
+가장 현실적인 다음 작업 순서:
+
+1. API 계약 문서 작성: `practice/prepare`, `evaluations`, auth, error response.
+2. 백엔드: 표준 발음 변환 controller 테스트와 에러 응답 표준화.
+3. 앱: API client 추가 후 직접 입력 문장의 표준 발음 API 연동.
+4. 백엔드: 추천 문장 seed/model/API 추가.
+5. 앱: 추천 문장 mock 제거 및 API 연동.
+6. 백엔드: Google OAuth와 JWT 최소 구현.
+7. 앱: 로그인 화면과 토큰 저장.
+8. 백엔드/앱: 녹음 업로드와 Azure 평가 수직 구현.
+9. QA: 실제 기기 녹음, 네트워크 실패, 권한 거부, 긴 문장, 비한글 입력 검증.
+
+## 13. 결론
+
+LingKo는 제품 방향이 `plan.md`에 명확하고, 현재 코드는 "발음 학습 앱의 UI 프로토타입"과 "표준 발음 변환 중심 백엔드"가 각각 따로 존재하는 단계다.
+
+다음 성공 기준은 기능을 넓히는 것이 아니라 하나의 수직 흐름을 닫는 것이다. 가장 먼저 닫을 흐름은 "사용자 직접 입력 -> 백엔드 표준 발음 변환 -> 앱에 결과 표시"다. 이 흐름이 안정화되면 녹음, Azure 평가, 학습 기록, 인증을 순서대로 붙이는 것이 리스크를 가장 작게 만든다.
