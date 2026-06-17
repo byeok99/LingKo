@@ -462,7 +462,7 @@ Authorization: Bearer <accessToken>
 
 요청 후보:
 
-- `referenceText`: 원문 또는 표준 발음 기준 문장.
+- `referenceText`: 서버가 계산한 표준 발음 기준 문장. 원문은 화면 표시와 저장 스냅샷으로 유지한다.
 - `audio`: 사용자 녹음 파일.
 - `practiceSource`: `RECOMMENDED` 또는 `CUSTOM`.
 - `sentenceId`: 추천 문장인 경우 optional.

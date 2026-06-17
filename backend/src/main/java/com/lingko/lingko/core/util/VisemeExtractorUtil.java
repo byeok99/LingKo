@@ -1,5 +1,6 @@
 package com.lingko.lingko.core.util;
 
+import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -162,15 +163,12 @@ public class VisemeExtractorUtil {
             return null;
         }
 
-        // URL 반환
-        String url = isTongue ? mapping.getTongueUrl() : mapping.getMouthUrl();
+        VideoType videoType = isTongue ? VideoType.TONGUE : VideoType.MOUTH;
+        String url = syllableMappingUtil.getImageUrl(key, videoType);
 
         // 변이음 URL이 없으면 기본 자음으로 폴백
         if ((url == null || url.isEmpty()) && !key.equals(phoneme)) {
-            mapping = syllableMappingUtil.getMapping(phoneme);
-            url = mapping != null ?
-                    (isTongue ? mapping.getTongueUrl() : mapping.getMouthUrl()):
-                    null;
+            url = syllableMappingUtil.getImageUrl(phoneme, videoType);
         }
 
         return url;

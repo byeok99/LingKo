@@ -65,7 +65,9 @@ class visumeExtractorUtilTest {
         // then - ㅜ만 있어야 정상!
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).hasSize(1);
-        assertThat(result.get(0).get(0)).isEqualTo("vowel-u.png");
+        assertThat(result.get(0).get(0))
+                .startsWith("https://lingko.s3.ap-northeast-2.amazonaws.com/guides/mouth/")
+                .endsWith("vowel-u.png");
     }
 
     @Test
@@ -101,7 +103,9 @@ class visumeExtractorUtilTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).hasSize(1);
-        assertThat(result.get(0).get(0)).isEqualTo("vowel-a.png");
+        assertThat(result.get(0).get(0))
+                .startsWith("https://lingko.s3.ap-northeast-2.amazonaws.com/guides/mouth/")
+                .endsWith("vowel-a.png");
     }
 
     @Test

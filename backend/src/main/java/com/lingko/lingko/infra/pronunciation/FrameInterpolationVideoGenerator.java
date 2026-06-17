@@ -3,6 +3,7 @@ package com.lingko.lingko.infra.pronunciation;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
 import com.lingko.lingko.core.domain.evaluation.service.VideoGenerator;
+import com.lingko.lingko.infra.storage.ExternalMediaUrlValidator;
 import com.lingko.lingko.infra.storage.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,10 +11,10 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +36,7 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
     private final ReplicateApiClient replicateApiClient;
     private final VideoMerger videoMerger;
     private final S3Uploader s3Uploader;
+    private final ExternalMediaUrlValidator externalMediaUrlValidator;
 
     @Override
     public String generate(List<List<String>> urlPairs, String syllable, VideoType type) {
@@ -71,7 +73,7 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
     private String handleStaticImage(String imageUrl, String syllable, VideoType type) {
         log.info("정적 이미지 처리: {}", imageUrl);
 
-        validateUrl(imageUrl);
+        externalMediaUrlValidator.validate(imageUrl);
 
         // 파일명 생성
         String extension = extractExtension(imageUrl);
@@ -142,8 +144,8 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
 
             log.info("세그먼트 {}/{} 생성", i + 1, urlPairs.size());
 
-            validateUrl(pair.get(0));
-            validateUrl(pair.get(1));
+            externalMediaUrlValidator.validate(pair.get(0));
+            externalMediaUrlValidator.validate(pair.get(1));
 
             // Replicate API로 Frame Interpolation
             String videoUrl = replicateApiClient.interpolate(pair.get(0), pair.get(1));
@@ -174,9 +176,12 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
             // 임시 파일 생성
             Path tempFile = Files.createTempFile("download_", extension);
 
-            // URL에서 다운로드
-            try (InputStream in = new URL(url).openStream()) {
-                Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            HttpURLConnection connection = externalMediaUrlValidator.openConnection(url);
+            try (InputStream in = connection.getInputStream();
+                 OutputStream out = Files.newOutputStream(tempFile)) {
+                copyWithLimit(in, out, ExternalMediaUrlValidator.MAX_DOWNLOAD_BYTES);
+            } finally {
+                connection.disconnect();
             }
 
             long fileSize = Files.size(tempFile);
@@ -187,6 +192,20 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
         } catch (IOException e) {
             log.error("다운로드 실패: {}", url, e);
             throw new VideoGenerationException("다운로드 실패: " + url, e);
+        }
+    }
+
+    private void copyWithLimit(InputStream in, OutputStream out, long maxBytes) throws IOException {
+        byte[] buffer = new byte[8192];
+        long total = 0;
+        int read;
+
+        while ((read = in.read(buffer)) != -1) {
+            total += read;
+            if (total > maxBytes) {
+                throw new VideoGenerationException("외부 미디어 크기 제한 초과: " + total);
+            }
+            out.write(buffer, 0, read);
         }
     }
 
@@ -243,15 +262,4 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
         return String.format("%s_%s_%s%s", type.getPrefix(), syllable, uuid, extension);
     }
 
-    /**
-     * URL 유효성 검사
-     */
-    private void validateUrl(String url) {
-        if (url == null || url.isBlank()) {
-            throw new IllegalArgumentException("URL이 비어있음");
-        }
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            throw new IllegalArgumentException("유효하지 않은 URL: " + url);
-        }
-    }
 }

@@ -54,8 +54,8 @@ public class ReplicateApiClient {
      * Prediction 생성
      */
     private String createPrediction(String frame1Url, String frame2Url) throws Exception {
-        log.info("Requesting Replicate with Key: {}...",
-                settings.getApiKey() != null ? settings.getApiKey().substring(0, 5) : "NULL");
+        validateSettings();
+
         Map<String, Object> input = Map.of(
                 "frame1", frame1Url,
                 "frame2", frame2Url,
@@ -140,5 +140,14 @@ public class ReplicateApiClient {
             return output.get(0).asText();
         }
         throw new VideoGenerationException("예상치 못한 output 형식: " + output);
+    }
+
+    void validateSettings() {
+        if (settings.getApiKey() == null || settings.getApiKey().isBlank()) {
+            throw new VideoGenerationException("Replicate API key is not configured");
+        }
+        if (settings.getVersion() == null || settings.getVersion().isBlank()) {
+            throw new VideoGenerationException("Replicate model version is not configured");
+        }
     }
 }

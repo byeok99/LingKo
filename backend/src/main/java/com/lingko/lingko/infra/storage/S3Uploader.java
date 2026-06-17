@@ -13,11 +13,11 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 /**
  * S3 업로더
@@ -33,6 +33,7 @@ public class S3Uploader {
 
     private final S3Client s3Client;
     private final AwsSettings awsSettings;
+    private final ExternalMediaUrlValidator externalMediaUrlValidator;
 
     /**
      * 로컬 파일을 S3에 업로드
@@ -145,9 +146,12 @@ public class S3Uploader {
             // 임시 파일 생성
             Path tempFile = Files.createTempFile("download_", extension);
 
-            // URL에서 다운로드
-            try (InputStream in = new URL(url).openStream()) {
-                Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            HttpURLConnection connection = externalMediaUrlValidator.openConnection(url);
+            try (InputStream in = connection.getInputStream();
+                 OutputStream out = Files.newOutputStream(tempFile)) {
+                copyWithLimit(in, out, ExternalMediaUrlValidator.MAX_DOWNLOAD_BYTES);
+            } finally {
+                connection.disconnect();
             }
 
             long fileSize = Files.size(tempFile);
@@ -158,6 +162,20 @@ public class S3Uploader {
         } catch (IOException e) {
             log.error("URL 다운로드 실패: {}", url, e);
             throw new VideoGenerationException("URL 다운로드 실패: " + url, e);
+        }
+    }
+
+    private void copyWithLimit(InputStream in, OutputStream out, long maxBytes) throws IOException {
+        byte[] buffer = new byte[8192];
+        long total = 0;
+        int read;
+
+        while ((read = in.read(buffer)) != -1) {
+            total += read;
+            if (total > maxBytes) {
+                throw new VideoGenerationException("외부 미디어 크기 제한 초과: " + total);
+            }
+            out.write(buffer, 0, read);
         }
     }
 
