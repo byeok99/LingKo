@@ -45,7 +45,10 @@ public class EvaluationLog {
     private List<EvaluationSyllable> syllableList = new ArrayList<>();
 
     public void addSyllable(EvaluationSyllable syllable) {
-//        syllable.add(syllable);
+        if (syllable == null) {
+            throw new IllegalArgumentException("syllable must not be null");
+        }
+        syllableList.add(syllable);
         syllable.setEvaluationLog(this);
     }
 }
