@@ -82,7 +82,7 @@ test: cover pronunciation validation errors
 
 ### 1.1 MVP API 계약 문서화
 
-- 상태: `[ ]`
+- 상태: `[x]`
 - 변경 파일:
   - `docs/api.md`
 - 할 일:
@@ -100,7 +100,7 @@ test: cover pronunciation validation errors
 
 ### 1.2 공통 성공/실패 응답 형식 확정
 
-- 상태: `[ ]`
+- 상태: `[x]`
 - 변경 파일:
   - `docs/api.md`
   - 백엔드 공통 response/error 패키지 후보
@@ -116,7 +116,7 @@ test: cover pronunciation validation errors
 
 ### 1.3 기준 문장 정책 결정
 
-- 상태: `[!]`
+- 상태: `[x]`
 - 변경 파일:
   - `docs/api.md`
   - `docs/research.md`
@@ -134,7 +134,7 @@ test: cover pronunciation validation errors
 
 ### 2.1 `EvaluationLog.addSyllable()` 수정
 
-- 상태: `[ ]`
+- 상태: `[x]`
 - 변경 파일:
   - `backend/src/main/java/com/lingko/lingko/core/domain/evaluation/entity/EvaluationLog.java`
   - 관련 테스트
@@ -149,7 +149,7 @@ test: cover pronunciation validation errors
 
 ### 2.2 Replicate API key 로그 제거
 
-- 상태: `[ ]`
+- 상태: `[x]`
 - 변경 파일:
   - `backend/src/main/java/com/lingko/lingko/infra/pronunciation/ReplicateApiClient.java`
 - 할 일:
@@ -164,7 +164,7 @@ test: cover pronunciation validation errors
 
 ### 2.3 외부 URL 다운로드 방어 추가
 
-- 상태: `[ ]`
+- 상태: `[x]`
 - 변경 파일 후보:
   - `backend/src/main/java/com/lingko/lingko/infra/storage/S3Uploader.java`
   - `backend/src/main/java/com/lingko/lingko/infra/pronunciation/FrameInterpolationVideoGenerator.java`
@@ -182,7 +182,7 @@ test: cover pronunciation validation errors
 
 ### 2.4 조음 guide URL 생성 흐름 통일
 
-- 상태: `[ ]`
+- 상태: `[x]`
 - 변경 파일 후보:
   - `backend/src/main/java/com/lingko/lingko/core/util/SyllableMappingUtil.java`
   - `backend/src/main/java/com/lingko/lingko/core/util/VisemeExtractorUtil.java`
@@ -200,7 +200,7 @@ test: cover pronunciation validation errors
 
 ### 2.5 DB migration 도구 도입
 
-- 상태: `[ ]`
+- 상태: `[x]`
 - 변경 파일 후보:
   - `backend/build.gradle`
   - `backend/src/main/resources/db/migration/...`
@@ -217,7 +217,7 @@ test: cover pronunciation validation errors
 
 ### 2.6 공통 예외 처리 추가
 
-- 상태: `[ ]`
+- 상태: `[x]`
 - 변경 파일 후보:
   - `backend/src/main/java/com/lingko/lingko/api/common/...`
   - `backend/src/main/java/com/lingko/lingko/api/.../GlobalExceptionHandler.java`
