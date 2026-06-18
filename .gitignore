@@ -45,7 +45,6 @@ application.yaml
 !.env.example
 
 # Local planning and reference docs
-plan.md
 docs/
 app/docs/
 .dmux/

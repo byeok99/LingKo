@@ -41,12 +41,12 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
     @Override
     public String generate(List<List<String>> urlPairs, String syllable, VideoType type) {
         try {
-            log.info("영상 생성 시작: {} {}, {}개 세그먼트", syllable, type, urlPairs.size());
-
             // 빈 리스트 체크
             if (urlPairs == null || urlPairs.isEmpty()) {
                 throw new IllegalArgumentException("URL 쌍이 비어있음: " + syllable);
             }
+
+            log.info("영상 생성 시작: {} {}, {}개 세그먼트", syllable, type, urlPairs.size());
 
             // 정적 이미지 케이스 (단일 프레임)
             if (urlPairs.size() == 1 && urlPairs.get(0).size() == 1) {
