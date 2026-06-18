@@ -1,6 +1,7 @@
 package com.lingko.lingko.core.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lingko.lingko.core.config.AwsSettings;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,16 @@ public class SyllableMappingUtil {
 
     private static final String S3_BASE_URL = "https://lingko.s3.ap-northeast-2.amazonaws.com/guides";
 
+    private final AwsSettings awsSettings;
     private Map<String, SyllableMapping> mappingTable = new HashMap<>();
+
+    public SyllableMappingUtil(AwsSettings awsSettings) {
+        this.awsSettings = awsSettings;
+    }
+
+    SyllableMappingUtil() {
+        this(null);
+    }
     
     @PostConstruct
     public void loadMapping() {
@@ -74,7 +84,26 @@ public class SyllableMappingUtil {
 
         // guides/mouth/bilabial-consonants.png
         String folder = type == VideoType.MOUTH ? "mouth" : "tongue";
-        return String.format("%s/%s/%s", S3_BASE_URL, folder, filename);
+        return String.format("%s/%s/%s", getGuideBaseUrl(), folder, filename);
+    }
+
+    private String getGuideBaseUrl() {
+        if (awsSettings == null
+                || awsSettings.getS3() == null
+                || isBlank(awsSettings.getS3().getBucket())
+                || isBlank(awsSettings.getS3().getRegion())) {
+            return S3_BASE_URL;
+        }
+
+        return String.format(
+                "https://%s.s3.%s.amazonaws.com/guides",
+                awsSettings.getS3().getBucket(),
+                awsSettings.getS3().getRegion()
+        );
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     /**

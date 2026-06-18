@@ -1,5 +1,6 @@
 package com.lingko.lingko.infra.storage;
 
+import com.lingko.lingko.core.config.AwsSettings;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
 import org.springframework.stereotype.Component;
 
@@ -8,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -23,14 +25,26 @@ public class ExternalMediaUrlValidator {
             "replicate.delivery"
     );
 
+    private final AwsSettings awsSettings;
     private final Function<String, InetAddress[]> addressResolver;
+    private final Function<URL, HttpURLConnection> connectionFactory;
 
-    public ExternalMediaUrlValidator() {
-        this(ExternalMediaUrlValidator::resolveAddresses);
+    public ExternalMediaUrlValidator(AwsSettings awsSettings) {
+        this(awsSettings, ExternalMediaUrlValidator::resolveAddresses, ExternalMediaUrlValidator::openHttpConnection);
     }
 
     ExternalMediaUrlValidator(Function<String, InetAddress[]> addressResolver) {
+        this(null, addressResolver, ExternalMediaUrlValidator::openHttpConnection);
+    }
+
+    ExternalMediaUrlValidator(
+            AwsSettings awsSettings,
+            Function<String, InetAddress[]> addressResolver,
+            Function<URL, HttpURLConnection> connectionFactory
+    ) {
+        this.awsSettings = awsSettings;
         this.addressResolver = addressResolver;
+        this.connectionFactory = connectionFactory;
     }
 
     public void validate(String rawUrl) {
@@ -44,7 +58,7 @@ public class ExternalMediaUrlValidator {
         validate(rawUrl);
         try {
             URL url = parse(rawUrl).toURL();
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            HttpURLConnection connection = connectionFactory.apply(url);
             connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
             connection.setReadTimeout(READ_TIMEOUT_MS);
             connection.setInstanceFollowRedirects(false);
@@ -87,7 +101,7 @@ public class ExternalMediaUrlValidator {
             throw new IllegalArgumentException("URL host가 비어있음");
         }
         String normalizedHost = host.toLowerCase();
-        if (EXACT_ALLOWED_HOSTS.contains(normalizedHost)) {
+        if (getExactAllowedHosts().contains(normalizedHost)) {
             return;
         }
         if (normalizedHost.endsWith(".replicate.delivery")) {
@@ -104,11 +118,47 @@ public class ExternalMediaUrlValidator {
         }
     }
 
+    private Set<String> getExactAllowedHosts() {
+        Set<String> hosts = new HashSet<>(EXACT_ALLOWED_HOSTS);
+        String configuredS3Host = getConfiguredS3Host();
+        if (configuredS3Host != null) {
+            hosts.add(configuredS3Host);
+        }
+        return hosts;
+    }
+
+    private String getConfiguredS3Host() {
+        if (awsSettings == null
+                || awsSettings.getS3() == null
+                || isBlank(awsSettings.getS3().getBucket())
+                || isBlank(awsSettings.getS3().getRegion())) {
+            return null;
+        }
+
+        return String.format(
+                "%s.s3.%s.amazonaws.com",
+                awsSettings.getS3().getBucket(),
+                awsSettings.getS3().getRegion()
+        ).toLowerCase();
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
     private static InetAddress[] resolveAddresses(String host) {
         try {
             return InetAddress.getAllByName(host);
         } catch (IOException e) {
             throw new IllegalArgumentException("URL host를 확인할 수 없음: " + host, e);
+        }
+    }
+
+    private static HttpURLConnection openHttpConnection(URL url) {
+        try {
+            return (HttpURLConnection) url.openConnection();
+        } catch (IOException e) {
+            throw new VideoGenerationException("외부 미디어 URL 연결 실패: " + url, e);
         }
     }
 
