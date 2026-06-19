@@ -11,18 +11,21 @@ GLOBAL_CODEX_AGENTS_DIR="$CODEX_HOME/agents"
 GLOBAL_CODEX_PROMPTS_DIR="$CODEX_HOME/prompts"
 GLOBAL_CODEX_AGENTS_MD="$CODEX_HOME/AGENTS.md"
 GLOBAL_CODEX_CONFIG="$CODEX_HOME/config.toml"
+PROJECT_CODEX_AGENTS_DIR="$PROJECT_DIR/.codex/agents"
 
 # Codex Skills 공식 경로
 PROJECT_SKILL_DIR="$PROJECT_DIR/.agents/skills"
 GLOBAL_SKILL_DIR="$HOME/.agents/skills"
 
 # send_to_agent.sh 위치 자동 탐색
-if [ -x "$HOME/.codex/send_to_agent.sh" ]; then
+if [ -f "$PROJECT_DIR/.codex/scripts/send_to_agent.sh" ]; then
+    SEND_TO_AGENT="$PROJECT_DIR/.codex/scripts/send_to_agent.sh"
+elif [ -f "$HOME/.codex/send_to_agent.sh" ]; then
     SEND_TO_AGENT="$HOME/.codex/send_to_agent.sh"
-elif [ -x "$HOME/.codex/scripts/send_to_agent.sh" ]; then
+elif [ -f "$HOME/.codex/scripts/send_to_agent.sh" ]; then
     SEND_TO_AGENT="$HOME/.codex/scripts/send_to_agent.sh"
 else
-    SEND_TO_AGENT="$HOME/.codex/send_to_agent.sh"
+    SEND_TO_AGENT="$PROJECT_DIR/.codex/scripts/send_to_agent.sh"
 fi
 
 # 필요하면 실행 시 환경변수로 덮어쓸 수 있음
@@ -71,15 +74,21 @@ if [ ! -d "$GLOBAL_CODEX_AGENTS_DIR" ]; then
     echo "   ECC sync가 정상 실행되었는지 확인해주세요."
 fi
 
+if [ ! -d "$PROJECT_CODEX_AGENTS_DIR" ]; then
+    echo "⚠️ 프로젝트 agent 지침 디렉터리를 찾을 수 없습니다: $PROJECT_CODEX_AGENTS_DIR"
+    echo "   .codex/agents/main.md, developer.md, review-qa.md 구성을 확인해주세요."
+fi
+
 if [ ! -d "$GLOBAL_SKILL_DIR" ]; then
     echo "⚠️ 전역 skills 디렉터리를 찾을 수 없습니다: $GLOBAL_SKILL_DIR"
     echo "   ECC sync 스크립트는 skills를 직접 설치하지 않습니다."
     echo "   필요한 경우 ~/.agents/skills에 필요한 skill만 복사하세요."
 fi
 
-if [ ! -x "$SEND_TO_AGENT" ]; then
-    echo "⚠️ send_to_agent.sh helper를 찾을 수 없거나 실행 권한이 없습니다."
+if [ ! -f "$SEND_TO_AGENT" ]; then
+    echo "⚠️ send_to_agent.sh helper를 찾을 수 없습니다."
     echo "   확인한 경로:"
+    echo "   - $PROJECT_DIR/.codex/scripts/send_to_agent.sh"
     echo "   - $HOME/.codex/send_to_agent.sh"
     echo "   - $HOME/.codex/scripts/send_to_agent.sh"
     echo "   자동 pane 호출 기능은 사용할 수 없습니다."
@@ -140,7 +149,8 @@ build_codex_command() {
 
 make_role_prompt() {
     local role="$1"
-    local dispatch_rule="$2"
+    local agent_file="$2"
+    local dispatch_rule="$3"
 
     cat <<PROMPT_EOF
 너는 tmux 멀티에이전트 팀의 "$role" 역할이다.
@@ -153,13 +163,14 @@ ECC 기준 환경:
 - 전역 Codex 설정: $GLOBAL_CODEX_CONFIG
 - Codex 공식 subagent TOML 경로: $GLOBAL_CODEX_AGENTS_DIR
 - Codex prompts 경로: $GLOBAL_CODEX_PROMPTS_DIR
+- 프로젝트 role 지침: $agent_file
 
 작업 skills 경로:
 - 프로젝트: $PROJECT_SKILL_DIR
 - 전역: $GLOBAL_SKILL_DIR
 
 pane 호출 helper:
-$SEND_TO_AGENT
+bash $SEND_TO_AGENT
 
 pane 호출 권한:
 $dispatch_rule
@@ -172,6 +183,7 @@ $dispatch_rule
 - 전체 코드베이스 탐색보다 관련 파일 중심으로 확인한다.
 - 긴 설명보다 변경 범위, 판단, 다음 행동을 짧게 보고한다.
 - 항상 적용할 개발 지침은 AGENTS.md를 따른다.
+- 시작 시 반드시 프로젝트 role 지침 파일을 읽고, 해당 지침을 현재 pane의 우선 운영 규칙으로 적용한다.
 - 상황별 작업 절차는 .agents/skills 또는 ~/.agents/skills의 SKILL.md를 참고한다.
 - .codex/rules/*.rules는 Codex 명령 실행 정책용이며, 개발 규칙 문서가 아니다.
 
@@ -182,7 +194,8 @@ PROMPT_EOF
         "메인")
             cat <<'PROMPT_EOF'
 - 요구사항 정리, 작업 분해, API/아키텍처 판단, 최종 취합을 담당한다.
-- 작은 작업은 다른 pane에 보내지 말고 직접 처리한다.
+- 질문 답변, 조사, 계획 같은 비구현 작업은 다른 pane에 보내지 말고 직접 처리한다.
+- 제품 코드 생성, 수정, 삭제가 필요한 작업은 크기와 상관없이 구현 pane에 전달한다.
 - 구현이 필요한 작업만 구현 pane에 전달한다.
 - 리뷰가 필요한 시점에만 리뷰 & QA pane에 전달한다.
 - 다른 pane에 보낸 요청과 결과는 사용자에게 요약 보고한다.
@@ -222,12 +235,13 @@ start_codex_in_pane() {
     local role_key="$3"
     local model="$4"
     local reasoning="$5"
-    local dispatch_rule="$6"
+    local agent_file="$6"
+    local dispatch_rule="$7"
 
     local prompt_file
     prompt_file="$(mktemp)"
 
-    make_role_prompt "$role" "$dispatch_rule" > "$prompt_file"
+    make_role_prompt "$role" "$agent_file" "$dispatch_rule" > "$prompt_file"
 
     tmux send-keys -t "$pane" C-c 2>/dev/null || true
     sleep 0.2
@@ -257,17 +271,18 @@ start_codex_in_pane() {
     echo "   - pane: $pane"
     echo "   - model: $model"
     echo "   - reasoning: $reasoning"
+    echo "   - role 지침: $agent_file"
 }
 
-MAIN_DISPATCH_RULE='메인 역할은 필요한 경우에만 send_to_agent.sh를 사용해 구현 또는 리뷰&QA pane에 요청을 보낸다. 다른 pane에 보낸 요청과 결과는 사용자에게 요약 보고한다.'
+MAIN_DISPATCH_RULE="메인 역할은 필요한 경우에만 bash \"$SEND_TO_AGENT\" developer \"...\" 또는 bash \"$SEND_TO_AGENT\" review-qa \"...\" 형식으로 구현 또는 리뷰&QA pane에 요청을 보낸다. 다른 pane에 보낸 요청과 결과는 사용자에게 요약 보고한다."
 
-DEV_DISPATCH_RULE='구현 역할은 원칙적으로 다른 pane에 직접 작업을 전송하지 않는다. 작업 완료 후 필요하면 send_to_agent.sh main "작업 완료: [요약]" 형식으로 메인에게 보고한다.'
+DEV_DISPATCH_RULE="구현 역할은 원칙적으로 다른 pane에 직접 작업을 전송하지 않는다. 작업 완료 후 필요하면 bash \"$SEND_TO_AGENT\" main \"작업 완료: [요약]\" 형식으로 메인에게 보고한다."
 
-QA_DISPATCH_RULE='리뷰 & QA 역할은 원칙적으로 직접 구현하지 않고 발견사항을 메인에게 보고한다. 작업 완료 후 필요하면 send_to_agent.sh main "리뷰 완료: [요약]" 형식으로 메인에게 보고한다.'
+QA_DISPATCH_RULE="리뷰 & QA 역할은 원칙적으로 직접 구현하지 않고 발견사항을 메인에게 보고한다. 작업 완료 후 필요하면 bash \"$SEND_TO_AGENT\" main \"리뷰 완료: [요약]\" 형식으로 메인에게 보고한다."
 
-start_codex_in_pane "$MAIN_PANE" "메인" "main" "$DEFAULT_MODEL" "$MAIN_REASONING" "$MAIN_DISPATCH_RULE"
-start_codex_in_pane "$DEV_PANE" "구현" "developer" "$DEFAULT_MODEL" "$DEV_REASONING" "$DEV_DISPATCH_RULE"
-start_codex_in_pane "$QA_PANE" "리뷰 & QA" "review-qa" "$DEFAULT_MODEL" "$QA_REASONING" "$QA_DISPATCH_RULE"
+start_codex_in_pane "$MAIN_PANE" "메인" "main" "$DEFAULT_MODEL" "$MAIN_REASONING" "$PROJECT_CODEX_AGENTS_DIR/main.md" "$MAIN_DISPATCH_RULE"
+start_codex_in_pane "$DEV_PANE" "구현" "developer" "$DEFAULT_MODEL" "$DEV_REASONING" "$PROJECT_CODEX_AGENTS_DIR/developer.md" "$DEV_DISPATCH_RULE"
+start_codex_in_pane "$QA_PANE" "리뷰 & QA" "review-qa" "$DEFAULT_MODEL" "$QA_REASONING" "$PROJECT_CODEX_AGENTS_DIR/review-qa.md" "$QA_DISPATCH_RULE"
 
 # 모든 Codex 실행 후 한 번 더 title 고정
 set_pane_titles

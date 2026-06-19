@@ -1,0 +1,51 @@
+import '../models/practice_result.dart';
+import 'api_client.dart';
+
+abstract class EvaluationApi {
+  Future<PracticeResult> evaluate({
+    required String audioPath,
+    String? practiceToken,
+    int? sentenceId,
+    String? text,
+  });
+}
+
+class DartIoEvaluationApi implements EvaluationApi {
+  DartIoEvaluationApi({ApiClient? client}) : _client = client ?? ApiClient();
+
+  final ApiClient _client;
+
+  @override
+  Future<PracticeResult> evaluate({
+    required String audioPath,
+    String? practiceToken,
+    int? sentenceId,
+    String? text,
+  }) async {
+    final fields = <String, String>{
+      if (practiceToken != null && practiceToken.isNotEmpty)
+        'practiceToken': practiceToken,
+      if (sentenceId != null) 'sentenceId': '$sentenceId',
+      if (text != null && text.trim().isNotEmpty) 'text': text.trim(),
+    };
+
+    final json = await _client.postMultipart(
+      '/api/evaluations',
+      MultipartUpload(
+        file: MultipartFileData(
+          fieldName: 'audio',
+          path: audioPath,
+          filename: _basename(audioPath),
+          contentType: 'audio/wav',
+        ),
+        fields: fields,
+      ),
+    );
+
+    return PracticeResult.fromJson(json);
+  }
+}
+
+String _basename(String path) {
+  return path.split(RegExp(r'[/\\]')).last;
+}

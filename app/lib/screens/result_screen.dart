@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../widgets/result_tile.dart';
 import '../widgets/score_breakdown.dart';
@@ -10,16 +11,25 @@ class ResultScreen extends StatelessWidget {
   const ResultScreen({
     super.key,
     required this.sentence,
+    required this.result,
     required this.onTryAgain,
   });
 
   final PracticeSentence sentence;
+  final PracticeResult? result;
   final VoidCallback onTryAgain;
 
   @override
   Widget build(BuildContext context) {
-    // 더미 점수에서 80점 미만인 글자만 취약 발음으로 보여줍니다.
-    final weak = sentence.characters.where((item) => item.score < 80).toList();
+    final score = result?.overallScore ?? sentence.score;
+    final gradeLabel = result?.gradeLabel ?? 'Good';
+    final summary =
+        result?.summary ??
+        'Tense consonants and sibilant tongue position need attention.';
+    final breakdown = result?.scoreBreakdown;
+    final weak =
+        result?.weakCharacters ??
+        sentence.characters.where((item) => item.score < 80).toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
@@ -30,7 +40,7 @@ class ResultScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '${sentence.score}',
+              '$score',
               style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 64,
@@ -39,11 +49,11 @@ class ResultScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 8),
               child: Text(
-                'Good',
-                style: TextStyle(
+                gradeLabel,
+                style: const TextStyle(
                   color: AppColors.success,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -53,8 +63,8 @@ class ResultScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        const Text(
-          'Tense consonants and sibilant tongue position need attention.',
+        Text(
+          summary,
           style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 16,
@@ -62,7 +72,11 @@ class ResultScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 22),
-        const ScoreBreakdown(),
+        ScoreBreakdown(
+          accuracy: breakdown?.accuracy ?? 84,
+          fluency: breakdown?.fluency ?? 80,
+          completeness: breakdown?.completeness ?? 91,
+        ),
         const SizedBox(height: 28),
         const SectionHeader(title: 'Weak sounds'),
         const SizedBox(height: 12),

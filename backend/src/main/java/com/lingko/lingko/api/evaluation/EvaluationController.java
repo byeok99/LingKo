@@ -2,6 +2,8 @@ package com.lingko.lingko.api.evaluation;
 
 import com.lingko.lingko.api.evaluation.dto.StandardPronunciationRequest;
 import com.lingko.lingko.api.evaluation.dto.StandardPronunciationResponse;
+import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareRequest;
+import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareResponse;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,20 @@ public class EvaluationController {
                 .build();
 
         log.info("표준발음 변환 완료: {} -> {}", request.getText(), standardPronunciation);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/prepare")
+    public ResponseEntity<PronunciationPrepareResponse> preparePronunciation(
+            @Valid @RequestBody PronunciationPrepareRequest request
+    ) {
+        if (!request.isCustom()) {
+            throw new IllegalArgumentException("Only CUSTOM prepare requests are supported");
+        }
+
+        PronunciationPrepareResponse response = service.prepareCustomSentence(request.trimmedText());
+        log.info("발음 연습 준비 완료: {}", request.trimmedText());
 
         return ResponseEntity.ok(response);
     }

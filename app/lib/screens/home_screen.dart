@@ -9,10 +9,16 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({
     super.key,
     required this.sentences,
+    required this.isLoading,
+    required this.errorText,
+    required this.onRetry,
     required this.onSelect,
   });
 
   final List<PracticeSentence> sentences;
+  final bool isLoading;
+  final String? errorText;
+  final VoidCallback onRetry;
   final ValueChanged<PracticeSentence> onSelect;
 
   @override
@@ -59,16 +65,61 @@ class HomeScreen extends StatelessWidget {
           trailing: TextButton(onPressed: () {}, child: const Text('All')),
         ),
         const SizedBox(height: 12),
-        ...sentences.map(
-          (sentence) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: SentenceCard(
-              sentence: sentence,
-              onTap: () => onSelect(sentence),
+        if (isLoading)
+          const _HomeStatusCard(text: 'Loading recommended sentences')
+        else if (errorText != null)
+          _HomeStatusCard(
+            text: errorText!,
+            actionLabel: 'Retry',
+            onAction: onRetry,
+          )
+        else if (sentences.isEmpty)
+          const _HomeStatusCard(text: 'No recommended sentences yet.')
+        else
+          ...sentences.map(
+            (sentence) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: SentenceCard(
+                sentence: sentence,
+                onTap: () => onSelect(sentence),
+              ),
             ),
           ),
-        ),
       ],
+    );
+  }
+}
+
+class _HomeStatusCard extends StatelessWidget {
+  const _HomeStatusCard({required this.text, this.actionLabel, this.onAction});
+
+  final String text;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE1E8EF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(text, style: Theme.of(context).textTheme.bodyLarge),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: onAction,
+              icon: const Icon(Icons.refresh),
+              label: Text(actionLabel!),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
