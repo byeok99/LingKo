@@ -1,6 +1,7 @@
 package com.lingko.lingko.api.common;
 
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
+import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidRequest(Exception exception) {
         return ResponseEntity.badRequest()
                 .body(ErrorResponse.of("INVALID_REQUEST", exception.getMessage()));
+    }
+
+    @ExceptionHandler(SentenceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleSentenceNotFound(SentenceNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of("SENTENCE_NOT_FOUND", "Sentence not found"));
     }
 
     @ExceptionHandler(VideoGenerationException.class)
