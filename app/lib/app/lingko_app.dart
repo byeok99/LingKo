@@ -1,17 +1,32 @@
 import 'package:flutter/material.dart';
 
-import '../data/mock_sentences.dart';
+import '../api/evaluation_api.dart';
+import '../api/pronunciation_api.dart';
+import '../api/sentence_api.dart';
+import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../screens/home_screen.dart';
 import '../screens/practice_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/result_screen.dart';
+import '../services/audio_recorder_service.dart';
 import 'app_theme.dart';
 
 // 앱 전체 설정을 담당하는 최상위 위젯입니다.
 // 여기서는 앱 이름, 테마 색상, 기본 글자 스타일, 첫 화면을 정합니다.
 class LingKoApp extends StatelessWidget {
-  const LingKoApp({super.key});
+  const LingKoApp({
+    super.key,
+    this.pronunciationApi,
+    this.sentenceApi,
+    this.evaluationApi,
+    this.audioRecorderService,
+  });
+
+  final PronunciationApi? pronunciationApi;
+  final SentenceApi? sentenceApi;
+  final EvaluationApi? evaluationApi;
+  final AudioRecorderService? audioRecorderService;
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +35,30 @@ class LingKoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       // LingKoShell은 하단 탭과 현재 선택된 화면 상태를 관리합니다.
-      home: const LingKoShell(),
+      home: LingKoShell(
+        pronunciationApi: pronunciationApi ?? DartIoPronunciationApi(),
+        sentenceApi: sentenceApi ?? DartIoSentenceApi(),
+        evaluationApi: evaluationApi ?? DartIoEvaluationApi(),
+        audioRecorderService:
+            audioRecorderService ?? RecordAudioRecorderService(),
+      ),
     );
   }
 }
 
 class LingKoShell extends StatefulWidget {
-  const LingKoShell({super.key});
+  const LingKoShell({
+    super.key,
+    required this.pronunciationApi,
+    required this.sentenceApi,
+    required this.evaluationApi,
+    required this.audioRecorderService,
+  });
+
+  final PronunciationApi pronunciationApi;
+  final SentenceApi sentenceApi;
+  final EvaluationApi evaluationApi;
+  final AudioRecorderService audioRecorderService;
 
   @override
   State<LingKoShell> createState() => _LingKoShellState();
@@ -39,9 +71,53 @@ class _LingKoShellState extends State<LingKoShell> {
   // 사용자가 홈에서 고르거나 직접 입력한 현재 연습 문장입니다.
   // 아직 아무 문장도 선택하지 않은 Practice 탭 진입 상태는 null입니다.
   PracticeSentence? selectedSentence;
+  List<PracticeSentence> recommendedSentences = const [];
+  bool isLoadingRecommendedSentences = true;
+  String? recommendedSentenceError;
+  PracticeResult? latestResult;
 
   // Practice 탭 안에서 연습 화면을 보여줄지, 결과 화면을 보여줄지 결정합니다.
   bool hasResult = false;
+
+  @override
+  void initState() {
+    super.initState();
+    loadRecommendedSentences();
+  }
+
+  Future<void> loadRecommendedSentences() async {
+    setState(() {
+      isLoadingRecommendedSentences = true;
+      recommendedSentenceError = null;
+    });
+
+    try {
+      final sentences = await widget.sentenceApi.fetchRecommendedSentences();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        recommendedSentences = sentences;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        recommendedSentences = const [];
+        recommendedSentenceError = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingRecommendedSentences = false;
+        });
+      }
+    }
+  }
 
   // 홈에서 문장을 선택하면 Practice 탭으로 이동합니다.
   void openPractice(PracticeSentence sentence) {
@@ -52,10 +128,18 @@ class _LingKoShellState extends State<LingKoShell> {
     });
   }
 
-  // 실제 앱에서는 녹음 업로드와 평가 API 호출이 끝난 뒤 이 상태로 바뀝니다.
-  // 지금은 디자인 확인용이라 버튼을 누르면 바로 결과 화면으로 전환합니다.
-  void showResult() {
+  Future<void> evaluateRecording(
+    PracticeSentence sentence,
+    String audioPath,
+  ) async {
+    final result = await widget.evaluationApi.evaluate(
+      audioPath: audioPath,
+      sentenceId: sentence.source == 'RECOMMENDED' ? sentence.sentenceId : null,
+      text: sentence.source == 'RECOMMENDED' ? null : sentence.text,
+    );
+
     setState(() {
+      latestResult = result;
       hasResult = true;
     });
   }
@@ -73,10 +157,17 @@ class _LingKoShellState extends State<LingKoShell> {
     // Flutter는 화면도 모두 Widget입니다. 조건에 따라 Practice 탭의 내용을
     // 연습 화면 또는 결과 화면으로 바꿔 끼웁니다.
     final pages = [
-      HomeScreen(sentences: mockSentences, onSelect: openPractice),
+      HomeScreen(
+        sentences: recommendedSentences,
+        isLoading: isLoadingRecommendedSentences,
+        errorText: recommendedSentenceError,
+        onRetry: loadRecommendedSentences,
+        onSelect: openPractice,
+      ),
       hasResult && selectedSentence != null
           ? ResultScreen(
             sentence: selectedSentence!,
+            result: latestResult,
             onTryAgain: () {
               setState(() {
                 hasResult = false;
@@ -85,8 +176,11 @@ class _LingKoShellState extends State<LingKoShell> {
           )
           : PracticeScreen(
             sentence: selectedSentence,
-            onResult: showResult,
+            audioRecorderService: widget.audioRecorderService,
+            onEvaluateRecording: evaluateRecording,
             onCustomSentence: useCustomSentence,
+            onPrepareCustomSentence:
+                widget.pronunciationApi.prepareCustomSentence,
           ),
       const ProfileScreen(),
     ];

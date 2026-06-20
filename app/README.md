@@ -1,6 +1,6 @@
 # LingKo Flutter App
 
-LingKo의 iOS/Android 앱 프로토타입입니다. 현재는 백엔드와 연결하지 않고 더미 데이터로 MVP 화면 흐름을 확인합니다.
+LingKo의 iOS/Android 앱 프로토타입입니다. Phase 5 기준으로 Home 추천 문장은 백엔드 `GET /api/sentences/recommended`에서 로딩하고, Practice 탭의 직접 입력 문장은 `POST /api/pronunciation/prepare`와 연결되어 표준 발음과 글자별 가이드를 받습니다. Practice 녹음은 `POST /api/evaluations`로 업로드해 평가 결과를 표시합니다. 결과 저장은 아직 더미 흐름입니다.
 
 코드가 실제로 어떤 순서로 실행되는지는 [docs/code-flow.md](docs/code-flow.md)에 별도로 정리했습니다.
 
@@ -9,20 +9,18 @@ LingKo의 iOS/Android 앱 프로토타입입니다. 현재는 백엔드와 연�
 현재 앱은 발음 학습 MVP만 다룹니다.
 
 - 홈에서 추천 문장 선택
-- 연습 탭에서 사용자가 직접 문장 입력
-- 문장 원문, 표준 발음, 번역 확인
+- 연습 탭에서 사용자가 직접 문장 입력 후 서버 prepare API 호출
+- 문장 원문, 서버 표준 발음, 번역 확인
 - 일반/느린 듣기 버튼 자리 확인
 - 글자별 발음 가이드 진입점 확인
-- 녹음 버튼을 누르면 더미 결과 표시
+- 녹음 후 서버 평가 결과 표시
 - 결과에서 취약 글자 선택
 - 입/혀 가이드 바텀시트 확인
 
 아직 구현하지 않은 것:
 
 - 실제 로그인
-- 실제 녹음
-- 백엔드 API 연동
-- 실제 Azure 발음 평가
+- 결과 저장
 - 실제 가이드 이미지/영상 재생
 - 코스 기능
 
@@ -37,7 +35,8 @@ app/
 ├── lib/
 │   ├── main.dart         # 앱 시작점. runApp만 담당
 │   ├── app/              # 앱 루트, 하단 탭 Shell, 테마
-│   ├── data/             # 임시 더미 데이터
+│   ├── api/              # 백엔드 API client
+│   ├── data/             # 오래된 mock 데이터. Home 추천 목록은 API 응답을 사용
 │   ├── models/           # 화면/데이터 모델
 │   ├── screens/          # 화면 단위 위젯
 │   └── widgets/          # 재사용 가능한 작은 UI 위젯
@@ -58,11 +57,11 @@ Android/iOS 폴더는 Flutter가 앱을 각 플랫폼에 올리기 위해 만든
 - `main.dart`: 앱 실행만 담당
 - `app/`: 앱 전체 조립, 전역 테마, 하단 탭 상태 관리
 - `models/`: 화면에서 쓰는 데이터 형태 정의
-- `data/`: 백엔드 연결 전까지 쓰는 더미 데이터
+- `data/`: 오래된 mock 데이터. 현재 Home 추천 목록은 백엔드 API 응답 사용
 - `screens/`: 한 화면 전체를 구성하는 위젯
 - `widgets/`: 여러 화면에서 재사용하는 작은 UI 부품
 
-파일을 나누는 기준은 "크기"가 아니라 "변경 이유"입니다. 예를 들어 점수 표시 UI가 바뀌면 `score_breakdown.dart`만 바뀌고, 추천 문장 데이터가 바뀌면 `mock_sentences.dart`만 바뀌는 구조를 목표로 합니다.
+파일을 나누는 기준은 "크기"가 아니라 "변경 이유"입니다. 예를 들어 점수 표시 UI가 바뀌면 `score_breakdown.dart`만 바뀌고, 추천 문장 API 계약이 바뀌면 `api/sentence_api.dart`와 모델 매핑만 바뀌는 구조를 목표로 합니다.
 
 이렇게 나눈 이유는 SOLID 중 특히 아래 원칙을 지키기 위해서입니다.
 
@@ -162,14 +161,14 @@ Home
 - 브랜드 컬러와 텍스트 스타일 설정
 - 첫 화면으로 `LingKoShell` 지정
 
-### 더미 데이터
+### 추천 문장 API
 
 관련 파일:
 
 - `lib/models/practice_sentence.dart`
-- `lib/data/mock_sentences.dart`
+- `lib/api/sentence_api.dart`
 
-현재는 `data/mock_sentences.dart`에 더미 데이터를 넣었습니다. 백엔드 연동 후에는 추천 문장 API 응답으로 바뀝니다.
+Home 추천 목록은 `GET /api/sentences/recommended` 응답을 `PracticeSentence`로 매핑해 표시합니다. `lib/data/mock_sentences.dart`는 이전 프로토타입 데이터이며 현재 Home fallback으로 사용하지 않습니다.
 
 ### 하단 탭과 상태
 
@@ -180,7 +179,7 @@ Home
 앱의 현재 상태를 관리합니다.
 
 - 홈에서 문장을 누르면 `openPractice()` 실행
-- Practice에서 `Record and score`를 누르면 `showResult()` 실행
+- Practice에서 녹음 후 `Upload and score`를 누르면 평가 API 호출 후 결과 화면으로 이동
 - 하단 탭을 누르면 `selectedTab` 변경
 
 ### 홈
@@ -191,7 +190,7 @@ Home
 - `lib/widgets/progress_panel.dart`
 - `lib/widgets/sentence_card.dart`
 
-추천 문장 목록을 보여줍니다. 현재는 코스 없이 문장 연습에 집중합니다.
+추천 문장 목록은 `GET /api/sentences/recommended`에서 로딩합니다. Home은 로딩, 실패, 빈 목록 상태를 표시하며 mock fallback은 사용하지 않습니다.
 
 ### 연습
 
@@ -200,9 +199,24 @@ Home
 - `lib/screens/practice_screen.dart`
 - `lib/widgets/shared_widgets.dart`
 
-선택한 문장의 원문, 표준 발음, 번역, 듣기 버튼, 글자별 가이드 칩, 녹음 버튼을 보여줍니다.
+선택한 문장의 원문, 표준 발음, 번역, 듣기 버튼, 글자별 가이드 칩, 녹음 상태와 평가 업로드 버튼을 보여줍니다.
 
-사용자가 직접 입력한 문장은 `PracticeSentence.custom()`으로 임시 연습 데이터가 됩니다. 현재는 백엔드 분석 전 단계라 표준 발음과 글자별 가이드는 더미 값으로 표시합니다.
+사용자가 직접 입력한 문장은 `POST /api/pronunciation/prepare`로 전송됩니다. 서버 응답의 `standardPronunciation`과 `characters`를 `PracticeSentence`로 매핑해 화면에 표시합니다.
+
+녹음은 `record` 패키지로 WAV 파일을 만들고, `POST /api/evaluations` multipart 요청으로 업로드합니다. Android는 `RECORD_AUDIO`, iOS는 `NSMicrophoneUsageDescription` 권한 설정이 필요합니다.
+
+#### API base URL
+
+기본 API 주소는 실행 환경에 따라 다릅니다.
+
+- Android emulator: `http://10.0.2.2:8080`
+- iOS simulator, desktop, tests: `http://localhost:8080`
+
+실기기 또는 다른 호스트의 백엔드를 사용할 때는 Flutter 실행 시 compile-time define으로 덮어씁니다.
+
+```bash
+flutter run --dart-define=LINGKO_API_BASE_URL=http://192.168.0.10:8080
+```
 
 ### 결과
 
@@ -212,7 +226,7 @@ Home
 - `lib/widgets/score_breakdown.dart`
 - `lib/widgets/result_tile.dart`
 
-더미 점수와 취약 글자를 보여줍니다. 80점 미만 글자만 취약 글자로 표시합니다.
+서버 평가 응답의 `overallScore`, `gradeLabel`, `summary`, `scoreBreakdown`, `weakCharacters`를 표시합니다. 저장된 기록 화면은 아직 구현하지 않았습니다.
 
 ### 글자별 가이드
 
@@ -270,8 +284,8 @@ flutter test
 
 MVP 기준 다음 순서가 적절합니다.
 
-1. 실제 녹음 기능 추가
-2. 백엔드 표준 발음 API 연결
+1. 평가 결과 저장
+2. 평가 기록 화면 연결
 3. 발음 평가 API 연결
 4. 결과 저장/조회 연결
 5. 실제 입/혀 가이드 이미지 또는 영상 연결
