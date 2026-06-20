@@ -3,11 +3,24 @@ import 'package:flutter/material.dart';
 import '../app/app_theme.dart';
 
 class ScoreBreakdown extends StatelessWidget {
-  const ScoreBreakdown({super.key});
+  const ScoreBreakdown({
+    super.key,
+    this.accuracy = 84,
+    this.fluency = 80,
+    this.completeness = 91,
+  });
+
+  final int accuracy;
+  final int fluency;
+  final int completeness;
 
   @override
   Widget build(BuildContext context) {
-    const items = [('Accuracy', 84), ('Fluency', 80), ('Completeness', 91)];
+    final items = [
+      ('Accuracy', accuracy),
+      ('Fluency', fluency),
+      ('Completeness', completeness),
+    ];
 
     return Container(
       padding: const EdgeInsets.all(16),
