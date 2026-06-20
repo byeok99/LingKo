@@ -22,9 +22,6 @@ public class SettingsLoadTest {
         String key = azureSettings.getSecretKey();
         String region = azureSettings.getRegion();
 
-        System.out.println(">>> Azure Key: " + key);
-        System.out.println(">>> Azure Region: " + region);
-
         assertThat(key).isNotEmpty();
         assertThat(region).isNotEmpty();
     }
@@ -37,9 +34,6 @@ public class SettingsLoadTest {
         String algorithm = jwtSettings.getAlgorithm();
 
         // Then
-        System.out.println(">>> JWT Expire: " + expireMinutes);
-        System.out.println(">>> JWT Algorithm: " + algorithm);
-
         assertThat(expireMinutes).isGreaterThan(0);
         assertThat(algorithm).isEqualTo("HS256"); // YAML에 쓴 값과 비교
     }
