@@ -48,3 +48,5 @@ application.yaml
 docs/
 app/docs/
 .dmux/
+.dumx-hooks
+AGENTS.md
