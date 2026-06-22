@@ -85,6 +85,12 @@ class _LingKoShellState extends State<LingKoShell> {
     loadRecommendedSentences();
   }
 
+  @override
+  void dispose() {
+    widget.audioRecorderService.dispose();
+    super.dispose();
+  }
+
   Future<void> loadRecommendedSentences() async {
     setState(() {
       isLoadingRecommendedSentences = true;

@@ -38,6 +38,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   bool isRecording = false;
   bool isUploadingRecording = false;
   String? recordingError;
+  bool wasPermissionDenied = false;
 
   @override
   void initState() {
@@ -104,6 +105,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
     isRecording = false;
     isUploadingRecording = false;
     recordingError = null;
+    wasPermissionDenied = false;
   }
 
   Future<void> _submitCustomSentence() async {
@@ -155,19 +157,20 @@ class _PracticeScreenState extends State<PracticeScreen> {
       recordedAudioPath = null;
     });
 
-    final hasPermission = await widget.audioRecorderService.hasPermission();
-    if (!hasPermission) {
-      if (!mounted) {
+    try {
+      final hasPermission = await widget.audioRecorderService.hasPermission();
+      if (!hasPermission) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          wasPermissionDenied = true;
+          recordingError = 'Microphone permission is required.';
+        });
         return;
       }
 
-      setState(() {
-        recordingError = 'Microphone permission is required.';
-      });
-      return;
-    }
-
-    try {
       await widget.audioRecorderService.start();
 
       if (!mounted) {
@@ -175,6 +178,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
       }
 
       setState(() {
+        wasPermissionDenied = false;
         isRecording = true;
       });
     } catch (error) {
@@ -219,7 +223,22 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   Future<void> _cancelRecording() async {
-    await widget.audioRecorderService.cancel();
+    final audioPath = recordedAudioPath;
+
+    try {
+      await widget.audioRecorderService.cancel();
+      if (audioPath != null) {
+        await widget.audioRecorderService.delete(audioPath);
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        recordingError = error.toString();
+      });
+      return;
+    }
 
     if (!mounted) {
       return;
@@ -229,6 +248,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
       isRecording = false;
       recordedAudioPath = null;
       recordingError = null;
+      wasPermissionDenied = false;
     });
   }
 
@@ -247,6 +267,12 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
     try {
       await widget.onEvaluateRecording(sentence, audioPath);
+      await widget.audioRecorderService.delete(audioPath);
+      if (mounted) {
+        setState(() {
+          recordedAudioPath = null;
+        });
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -266,8 +292,6 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 아직 실제 녹음 기능은 없습니다.
-    // 이 화면은 "듣기 -> 가이드 확인 -> 녹음" 흐름의 레이아웃을 먼저 검증합니다.
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
       children: [
@@ -291,6 +315,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
             isUploading: isUploadingRecording,
             hasRecording: recordedAudioPath != null,
             errorText: recordingError,
+            wasPermissionDenied: wasPermissionDenied,
             onStartRecording: _startRecording,
             onStopRecording: _stopRecording,
             onCancelRecording: _cancelRecording,
@@ -308,6 +333,7 @@ class _PracticeContent extends StatelessWidget {
     required this.isUploading,
     required this.hasRecording,
     required this.errorText,
+    required this.wasPermissionDenied,
     required this.onStartRecording,
     required this.onStopRecording,
     required this.onCancelRecording,
@@ -319,6 +345,7 @@ class _PracticeContent extends StatelessWidget {
   final bool isUploading;
   final bool hasRecording;
   final String? errorText;
+  final bool wasPermissionDenied;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
   final VoidCallback onCancelRecording;
@@ -402,6 +429,7 @@ class _PracticeContent extends StatelessWidget {
           isUploading: isUploading,
           hasRecording: hasRecording,
           errorText: errorText,
+          wasPermissionDenied: wasPermissionDenied,
           onStartRecording: onStartRecording,
           onStopRecording: onStopRecording,
           onCancelRecording: onCancelRecording,
@@ -418,6 +446,7 @@ class _RecordingPanel extends StatelessWidget {
     required this.isUploading,
     required this.hasRecording,
     required this.errorText,
+    required this.wasPermissionDenied,
     required this.onStartRecording,
     required this.onStopRecording,
     required this.onCancelRecording,
@@ -428,6 +457,7 @@ class _RecordingPanel extends StatelessWidget {
   final bool isUploading;
   final bool hasRecording;
   final String? errorText;
+  final bool wasPermissionDenied;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
   final VoidCallback onCancelRecording;
@@ -440,6 +470,8 @@ class _RecordingPanel extends StatelessWidget {
             ? 'Stop recording'
             : hasRecording
             ? 'Upload and score'
+            : wasPermissionDenied
+            ? 'Retry microphone permission'
             : 'Start recording';
     final primaryIcon =
         isRecording

@@ -8,6 +8,7 @@ import 'package:lingko_app/app/lingko_app.dart';
 import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
+import 'package:lingko_app/widgets/result_tile.dart';
 
 class FakePronunciationApi implements PronunciationApi {
   FakePronunciationApi({this.error});
@@ -52,7 +53,6 @@ class FakeEvaluationApi implements EvaluationApi {
   @override
   Future<PracticeResult> evaluate({
     required String audioPath,
-    String? practiceToken,
     int? sentenceId,
     String? text,
   }) async {
@@ -68,6 +68,8 @@ class FakeEvaluationApi implements EvaluationApi {
       overallScore: 91,
       gradeLabel: 'Excellent',
       summary: 'Clear pronunciation.',
+      recognizedText: '마싯게따.',
+      characterScoreStatus: 'UNAVAILABLE',
       scoreBreakdown: PracticeScoreBreakdown(
         accuracy: 92,
         fluency: 90,
@@ -80,14 +82,24 @@ class FakeEvaluationApi implements EvaluationApi {
 }
 
 class FakeAudioRecorderService implements AudioRecorderService {
-  FakeAudioRecorderService({this.permission = true});
+  FakeAudioRecorderService({List<bool> permissions = const [true]})
+    : _permissions = [...permissions];
 
-  final bool permission;
+  final List<bool> _permissions;
   bool started = false;
   bool cancelled = false;
+  final List<String> deletedPaths = [];
+  int permissionChecks = 0;
 
   @override
-  Future<bool> hasPermission() async => permission;
+  Future<bool> hasPermission() async {
+    final index =
+        permissionChecks < _permissions.length
+            ? permissionChecks
+            : _permissions.length - 1;
+    permissionChecks++;
+    return _permissions[index];
+  }
 
   @override
   Future<String> start() async {
@@ -107,6 +119,11 @@ class FakeAudioRecorderService implements AudioRecorderService {
 
   @override
   Future<void> dispose() async {}
+
+  @override
+  Future<void> delete(String path) async {
+    deletedPaths.add(path);
+  }
 }
 
 class FakeSentenceApi implements SentenceApi {
@@ -154,12 +171,13 @@ void main() {
   testWidgets('LingKo prototype opens recommended sentences', (
     WidgetTester tester,
   ) async {
+    final recorder = FakeAudioRecorderService();
     await tester.pumpWidget(
       LingKoApp(
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        audioRecorderService: FakeAudioRecorderService(),
+        audioRecorderService: recorder,
       ),
     );
     await tester.pumpAndSettle();
@@ -193,6 +211,12 @@ void main() {
     expect(find.text('Result'), findsOneWidget);
     expect(find.text('Excellent'), findsOneWidget);
     expect(find.text('91'), findsOneWidget);
+    expect(find.text('Recognized speech: 마싯게따.'), findsOneWidget);
+    expect(
+      find.text('Character-level scores are unavailable for this evaluation.'),
+      findsOneWidget,
+    );
+    expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
   });
 
   testWidgets('Practice tab accepts a custom sentence', (
@@ -282,15 +306,16 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
   });
 
-  testWidgets('Practice tab shows microphone permission errors', (
+  testWidgets('Practice tab retries microphone permission after denial', (
     WidgetTester tester,
   ) async {
+    final recorder = FakeAudioRecorderService(permissions: [false, true]);
     await tester.pumpWidget(
       LingKoApp(
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        audioRecorderService: FakeAudioRecorderService(permission: false),
+        audioRecorderService: recorder,
       ),
     );
     await tester.pumpAndSettle();
@@ -304,5 +329,41 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Microphone permission is required.'), findsOneWidget);
+    expect(find.text('Retry microphone permission'), findsOneWidget);
+
+    await tester.tap(find.text('Retry microphone permission'));
+    await tester.pumpAndSettle();
+
+    expect(recorder.permissionChecks, 2);
+    expect(find.text('Stop recording'), findsOneWidget);
+  });
+
+  testWidgets('weak character opens its pronunciation guide', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '나',
+      score: 55,
+      scoreStatus: 'AVAILABLE',
+      note: 'Focus on tongue placement',
+      kind: 'TONGUE',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ResultTile(result: character),
+        ),
+      ),
+    );
+
+    expect(find.text('55'), findsOneWidget);
+    await tester.tap(find.byType(ResultTile));
+    await tester.pumpAndSettle();
+
+    expect(find.text('TONGUE guide'), findsWidgets);
+    expect(find.text('Focus on tongue placement'), findsWidgets);
+    expect(find.text('Play'), findsOneWidget);
+    expect(find.text('Repeat'), findsOneWidget);
   });
 }

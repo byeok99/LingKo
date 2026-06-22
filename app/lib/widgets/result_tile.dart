@@ -55,7 +55,7 @@ class ResultTile extends StatelessWidget {
                 ),
               ),
               Text(
-                '${result.score}',
+                result.scoreStatus == 'AVAILABLE' ? '${result.score}' : '—',
                 style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 18,
