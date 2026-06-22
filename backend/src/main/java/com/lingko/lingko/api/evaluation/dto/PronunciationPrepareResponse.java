@@ -12,7 +12,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PronunciationPrepareResponse {
-    private String practiceToken;
     private SentenceResponse sentence;
 
     @Getter

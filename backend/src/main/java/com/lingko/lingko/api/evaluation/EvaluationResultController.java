@@ -24,7 +24,6 @@ public class EvaluationResultController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> evaluate(
             @RequestPart(required = false) MultipartFile audio,
-            @RequestParam(required = false) String practiceToken,
             @RequestParam(required = false) Long sentenceId,
             @RequestParam(required = false) String text
     ) {
@@ -38,9 +37,22 @@ public class EvaluationResultController {
                     .body(ErrorResponse.of("VALIDATION_FAILED", "sentenceId or text is required"));
         }
 
-        if (!evaluationService.isSupportedAudio(audio)) {
+        if (audio.getSize() > EvaluationService.MAX_AUDIO_BYTES) {
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                    .body(ErrorResponse.of(
+                            "AUDIO_TOO_LARGE",
+                            "Audio must not exceed " + EvaluationService.MAX_AUDIO_BYTES + " bytes"
+                    ));
+        }
+
+        EvaluationService.AudioValidationStatus validationStatus = evaluationService.validateAudio(audio);
+        if (validationStatus == EvaluationService.AudioValidationStatus.UNSUPPORTED_TYPE) {
             return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
                     .body(ErrorResponse.of("UNSUPPORTED_MEDIA_TYPE", "Only WAV audio is supported"));
+        }
+        if (validationStatus == EvaluationService.AudioValidationStatus.INVALID_WAV) {
+            return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                    .body(ErrorResponse.of("INVALID_WAV", "A valid 16-bit mono PCM WAV file is required"));
         }
 
         PracticeResultResponse response = evaluationService.evaluatePronunciation(audio, sentenceId, text);
