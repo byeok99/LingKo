@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -53,6 +55,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.sentence?.text != widget.sentence?.text) {
+      unawaited(_cleanupRecording(reportErrors: false));
       _syncControllerWithSentence();
       _focusEmptyPracticeInput();
     }
@@ -60,6 +63,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   @override
   void dispose() {
+    unawaited(_cleanupRecording(reportErrors: false));
     customSentenceController.removeListener(_syncCustomSentenceState);
     customSentenceController.dispose();
     customSentenceFocusNode.dispose();
@@ -223,15 +227,22 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   Future<void> _cancelRecording() async {
+    await _cleanupRecording(reportErrors: true);
+  }
+
+  Future<void> _cleanupRecording({required bool reportErrors}) async {
+    final shouldCancel = isRecording;
     final audioPath = recordedAudioPath;
 
     try {
-      await widget.audioRecorderService.cancel();
+      if (shouldCancel) {
+        await widget.audioRecorderService.cancel();
+      }
       if (audioPath != null) {
         await widget.audioRecorderService.delete(audioPath);
       }
     } catch (error) {
-      if (!mounted) {
+      if (!reportErrors || !mounted) {
         return;
       }
       setState(() {
@@ -240,7 +251,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
       return;
     }
 
-    if (!mounted) {
+    if (!mounted || !reportErrors) {
       return;
     }
 
@@ -267,7 +278,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
     try {
       await widget.onEvaluateRecording(sentence, audioPath);
-      await widget.audioRecorderService.delete(audioPath);
+      await _deleteRecordingBestEffort(audioPath);
       if (mounted) {
         setState(() {
           recordedAudioPath = null;
@@ -287,6 +298,14 @@ class _PracticeScreenState extends State<PracticeScreen> {
           isUploadingRecording = false;
         });
       }
+    }
+  }
+
+  Future<void> _deleteRecordingBestEffort(String audioPath) async {
+    try {
+      await widget.audioRecorderService.delete(audioPath);
+    } catch (_) {
+      // Cleanup must not block a successfully produced evaluation result.
     }
   }
 

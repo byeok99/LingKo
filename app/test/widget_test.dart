@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -82,12 +84,16 @@ class FakeEvaluationApi implements EvaluationApi {
 }
 
 class FakeAudioRecorderService implements AudioRecorderService {
-  FakeAudioRecorderService({List<bool> permissions = const [true]})
-    : _permissions = [...permissions];
+  FakeAudioRecorderService({
+    List<bool> permissions = const [true],
+    this.deleteError,
+  }) : _permissions = [...permissions];
 
   final List<bool> _permissions;
+  final Object? deleteError;
   bool started = false;
   bool cancelled = false;
+  int cancelCount = 0;
   final List<String> deletedPaths = [];
   int permissionChecks = 0;
 
@@ -114,6 +120,7 @@ class FakeAudioRecorderService implements AudioRecorderService {
 
   @override
   Future<void> cancel() async {
+    cancelCount++;
     cancelled = true;
   }
 
@@ -122,6 +129,9 @@ class FakeAudioRecorderService implements AudioRecorderService {
 
   @override
   Future<void> delete(String path) async {
+    if (deleteError != null) {
+      throw deleteError!;
+    }
     deletedPaths.add(path);
   }
 }
@@ -162,6 +172,22 @@ const _defaultSentences = [
     level: 'RECOMMENDED',
     category: 'Food',
     point: 'Final consonant linking and tense sound',
+    score: 0,
+    characters: [],
+  ),
+];
+
+const _twoSentences = [
+  ..._defaultSentences,
+  PracticeSentence(
+    sentenceId: 2,
+    source: 'RECOMMENDED',
+    text: '사진 찍어도 돼요?',
+    pronunciation: '사진 찌거도 돼요?',
+    translation: 'May I take a photo?',
+    level: 'RECOMMENDED',
+    category: 'Travel',
+    point: 'Tense consonant in connected speech',
     score: 0,
     characters: [],
   ),
@@ -338,6 +364,125 @@ void main() {
     expect(find.text('Stop recording'), findsOneWidget);
   });
 
+  testWidgets('leaving Practice tab cancels active recording', (
+    WidgetTester tester,
+  ) async {
+    final recorder = FakeAudioRecorderService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        audioRecorderService: recorder,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start recording'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+
+    expect(recorder.cancelCount, 1);
+  });
+
+  testWidgets('leaving Practice tab deletes a stopped temporary recording', (
+    WidgetTester tester,
+  ) async {
+    final recorder = FakeAudioRecorderService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        audioRecorderService: recorder,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start recording'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stop recording'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+
+    expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
+  });
+
+  testWidgets('changing the practice sentence cleans up existing recording', (
+    WidgetTester tester,
+  ) async {
+    final recorder = FakeAudioRecorderService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(sentences: _twoSentences),
+        evaluationApi: FakeEvaluationApi(),
+        audioRecorderService: recorder,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start recording'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stop recording'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), '새 문장입니다.');
+    await tester.pump();
+    await tester.ensureVisible(find.text('Use this sentence'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use this sentence'));
+    await tester.pumpAndSettle();
+
+    expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
+  });
+
+  testWidgets('cleanup failure after successful upload does not block result', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        audioRecorderService: FakeAudioRecorderService(
+          deleteError: FileSystemException('delete failed'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start recording'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stop recording'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Upload and score'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Result'), findsOneWidget);
+    expect(find.text('Excellent'), findsOneWidget);
+  });
+
   testWidgets('weak character opens its pronunciation guide', (
     WidgetTester tester,
   ) async {
@@ -350,11 +495,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: ResultTile(result: character),
-        ),
-      ),
+      MaterialApp(home: Scaffold(body: ResultTile(result: character))),
     );
 
     expect(find.text('55'), findsOneWidget);
