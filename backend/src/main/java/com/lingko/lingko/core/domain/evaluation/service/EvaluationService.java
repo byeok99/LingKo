@@ -192,9 +192,7 @@ public class EvaluationService {
                     return false;
                 }
                 consumed += 16;
-                validFormat = littleEndianUnsignedShort(format, 0) == 1
-                        && littleEndianUnsignedShort(format, 2) == 1
-                        && littleEndianUnsignedShort(format, 14) == 16;
+                validFormat = hasConsistentPcmFormat(format);
                 if (!skipFully(input, chunkSize - 16)) {
                     return false;
                 }
@@ -231,6 +229,25 @@ public class EvaluationService {
             remaining -= skipped;
         }
         return true;
+    }
+
+    private boolean hasConsistentPcmFormat(byte[] format) {
+        int audioFormat = littleEndianUnsignedShort(format, 0);
+        int channels = littleEndianUnsignedShort(format, 2);
+        long sampleRate = littleEndianUnsignedInt(format, 4);
+        long byteRate = littleEndianUnsignedInt(format, 8);
+        int blockAlign = littleEndianUnsignedShort(format, 12);
+        int bitsPerSample = littleEndianUnsignedShort(format, 14);
+        int expectedBlockAlign = channels * bitsPerSample / 8;
+        long expectedByteRate = sampleRate * expectedBlockAlign;
+
+        return audioFormat == 1
+                && channels == 1
+                && bitsPerSample == 16
+                && sampleRate > 0
+                && sampleRate <= 48_000
+                && blockAlign == expectedBlockAlign
+                && byteRate == expectedByteRate;
     }
 
     private boolean matchesAscii(byte[] bytes, int offset, String expected) {

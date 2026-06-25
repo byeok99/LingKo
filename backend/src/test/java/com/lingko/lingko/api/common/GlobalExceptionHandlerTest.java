@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -55,5 +56,18 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.code").value("EVALUATION_FAILED"))
                 .andExpect(jsonPath("$.message").value("Pronunciation evaluation failed. Please try again."))
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("replicate.delivery"))));
+    }
+
+    @Test
+    @DisplayName("multipart 크기 초과 예외는 413 AUDIO_TOO_LARGE로 반환한다")
+    void maxUploadSizeExceededReturnsPayloadTooLarge() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        var response = handler.handleMaxUploadSizeExceeded(new MaxUploadSizeExceededException(10 * 1024 * 1024));
+
+        org.assertj.core.api.Assertions.assertThat(response.getStatusCode().value()).isEqualTo(413);
+        org.assertj.core.api.Assertions.assertThat(response.getBody()).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(response.getBody().code()).isEqualTo("AUDIO_TOO_LARGE");
+        org.assertj.core.api.Assertions.assertThat(response.getBody().message()).isEqualTo("Audio file is too large");
     }
 }

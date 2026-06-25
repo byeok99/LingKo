@@ -77,6 +77,16 @@ class EvaluationServiceResultTest {
     }
 
     @Test
+    @DisplayName("PCM WAV fmt 필드의 sampleRate, byteRate, blockAlign, channels, bitsPerSample은 서로 일관되어야 한다")
+    void rejectsInconsistentWavFormatFields() {
+        assertThat(service.isSupportedAudio(wavAudio(16000, 1, 16, 16000, 2))).isFalse();
+        assertThat(service.isSupportedAudio(wavAudio(16000, 1, 16, 32000, 4))).isFalse();
+        assertThat(service.isSupportedAudio(wavAudio(0, 1, 16, 0, 2))).isFalse();
+        assertThat(service.isSupportedAudio(wavAudio(16000, 2, 16, 64000, 4))).isFalse();
+        assertThat(service.isSupportedAudio(wavAudio(16000, 1, 8, 16000, 1))).isFalse();
+    }
+
+    @Test
     @DisplayName("신뢰할 수 있는 Azure 글자 점수로 weakCharacters를 산출한다")
     void mapsReliableCharacterScores() {
         AssessmentResult result = AssessmentResult.builder()
@@ -143,6 +153,10 @@ class EvaluationServiceResultTest {
     }
 
     private MockMultipartFile wavAudio() {
+        return wavAudio(16000, 1, 16, 32000, 2);
+    }
+
+    private MockMultipartFile wavAudio(int sampleRate, int channels, int bitsPerSample, int byteRate, int blockAlign) {
         byte[] bytes = new byte[45];
         writeAscii(bytes, 0, "RIFF");
         writeLittleEndianInt(bytes, 4, bytes.length - 8);
@@ -150,11 +164,11 @@ class EvaluationServiceResultTest {
         writeAscii(bytes, 12, "fmt ");
         writeLittleEndianInt(bytes, 16, 16);
         bytes[20] = 1;
-        bytes[22] = 1;
-        writeLittleEndianInt(bytes, 24, 16000);
-        writeLittleEndianInt(bytes, 28, 32000);
-        bytes[32] = 2;
-        bytes[34] = 16;
+        writeLittleEndianShort(bytes, 22, channels);
+        writeLittleEndianInt(bytes, 24, sampleRate);
+        writeLittleEndianInt(bytes, 28, byteRate);
+        writeLittleEndianShort(bytes, 32, blockAlign);
+        writeLittleEndianShort(bytes, 34, bitsPerSample);
         writeAscii(bytes, 36, "data");
         writeLittleEndianInt(bytes, 40, 1);
         return new MockMultipartFile("audio", "recording.wav", "audio/wav", bytes);
@@ -171,5 +185,10 @@ class EvaluationServiceResultTest {
         target[offset + 1] = (byte) (value >>> 8);
         target[offset + 2] = (byte) (value >>> 16);
         target[offset + 3] = (byte) (value >>> 24);
+    }
+
+    private void writeLittleEndianShort(byte[] target, int offset, int value) {
+        target[offset] = (byte) value;
+        target[offset + 1] = (byte) (value >>> 8);
     }
 }
