@@ -7,10 +7,12 @@ import 'package:lingko_app/api/evaluation_api.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 import 'package:lingko_app/api/sentence_api.dart';
 import 'package:lingko_app/app/lingko_app.dart';
+import 'package:lingko_app/models/auth_session.dart';
 import 'package:lingko_app/models/practice_history.dart';
 import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
+import 'package:lingko_app/services/app_auth_service.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
 
 class FakePronunciationApi implements PronunciationApi {
@@ -177,6 +179,44 @@ class FakeAudioRecorderService implements AudioRecorderService {
   }
 }
 
+class FakeAppAuthService implements AppAuthService {
+  bool signInCalled = false;
+  Object? error;
+  AuthSession? session = const AuthSession(
+    tokenType: 'Bearer',
+    accessToken: 'access.jwt',
+    refreshToken: 'refresh.jwt',
+    expiresInSeconds: 1800,
+    user: AuthUser(
+      userId: 7,
+      email: 'user@example.com',
+      name: 'LingKo User',
+      profileImageUrl: 'https://example.com/profile.png',
+    ),
+  );
+
+  @override
+  Future<AuthSession?> restoreSession() async {
+    return null;
+  }
+
+  @override
+  Future<AuthSession> signInWithGoogle() async {
+    signInCalled = true;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return session!;
+  }
+
+  @override
+  Future<void> signOut() async {
+    session = null;
+  }
+}
+
 class FakeSentenceApi implements SentenceApi {
   FakeSentenceApi({this.error, this.sentences = _defaultSentences});
 
@@ -244,6 +284,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
     );
@@ -295,6 +336,7 @@ void main() {
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -325,6 +367,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(error: 'Validation failed'),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -350,6 +393,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(sentences: const []),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -364,6 +408,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(error: 'Cannot load sentences'),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -382,6 +427,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
     );
@@ -414,6 +460,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
     );
@@ -440,6 +487,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -462,6 +510,34 @@ void main() {
     expect(retryInput.controller?.text, '맛있겠다.');
   });
 
+  testWidgets('Profile signs in with Google and shows account email', (
+    WidgetTester tester,
+  ) async {
+    final authService = FakeAppAuthService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in with Google'), findsOneWidget);
+
+    await tester.tap(find.text('Sign in with Google'));
+    await tester.pumpAndSettle();
+
+    expect(authService.signInCalled, isTrue);
+    expect(find.text('LingKo User'), findsOneWidget);
+    expect(find.text('user@example.com'), findsOneWidget);
+  });
+
   testWidgets('leaving Practice tab deletes a stopped temporary recording', (
     WidgetTester tester,
   ) async {
@@ -471,6 +547,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
     );
@@ -500,6 +577,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(sentences: _twoSentences),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
     );
@@ -532,6 +610,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(
           deleteError: FileSystemException('delete failed'),
         ),

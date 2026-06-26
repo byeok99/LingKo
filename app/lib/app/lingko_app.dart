@@ -10,6 +10,7 @@ import '../screens/practice_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/result_screen.dart';
 import '../services/audio_recorder_service.dart';
+import '../services/app_auth_service.dart';
 import 'app_theme.dart';
 
 // 앱 전체 설정을 담당하는 최상위 위젯입니다.
@@ -20,12 +21,14 @@ class LingKoApp extends StatelessWidget {
     this.pronunciationApi,
     this.sentenceApi,
     this.evaluationApi,
+    this.authService,
     this.audioRecorderService,
   });
 
   final PronunciationApi? pronunciationApi;
   final SentenceApi? sentenceApi;
   final EvaluationApi? evaluationApi;
+  final AppAuthService? authService;
   final AudioRecorderService? audioRecorderService;
 
   @override
@@ -39,6 +42,7 @@ class LingKoApp extends StatelessWidget {
         pronunciationApi: pronunciationApi ?? DartIoPronunciationApi(),
         sentenceApi: sentenceApi ?? DartIoSentenceApi(),
         evaluationApi: evaluationApi ?? DartIoEvaluationApi(),
+        authService: authService ?? DefaultAppAuthService(),
         audioRecorderService:
             audioRecorderService ?? RecordAudioRecorderService(),
       ),
@@ -52,12 +56,14 @@ class LingKoShell extends StatefulWidget {
     required this.pronunciationApi,
     required this.sentenceApi,
     required this.evaluationApi,
+    required this.authService,
     required this.audioRecorderService,
   });
 
   final PronunciationApi pronunciationApi;
   final SentenceApi sentenceApi;
   final EvaluationApi evaluationApi;
+  final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
 
   @override
@@ -190,6 +196,7 @@ class _LingKoShellState extends State<LingKoShell> {
           ),
       ProfileScreen(
         evaluationApi: widget.evaluationApi,
+        authService: widget.authService,
         onRetryPractice: openPractice,
       ),
     ];

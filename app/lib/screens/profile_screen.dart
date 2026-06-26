@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../api/evaluation_api.dart';
 import '../app/app_theme.dart';
+import '../models/auth_session.dart';
 import '../models/practice_history.dart';
 import '../models/practice_sentence.dart';
+import '../services/app_auth_service.dart';
 import '../widgets/settings_row.dart';
 import '../widgets/shared_widgets.dart';
 
@@ -11,10 +13,12 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     super.key,
     required this.evaluationApi,
+    required this.authService,
     required this.onRetryPractice,
   });
 
   final EvaluationApi evaluationApi;
+  final AppAuthService authService;
   final ValueChanged<PracticeSentence> onRetryPractice;
 
   @override
@@ -23,13 +27,91 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   PracticeHistory? history;
+  AuthSession? session;
   bool isLoading = true;
+  bool isAuthenticating = true;
   String? errorText;
+  String? authErrorText;
 
   @override
   void initState() {
     super.initState();
+    restoreSession();
     loadHistory();
+  }
+
+  Future<void> restoreSession() async {
+    try {
+      final restoredSession = await widget.authService.restoreSession();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        session = restoredSession;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        authErrorText = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isAuthenticating = false;
+        });
+      }
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    setState(() {
+      isAuthenticating = true;
+      authErrorText = null;
+    });
+
+    try {
+      final nextSession = await widget.authService.signInWithGoogle();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        session = nextSession;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        authErrorText = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isAuthenticating = false;
+        });
+      }
+    }
+  }
+
+  Future<void> signOut() async {
+    await widget.authService.signOut();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      session = null;
+      authErrorText = null;
+    });
   }
 
   Future<void> loadHistory() async {
@@ -73,6 +155,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         const TopBar(title: 'Profile'),
         const SizedBox(height: 24),
+        _AccountPanel(
+          session: session,
+          isLoading: isAuthenticating,
+          errorText: authErrorText,
+          onSignIn: signInWithGoogle,
+          onSignOut: signOut,
+        ),
+        const SizedBox(height: 24),
         const SectionHeader(title: 'Practice history'),
         const SizedBox(height: 12),
         _HistorySummaryCard(history: history),
@@ -112,6 +202,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SettingsRow(label: 'Native language', value: 'English'),
         const SettingsRow(label: 'Target level', value: 'Beginner 2'),
       ],
+    );
+  }
+}
+
+class _AccountPanel extends StatelessWidget {
+  const _AccountPanel({
+    required this.session,
+    required this.isLoading,
+    required this.errorText,
+    required this.onSignIn,
+    required this.onSignOut,
+  });
+
+  final AuthSession? session;
+  final bool isLoading;
+  final String? errorText;
+  final VoidCallback onSignIn;
+  final VoidCallback onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = session?.user;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.account_circle_outlined, color: AppColors.info),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  user == null ? 'Account' : user.name,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            ],
+          ),
+          if (user != null) ...[
+            const SizedBox(height: 6),
+            Text(user.email, style: Theme.of(context).textTheme.bodyMedium),
+          ],
+          if (errorText != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              errorText!,
+              style: const TextStyle(
+                color: Color(0xFFB3261E),
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child:
+                user == null
+                    ? FilledButton.icon(
+                      onPressed: isLoading ? null : onSignIn,
+                      icon:
+                          isLoading
+                              ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : const Icon(Icons.login),
+                      label: const Text('Sign in with Google'),
+                    )
+                    : OutlinedButton.icon(
+                      onPressed: isLoading ? null : onSignOut,
+                      icon: const Icon(Icons.logout),
+                      label: const Text('Sign out'),
+                    ),
+          ),
+        ],
+      ),
     );
   }
 }

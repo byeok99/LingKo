@@ -1,6 +1,7 @@
 package com.lingko.lingko.api.common;
 
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
+import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidRequest(Exception exception) {
         return ResponseEntity.badRequest()
                 .body(ErrorResponse.of("INVALID_REQUEST", exception.getMessage()));
+    }
+
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<ErrorResponse> handleAuth(AuthException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponse.of("AUTHENTICATION_FAILED", "Authentication failed"));
     }
 
     @ExceptionHandler(SentenceNotFoundException.class)
