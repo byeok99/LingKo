@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: lingko
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:lingko}
+    username: ${DB_USER:lingko}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:none}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+logging:
+  file:
+    name: logs/lingko.log
+  level:
+    com.lingko.lingko: ${LOG_LEVEL:DEBUG}
+
+db:
+  host: ${DB_HOST:localhost}
+  port: ${DB_PORT:3306}
+  user: ${DB_USER:lingko}
+  password: ${DB_PASSWORD:}
+  name: ${DB_NAME:lingko}
+  driver: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY:}
+  access-token-expire-minutes: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:30}
+  refresh-token-expire-days: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS:14}
+  algorithm: ${JWT_ALGORITHM:HS256}
+
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  text-model: ${OPENAI_TEXT_MODEL:gpt-4o-mini}
+
+azure:
+  secret-key: ${AZURE_SECRET_KEY:}
+  region: ${AZURE_REGION:}
+  language: ${AZURE_LANGUAGE:ko-KR}
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID:}
+  client-secret: ${GOOGLE_CLIENT_SECRET:}
+  redirect-uri: ${GOOGLE_REDIRECT_URI:}
+
+replicate:
+  api-key: ${REPLICATE_API_KEY:}
+  version: ${REPLICATE_VERSION:}
+  max-poll-attempts: ${REPLICATE_MAX_POLL_ATTEMPTS:60}
+  poll-interval-ms: ${REPLICATE_POLL_INTERVAL_MS:1000}
+  frame-rate: ${REPLICATE_FRAME_RATE:24}
+
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET:}
+    region: ${AWS_S3_REGION:}
+  credentials:
+    access-key: ${AWS_ACCESS_KEY:}
+    secret-key: ${AWS_SECRET_KEY:}
+
+ffmpeg:
+  path: ${FFMPEG_PATH:ffmpeg}

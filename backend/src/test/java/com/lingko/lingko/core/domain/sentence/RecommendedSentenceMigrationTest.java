@@ -1,0 +1,45 @@
+package com.lingko.lingko.core.domain.sentence;
+
+import org.h2.tools.RunScript;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.io.FileReader;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class RecommendedSentenceMigrationTest {
+
+    @Test
+    @DisplayName("추천 문장 migration은 테이블과 MVP seed 20개 이상을 생성한다")
+    void recommendedSentenceMigrationCreatesSeedData() throws Exception {
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:h2:mem:recommended_sentences;MODE=MySQL;DATABASE_TO_UPPER=false"
+        )) {
+            RunScript.execute(
+                    connection,
+                    new FileReader(
+                            "src/main/resources/db/migration/V2__recommended_sentences.sql",
+                            StandardCharsets.UTF_8
+                    )
+            );
+
+            try (ResultSet resultSet = connection.createStatement()
+                    .executeQuery("SELECT COUNT(*) FROM recommended_sentences WHERE active = TRUE")) {
+                resultSet.next();
+                assertThat(resultSet.getInt(1)).isGreaterThanOrEqualTo(20);
+            }
+
+            try (ResultSet resultSet = connection.createStatement()
+                    .executeQuery("SELECT category_code, standard_pronunciation FROM recommended_sentences WHERE sentence_id = 1")) {
+                resultSet.next();
+                assertThat(resultSet.getString("category_code")).isEqualTo("FOOD");
+                assertThat(resultSet.getString("standard_pronunciation")).isNotBlank();
+            }
+        }
+    }
+}

@@ -1,4 +1,4 @@
-lingko/HELP.md
+backend/HELP.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -6,6 +6,9 @@ build/
 !**/src/test/**/build/
 
 .DS_Store
+logs/
+.codex/logs/
+.codex/tmp/
 
 ### STS ###
 .apt_generated
@@ -39,3 +42,13 @@ out/
 .vscode/
 
 application.yaml
+.env
+.env.*
+!.env.example
+
+# Local planning and reference docs
+docs/
+app/docs/
+.dmux/
+.dumx-hooks
+AGENTS.md
