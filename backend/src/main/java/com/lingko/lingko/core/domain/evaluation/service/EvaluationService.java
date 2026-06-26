@@ -16,19 +16,29 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
 
 @Service
 public class EvaluationService {
 
+    public static final long MAX_AUDIO_BYTES = 10L * 1024 * 1024;
+    private static final int MIN_WAV_HEADER_BYTES = 44;
+
     private final SyllableMappingUtil syllableMappingUtil;
     private final SpeechEvaluator speechEvaluator;
     private final RecommendedSentenceRepository sentenceRepository;
+
+    public enum AudioValidationStatus {
+        VALID,
+        UNSUPPORTED_TYPE,
+        INVALID_WAV
+    }
 
     public EvaluationService(SyllableMappingUtil syllableMappingUtil) {
         this(syllableMappingUtil, null, null);
@@ -54,7 +64,6 @@ public class EvaluationService {
         String standardPronunciation = convertToStandardPronunciation(trimmed);
 
         return PronunciationPrepareResponse.builder()
-                .practiceToken("prep_" + UUID.randomUUID())
                 .sentence(PronunciationPrepareResponse.SentenceResponse.builder()
                         .sentenceId(null)
                         .source("CUSTOM")
@@ -120,6 +129,10 @@ public class EvaluationService {
     }
 
     public boolean isSupportedAudio(MultipartFile audio) {
+        return validateAudio(audio) == AudioValidationStatus.VALID;
+    }
+
+    public AudioValidationStatus validateAudio(MultipartFile audio) {
         String filename = audio.getOriginalFilename();
         String contentType = audio.getContentType();
         boolean wavName = filename != null && filename.toLowerCase(Locale.ROOT).endsWith(".wav");
@@ -129,7 +142,129 @@ public class EvaluationService {
                 || contentType.equalsIgnoreCase("audio/vnd.wave")
                 || contentType.equalsIgnoreCase("application/octet-stream");
 
-        return wavName && wavType;
+        if (!wavName || !wavType || audio.getSize() < MIN_WAV_HEADER_BYTES) {
+            return !wavName || !wavType
+                    ? AudioValidationStatus.UNSUPPORTED_TYPE
+                    : AudioValidationStatus.INVALID_WAV;
+        }
+
+        try (InputStream input = audio.getInputStream()) {
+            return hasValidPcmWavHeader(input, audio.getSize())
+                    ? AudioValidationStatus.VALID
+                    : AudioValidationStatus.INVALID_WAV;
+        } catch (IOException exception) {
+            return AudioValidationStatus.INVALID_WAV;
+        }
+    }
+
+    private boolean hasValidPcmWavHeader(InputStream input, long fileSize) throws IOException {
+        byte[] riffHeader = input.readNBytes(12);
+        if (riffHeader.length != 12
+                || !matchesAscii(riffHeader, 0, "RIFF")
+                || !matchesAscii(riffHeader, 8, "WAVE")) {
+            return false;
+        }
+
+        long declaredFileSize = littleEndianUnsignedInt(riffHeader, 4) + 8;
+        if (declaredFileSize > fileSize || declaredFileSize < MIN_WAV_HEADER_BYTES) {
+            return false;
+        }
+
+        boolean validFormat = false;
+        long consumed = 12;
+        while (consumed + 8 <= declaredFileSize) {
+            byte[] chunkHeader = input.readNBytes(8);
+            if (chunkHeader.length != 8) {
+                return false;
+            }
+            consumed += 8;
+            long chunkSize = littleEndianUnsignedInt(chunkHeader, 4);
+            if (chunkSize > declaredFileSize - consumed) {
+                return false;
+            }
+
+            if (matchesAscii(chunkHeader, 0, "fmt ")) {
+                if (chunkSize < 16) {
+                    return false;
+                }
+                byte[] format = input.readNBytes(16);
+                if (format.length != 16) {
+                    return false;
+                }
+                consumed += 16;
+                validFormat = hasConsistentPcmFormat(format);
+                if (!skipFully(input, chunkSize - 16)) {
+                    return false;
+                }
+                consumed += chunkSize - 16;
+            } else if (matchesAscii(chunkHeader, 0, "data")) {
+                return validFormat && chunkSize > 0;
+            } else {
+                if (!skipFully(input, chunkSize)) {
+                    return false;
+                }
+                consumed += chunkSize;
+            }
+
+            if ((chunkSize & 1) == 1 && consumed < declaredFileSize) {
+                if (!skipFully(input, 1)) {
+                    return false;
+                }
+                consumed++;
+            }
+        }
+        return false;
+    }
+
+    private boolean skipFully(InputStream input, long byteCount) throws IOException {
+        long remaining = byteCount;
+        while (remaining > 0) {
+            long skipped = input.skip(remaining);
+            if (skipped <= 0) {
+                if (input.read() == -1) {
+                    return false;
+                }
+                skipped = 1;
+            }
+            remaining -= skipped;
+        }
+        return true;
+    }
+
+    private boolean hasConsistentPcmFormat(byte[] format) {
+        int audioFormat = littleEndianUnsignedShort(format, 0);
+        int channels = littleEndianUnsignedShort(format, 2);
+        long sampleRate = littleEndianUnsignedInt(format, 4);
+        long byteRate = littleEndianUnsignedInt(format, 8);
+        int blockAlign = littleEndianUnsignedShort(format, 12);
+        int bitsPerSample = littleEndianUnsignedShort(format, 14);
+        int expectedBlockAlign = channels * bitsPerSample / 8;
+        long expectedByteRate = sampleRate * expectedBlockAlign;
+
+        return audioFormat == 1
+                && channels == 1
+                && bitsPerSample == 16
+                && sampleRate > 0
+                && sampleRate <= 48_000
+                && blockAlign == expectedBlockAlign
+                && byteRate == expectedByteRate;
+    }
+
+    private boolean matchesAscii(byte[] bytes, int offset, String expected) {
+        byte[] expectedBytes = expected.getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+        return offset + expectedBytes.length <= bytes.length
+                && Arrays.equals(bytes, offset, offset + expectedBytes.length, expectedBytes, 0, expectedBytes.length);
+    }
+
+    private long littleEndianUnsignedInt(byte[] bytes, int offset) {
+        return (bytes[offset] & 0xffL)
+                | ((bytes[offset + 1] & 0xffL) << 8)
+                | ((bytes[offset + 2] & 0xffL) << 16)
+                | ((bytes[offset + 3] & 0xffL) << 24);
+    }
+
+    private int littleEndianUnsignedShort(byte[] bytes, int offset) {
+        return (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
     }
 
     public PracticeResultResponse evaluatePronunciation(MultipartFile audio, Long sentenceId, String text) {
@@ -151,7 +286,7 @@ public class EvaluationService {
                 throw exception;
             }
 
-            throw new VideoGenerationException("Speech evaluation failed");
+            throw new VideoGenerationException("Speech evaluation failed", exception);
         } finally {
             if (tempFile != null) {
                 try {
@@ -176,33 +311,68 @@ public class EvaluationService {
 
     private PracticeResultResponse toPracticeResult(String referenceText, AssessmentResult result) {
         int overallScore = toScore(result.getPronunciationScore());
-        List<GuideCharacterResponse> characters = buildGuideCharacters(referenceText).stream()
-                .map(character -> GuideCharacterResponse.builder()
+        List<GuideCharacterResponse> guideCharacters = buildGuideCharacters(referenceText);
+        boolean characterScoresAvailable = hasReliableCharacterScores(guideCharacters, result);
+        List<GuideCharacterResponse> characters = guideCharacters.stream()
+                .map(character -> {
+                    Integer characterScore = characterScoresAvailable
+                            ? toScore(result.getCharacterScores().get(character.getPosition()).accuracyScore())
+                            : null;
+                    return GuideCharacterResponse.builder()
                         .position(character.getPosition())
                         .text(character.getText())
                         .pronunciationText(character.getPronunciationText())
-                        .score(overallScore)
+                        .score(characterScore)
+                        .scoreStatus(characterScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
                         .phonemes(character.getPhonemes())
                         .guideType(character.getGuideType())
                         .guideStatus(character.getGuideStatus())
                         .mouthGuideUrl(character.getMouthGuideUrl())
                         .tongueGuideUrl(character.getTongueGuideUrl())
                         .note(character.getNote())
-                        .build())
+                        .build();
+                })
                 .toList();
+
+        List<GuideCharacterResponse> weakCharacters = characterScoresAvailable
+                ? characters.stream().filter(character -> character.getScore() < 80).toList()
+                : List.of();
 
         return PracticeResultResponse.builder()
                 .overallScore(overallScore)
                 .gradeLabel(resolveGradeLabel(overallScore))
                 .summary(resolveSummary(overallScore, result.getRecognizedText()))
+                .recognizedText(result.getRecognizedText())
+                .characterScoreStatus(characterScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
                 .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
                         .accuracy(toScore(result.getAccuracyScore()))
                         .fluency(toScore(result.getFluencyScore()))
                         .completeness(toScore(result.getCompletenessScore()))
                         .build())
                 .characters(characters)
-                .weakCharacters(overallScore < 80 ? characters : List.of())
+                .weakCharacters(weakCharacters)
                 .build();
+    }
+
+    private boolean hasReliableCharacterScores(
+            List<GuideCharacterResponse> characters,
+            AssessmentResult result
+    ) {
+        List<AssessmentResult.CharacterScore> scores = result.getCharacterScores();
+        if (!result.isCharacterScoresAvailable() || scores == null || scores.size() != characters.size()) {
+            return false;
+        }
+
+        for (int index = 0; index < characters.size(); index++) {
+            AssessmentResult.CharacterScore score = scores.get(index);
+            GuideCharacterResponse character = characters.get(index);
+            if (score.position() != index
+                    || !character.getText().equals(score.text())
+                    || score.accuracyScore() == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private int toScore(Double score) {
@@ -226,15 +396,19 @@ public class EvaluationService {
     }
 
     private String resolveSummary(int score, String recognizedText) {
+        String scoreSummary;
         if (score >= 90) {
-            return "Clear pronunciation. Keep the same rhythm and articulation.";
+            scoreSummary = "Clear pronunciation. Keep the same rhythm and articulation.";
+        } else if (score >= 75) {
+            scoreSummary = "Good pronunciation. Review the highlighted sounds and try once more.";
+        } else {
+            scoreSummary = "Pronunciation needs more practice. Focus on the guide items before retrying.";
         }
 
-        if (score >= 75) {
-            return "Good pronunciation. Review the highlighted sounds and try once more.";
+        if (recognizedText == null || recognizedText.isBlank()) {
+            return scoreSummary;
         }
-
-        return "Pronunciation needs more practice. Focus on the guide items before retrying.";
+        return scoreSummary + " Recognized speech: " + recognizedText.trim();
     }
 
     private SpeechEvaluator requireSpeechEvaluator() {

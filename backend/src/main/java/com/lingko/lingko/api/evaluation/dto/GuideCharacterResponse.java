@@ -16,6 +16,7 @@ public class GuideCharacterResponse {
     private String text;
     private String pronunciationText;
     private Integer score;
+    private String scoreStatus;
     private List<String> phonemes;
     private String guideType;
     private String guideStatus;

@@ -25,7 +25,6 @@ class EvaluationServicePrepareTest {
 
         PronunciationPrepareResponse response = service.prepareCustomSentence("맛있겠다.");
 
-        assertThat(response.getPracticeToken()).startsWith("prep_");
         assertThat(response.getSentence().getSource()).isEqualTo("CUSTOM");
         assertThat(response.getSentence().getOriginalText()).isEqualTo("맛있겠다.");
         assertThat(response.getSentence().getStandardPronunciation()).isEqualTo("마싰겠다.");

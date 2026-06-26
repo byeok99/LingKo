@@ -11,4 +11,5 @@ import org.springframework.context.annotation.Configuration;
 public class AzureSettings {
     private String secretKey;
     private String region;
+    private String language = "ko-KR";
 }

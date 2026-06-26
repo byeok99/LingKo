@@ -35,12 +35,14 @@ class EvaluationResultControllerTest {
                 "audio",
                 "recording.wav",
                 "audio/wav",
-                new byte[]{1, 2, 3}
+                wavBytes(1)
         );
         PracticeResultResponse response = PracticeResultResponse.builder()
                 .overallScore(87)
                 .gradeLabel("Good")
                 .summary("Good pronunciation.")
+                .recognizedText("안녕하세요.")
+                .characterScoreStatus("UNAVAILABLE")
                 .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
                         .accuracy(88)
                         .fluency(86)
@@ -49,7 +51,8 @@ class EvaluationResultControllerTest {
                 .weakCharacters(List.of())
                 .characters(List.of())
                 .build();
-        when(evaluationService.isSupportedAudio(any())).thenReturn(true);
+        when(evaluationService.validateAudio(any()))
+                .thenReturn(EvaluationService.AudioValidationStatus.VALID);
         when(evaluationService.evaluatePronunciation(any(), eq(null), eq("안녕하세요."))).thenReturn(response);
 
         mockMvc.perform(multipart("/api/evaluations")
@@ -58,6 +61,8 @@ class EvaluationResultControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.overallScore").value(87))
                 .andExpect(jsonPath("$.gradeLabel").value("Good"))
+                .andExpect(jsonPath("$.recognizedText").value("안녕하세요."))
+                .andExpect(jsonPath("$.characterScoreStatus").value("UNAVAILABLE"))
                 .andExpect(jsonPath("$.scoreBreakdown.accuracy").value(88));
     }
 
@@ -71,24 +76,6 @@ class EvaluationResultControllerTest {
     }
 
     @Test
-    @DisplayName("practiceToken 단독 요청은 Phase 5에서 지원하지 않고 400을 반환한다")
-    void practiceTokenOnlyIsRejected() throws Exception {
-        MockMultipartFile audio = new MockMultipartFile(
-                "audio",
-                "recording.wav",
-                "audio/wav",
-                new byte[]{1, 2, 3}
-        );
-
-        mockMvc.perform(multipart("/api/evaluations")
-                        .file(audio)
-                        .param("practiceToken", "prep_test"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.message").value("sentenceId or text is required"));
-    }
-
-    @Test
     @DisplayName("지원하지 않는 audio 형식이면 415를 반환한다")
     void unsupportedAudio() throws Exception {
         MockMultipartFile audio = new MockMultipartFile(
@@ -97,12 +84,77 @@ class EvaluationResultControllerTest {
                 "audio/mpeg",
                 new byte[]{1, 2, 3}
         );
-        when(evaluationService.isSupportedAudio(any())).thenReturn(false);
+        when(evaluationService.validateAudio(any()))
+                .thenReturn(EvaluationService.AudioValidationStatus.UNSUPPORTED_TYPE);
 
         mockMvc.perform(multipart("/api/evaluations")
                         .file(audio)
                         .param("text", "안녕하세요."))
                 .andExpect(status().isUnsupportedMediaType())
                 .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"));
+    }
+
+    @Test
+    @DisplayName("WAV 확장자와 MIME이 맞아도 헤더가 잘못되면 415를 반환한다")
+    void rejectsInvalidWavHeader() throws Exception {
+        MockMultipartFile audio = new MockMultipartFile(
+                "audio", "recording.wav", "audio/wav", new byte[]{1, 2, 3}
+        );
+        when(evaluationService.validateAudio(any()))
+                .thenReturn(EvaluationService.AudioValidationStatus.INVALID_WAV);
+
+        mockMvc.perform(multipart("/api/evaluations")
+                        .file(audio)
+                        .param("text", "안녕하세요."))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.code").value("INVALID_WAV"));
+    }
+
+    @Test
+    @DisplayName("10 MiB를 초과한 오디오는 평가 전에 413을 반환한다")
+    void rejectsOversizedAudio() throws Exception {
+        MockMultipartFile audio = new MockMultipartFile(
+                "audio",
+                "recording.wav",
+                "audio/wav",
+                new byte[(int) EvaluationService.MAX_AUDIO_BYTES + 1]
+        );
+
+        mockMvc.perform(multipart("/api/evaluations")
+                        .file(audio)
+                        .param("text", "안녕하세요."))
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(jsonPath("$.code").value("AUDIO_TOO_LARGE"));
+    }
+
+    private byte[] wavBytes(int dataLength) {
+        byte[] bytes = new byte[44 + dataLength];
+        writeAscii(bytes, 0, "RIFF");
+        writeLittleEndianInt(bytes, 4, bytes.length - 8);
+        writeAscii(bytes, 8, "WAVE");
+        writeAscii(bytes, 12, "fmt ");
+        writeLittleEndianInt(bytes, 16, 16);
+        bytes[20] = 1;
+        bytes[22] = 1;
+        writeLittleEndianInt(bytes, 24, 16000);
+        writeLittleEndianInt(bytes, 28, 32000);
+        bytes[32] = 2;
+        bytes[34] = 16;
+        writeAscii(bytes, 36, "data");
+        writeLittleEndianInt(bytes, 40, dataLength);
+        return bytes;
+    }
+
+    private void writeAscii(byte[] target, int offset, String value) {
+        for (int index = 0; index < value.length(); index++) {
+            target[offset + index] = (byte) value.charAt(index);
+        }
+    }
+
+    private void writeLittleEndianInt(byte[] target, int offset, int value) {
+        target[offset] = (byte) value;
+        target[offset + 1] = (byte) (value >>> 8);
+        target[offset + 2] = (byte) (value >>> 16);
+        target[offset + 3] = (byte) (value >>> 24);
     }
 }

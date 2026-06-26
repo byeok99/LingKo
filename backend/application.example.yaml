@@ -1,6 +1,10 @@
 spring:
   application:
     name: lingko
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:lingko}
     username: ${DB_USER:lingko}
@@ -40,6 +44,7 @@ openai:
 azure:
   secret-key: ${AZURE_SECRET_KEY:}
   region: ${AZURE_REGION:}
+  language: ${AZURE_LANGUAGE:ko-KR}
 
 google:
   client-id: ${GOOGLE_CLIENT_ID:}
