@@ -49,6 +49,12 @@ public class User {
     @Column(name = "last_login_at", nullable = false)
     private LocalDateTime lastLoginAt;
 
+    public void updateOAuthProfile(String email, String name, String profileImageUrl) {
+        this.email = email;
+        this.name = name;
+        this.profileImageUrl = profileImageUrl;
+    }
+
     public enum SocialType {
         GOOGLE, APPLE, KAKAO
     }

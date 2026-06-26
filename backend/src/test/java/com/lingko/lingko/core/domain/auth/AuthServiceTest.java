@@ -1,0 +1,152 @@
+package com.lingko.lingko.core.domain.auth;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lingko.lingko.api.auth.dto.AuthTokenResponse;
+import com.lingko.lingko.api.auth.dto.OAuthLoginRequest;
+import com.lingko.lingko.core.config.JwtSettings;
+import com.lingko.lingko.core.domain.auth.service.AuthService;
+import com.lingko.lingko.core.domain.auth.service.JwtTokenProvider;
+import com.lingko.lingko.core.domain.auth.service.OAuthIdentity;
+import com.lingko.lingko.core.domain.auth.service.OAuthIdentityVerifier;
+import com.lingko.lingko.core.domain.user.entity.User;
+import com.lingko.lingko.core.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@DataJpaTest(properties = {
+        "spring.datasource.url=jdbc:h2:mem=auth_service;MODE=MySQL;DATABASE_TO_UPPER=false",
+        "spring.datasource.driver-class-name=org.h2.Driver",
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
+        "spring.flyway.enabled=false",
+        "jwt.secret-key=01234567890123456789012345678901",
+        "jwt.access-token-expire-minutes=30",
+        "jwt.refresh-token-expire-days=14",
+        "jwt.algorithm=HS256"
+})
+@Import({AuthService.class, AuthServiceTest.TestAuthConfig.class})
+class AuthServiceTest {
+
+    @Autowired
+    private AuthService authService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    @DisplayName("Google OAuth 로그인은 신규 사용자를 생성하고 JWT를 발급한다")
+    void loginWithGoogleCreatesUserAndTokens() throws Exception {
+        AuthTokenResponse response = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+
+        assertThat(response.getTokenType()).isEqualTo("Bearer");
+        assertThat(response.getAccessToken()).isNotBlank();
+        assertThat(response.getRefreshToken()).isNotBlank();
+        assertThat(response.getExpiresInSeconds()).isEqualTo(1800L);
+        assertThat(response.getUser().getEmail()).isEqualTo("user@example.com");
+
+        User user = userRepository.findBySocialIdAndSocialType("google-sub-123", User.SocialType.GOOGLE).orElseThrow();
+        assertThat(user.getEmail()).isEqualTo("user@example.com");
+        assertThat(user.getName()).isEqualTo("LingKo User");
+
+        JsonNode accessPayload = jwtPayload(response.getAccessToken());
+        assertThat(accessPayload.get("sub").asText()).isEqualTo(String.valueOf(user.getUserIdx()));
+        assertThat(accessPayload.get("typ").asText()).isEqualTo("access");
+    }
+
+    @Test
+    @DisplayName("기존 Google 사용자는 중복 생성하지 않고 profile snapshot을 갱신한다")
+    void loginWithGoogleReusesExistingUser() {
+        User existing = User.builder()
+                .socialId("google-sub-123")
+                .socialType(User.SocialType.GOOGLE)
+                .email("old@example.com")
+                .name("Old Name")
+                .build();
+        entityManager.persist(existing);
+        entityManager.flush();
+        entityManager.clear();
+
+        AuthTokenResponse response = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+
+        assertThat(userRepository.count()).isEqualTo(1);
+        assertThat(response.getUser().getUserId()).isEqualTo(existing.getUserIdx());
+        User updated = userRepository.findById(existing.getUserIdx()).orElseThrow();
+        assertThat(updated.getEmail()).isEqualTo("user@example.com");
+        assertThat(updated.getName()).isEqualTo("LingKo User");
+    }
+
+    @Test
+    @DisplayName("지원하지 않는 OAuth provider는 거부한다")
+    void unsupportedProviderIsRejected() {
+        assertThatThrownBy(() -> authService.loginWithOAuth(new OAuthLoginRequest("APPLE", "valid-token")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Unsupported OAuth provider");
+    }
+
+    private JsonNode jwtPayload(String token) throws Exception {
+        String payload = token.split("\\.")[1];
+        byte[] decoded = Base64.getUrlDecoder().decode(payload);
+
+        return objectMapper.readTree(new String(decoded, StandardCharsets.UTF_8));
+    }
+
+    @TestConfiguration
+    static class TestAuthConfig {
+        @Bean
+        @Primary
+        JwtSettings jwtSettings() {
+            JwtSettings settings = new JwtSettings();
+            settings.setSecretKey("01234567890123456789012345678901");
+            settings.setAccessTokenExpireMinutes(30);
+            settings.setRefreshTokenExpireDays(14);
+            settings.setAlgorithm("HS256");
+
+            return settings;
+        }
+
+        @Bean
+        ObjectMapper objectMapper() {
+            return new ObjectMapper();
+        }
+
+        @Bean
+        JwtTokenProvider jwtTokenProvider(JwtSettings jwtSettings, ObjectMapper objectMapper) {
+            return new JwtTokenProvider(jwtSettings, objectMapper);
+        }
+
+        @Bean
+        OAuthIdentityVerifier googleIdentityVerifier() {
+            return idToken -> {
+                if (!"valid-token".equals(idToken)) {
+                    throw new IllegalArgumentException("invalid token");
+                }
+
+                return new OAuthIdentity(
+                        "google-sub-123",
+                        "user@example.com",
+                        "LingKo User",
+                        "https://example.com/profile.png"
+                );
+            };
+        }
+    }
+}
