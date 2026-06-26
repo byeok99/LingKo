@@ -5,8 +5,8 @@ This directory contains hooks that run automatically at key lifecycle events in 
 ## Quick Start
 
 1. **Read the documentation**:
-   - `AGENTS.md` - Complete reference (for any AI agent)
-   - `CLAUDE.md` - Same content (Claude Code looks for this filename)
+   - `AGENTS.md` - Hook reference for the current single-AI workflow
+   - `CLAUDE.md` - Same hook reference for Claude-compatible tooling
 
 2. **Check examples**:
    - `examples/` directory contains starter templates
@@ -41,7 +41,7 @@ This directory contains hooks that run automatically at key lifecycle events in 
 
 ## Documentation
 
-See `AGENTS.md` or `CLAUDE.md` for complete documentation including:
+See `AGENTS.md` or `CLAUDE.md` for hook documentation including:
 - Environment variables
 - HTTP callback API
 - Common patterns
@@ -51,3 +51,5 @@ See `AGENTS.md` or `CLAUDE.md` for complete documentation including:
 ## Note
 
 This directory is **version controlled**. Hooks you create here will be shared with your team.
+
+The project runtime is a single Codex AI in the main tmux pane. Server and verification panes are user-operated terminals, not delegated AI roles.

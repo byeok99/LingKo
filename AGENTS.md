@@ -4,115 +4,91 @@
 
 Spring 백엔드 + Flutter 앱 프로젝트.
 
-## 역할
+## 운영 방식
 
-tmux 기본 운영은 3-pane 구조를 따른다.
+이 프로젝트는 기본적으로 단일 Codex AI 방식으로 운영한다.
 
-* main: 사용자 승인, 요구사항 정리, 작업 분해, 범위 통제, 결과 통합
-* developer: Spring 백엔드와 Flutter 앱 구현, 테스트, 수정 결과 보고
-* review-qa: 코드 리뷰, 테스트 누락, 보안 위험, 회귀 위험 검토
+- tmux pane은 여러 개일 수 있지만, AI는 메인 pane 하나에서만 실행된다.
+- pane 1은 AI 메인이다. 요구사항 정리, 구현, 자체 리뷰, 테스트 안내, 변경 요약을 현재 Codex 세션에서 처리한다.
+- pane 2는 사용자가 직접 서버를 실행하는 터미널이다. 예: `npm run dev`, `uvicorn`, `docker compose`.
+- pane 3은 사용자가 직접 로그와 검증을 확인하는 터미널이다. 예: `git status`, `git diff`, test, `tail -f`.
+- 다른 pane에 작업을 위임하지 않는다.
+- 다른 pane에는 AI가 없다고 가정한다.
+- Codex 공식 subagent는 사용자가 명시적으로 요청한 경우에만 사용한다.
+- 토큰 절약을 위해 불필요한 반복 탐색, 전체 파일 열람, 과도한 설명을 피한다.
 
-세부 전문성은 developer 내부에서 작업 범위에 따라 나눈다.
+## 작업 범위
 
-* backend 관점: Spring API, DB, 인증/인가, 비즈니스 로직, 테스트
-* app 관점: Flutter 화면, 상태관리, API 연동
-* architect 관점: API 계약, DB, 인증 흐름, 구조 검토
+- 수정 전에는 확인할 파일 범위를 짧게 말한다.
+- 전체 코드베이스를 무작정 탐색하지 말고, 요청과 관련된 파일 중심으로 확인한다.
+- 대규모 리팩토링보다 요청 범위 내 최소 변경을 우선한다.
+- 관련 없는 사용자 변경은 되돌리지 않는다.
+- tmux 실행 스크립트, 빌드 설정, 앱 설정, 소스코드는 사용자가 명시적으로 요청한 범위에서만 수정한다.
 
-## 승인 흐름
+## 개발 원칙
 
-사용자 승인 요청은 main만 수행한다.
+- 수정 전 실제 디렉터리 구조와 기존 스타일을 확인한다.
+- 백엔드와 앱이 함께 쓰는 기능은 API 계약을 먼저 맞춘다.
+- API Key, 비밀번호, 토큰은 코드에 하드코딩하지 않는다.
+- Entity를 API 응답으로 직접 노출하지 않는다.
+- Flutter는 화면, 상태관리, API client를 가능한 한 분리한다.
+- 입력값은 시스템 경계에서 검증한다.
+- 오류는 사용자에게 필요한 메시지와 개발자가 확인할 수 있는 원인을 구분해 다룬다.
+- 테스트 또는 실행 확인 없이 완료했다고 단정하지 않는다.
+- 테스트를 못 하면 이유와 수동 검증 방법을 보고한다.
 
-main은 제품 코드를 직접 생성, 수정, 삭제하지 않는다. 구현이 필요한 작업은 반드시 developer에게 전달한다.
+## 구현 체크리스트
 
-developer와 review-qa는 main이 전달한 작업에 `USER_APPROVED: true`가 있을 때만 파일 생성, 수정, 삭제를 수행한다.
+- Spring 변경은 DTO, validation, exception handling, transaction, migration 영향을 확인한다.
+- Flutter 변경은 화면, 상태, API client, model 경계를 확인한다.
+- 외부 연동은 Azure, Replicate, AWS S3, FFmpeg, MySQL 관련 설정과 비밀값 노출 위험을 확인한다.
+- 변경 범위가 백엔드와 앱을 동시에 건드리면 요청/응답 형식, 에러 포맷, 인증 흐름을 먼저 정리한다.
+- 새 기능이나 버그 수정은 가능한 한 가장 작은 의미 있는 테스트를 함께 추가하거나 안내한다.
 
-승인 범위를 벗어나는 변경이 필요하면 사용자에게 직접 묻지 말고 main에게 보고한다.
+## 리뷰와 검증
 
-승인된 작업 전달 형식:
+단일 AI가 수정 후 자체 점검한다.
 
-```text
-USER_APPROVED: true
-APPROVED_SCOPE:
-- 목적:
-- 변경 허용 파일:
-- 변경 금지 파일:
-- 허용 작업:
-- 검증 방법:
-```
+- correctness, regression, security, missing tests를 우선 확인한다.
+- 스타일보다 버그, API 계약 불일치, 보안 문제, 테스트 공백을 먼저 본다.
+- 사용자가 별도 pane에서 테스트나 로그를 확인할 수 있다.
+- 로그가 필요하면 전체 로그를 요구하지 말고 핵심 에러 구간, 실패 명령, 재현 조건만 요청한다.
+- 검증 명령은 변경 범위에 맞게 최소로 제안한다.
 
-`USER_APPROVED: true`가 없으면 조사, 분석, 계획 수립까지만 수행한다.
+권장 검증 예:
 
-## 작업 원칙
-
-* 수정 전 실제 디렉터리 구조와 기존 스타일을 확인한다.
-* 백엔드와 앱이 함께 쓰는 기능은 API 계약을 먼저 맞춘다.
-* API Key, 비밀번호, 토큰은 코드에 하드코딩하지 않는다.
-* Entity를 API 응답으로 직접 노출하지 않는다.
-* Flutter는 화면, 상태관리, API client를 가능한 한 분리한다.
-* 테스트 또는 실행 확인 없이 완료했다고 단정하지 않는다.
-* 테스트를 못 하면 이유와 수동 검증 방법을 보고한다.
+- Backend compile: `cd backend && ./gradlew compileJava`
+- Backend unit tests: `cd backend && ./gradlew test`
+- Backend integration tests: `cd backend && ./gradlew integrationTest`
+- Flutter analysis: `cd app && flutter analyze`
+- Flutter tests: `cd app && flutter test`
 
 ## 브랜치와 커밋 원칙
 
 브랜치와 PR은 phase 단위가 아니라 기능 단위로 나눈다.
 
-* 하나의 브랜치는 독립적으로 리뷰, 테스트, 배포 판단이 가능한 기능이나 운영 변경 하나만 포함한다.
-* backend API, Flutter 화면/API 연동, native 설정, 문서/운영 스크립트는 서로 다른 검토 단위이면 별도 브랜치로 분리한다.
-* 여러 기능이 순서 의존성을 가지면 stacked PR로 만들고, 각 PR의 base branch를 명확히 둔다.
-* phase 번호는 작업 추적용일 뿐 브랜치명, PR 범위, 커밋 범위의 기준으로 쓰지 않는다.
-* 커밋은 작은 논리 단위로 만든다. 한 커밋에는 하나의 목적과 그 목적을 검증하는 테스트만 포함한다.
-* 커밋 전 staged diff가 여러 기능을 섞고 있으면 커밋하지 말고 기능별로 분리한다.
-* 대규모 변경을 push하거나 PR 생성하기 전에 main은 변경 파일 목록을 확인하고 기능 단위 분리가 필요한지 사용자에게 보고한다.
-* PR 본문에는 포함 기능, 제외한 후속 기능, 검증 결과, stacked PR 의존 관계를 명시한다.
+- 하나의 브랜치는 독립적으로 리뷰, 테스트, 배포 판단이 가능한 기능이나 운영 변경 하나만 포함한다.
+- backend API, Flutter 화면/API 연동, native 설정, 문서/운영 스크립트는 서로 다른 검토 단위이면 별도 브랜치로 분리한다.
+- 여러 기능이 순서 의존성을 가지면 stacked PR로 만들고, 각 PR의 base branch를 명확히 둔다.
+- phase 번호는 작업 추적용일 뿐 브랜치명, PR 범위, 커밋 범위의 기준으로 쓰지 않는다.
+- 커밋은 작은 논리 단위로 만든다. 한 커밋에는 하나의 목적과 그 목적을 검증하는 테스트만 포함한다.
+- 커밋 전 staged diff가 여러 기능을 섞고 있으면 커밋하지 말고 기능별로 분리한다.
+- 대규모 변경을 push하거나 PR 생성하기 전에 변경 파일 목록을 확인하고 기능 단위 분리가 필요한지 사용자에게 보고한다.
+- PR 본문에는 포함 기능, 제외한 후속 기능, 검증 결과, stacked PR 의존 관계를 명시한다.
 
 ## 참고 파일
 
 필요할 때만 아래 파일을 참고한다.
 
-* 역할: `.codex/agents/*.md` 또는 `~/.codex/agents/*.md`
-* 공통 규칙: `.codex/rules/*.md` 또는 `~/.codex/rules/*.md`
-* 작업 절차: `.codex/skills/*.md` 또는 `~/.codex/skills/*.md`
+- 현재 Codex 역할: `.codex/agents/main.md`
+- 공통 규칙 후보: `.codex/rules/*.md` 또는 `~/.codex/rules/*.md`
+- 작업 절차 후보: `.codex/skills/*.md` 또는 `~/.codex/skills/*.md`
 
-예:
-
-* API 설계: `api-design.md`
-* Spring 기능 구현: `springboot-feature.md`
-* Flutter API 연동: `flutter-api-integration.md`
-* 검증 루프: `verification-loop.md`
-
-## 참고 범위 제한
-
-에이전트는 자기 역할과 현재 작업에 필요한 파일만 확인한다.
-
-* 공통: 프로젝트 `AGENTS.md`와 자신의 agent 파일만 기본으로 읽는다.
-* main: `.codex/agents/main.md`를 읽고, 작업 분배에 필요한 범위만 추가로 확인한다.
-* developer: `.codex/agents/developer.md`를 읽고, Spring/Flutter 구현에 필요한 rule/skill만 확인한다.
-* review-qa: `.codex/agents/review-qa.md`를 읽고, 리뷰, QA, 테스트, 회귀 위험 검토에 필요한 rule/skill만 확인한다.
-
-rules/skills 디렉터리는 필요한 파일명을 찾기 위한 목록 조회만 허용한다. 파일 내용은 현재 작업과 직접 관련이 있을 때만 읽는다.
-
-다른 역할의 agent 파일이나 관련 없는 rule/skill 파일은 임의로 읽지 않는다. 필요하면 main에게 먼저 이유를 보고하고 범위를 확인받는다.
-
-## 역할별 참고 rule/skill
-
-아래 파일은 역할별 우선 참고 후보다. 실제 파일 내용은 현재 작업과 직접 관련이 있을 때만 읽는다.
-
-* main
-  * rule: `common.md`, `api-contract.md`, `security.md`, `testing.md`
-  * skill: `api-design.md`, `verification-loop.md`
-  * 조건부: Spring 작업 분배 시 `springboot.md`, `springboot-feature.md`; Flutter 작업 분배 시 `flutter.md`, `flutter-api-integration.md`
-* developer
-  * rule: `common.md`, `api-contract.md`, `security.md`, `springboot.md`, `flutter.md`
-  * skill: `springboot-feature.md`, `flutter-api-integration.md`
-  * 조건부: API 계약 설계가 필요하면 `api-design.md`; TDD가 필요한 변경이면 `tdd-workflow.md`; 검증 루프가 필요하면 `verification-loop.md`
-* review-qa
-  * rule: `common.md`, `testing.md`, `api-contract.md`, `security.md`
-  * skill: `verification-loop.md`
-  * 조건부: 백엔드 검토 시 `springboot.md`, `springboot-feature.md`; 앱 검토 시 `flutter.md`, `flutter-api-integration.md`; 테스트 설계가 필요하면 `tdd-workflow.md`
+rules/skills 디렉터리는 필요한 파일명을 찾기 위한 목록 조회만 먼저 수행한다. 파일 내용은 현재 작업과 직접 관련이 있을 때만 읽는다.
 
 ## 완료 보고
 
-작업 완료 시 아래만 보고한다.
+작업 완료 시 아래만 짧게 보고한다.
 
 1. 작업 요약
 2. 변경 파일
