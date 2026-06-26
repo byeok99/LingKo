@@ -7,6 +7,7 @@ import 'package:lingko_app/api/evaluation_api.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 import 'package:lingko_app/api/sentence_api.dart';
 import 'package:lingko_app/app/lingko_app.dart';
+import 'package:lingko_app/models/practice_history.dart';
 import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
@@ -51,6 +52,33 @@ class FakeEvaluationApi implements EvaluationApi {
   int? lastSentenceId;
   String? lastText;
   Object? error;
+  PracticeHistory history = const PracticeHistory(
+    items: [
+      PracticeHistoryItem(
+        evaluationLogId: 10,
+        sentenceId: 1,
+        source: 'RECOMMENDED',
+        originalText: '맛있겠다.',
+        standardPronunciation: '마싯게따.',
+        recognizedText: '마싯게따.',
+        overallScore: 91,
+        gradeLabel: 'Excellent',
+        summary: 'Clear pronunciation.',
+        scoreBreakdown: PracticeScoreBreakdown(
+          accuracy: 92,
+          fluency: 90,
+          completeness: 93,
+        ),
+        characters: [],
+      ),
+    ],
+    page: 0,
+    size: 10,
+    totalItems: 1,
+    totalPages: 1,
+    hasNext: false,
+    bestScore: 91,
+  );
 
   @override
   Future<PracticeResult> evaluate({
@@ -80,6 +108,19 @@ class FakeEvaluationApi implements EvaluationApi {
       weakCharacters: [],
       characters: [],
     );
+  }
+
+  @override
+  Future<PracticeHistory> fetchHistory({
+    int userId = 1,
+    int page = 0,
+    int size = 10,
+  }) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    return history;
   }
 }
 
@@ -389,6 +430,36 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(recorder.cancelCount, 1);
+  });
+
+  testWidgets('Profile shows recent practice history and opens retry', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Practice history'), findsOneWidget);
+    expect(find.text('Best score'), findsOneWidget);
+    expect(find.text('91'), findsWidgets);
+    expect(find.text('맛있겠다.'), findsOneWidget);
+    expect(find.text('Recognized: 마싯게따.'), findsOneWidget);
+
+    await tester.tap(find.text('Practice again'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Practice'), findsWidgets);
+    final retryInput = tester.widget<TextField>(find.byType(TextField));
+    expect(retryInput.controller?.text, '맛있겠다.');
   });
 
   testWidgets('leaving Practice tab deletes a stopped temporary recording', (

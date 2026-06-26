@@ -1,3 +1,4 @@
+import '../models/practice_history.dart';
 import '../models/practice_result.dart';
 import 'api_client.dart';
 
@@ -6,6 +7,12 @@ abstract class EvaluationApi {
     required String audioPath,
     int? sentenceId,
     String? text,
+  });
+
+  Future<PracticeHistory> fetchHistory({
+    int userId = 1,
+    int page = 0,
+    int size = 10,
   });
 }
 
@@ -39,6 +46,21 @@ class DartIoEvaluationApi implements EvaluationApi {
     );
 
     return PracticeResult.fromJson(json);
+  }
+
+  @override
+  Future<PracticeHistory> fetchHistory({
+    int userId = 1,
+    int page = 0,
+    int size = 10,
+  }) async {
+    final json = await _client.getJson('/api/evaluations/me', {
+      'userId': userId,
+      'page': page,
+      'size': size,
+    });
+
+    return PracticeHistory.fromJson(json);
   }
 }
 
