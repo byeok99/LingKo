@@ -4,7 +4,6 @@ import 'api_client.dart';
 abstract class EvaluationApi {
   Future<PracticeResult> evaluate({
     required String audioPath,
-    String? practiceToken,
     int? sentenceId,
     String? text,
   });
@@ -18,13 +17,10 @@ class DartIoEvaluationApi implements EvaluationApi {
   @override
   Future<PracticeResult> evaluate({
     required String audioPath,
-    String? practiceToken,
     int? sentenceId,
     String? text,
   }) async {
     final fields = <String, String>{
-      if (practiceToken != null && practiceToken.isNotEmpty)
-        'practiceToken': practiceToken,
       if (sentenceId != null) 'sentenceId': '$sentenceId',
       if (text != null && text.trim().isNotEmpty) 'text': text.trim(),
     };

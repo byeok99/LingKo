@@ -21,71 +21,73 @@ class GuideSheet extends StatelessWidget {
         20,
         MediaQuery.of(context).padding.bottom + 20,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 42,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(99),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(99),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              CharacterBadge(text: result.character, large: true),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  '${result.kind} guide',
-                  style: Theme.of(context).textTheme.headlineMedium,
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                CharacterBadge(text: result.character, large: true),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    '${result.kind} guide',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          AspectRatio(
-            aspectRatio: 1.5,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: CustomPaint(
-                painter: GuidePainter(result.kind),
-                child: const SizedBox.expand(),
+              ],
+            ),
+            const SizedBox(height: 18),
+            AspectRatio(
+              aspectRatio: 1.5,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: CustomPaint(
+                  painter: GuidePainter(result.kind),
+                  child: const SizedBox.expand(),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(result.note, style: Theme.of(context).textTheme.bodyLarge),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: ActionButton(
-                  icon: Icons.play_arrow,
-                  label: 'Play',
-                  onPressed: () {},
+            const SizedBox(height: 16),
+            Text(result.note, style: Theme.of(context).textTheme.bodyLarge),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: ActionButton(
+                    icon: Icons.play_arrow,
+                    label: 'Play',
+                    onPressed: () {},
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ActionButton(
-                  icon: Icons.mic,
-                  label: 'Repeat',
-                  onPressed: () {},
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ActionButton(
+                    icon: Icons.mic,
+                    label: 'Repeat',
+                    onPressed: () {},
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

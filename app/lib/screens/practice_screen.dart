@@ -1,20 +1,28 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
 import '../models/practice_sentence.dart';
+import '../services/audio_recorder_service.dart';
 import '../widgets/shared_widgets.dart';
 
 class PracticeScreen extends StatefulWidget {
   const PracticeScreen({
     super.key,
     required this.sentence,
-    required this.onResult,
+    required this.audioRecorderService,
+    required this.onEvaluateRecording,
     required this.onCustomSentence,
+    required this.onPrepareCustomSentence,
   });
 
   final PracticeSentence? sentence;
-  final VoidCallback onResult;
+  final AudioRecorderService audioRecorderService;
+  final Future<void> Function(PracticeSentence sentence, String audioPath)
+  onEvaluateRecording;
   final ValueChanged<PracticeSentence> onCustomSentence;
+  final Future<PracticeSentence> Function(String text) onPrepareCustomSentence;
 
   @override
   State<PracticeScreen> createState() => _PracticeScreenState();
@@ -26,6 +34,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
   final FocusNode customSentenceFocusNode = FocusNode();
 
   bool canSubmitCustomSentence = false;
+  bool isPreparingCustomSentence = false;
+  String? customSentenceError;
+  String? recordedAudioPath;
+  bool isRecording = false;
+  bool isUploadingRecording = false;
+  String? recordingError;
+  bool wasPermissionDenied = false;
 
   @override
   void initState() {
@@ -40,6 +55,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.sentence?.text != widget.sentence?.text) {
+      unawaited(_cleanupRecording(reportErrors: false));
       _syncControllerWithSentence();
       _focusEmptyPracticeInput();
     }
@@ -47,6 +63,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   @override
   void dispose() {
+    unawaited(_cleanupRecording(reportErrors: false));
     customSentenceController.removeListener(_syncCustomSentenceState);
     customSentenceController.dispose();
     customSentenceFocusNode.dispose();
@@ -88,22 +105,212 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
     customSentenceController.text = text;
     canSubmitCustomSentence = text.trim().isNotEmpty;
+    recordedAudioPath = null;
+    isRecording = false;
+    isUploadingRecording = false;
+    recordingError = null;
+    wasPermissionDenied = false;
   }
 
-  void _submitCustomSentence() {
+  Future<void> _submitCustomSentence() async {
     final text = customSentenceController.text.trim();
 
-    if (text.isEmpty) {
+    if (text.isEmpty || isPreparingCustomSentence) {
       return;
     }
 
-    widget.onCustomSentence(PracticeSentence.custom(text));
+    setState(() {
+      isPreparingCustomSentence = true;
+      customSentenceError = null;
+    });
+
+    try {
+      final preparedSentence = await widget.onPrepareCustomSentence(text);
+
+      if (!mounted) {
+        return;
+      }
+
+      widget.onCustomSentence(preparedSentence);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        customSentenceError = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isPreparingCustomSentence = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _startRecording() async {
+    final sentence = widget.sentence;
+
+    if (sentence == null || isRecording || isUploadingRecording) {
+      return;
+    }
+
+    setState(() {
+      recordingError = null;
+      recordedAudioPath = null;
+    });
+
+    try {
+      final hasPermission = await widget.audioRecorderService.hasPermission();
+      if (!hasPermission) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          wasPermissionDenied = true;
+          recordingError = 'Microphone permission is required.';
+        });
+        return;
+      }
+
+      await widget.audioRecorderService.start();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        wasPermissionDenied = false;
+        isRecording = true;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        recordingError = error.toString();
+      });
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    if (!isRecording) {
+      return;
+    }
+
+    try {
+      final path = await widget.audioRecorderService.stop();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        isRecording = false;
+        recordedAudioPath = path;
+        recordingError =
+            path == null ? 'Recording did not produce a file.' : null;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        isRecording = false;
+        recordingError = error.toString();
+      });
+    }
+  }
+
+  Future<void> _cancelRecording() async {
+    await _cleanupRecording(reportErrors: true);
+  }
+
+  Future<void> _cleanupRecording({required bool reportErrors}) async {
+    final shouldCancel = isRecording;
+    final audioPath = recordedAudioPath;
+
+    try {
+      if (shouldCancel) {
+        await widget.audioRecorderService.cancel();
+      }
+      if (audioPath != null) {
+        await widget.audioRecorderService.delete(audioPath);
+      }
+    } catch (error) {
+      if (!reportErrors || !mounted) {
+        return;
+      }
+      setState(() {
+        recordingError = error.toString();
+      });
+      return;
+    }
+
+    if (!mounted || !reportErrors) {
+      return;
+    }
+
+    setState(() {
+      isRecording = false;
+      recordedAudioPath = null;
+      recordingError = null;
+      wasPermissionDenied = false;
+    });
+  }
+
+  Future<void> _uploadRecording() async {
+    final sentence = widget.sentence;
+    final audioPath = recordedAudioPath;
+
+    if (sentence == null || audioPath == null || isUploadingRecording) {
+      return;
+    }
+
+    setState(() {
+      isUploadingRecording = true;
+      recordingError = null;
+    });
+
+    try {
+      await widget.onEvaluateRecording(sentence, audioPath);
+      await _deleteRecordingBestEffort(audioPath);
+      if (mounted) {
+        setState(() {
+          recordedAudioPath = null;
+        });
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        recordingError = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isUploadingRecording = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteRecordingBestEffort(String audioPath) async {
+    try {
+      await widget.audioRecorderService.delete(audioPath);
+    } catch (_) {
+      // Cleanup must not block a successfully produced evaluation result.
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 아직 실제 녹음 기능은 없습니다.
-    // 이 화면은 "듣기 -> 가이드 확인 -> 녹음" 흐름의 레이아웃을 먼저 검증합니다.
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
       children: [
@@ -112,7 +319,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
         _CustomSentenceCard(
           controller: customSentenceController,
           focusNode: customSentenceFocusNode,
-          canSubmit: canSubmitCustomSentence,
+          canSubmit: canSubmitCustomSentence && !isPreparingCustomSentence,
+          isLoading: isPreparingCustomSentence,
+          errorText: customSentenceError,
           onSubmit: _submitCustomSentence,
         ),
         const SizedBox(height: 24),
@@ -121,7 +330,15 @@ class _PracticeScreenState extends State<PracticeScreen> {
         else
           _PracticeContent(
             sentence: widget.sentence!,
-            onResult: widget.onResult,
+            isRecording: isRecording,
+            isUploading: isUploadingRecording,
+            hasRecording: recordedAudioPath != null,
+            errorText: recordingError,
+            wasPermissionDenied: wasPermissionDenied,
+            onStartRecording: _startRecording,
+            onStopRecording: _stopRecording,
+            onCancelRecording: _cancelRecording,
+            onUploadRecording: _uploadRecording,
           ),
       ],
     );
@@ -129,10 +346,29 @@ class _PracticeScreenState extends State<PracticeScreen> {
 }
 
 class _PracticeContent extends StatelessWidget {
-  const _PracticeContent({required this.sentence, required this.onResult});
+  const _PracticeContent({
+    required this.sentence,
+    required this.isRecording,
+    required this.isUploading,
+    required this.hasRecording,
+    required this.errorText,
+    required this.wasPermissionDenied,
+    required this.onStartRecording,
+    required this.onStopRecording,
+    required this.onCancelRecording,
+    required this.onUploadRecording,
+  });
 
   final PracticeSentence sentence;
-  final VoidCallback onResult;
+  final bool isRecording;
+  final bool isUploading;
+  final bool hasRecording;
+  final String? errorText;
+  final bool wasPermissionDenied;
+  final VoidCallback onStartRecording;
+  final VoidCallback onStopRecording;
+  final VoidCallback onCancelRecording;
+  final VoidCallback onUploadRecording;
 
   @override
   Widget build(BuildContext context) {
@@ -207,10 +443,94 @@ class _PracticeContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 32),
+        _RecordingPanel(
+          isRecording: isRecording,
+          isUploading: isUploading,
+          hasRecording: hasRecording,
+          errorText: errorText,
+          wasPermissionDenied: wasPermissionDenied,
+          onStartRecording: onStartRecording,
+          onStopRecording: onStopRecording,
+          onCancelRecording: onCancelRecording,
+          onUploadRecording: onUploadRecording,
+        ),
+      ],
+    );
+  }
+}
+
+class _RecordingPanel extends StatelessWidget {
+  const _RecordingPanel({
+    required this.isRecording,
+    required this.isUploading,
+    required this.hasRecording,
+    required this.errorText,
+    required this.wasPermissionDenied,
+    required this.onStartRecording,
+    required this.onStopRecording,
+    required this.onCancelRecording,
+    required this.onUploadRecording,
+  });
+
+  final bool isRecording;
+  final bool isUploading;
+  final bool hasRecording;
+  final String? errorText;
+  final bool wasPermissionDenied;
+  final VoidCallback onStartRecording;
+  final VoidCallback onStopRecording;
+  final VoidCallback onCancelRecording;
+  final VoidCallback onUploadRecording;
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryLabel =
+        isRecording
+            ? 'Stop recording'
+            : hasRecording
+            ? 'Upload and score'
+            : wasPermissionDenied
+            ? 'Retry microphone permission'
+            : 'Start recording';
+    final primaryIcon =
+        isRecording
+            ? Icons.stop
+            : hasRecording
+            ? Icons.cloud_upload_outlined
+            : Icons.mic;
+    final primaryAction =
+        isUploading
+            ? null
+            : isRecording
+            ? onStopRecording
+            : hasRecording
+            ? onUploadRecording
+            : onStartRecording;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (errorText != null) ...[
+          Text(
+            errorText!,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.error,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         FilledButton.icon(
-          onPressed: onResult,
-          icon: const Icon(Icons.mic),
-          label: const Text('Record and score'),
+          onPressed: primaryAction,
+          icon:
+              isUploading
+                  ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : Icon(primaryIcon),
+          label: Text(isUploading ? 'Uploading' : primaryLabel),
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.brandStrong,
             foregroundColor: AppColors.textPrimary,
@@ -224,6 +544,14 @@ class _PracticeContent extends StatelessWidget {
             ),
           ),
         ),
+        if (isRecording || hasRecording) ...[
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: isUploading ? null : onCancelRecording,
+            icon: const Icon(Icons.refresh),
+            label: Text(isRecording ? 'Cancel recording' : 'Re-record'),
+          ),
+        ],
       ],
     );
   }
@@ -255,12 +583,16 @@ class _CustomSentenceCard extends StatelessWidget {
     required this.controller,
     required this.focusNode,
     required this.canSubmit,
+    required this.isLoading,
+    required this.errorText,
     required this.onSubmit,
   });
 
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool canSubmit;
+  final bool isLoading;
+  final String? errorText;
   final VoidCallback onSubmit;
 
   @override
@@ -294,13 +626,30 @@ class _CustomSentenceCard extends StatelessWidget {
               prefixIcon: Icon(Icons.edit_outlined),
             ),
           ),
+          if (errorText != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              errorText!,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: canSubmit ? onSubmit : null,
-              icon: const Icon(Icons.arrow_forward),
-              label: const Text('Use this sentence'),
+              icon:
+                  isLoading
+                      ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : const Icon(Icons.arrow_forward),
+              label: Text(isLoading ? 'Preparing' : 'Use this sentence'),
             ),
           ),
         ],

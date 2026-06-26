@@ -38,7 +38,6 @@ void main() {
             return ApiResponse(
               statusCode: 200,
               body: jsonEncode({
-                'practiceToken': 'prep_test',
                 'sentence': {
                   'source': 'CUSTOM',
                   'originalText': '한국어를 배우고 있어요.',
