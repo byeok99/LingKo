@@ -188,7 +188,10 @@ class _LingKoShellState extends State<LingKoShell> {
             onPrepareCustomSentence:
                 widget.pronunciationApi.prepareCustomSentence,
           ),
-      const ProfileScreen(),
+      ProfileScreen(
+        evaluationApi: widget.evaluationApi,
+        onRetryPractice: openPractice,
+      ),
     ];
 
     // Scaffold는 일반적인 앱 화면 뼈대입니다.
