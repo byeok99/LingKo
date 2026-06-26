@@ -12,6 +12,8 @@ abstract class AudioRecorderService {
 
   Future<void> cancel();
 
+  Future<void> delete(String path);
+
   Future<void> dispose();
 }
 
@@ -28,11 +30,15 @@ class RecordAudioRecorderService implements AudioRecorderService {
 
   @override
   Future<String> start() async {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await getTemporaryDirectory();
     final path =
         '${directory.path}${Platform.pathSeparator}lingko-${DateTime.now().millisecondsSinceEpoch}.wav';
     await _recorder.start(
-      const RecordConfig(encoder: AudioEncoder.wav),
+      const RecordConfig(
+        encoder: AudioEncoder.wav,
+        sampleRate: 16000,
+        numChannels: 1,
+      ),
       path: path,
     );
     return path;
@@ -46,6 +52,14 @@ class RecordAudioRecorderService implements AudioRecorderService {
   @override
   Future<void> cancel() {
     return _recorder.cancel();
+  }
+
+  @override
+  Future<void> delete(String path) async {
+    final file = File(path);
+    if (await file.exists()) {
+      await file.delete();
+    }
   }
 
   @override

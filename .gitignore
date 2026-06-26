@@ -7,6 +7,8 @@ build/
 
 .DS_Store
 logs/
+.codex/logs/
+.codex/tmp/
 
 ### STS ###
 .apt_generated
@@ -48,3 +50,5 @@ application.yaml
 docs/
 app/docs/
 .dmux/
+.dumx-hooks
+AGENTS.md

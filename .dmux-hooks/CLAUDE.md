@@ -1,445 +1,71 @@
-# dmux Hooks System - Agent Reference
+# dmux Hooks Reference
 
-**Auto-generated documentation for AI agents**
+이 문서는 `.dmux-hooks/` 안의 훅 스크립트를 수정할 때만 참고한다. 프로젝트의 기본 운영은 단일 Codex AI + tmux 보조 pane 방식이며, dmux 훅 문서가 여러 AI pane 운영을 의미하지 않는다.
 
-This document contains everything an AI agent needs to create, modify, and understand dmux hooks. It is automatically generated from the dmux source code and embedded in the binary.
+## 현재 운영 전제
 
-## What You're Working On
+- AI는 메인 pane 하나에서만 실행된다.
+- 서버 실행 pane과 로그/검증 pane은 사용자가 직접 사용하는 터미널이다.
+- 훅 작업도 현재 Codex 세션에서 처리하며 다른 AI pane에 위임하지 않는다.
+- Codex 공식 subagent는 사용자가 명시적으로 요청한 경우에만 사용한다.
+- 긴 로그가 필요하면 전체 로그가 아니라 실패 명령, 핵심 에러 구간, 재현 조건만 확인한다.
 
-You are editing hooks for **dmux**, a tmux pane manager that creates AI-powered development workflows. Each pane runs in its own git worktree with an AI agent.
+## 훅 작성 원칙
 
-## Your Goal
+- `.dmux-hooks/`의 실행 훅은 bash 스크립트다.
+- 새 훅은 shebang으로 시작한다: `#!/bin/bash`
+- 실행 권한이 필요하다: `chmod +x .dmux-hooks/<hook_name>`
+- 경로는 하드코딩하지 말고 dmux 환경 변수를 사용한다.
+- 오래 걸리는 작업은 훅 실행 모델을 확인하고 필요한 경우 background로 돌린다.
+- secret, token, 개인 로컬 경로를 커밋하지 않는다.
+- 수정 전에는 관련 훅 파일만 확인한다.
 
-Create executable bash scripts in `.dmux-hooks/` that run automatically at key lifecycle events.
+## 주요 환경 변수
 
-## Quick Start
-
-1. **Create a hook file**: `touch .dmux-hooks/worktree_created`
-2. **Make it executable**: `chmod +x .dmux-hooks/worktree_created`
-3. **Add shebang**: Start with `#!/bin/bash`
-4. **Use environment variables**: Access `$DMUX_ROOT`, `$DMUX_WORKTREE_PATH`, etc.
-5. **Test it**: Set env vars manually and run the script
-
-## Hook Execution Model
-
-- **Mostly non-blocking**: Most hooks run in background (detached processes)
-- **Bootstrap-gated**: `worktree_created` blocks agent launch so setup can finish first, with no fixed timeout
-- **Live bootstrap output**: During `worktree_created`, stdout/stderr is streamed into the new pane's setup UI
-- **Failure behavior**: Background hook errors are logged; gated hooks can abort the operation
-- **Environment-based**: All context passed via environment variables
-- **Version controlled**: Hooks in `.dmux-hooks/` are shared with team
-- **Priority resolution**: `.dmux-hooks/` → `.dmux/hooks/` → `~/.dmux/hooks/`
-
-## Available Hooks
-
-### Pane Lifecycle Hooks
-
-| Hook | When | Common Use Cases |
-|------|------|------------------|
-| `before_pane_create` | Before pane creation | Validation, notifications, pre-flight checks |
-| `pane_created` | After pane, before worktree | Configure tmux settings, prepare environment |
-| `worktree_created` | After worktree creation, before agent launch | Install deps, copy configs, setup git |
-| `before_pane_close` | Before closing | Save state, backup uncommitted work |
-| `pane_closed` | After closed | Cleanup resources, analytics, notifications |
-
-### Worktree Lifecycle Hooks
-
-| Hook | When | Common Use Cases |
-|------|------|------------------|
-| `before_worktree_remove` | Before worktree removal | Archive worktree, save artifacts |
-| `worktree_removed` | After worktree removed | Cleanup external references |
-
-### Merge Lifecycle Hooks
-
-| Hook | When | Common Use Cases |
-|------|------|------------------|
-| `pre_merge` | Before merge operation | Run final tests, create backups |
-| `post_merge` | After successful merge | Deploy, close issues, notify team |
-
-### Interactive Hooks (with HTTP callbacks)
-
-| Hook | When | Common Use Cases |
-|------|------|------------------|
-| `run_test` | When tests triggered | Run test suite, report status via HTTP |
-| `run_dev` | When dev server triggered | Start dev server, create tunnel, report URL |
-
-
-## Environment Variables
-
-### Always Available
 ```bash
-DMUX_ROOT="/path/to/project"           # Project root directory
-DMUX_SERVER_PORT="3142"                # HTTP server port
-```
-
-### Pane Context (most hooks)
-```bash
-DMUX_PANE_ID="dmux-1234567890"         # dmux pane identifier
-DMUX_SLUG="fix-auth-bug"               # Branch/worktree name
-DMUX_PROMPT="Fix authentication bug"   # User's prompt
-DMUX_AGENT="claude"                    # Agent type (registry id, e.g. claude, codex, opencode)
-DMUX_TMUX_PANE_ID="%38"                # tmux pane ID
-```
-
-### Worktree Context
-```bash
+DMUX_ROOT="/path/to/project"
+DMUX_SERVER_PORT="3142"
+DMUX_PANE_ID="dmux-1234567890"
+DMUX_SLUG="fix-auth-bug"
+DMUX_PROMPT="Fix authentication bug"
+DMUX_AGENT="codex"
+DMUX_TMUX_PANE_ID="%38"
 DMUX_WORKTREE_PATH="/path/.dmux/worktrees/fix-auth-bug"
-DMUX_BRANCH="fix-auth-bug"             # Same as slug
+DMUX_BRANCH="fix-auth-bug"
+DMUX_TARGET_BRANCH="main"
 ```
 
-### Bootstrap Progress Context
-```bash
-DMUX_PROGRESS="1"                      # Set when output is shown in the new pane setup UI
-DMUX_STATUS_PREFIX="DMUX_STATUS:"      # Prefix for clean status messages
-```
+## 사용 가능한 훅
 
-`worktree_created` can emit progress while it runs. Any stdout/stderr line is shown in the setup UI; lines prefixed with `$DMUX_STATUS_PREFIX` are displayed without the prefix.
+- `before_pane_create`: pane 생성 전
+- `pane_created`: pane 생성 후
+- `worktree_created`: worktree 생성 후, agent 시작 전
+- `before_pane_close`: pane 종료 전
+- `pane_closed`: pane 종료 후
+- `before_worktree_remove`: worktree 제거 전
+- `worktree_removed`: worktree 제거 후
+- `pre_merge`: merge 전
+- `post_merge`: merge 후
+- `run_test`: 테스트 실행 요청 시
+- `run_dev`: 개발 서버 실행 요청 시
 
-```bash
-status() {
-  if [ "${DMUX_PROGRESS:-0}" = "1" ]; then
-    echo "${DMUX_STATUS_PREFIX:-DMUX_STATUS:} $*"
-  else
-    echo "[Hook] $*"
-  fi
-}
-```
+## 최소 예시
 
-### Merge Context
-```bash
-DMUX_TARGET_BRANCH="main"              # Branch being merged into
-```
-
-## HTTP Callback API
-
-Interactive hooks (`run_test` and `run_dev`) can update dmux UI via HTTP.
-
-### Update Test Status
-```bash
-curl -X PUT "http://localhost:$DMUX_SERVER_PORT/api/panes/$DMUX_PANE_ID/test"   -H "Content-Type: application/json"   -d '{"status": "running", "output": "optional test output"}'
-
-# Status values: "running" | "passed" | "failed"
-```
-
-### Update Dev Server
-```bash
-curl -X PUT "http://localhost:$DMUX_SERVER_PORT/api/panes/$DMUX_PANE_ID/dev"   -H "Content-Type: application/json"   -d '{"status": "running", "url": "http://localhost:3000"}'
-
-# Status values: "running" | "stopped"
-# url: Can be localhost or tunnel URL (ngrok, cloudflared, etc.)
-```
-
-## Common Patterns
-
-### Pattern 1: Install Dependencies
 ```bash
 #!/bin/bash
-# .dmux-hooks/worktree_created
+set -e
 
 cd "$DMUX_WORKTREE_PATH"
 
-status() {
-  if [ "${DMUX_PROGRESS:-0}" = "1" ]; then
-    echo "${DMUX_STATUS_PREFIX:-DMUX_STATUS:} $*"
-  else
-    echo "[Hook] $*"
-  fi
-}
-
-if [ -f "pnpm-lock.yaml" ]; then
-  status "Installing dependencies with pnpm"
-  pnpm install --prefer-offline
-elif [ -f "package-lock.json" ]; then
-  status "Installing dependencies with npm"
-  npm install
-elif [ -f "yarn.lock" ]; then
-  status "Installing dependencies with yarn"
-  yarn install
-elif [ -f "Gemfile" ]; then
-  status "Installing gems"
-  bundle install
-elif [ -f "requirements.txt" ]; then
-  status "Installing Python dependencies"
-  pip install -r requirements.txt
-elif [ -f "Cargo.toml" ]; then
-  status "Building Rust project"
-  cargo build
-fi
+echo "[Hook] Running test command"
+./gradlew test
 ```
 
-### Pattern 2: Copy Configuration
+## 검증
+
 ```bash
-#!/bin/bash
-# .dmux-hooks/worktree_created
-
-# Copy environment file
-if [ -f "$DMUX_ROOT/.env.local" ]; then
-  cp "$DMUX_ROOT/.env.local" "$DMUX_WORKTREE_PATH/.env.local"
-fi
-
-# Copy other config files
-for file in .env.development .npmrc .yarnrc; do
-  if [ -f "$DMUX_ROOT/$file" ]; then
-    cp "$DMUX_ROOT/$file" "$DMUX_WORKTREE_PATH/$file"
-  fi
-done
+bash -n .dmux-hooks/<hook_name>
+shellcheck .dmux-hooks/<hook_name>
 ```
 
-### Pattern 3: Run Tests with Status Updates
-```bash
-#!/bin/bash
-# .dmux-hooks/run_test
-
-set -e
-cd "$DMUX_WORKTREE_PATH"
-API="http://localhost:$DMUX_SERVER_PORT/api/panes/$DMUX_PANE_ID/test"
-
-# Update: starting
-curl -s -X PUT "$API" -H "Content-Type: application/json"   -d '{"status": "running"}' > /dev/null
-
-# Run tests and capture output
-OUTPUT_FILE="/tmp/dmux-test-$DMUX_PANE_ID.txt"
-if pnpm test > "$OUTPUT_FILE" 2>&1; then
-  STATUS="passed"
-else
-  STATUS="failed"
-fi
-
-# Get output (truncate if too long)
-OUTPUT=$(head -c 5000 "$OUTPUT_FILE")
-
-# Update: complete
-curl -s -X PUT "$API" -H "Content-Type: application/json"   -d "$(jq -n --arg status "$STATUS" --arg output "$OUTPUT"     '{status: $status, output: $output}')" > /dev/null
-
-rm -f "$OUTPUT_FILE"
-```
-
-### Pattern 4: Dev Server with Tunnel
-```bash
-#!/bin/bash
-# .dmux-hooks/run_dev
-
-set -e
-cd "$DMUX_WORKTREE_PATH"
-API="http://localhost:$DMUX_SERVER_PORT/api/panes/$DMUX_PANE_ID/dev"
-
-# Start dev server in background
-LOG_FILE="/tmp/dmux-dev-$DMUX_PANE_ID.log"
-pnpm dev > "$LOG_FILE" 2>&1 &
-DEV_PID=$!
-
-# Wait for server to start
-sleep 5
-
-# Detect port from logs
-PORT=$(grep -oP 'localhost:Kd+' "$LOG_FILE" | head -1)
-[ -z "$PORT" ] && PORT=3000
-
-# Optional: Create tunnel with cloudflared
-if command -v cloudflared &> /dev/null; then
-  TUNNEL=$(cloudflared tunnel --url "http://localhost:$PORT" 2>&1 |     grep -oP 'https://[a-z0-9-]+.trycloudflare.com' | head -1)
-  URL="${TUNNEL:-http://localhost:$PORT}"
-else
-  URL="http://localhost:$PORT"
-fi
-
-# Report status
-curl -s -X PUT "$API" -H "Content-Type: application/json"   -d "{"status": "running", "url": "$URL"}" > /dev/null
-
-echo "[Hook] Dev server running at $URL (PID: $DEV_PID)"
-```
-
-### Pattern 5: Post-Merge Deployment
-```bash
-#!/bin/bash
-# .dmux-hooks/post_merge
-
-set -e
-cd "$DMUX_ROOT"
-
-# Only deploy from main/master
-if [ "$DMUX_TARGET_BRANCH" != "main" ] && [ "$DMUX_TARGET_BRANCH" != "master" ]; then
-  exit 0
-fi
-
-# Push to remote
-git push origin "$DMUX_TARGET_BRANCH"
-
-# Trigger deployment (example: Vercel)
-if [ -n "$VERCEL_TOKEN" ]; then
-  curl -s -X POST "https://api.vercel.com/v1/deployments"     -H "Authorization: Bearer $VERCEL_TOKEN"     -H "Content-Type: application/json"     -d '{"name": "my-project"}' > /dev/null
-fi
-
-# Close GitHub issue if prompt contains #123
-ISSUE=$(echo "$DMUX_PROMPT" | grep -oP '#Kd+' | head -1)
-if [ -n "$ISSUE" ] && command -v gh &> /dev/null; then
-  gh issue close "$ISSUE"     -c "Resolved in $DMUX_SLUG, merged to $DMUX_TARGET_BRANCH"     2>/dev/null || true
-fi
-```
-
-## Best Practices
-
-1. **Always start with shebang**: `#!/bin/bash`
-2. **Set error handling**: `set -e` (exit on error)
-3. **Make executable**: `chmod +x .dmux-hooks/hook_name`
-4. **Background long operations**: Append `&` to avoid blocking
-5. **Check for required tools**: `command -v tool &> /dev/null`
-6. **Log for debugging**: `echo "[Hook] message" >> "$DMUX_ROOT/.dmux/hooks.log"`
-7. **Handle missing vars gracefully**: `[ -z "$VAR" ] && exit 0`
-8. **Use silent curl**: `curl -s` to avoid noise in logs
-9. **Clean up temp files**: Remove files in `/tmp/`
-10. **Test before committing**: Run hooks manually with mock env vars
-
-## Testing Hooks
-
-### Manual Testing
-```bash
-# 1. Set environment variables
-export DMUX_ROOT="$(pwd)"
-export DMUX_PANE_ID="test-pane"
-export DMUX_SLUG="test-branch"
-export DMUX_WORKTREE_PATH="$(pwd)"
-export DMUX_SERVER_PORT="3142"
-export DMUX_AGENT="claude"
-export DMUX_PROMPT="Test prompt"
-
-# 2. Run hook directly
-./.dmux-hooks/worktree_created
-
-# 3. Check exit code
-echo $?  # Should be 0 for success
-```
-
-### Syntax Check
-```bash
-# Check for syntax errors without running
-bash -n ./.dmux-hooks/worktree_created
-```
-
-### Shellcheck (if available)
-```bash
-shellcheck ./.dmux-hooks/worktree_created
-```
-
-## Project Context Analysis
-
-Before creating hooks, analyze these files in the project:
-
-### Package Manager Detection
-```bash
-# Check which package manager is used
-if [ -f "pnpm-lock.yaml" ]; then
-  # Use: pnpm install, pnpm test, pnpm dev
-elif [ -f "package-lock.json" ]; then
-  # Use: npm install, npm test, npm run dev
-elif [ -f "yarn.lock" ]; then
-  # Use: yarn install, yarn test, yarn dev
-fi
-```
-
-### Test Command Discovery
-```bash
-# Read package.json to find test command
-cat package.json | grep '"test"'
-# Or with jq:
-jq -r '.scripts.test' package.json
-```
-
-### Dev Command Discovery
-```bash
-# Read package.json to find dev command
-cat package.json | grep '"dev"'
-# Or with jq:
-jq -r '.scripts.dev' package.json
-```
-
-### Environment Variables
-```bash
-# Check for .env files to copy
-ls -la | grep '.env'
-```
-
-### Build System
-```bash
-# Detect build system
-if [ -f "vite.config.ts" ]; then
-  # Vite project
-elif [ -f "next.config.js" ]; then
-  # Next.js project
-elif [ -f "nuxt.config.ts" ]; then
-  # Nuxt project
-fi
-```
-
-## Common Mistakes to Avoid
-
-❌ **Blocking operations**: `sleep 60` (blocks dmux)
-✅ **Background long tasks**: `slow_operation &`
-
-❌ **Hardcoded paths**: `/Users/me/project`
-✅ **Use variables**: `"$DMUX_ROOT"`
-
-❌ **Assuming tools exist**: `pnpm install`
-✅ **Check first**: `command -v pnpm && pnpm install`
-
-❌ **No error handling**: Script fails silently
-✅ **Set error mode**: `set -e` or check exit codes
-
-❌ **Forgetting executable bit**: Hook won't run
-✅ **Make executable**: `chmod +x`
-
-❌ **Noisy output**: Clutters dmux logs
-✅ **Silent operations**: `curl -s`, `> /dev/null 2>&1`
-
-❌ **Not testing**: Deploy and hope
-✅ **Test manually**: Run with mock env vars first
-
-## Debugging
-
-If a hook isn't working:
-
-1. **Check if file exists**: `ls -la .dmux-hooks/`
-2. **Check permissions**: Should show `x` in `rwxr-xr-x`
-3. **Check syntax**: `bash -n .dmux-hooks/hook_name`
-4. **Test manually**: Set env vars and run
-5. **Check logs**: dmux logs to stderr with `[Hooks]` prefix
-6. **Simplify**: Remove complex parts, test basic version
-7. **Check tool availability**: `command -v required_tool`
-
-### Debug Mode
-```bash
-#!/bin/bash
-# Add to top of hook for debugging
-set -x  # Print each command before executing
-set -e  # Exit on error
-
-# Your hook logic here
-```
-
-## Summary Checklist
-
-When creating a new hook:
-
-- [ ] Create file in `.dmux-hooks/`
-- [ ] Add shebang: `#!/bin/bash`
-- [ ] Make executable: `chmod +x`
-- [ ] Add `set -e` for error handling
-- [ ] Use environment variables (never hardcode paths)
-- [ ] Keep blocking hooks chatty with status output
-- [ ] Background long operations with `&` only when the hook does not gate the operation
-- [ ] Check for required tools before using
-- [ ] Test manually with mock env vars
-- [ ] Add comments explaining what it does
-- [ ] Commit to version control
-
-## Getting Help
-
-- **Full documentation**: See `HOOKS.md` in project root
-- **Claude-specific tips**: See `CLAUDE.md` in `.dmux-hooks/`
-- **Examples**: Check `.dmux-hooks/examples/` directory
-- **dmux API**: See `API.md` for REST endpoints
-
----
-
-*This documentation was auto-generated from dmux source code.*
-*Version: 2026-05-25*
+`shellcheck`가 설치되어 있지 않으면 `bash -n`과 수동 실행으로 확인한다.

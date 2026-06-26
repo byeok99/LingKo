@@ -5,6 +5,8 @@ class PracticeResult {
     required this.overallScore,
     required this.gradeLabel,
     required this.summary,
+    this.recognizedText = '',
+    this.characterScoreStatus = 'UNAVAILABLE',
     required this.scoreBreakdown,
     required this.weakCharacters,
     required this.characters,
@@ -19,6 +21,11 @@ class PracticeResult {
       overallScore: _intValue(json['overallScore']),
       gradeLabel: _stringValue(json['gradeLabel']),
       summary: _stringValue(json['summary']),
+      recognizedText: _stringValue(json['recognizedText']),
+      characterScoreStatus: _stringValue(
+        json['characterScoreStatus'],
+        fallback: 'UNAVAILABLE',
+      ),
       scoreBreakdown:
           scoreBreakdownJson is Map<String, Object?>
               ? PracticeScoreBreakdown.fromJson(scoreBreakdownJson)
@@ -35,6 +42,8 @@ class PracticeResult {
   final int overallScore;
   final String gradeLabel;
   final String summary;
+  final String recognizedText;
+  final String characterScoreStatus;
   final PracticeScoreBreakdown scoreBreakdown;
   final List<CharacterResult> weakCharacters;
   final List<CharacterResult> characters;

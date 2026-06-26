@@ -30,6 +30,11 @@ class ResultScreen extends StatelessWidget {
     final weak =
         result?.weakCharacters ??
         sentence.characters.where((item) => item.score < 80).toList();
+    final recognizedText = result?.recognizedText ?? '';
+    final showRecognizedText =
+        recognizedText.isNotEmpty && !summary.contains(recognizedText);
+    final characterScoresUnavailable =
+        result?.characterScoreStatus == 'UNAVAILABLE';
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
@@ -71,6 +76,13 @@ class ResultScreen extends StatelessWidget {
             height: 1.35,
           ),
         ),
+        if (showRecognizedText) ...[
+          const SizedBox(height: 10),
+          Text(
+            'Recognized speech: $recognizedText',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
         const SizedBox(height: 22),
         ScoreBreakdown(
           accuracy: breakdown?.accuracy ?? 84,
@@ -80,6 +92,11 @@ class ResultScreen extends StatelessWidget {
         const SizedBox(height: 28),
         const SectionHeader(title: 'Weak sounds'),
         const SizedBox(height: 12),
+        if (characterScoresUnavailable)
+          Text(
+            'Character-level scores are unavailable for this evaluation.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         ...weak.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: 10),

@@ -47,7 +47,7 @@ class GuidePainter extends CustomPainter {
     canvas.drawPath(mouth, fill);
     canvas.drawPath(mouth, outline);
 
-    if (kind == 'Tongue') {
+    if (kind.toUpperCase() == 'TONGUE') {
       final tongue =
           Path()
             ..moveTo(size.width * .31, size.height * .62)

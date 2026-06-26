@@ -130,6 +130,7 @@ class CharacterResult {
     this.mouthGuideUrl,
     this.tongueGuideUrl,
     this.guideStatus,
+    this.scoreStatus = 'AVAILABLE',
   });
 
   factory CharacterResult.fromGuideJson(Map<String, Object?> json) {
@@ -141,6 +142,7 @@ class CharacterResult {
       mouthGuideUrl: _nullableStringValue(json['mouthGuideUrl']),
       tongueGuideUrl: _nullableStringValue(json['tongueGuideUrl']),
       guideStatus: _nullableStringValue(json['guideStatus']),
+      scoreStatus: 'UNAVAILABLE',
     );
   }
 
@@ -153,6 +155,7 @@ class CharacterResult {
       mouthGuideUrl: _nullableStringValue(json['mouthGuideUrl']),
       tongueGuideUrl: _nullableStringValue(json['tongueGuideUrl']),
       guideStatus: _nullableStringValue(json['guideStatus']),
+      scoreStatus: _stringValue(json['scoreStatus'], fallback: 'UNAVAILABLE'),
     );
   }
 
@@ -163,6 +166,7 @@ class CharacterResult {
   final String? mouthGuideUrl;
   final String? tongueGuideUrl;
   final String? guideStatus;
+  final String scoreStatus;
 }
 
 String _stringValue(Object? value, {String fallback = ''}) {

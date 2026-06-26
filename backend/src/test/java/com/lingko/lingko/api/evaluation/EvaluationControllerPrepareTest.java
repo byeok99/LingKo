@@ -30,7 +30,6 @@ class EvaluationControllerPrepareTest {
     @DisplayName("POST /api/pronunciation/prepare는 준비된 문장을 반환한다")
     void prepareCustomSentence() throws Exception {
         PronunciationPrepareResponse response = PronunciationPrepareResponse.builder()
-                .practiceToken("prep_test")
                 .sentence(PronunciationPrepareResponse.SentenceResponse.builder()
                         .source("CUSTOM")
                         .originalText("한국어를 배우고 있어요.")
@@ -48,7 +47,7 @@ class EvaluationControllerPrepareTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"source\":\"CUSTOM\",\"text\":\"한국어를 배우고 있어요.\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.practiceToken").value("prep_test"))
+                .andExpect(jsonPath("$.practiceToken").doesNotExist())
                 .andExpect(jsonPath("$.sentence.source").value("CUSTOM"))
                 .andExpect(jsonPath("$.sentence.standardPronunciation").value("한구거를 배우고 이써요."));
     }
