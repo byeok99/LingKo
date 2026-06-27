@@ -130,11 +130,13 @@ void main() {
 
   test('fetchHistory requests my evaluations and maps response', () async {
     Uri? requestedUri;
+    Map<String, String>? requestedHeaders;
     final api = DartIoEvaluationApi(
       client: ApiClient(
         baseUrl: 'http://localhost:8080',
-        getJsonTransport: (uri, timeout) async {
+        getJsonTransport: (uri, timeout, headers) async {
           requestedUri = uri;
+          requestedHeaders = headers;
 
           return ApiResponse(
             statusCode: 200,
@@ -171,12 +173,17 @@ void main() {
       ),
     );
 
-    final history = await api.fetchHistory(userId: 7, page: 0, size: 2);
+    final history = await api.fetchHistory(
+      accessToken: 'access.jwt',
+      page: 0,
+      size: 2,
+    );
 
     expect(
       requestedUri.toString(),
-      'http://localhost:8080/api/evaluations/me?userId=7&page=0&size=2',
+      'http://localhost:8080/api/evaluations/me?page=0&size=2',
     );
+    expect(requestedHeaders, {'Authorization': 'Bearer access.jwt'});
     expect(history.bestScore, 91);
     expect(history.items.single.originalText, '맛있겠다.');
     expect(history.items.single.scoreBreakdown.accuracy, 92);

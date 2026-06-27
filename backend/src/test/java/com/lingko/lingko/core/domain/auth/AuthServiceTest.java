@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.api.auth.dto.AuthTokenResponse;
 import com.lingko.lingko.api.auth.dto.OAuthLoginRequest;
 import com.lingko.lingko.core.config.JwtSettings;
+import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.auth.service.AuthService;
 import com.lingko.lingko.core.domain.auth.service.JwtTokenProvider;
 import com.lingko.lingko.core.domain.auth.service.OAuthIdentity;
@@ -49,6 +50,9 @@ class AuthServiceTest {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -100,6 +104,23 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.loginWithOAuth(new OAuthLoginRequest("APPLE", "valid-token")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported OAuth provider");
+    }
+
+    @Test
+    @DisplayName("JWT provider는 access token subject를 사용자 ID로 파싱한다")
+    void jwtProviderParsesAccessTokenUserId() {
+        JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(7L);
+
+        assertThat(jwtTokenProvider.parseAccessTokenUserId(tokens.accessToken())).isEqualTo(7L);
+    }
+
+    @Test
+    @DisplayName("JWT provider는 refresh token을 access token으로 사용할 수 없게 거부한다")
+    void jwtProviderRejectsRefreshTokenAsAccessToken() {
+        JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(7L);
+
+        assertThatThrownBy(() -> jwtTokenProvider.parseAccessTokenUserId(tokens.refreshToken()))
+                .isInstanceOf(AuthException.class);
     }
 
     private JsonNode jwtPayload(String token) throws Exception {
