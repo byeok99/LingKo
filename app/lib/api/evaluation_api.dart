@@ -10,7 +10,7 @@ abstract class EvaluationApi {
   });
 
   Future<PracticeHistory> fetchHistory({
-    int userId = 1,
+    required String accessToken,
     int page = 0,
     int size = 10,
   });
@@ -50,15 +50,15 @@ class DartIoEvaluationApi implements EvaluationApi {
 
   @override
   Future<PracticeHistory> fetchHistory({
-    int userId = 1,
+    required String accessToken,
     int page = 0,
     int size = 10,
   }) async {
-    final json = await _client.getJson('/api/evaluations/me', {
-      'userId': userId,
-      'page': page,
-      'size': size,
-    });
+    final json = await _client.getJson(
+      '/api/evaluations/me',
+      {'page': page, 'size': size},
+      {'Authorization': 'Bearer ${accessToken.trim()}'},
+    );
 
     return PracticeHistory.fromJson(json);
   }

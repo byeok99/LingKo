@@ -4,7 +4,11 @@ import 'dart:io';
 
 typedef JsonMap = Map<String, Object?>;
 typedef GetJsonTransport =
-    Future<ApiResponse> Function(Uri uri, Duration timeout);
+    Future<ApiResponse> Function(
+      Uri uri,
+      Duration timeout,
+      Map<String, String> headers,
+    );
 typedef PostJsonTransport =
     Future<ApiResponse> Function(Uri uri, JsonMap body, Duration timeout);
 typedef MultipartTransport =
@@ -35,9 +39,10 @@ class ApiClient {
   Future<JsonMap> getJson(
     String path, [
     Map<String, Object?> query = const {},
+    Map<String, String> headers = const {},
   ]) async {
     final uri = _buildUri(path, query);
-    final response = await _getJsonTransport(uri, timeout);
+    final response = await _getJsonTransport(uri, timeout, headers);
 
     return _decodeResponse(response);
   }
@@ -156,12 +161,19 @@ class MultipartFileData {
   final String contentType;
 }
 
-Future<ApiResponse> _getJsonWithDartIo(Uri uri, Duration timeout) async {
+Future<ApiResponse> _getJsonWithDartIo(
+  Uri uri,
+  Duration timeout,
+  Map<String, String> headers,
+) async {
   final client = HttpClient();
 
   try {
     final request = await client.getUrl(uri).timeout(timeout);
     request.headers.set(HttpHeaders.acceptHeader, ContentType.json.mimeType);
+    for (final header in headers.entries) {
+      request.headers.set(header.key, header.value);
+    }
 
     final response = await request.close().timeout(timeout);
     final responseBody = await response.transform(utf8.decoder).join();

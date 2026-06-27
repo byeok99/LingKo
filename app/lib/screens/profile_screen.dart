@@ -37,7 +37,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     restoreSession();
-    loadHistory();
   }
 
   Future<void> restoreSession() async {
@@ -51,6 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         session = restoredSession;
       });
+      await loadHistory(restoredSession);
     } catch (error) {
       if (!mounted) {
         return;
@@ -84,6 +84,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         session = nextSession;
       });
+      await loadHistory(nextSession);
     } catch (error) {
       if (!mounted) {
         return;
@@ -110,18 +111,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     setState(() {
       session = null;
+      history = null;
+      isLoading = false;
       authErrorText = null;
     });
   }
 
-  Future<void> loadHistory() async {
+  Future<void> loadHistory([AuthSession? authSession]) async {
+    final currentSession = authSession ?? session;
+    if (currentSession == null) {
+      setState(() {
+        history = null;
+        isLoading = false;
+        errorText = null;
+      });
+      return;
+    }
+
     setState(() {
       isLoading = true;
       errorText = null;
     });
 
     try {
-      final nextHistory = await widget.evaluationApi.fetchHistory();
+      final nextHistory = await widget.evaluationApi.fetchHistory(
+        accessToken: currentSession.accessToken,
+      );
 
       if (!mounted) {
         return;
@@ -177,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.error_outline,
             label: errorText!,
             action: TextButton.icon(
-              onPressed: loadHistory,
+              onPressed: () => loadHistory(),
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
             ),

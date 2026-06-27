@@ -12,7 +12,7 @@ void main() {
       final api = DartIoSentenceApi(
         client: ApiClient(
           baseUrl: 'http://localhost:8080',
-          getJsonTransport: (uri, timeout) async {
+          getJsonTransport: (uri, timeout, headers) async {
             requestedUri = uri;
 
             return ApiResponse(
@@ -56,7 +56,7 @@ void main() {
     final api = DartIoSentenceApi(
       client: ApiClient(
         baseUrl: 'http://localhost:8080',
-        getJsonTransport: (uri, timeout) async {
+        getJsonTransport: (uri, timeout, headers) async {
           return ApiResponse(
             statusCode: 200,
             body: jsonEncode({
@@ -87,7 +87,7 @@ void main() {
       final api = DartIoSentenceApi(
         client: ApiClient(
           baseUrl: 'http://localhost:8080',
-          getJsonTransport: (uri, timeout) async {
+          getJsonTransport: (uri, timeout, headers) async {
             return ApiResponse(
               statusCode: 200,
               body: jsonEncode({

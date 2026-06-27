@@ -114,7 +114,7 @@ class FakeEvaluationApi implements EvaluationApi {
 
   @override
   Future<PracticeHistory> fetchHistory({
-    int userId = 1,
+    required String accessToken,
     int page = 0,
     int size = 10,
   }) async {
@@ -180,6 +180,9 @@ class FakeAudioRecorderService implements AudioRecorderService {
 }
 
 class FakeAppAuthService implements AppAuthService {
+  FakeAppAuthService({this.restoreExistingSession = false});
+
+  final bool restoreExistingSession;
   bool signInCalled = false;
   Object? error;
   AuthSession? session = const AuthSession(
@@ -197,7 +200,7 @@ class FakeAppAuthService implements AppAuthService {
 
   @override
   Future<AuthSession?> restoreSession() async {
-    return null;
+    return restoreExistingSession ? session : null;
   }
 
   @override
@@ -487,7 +490,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
