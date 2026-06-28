@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/evaluation_api.dart';
 import '../api/pronunciation_api.dart';
 import '../api/sentence_api.dart';
+import '../api/user_preferences_api.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../screens/home_screen.dart';
@@ -21,6 +22,7 @@ class LingKoApp extends StatelessWidget {
     this.pronunciationApi,
     this.sentenceApi,
     this.evaluationApi,
+    this.userPreferencesApi,
     this.authService,
     this.audioRecorderService,
   });
@@ -28,6 +30,7 @@ class LingKoApp extends StatelessWidget {
   final PronunciationApi? pronunciationApi;
   final SentenceApi? sentenceApi;
   final EvaluationApi? evaluationApi;
+  final UserPreferencesApi? userPreferencesApi;
   final AppAuthService? authService;
   final AudioRecorderService? audioRecorderService;
 
@@ -42,6 +45,7 @@ class LingKoApp extends StatelessWidget {
         pronunciationApi: pronunciationApi ?? DartIoPronunciationApi(),
         sentenceApi: sentenceApi ?? DartIoSentenceApi(),
         evaluationApi: evaluationApi ?? DartIoEvaluationApi(),
+        userPreferencesApi: userPreferencesApi ?? DartIoUserPreferencesApi(),
         authService: authService ?? DefaultAppAuthService(),
         audioRecorderService:
             audioRecorderService ?? RecordAudioRecorderService(),
@@ -56,6 +60,7 @@ class LingKoShell extends StatefulWidget {
     required this.pronunciationApi,
     required this.sentenceApi,
     required this.evaluationApi,
+    required this.userPreferencesApi,
     required this.authService,
     required this.audioRecorderService,
   });
@@ -63,6 +68,7 @@ class LingKoShell extends StatefulWidget {
   final PronunciationApi pronunciationApi;
   final SentenceApi sentenceApi;
   final EvaluationApi evaluationApi;
+  final UserPreferencesApi userPreferencesApi;
   final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
 
@@ -196,6 +202,7 @@ class _LingKoShellState extends State<LingKoShell> {
           ),
       ProfileScreen(
         evaluationApi: widget.evaluationApi,
+        userPreferencesApi: widget.userPreferencesApi,
         authService: widget.authService,
         onRetryPractice: openPractice,
       ),

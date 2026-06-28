@@ -11,6 +11,13 @@ typedef GetJsonTransport =
     );
 typedef PostJsonTransport =
     Future<ApiResponse> Function(Uri uri, JsonMap body, Duration timeout);
+typedef PatchJsonTransport =
+    Future<ApiResponse> Function(
+      Uri uri,
+      JsonMap body,
+      Duration timeout,
+      Map<String, String> headers,
+    );
 typedef MultipartTransport =
     Future<ApiResponse> Function(
       Uri uri,
@@ -24,16 +31,19 @@ class ApiClient {
     this.timeout = const Duration(seconds: 8),
     GetJsonTransport? getJsonTransport,
     PostJsonTransport? postJsonTransport,
+    PatchJsonTransport? patchJsonTransport,
     MultipartTransport? multipartTransport,
   }) : baseUrl = Uri.parse(baseUrl ?? resolveLingKoApiBaseUrl()),
        _getJsonTransport = getJsonTransport ?? _getJsonWithDartIo,
        _postJsonTransport = postJsonTransport ?? _postJsonWithDartIo,
+       _patchJsonTransport = patchJsonTransport ?? _patchJsonWithDartIo,
        _multipartTransport = multipartTransport ?? _postMultipartWithDartIo;
 
   final Uri baseUrl;
   final Duration timeout;
   final GetJsonTransport _getJsonTransport;
   final PostJsonTransport _postJsonTransport;
+  final PatchJsonTransport _patchJsonTransport;
   final MultipartTransport _multipartTransport;
 
   Future<JsonMap> getJson(
@@ -52,6 +62,20 @@ class ApiClient {
       baseUrl.resolve(path),
       body,
       timeout,
+    );
+    return _decodeResponse(response);
+  }
+
+  Future<JsonMap> patchJson(
+    String path,
+    JsonMap body, [
+    Map<String, String> headers = const {},
+  ]) async {
+    final response = await _patchJsonTransport(
+      baseUrl.resolve(path),
+      body,
+      timeout,
+      headers,
     );
     return _decodeResponse(response);
   }
@@ -90,6 +114,10 @@ class ApiClient {
       for (final entry in query.entries)
         if (entry.value != null) entry.key: entry.value.toString(),
     };
+
+    if (queryParameters.isEmpty) {
+      return uri;
+    }
 
     return uri.replace(queryParameters: queryParameters);
   }
@@ -198,6 +226,35 @@ Future<ApiResponse> _postJsonWithDartIo(
   try {
     final request = await client.postUrl(uri).timeout(timeout);
     request.headers.contentType = ContentType.json;
+    request.write(jsonEncode(body));
+
+    final response = await request.close().timeout(timeout);
+    final responseBody = await response.transform(utf8.decoder).join();
+
+    return ApiResponse(statusCode: response.statusCode, body: responseBody);
+  } on TimeoutException {
+    throw const ApiException('Request timed out');
+  } on SocketException {
+    throw const ApiException('Cannot connect to LingKo server');
+  } finally {
+    client.close(force: true);
+  }
+}
+
+Future<ApiResponse> _patchJsonWithDartIo(
+  Uri uri,
+  JsonMap body,
+  Duration timeout,
+  Map<String, String> headers,
+) async {
+  final client = HttpClient();
+
+  try {
+    final request = await client.openUrl('PATCH', uri).timeout(timeout);
+    request.headers.contentType = ContentType.json;
+    for (final header in headers.entries) {
+      request.headers.set(header.key, header.value);
+    }
     request.write(jsonEncode(body));
 
     final response = await request.close().timeout(timeout);

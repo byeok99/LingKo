@@ -41,6 +41,19 @@ public class User {
     @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
+    @Builder.Default
+    @Column(name = "display_language", nullable = false, length = 20)
+    private String displayLanguage = "en";
+
+    @Builder.Default
+    @Column(name = "native_language", nullable = false, length = 20)
+    private String nativeLanguage = "en";
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_level", nullable = false, length = 30)
+    private LearningLevel targetLevel = LearningLevel.BEGINNER_2;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -55,7 +68,21 @@ public class User {
         this.profileImageUrl = profileImageUrl;
     }
 
+    public void updateLearningPreferences(String displayLanguage, String nativeLanguage, LearningLevel targetLevel) {
+        this.displayLanguage = displayLanguage;
+        this.nativeLanguage = nativeLanguage;
+        this.targetLevel = targetLevel;
+    }
+
     public enum SocialType {
         GOOGLE, APPLE, KAKAO
+    }
+
+    public enum LearningLevel {
+        BEGINNER_1,
+        BEGINNER_2,
+        INTERMEDIATE_1,
+        INTERMEDIATE_2,
+        ADVANCED
     }
 }

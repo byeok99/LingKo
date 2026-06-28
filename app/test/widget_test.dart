@@ -6,11 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingko_app/api/evaluation_api.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 import 'package:lingko_app/api/sentence_api.dart';
+import 'package:lingko_app/api/user_preferences_api.dart';
 import 'package:lingko_app/app/lingko_app.dart';
 import 'package:lingko_app/models/auth_session.dart';
 import 'package:lingko_app/models/practice_history.dart';
 import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
+import 'package:lingko_app/models/user_preferences.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
@@ -123,6 +125,46 @@ class FakeEvaluationApi implements EvaluationApi {
     }
 
     return history;
+  }
+}
+
+class FakeUserPreferencesApi implements UserPreferencesApi {
+  UserPreferences preferences = const UserPreferences(
+    displayLanguage: 'ko',
+    nativeLanguage: 'en',
+    targetLevel: LearningLevel.beginner2,
+  );
+  UserPreferences? lastUpdatedPreferences;
+  String? lastAccessToken;
+  Object? error;
+
+  @override
+  Future<UserPreferences> fetchPreferences({
+    required String accessToken,
+  }) async {
+    lastAccessToken = accessToken;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return preferences;
+  }
+
+  @override
+  Future<UserPreferences> updatePreferences({
+    required String accessToken,
+    required UserPreferences preferences,
+  }) async {
+    lastAccessToken = accessToken;
+    lastUpdatedPreferences = preferences;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    this.preferences = preferences;
+    return preferences;
   }
 }
 
@@ -287,6 +329,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
@@ -339,6 +382,7 @@ void main() {
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -370,6 +414,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(error: 'Validation failed'),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -430,6 +475,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
@@ -490,6 +536,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -522,6 +569,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
         authService: authService,
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -539,6 +587,47 @@ void main() {
     expect(authService.signInCalled, isTrue);
     expect(find.text('LingKo User'), findsOneWidget);
     expect(find.text('user@example.com'), findsOneWidget);
+  });
+
+  testWidgets('Profile loads and updates learning preferences', (
+    WidgetTester tester,
+  ) async {
+    final preferencesApi = FakeUserPreferencesApi();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: preferencesApi,
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
+    await tester.pumpAndSettle();
+
+    expect(preferencesApi.lastAccessToken, 'access.jwt');
+    expect(find.text('Display language'), findsOneWidget);
+    expect(find.text('Korean'), findsOneWidget);
+    expect(find.text('Native language'), findsOneWidget);
+    expect(find.text('English'), findsWidgets);
+    expect(find.text('Target level'), findsOneWidget);
+    expect(find.text('Beginner 2'), findsOneWidget);
+
+    await tester.tap(find.text('Target level'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Intermediate 1').last);
+    await tester.pumpAndSettle();
+
+    expect(
+      preferencesApi.lastUpdatedPreferences?.targetLevel,
+      LearningLevel.intermediate1,
+    );
+    expect(find.text('Intermediate 1'), findsOneWidget);
   });
 
   testWidgets('leaving Practice tab deletes a stopped temporary recording', (
