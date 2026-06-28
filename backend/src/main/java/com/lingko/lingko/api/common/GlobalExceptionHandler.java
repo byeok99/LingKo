@@ -2,6 +2,7 @@ package com.lingko.lingko.api.common;
 
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
 import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +55,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleSentenceNotFound(SentenceNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of("SENTENCE_NOT_FOUND", "Sentence not found"));
+    }
+
+    @ExceptionHandler(QuotaExceededException.class)
+    public ResponseEntity<ErrorResponse> handleQuotaExceeded(QuotaExceededException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(ErrorResponse.of("QUOTA_EXCEEDED", "Daily practice quota exceeded"));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
