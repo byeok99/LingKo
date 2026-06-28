@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../api/evaluation_api.dart';
+import '../api/user_preferences_api.dart';
 import '../app/app_theme.dart';
 import '../models/auth_session.dart';
 import '../models/practice_history.dart';
 import '../models/practice_sentence.dart';
+import '../models/user_preferences.dart';
 import '../services/app_auth_service.dart';
 import '../widgets/settings_row.dart';
 import '../widgets/shared_widgets.dart';
@@ -13,11 +15,13 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     super.key,
     required this.evaluationApi,
+    required this.userPreferencesApi,
     required this.authService,
     required this.onRetryPractice,
   });
 
   final EvaluationApi evaluationApi;
+  final UserPreferencesApi userPreferencesApi;
   final AppAuthService authService;
   final ValueChanged<PracticeSentence> onRetryPractice;
 
@@ -27,10 +31,13 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   PracticeHistory? history;
+  UserPreferences? preferences;
   AuthSession? session;
   bool isLoading = true;
+  bool isLoadingPreferences = false;
   bool isAuthenticating = true;
   String? errorText;
+  String? preferencesErrorText;
   String? authErrorText;
 
   @override
@@ -50,7 +57,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         session = restoredSession;
       });
-      await loadHistory(restoredSession);
+      await Future.wait([
+        loadHistory(restoredSession),
+        loadPreferences(restoredSession),
+      ]);
     } catch (error) {
       if (!mounted) {
         return;
@@ -84,7 +94,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         session = nextSession;
       });
-      await loadHistory(nextSession);
+      await Future.wait([
+        loadHistory(nextSession),
+        loadPreferences(nextSession),
+      ]);
     } catch (error) {
       if (!mounted) {
         return;
@@ -112,8 +125,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       session = null;
       history = null;
+      preferences = null;
       isLoading = false;
+      isLoadingPreferences = false;
       authErrorText = null;
+      preferencesErrorText = null;
     });
   }
 
@@ -161,6 +177,138 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     }
+  }
+
+  Future<void> loadPreferences([AuthSession? authSession]) async {
+    final currentSession = authSession ?? session;
+    if (currentSession == null) {
+      setState(() {
+        preferences = null;
+        isLoadingPreferences = false;
+        preferencesErrorText = null;
+      });
+      return;
+    }
+
+    setState(() {
+      isLoadingPreferences = true;
+      preferencesErrorText = null;
+    });
+
+    try {
+      final nextPreferences = await widget.userPreferencesApi.fetchPreferences(
+        accessToken: currentSession.accessToken,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        preferences = nextPreferences;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        preferencesErrorText = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingPreferences = false;
+        });
+      }
+    }
+  }
+
+  Future<void> updatePreferences(UserPreferences nextPreferences) async {
+    final currentSession = session;
+    if (currentSession == null) {
+      return;
+    }
+
+    setState(() {
+      isLoadingPreferences = true;
+      preferencesErrorText = null;
+    });
+
+    try {
+      final savedPreferences = await widget.userPreferencesApi
+          .updatePreferences(
+            accessToken: currentSession.accessToken,
+            preferences: nextPreferences,
+          );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        preferences = savedPreferences;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        preferencesErrorText = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingPreferences = false;
+        });
+      }
+    }
+  }
+
+  Future<void> selectLanguage({required bool isDisplayLanguage}) async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) {
+        return _OptionSheet<String>(
+          title: isDisplayLanguage ? 'Display language' : 'Native language',
+          options: _languageOptions,
+          labelFor: languageLabel,
+        );
+      },
+    );
+
+    if (selected == null) {
+      return;
+    }
+
+    final currentPreferences = preferences ?? UserPreferences.defaults;
+    await updatePreferences(
+      isDisplayLanguage
+          ? currentPreferences.copyWith(displayLanguage: selected)
+          : currentPreferences.copyWith(nativeLanguage: selected),
+    );
+  }
+
+  Future<void> selectTargetLevel() async {
+    final selected = await showModalBottomSheet<LearningLevel>(
+      context: context,
+      builder: (context) {
+        return _OptionSheet<LearningLevel>(
+          title: 'Target level',
+          options: LearningLevel.values,
+          labelFor: (level) => level.label,
+        );
+      },
+    );
+
+    if (selected == null) {
+      return;
+    }
+
+    await updatePreferences(
+      (preferences ?? UserPreferences.defaults).copyWith(targetLevel: selected),
+    );
   }
 
   @override
@@ -213,12 +361,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 24),
         Text('Settings', style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: 16),
-        const SettingsRow(label: 'Display language', value: 'English'),
-        const SettingsRow(label: 'Native language', value: 'English'),
-        const SettingsRow(label: 'Target level', value: 'Beginner 2'),
+        if (preferencesErrorText != null) ...[
+          _HistoryMessage(
+            icon: Icons.error_outline,
+            label: preferencesErrorText!,
+            action: TextButton.icon(
+              onPressed: () => loadPreferences(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        SettingsRow(
+          label: 'Display language',
+          value:
+              isLoadingPreferences
+                  ? 'Loading'
+                  : languageLabel(
+                    (preferences ?? UserPreferences.defaults).displayLanguage,
+                  ),
+          onTap:
+              session == null
+                  ? null
+                  : () => selectLanguage(isDisplayLanguage: true),
+        ),
+        SettingsRow(
+          label: 'Native language',
+          value:
+              isLoadingPreferences
+                  ? 'Loading'
+                  : languageLabel(
+                    (preferences ?? UserPreferences.defaults).nativeLanguage,
+                  ),
+          onTap:
+              session == null
+                  ? null
+                  : () => selectLanguage(isDisplayLanguage: false),
+        ),
+        SettingsRow(
+          label: 'Target level',
+          value:
+              isLoadingPreferences
+                  ? 'Loading'
+                  : (preferences ?? UserPreferences.defaults).targetLevel.label,
+          onTap: session == null ? null : selectTargetLevel,
+        ),
       ],
     );
   }
+}
+
+const _languageOptions = ['en', 'ko', 'ja'];
+
+String languageLabel(String value) {
+  return switch (value) {
+    'ko' => 'Korean',
+    'ja' => 'Japanese',
+    _ => 'English',
+  };
 }
 
 class _AccountPanel extends StatelessWidget {
@@ -303,6 +504,44 @@ class _AccountPanel extends StatelessWidget {
                     ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _OptionSheet<T> extends StatelessWidget {
+  const _OptionSheet({
+    required this.title,
+    required this.options,
+    required this.labelFor,
+  });
+
+  final String title;
+  final List<T> options;
+  final String Function(T option) labelFor;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 12),
+              for (final option in options)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(labelFor(option)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).pop(option),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
