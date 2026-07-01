@@ -86,4 +86,30 @@ class EvaluationControllerPrepareTest {
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.details[0].field").value("customTextLengthValid"));
     }
+
+    @Test
+    @DisplayName("convert text가 30자를 넘으면 공통 validation 에러를 반환한다")
+    void convertValidatesLongTextAsBadRequest() throws Exception {
+        String longText = "가".repeat(31);
+
+        mockMvc.perform(post("/api/pronunciation/convert")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"" + longText + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.details[0].field").value("text"));
+    }
+
+    @Test
+    @DisplayName("malformed JSON은 공통 invalid request 에러를 반환한다")
+    void malformedJsonReturnsInvalidRequest() throws Exception {
+        mockMvc.perform(post("/api/pronunciation/prepare")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"source\":\"CUSTOM\",\"text\":\"맛있겠다\""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.details.length()").value(0));
+    }
 }
