@@ -15,6 +15,7 @@ import 'package:lingko_app/models/practice_sentence.dart';
 import 'package:lingko_app/models/user_preferences.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
+import 'package:lingko_app/widgets/guide_sheet.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
 
 class FakePronunciationApi implements PronunciationApi {
@@ -748,5 +749,31 @@ void main() {
     expect(find.text('Focus on tongue placement'), findsWidgets);
     expect(find.text('Play'), findsOneWidget);
     expect(find.text('Repeat'), findsOneWidget);
+  });
+
+  testWidgets('guide sheet renders available static guide assets first', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '마',
+      score: 0,
+      note: 'Stable vowel shape',
+      kind: 'BOTH',
+      guideStatus: 'AVAILABLE',
+      mouthGuideUrl: 'https://guides/mouth/vowel-a.png',
+      tongueGuideUrl: 'https://guides/tongue/m.png',
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
+    );
+
+    final images = tester.widgetList<Image>(find.byType(Image)).toList();
+
+    expect(images, hasLength(2));
+    expect((images[0].image as NetworkImage).url, character.mouthGuideUrl);
+    expect((images[1].image as NetworkImage).url, character.tongueGuideUrl);
+    expect(find.text('Mouth guide'), findsOneWidget);
+    expect(find.text('Tongue guide'), findsOneWidget);
   });
 }
