@@ -17,6 +17,15 @@ Spring 백엔드 + Flutter 앱 프로젝트.
 - Codex 공식 subagent는 사용자가 명시적으로 요청한 경우에만 사용한다.
 - 토큰 절약을 위해 불필요한 반복 탐색, 전체 파일 열람, 과도한 설명을 피한다.
 
+## RTK 사용
+
+Rust Token Killer(`rtk`)는 설치되어 있으나 자동 hook은 적용되어 있지 않다.
+
+- shell 명령은 가능한 한 `rtk` prefix로 실행한다. 예: `rtk git status`, `rtk ./gradlew test`
+- raw 출력이 필요하거나 `rtk` 필터링이 방해되면 `rtk proxy <cmd>`를 사용한다.
+- `rtk gain` 통계는 tracking DB 접근 상태에 따라 실패할 수 있으므로 필수 검증으로 보지 않는다.
+- 자동 hook 적용은 사용자 명시 요청이 있을 때만 수행한다.
+
 ## 작업 범위
 
 - 수정 전에는 확인할 파일 범위를 짧게 말한다.
