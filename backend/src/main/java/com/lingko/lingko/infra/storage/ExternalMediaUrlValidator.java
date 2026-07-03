@@ -2,6 +2,7 @@ package com.lingko.lingko.infra.storage;
 
 import com.lingko.lingko.core.config.AwsSettings;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ public class ExternalMediaUrlValidator {
     private final Function<String, InetAddress[]> addressResolver;
     private final Function<URL, HttpURLConnection> connectionFactory;
 
+    @Autowired
     public ExternalMediaUrlValidator(AwsSettings awsSettings) {
         this(awsSettings, ExternalMediaUrlValidator::resolveAddresses, ExternalMediaUrlValidator::openHttpConnection);
     }
