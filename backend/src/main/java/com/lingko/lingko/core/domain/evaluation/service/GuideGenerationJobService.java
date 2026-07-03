@@ -4,6 +4,7 @@ import com.lingko.lingko.api.evaluation.dto.GuideGenerationJobResponse;
 import com.lingko.lingko.core.domain.evaluation.dto.GuideGenerationJobStatus;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -27,6 +28,7 @@ public class GuideGenerationJobService {
     private final ConcurrentHashMap<String, GuideGenerationJobResponse> jobsById = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> jobIdByCacheKey = new ConcurrentHashMap<>();
 
+    @Autowired
     public GuideGenerationJobService(VideoGenerator videoGenerator) {
         this(videoGenerator, ForkJoinPool.commonPool());
     }

@@ -23,12 +23,6 @@ configurations {
 
 sourceSets {
 	integrationTest {
-		java {
-			srcDir 'src/integrationTest/java'
-		}
-		resources {
-			srcDir 'src/integrationTest/resources'
-		}
 		compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
 		runtimeClasspath += output + compileClasspath
 	}
@@ -77,10 +71,42 @@ tasks.named('jacocoTestReport') {
 }
 
 tasks.register('integrationTest', Test) {
-	description = 'Runs integration tests that require external services or full Spring context.'
+	description = 'Runs integration tests that do not call external services.'
 	group = 'verification'
 	testClassesDirs = sourceSets.integrationTest.output.classesDirs
 	classpath = sourceSets.integrationTest.runtimeClasspath
 	shouldRunAfter test
+	systemProperty 'spring.profiles.active', 'integration'
 	useJUnitPlatform()
+	useJUnitPlatform {
+		excludeTags 'external'
+	}
+}
+
+tasks.register('externalIntegrationTest', Test) {
+	description = 'Runs integration tests that call external services such as Azure, Replicate, S3, or FFmpeg.'
+	group = 'verification'
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath = sourceSets.integrationTest.runtimeClasspath
+	shouldRunAfter integrationTest
+	systemProperty 'spring.profiles.active', 'integration'
+	doFirst {
+		def requiredEnv = [
+				'AZURE_SECRET_KEY',
+				'AZURE_REGION',
+				'REPLICATE_API_KEY',
+				'REPLICATE_VERSION',
+				'AWS_S3_BUCKET',
+				'AWS_S3_REGION',
+				'AWS_ACCESS_KEY',
+				'AWS_SECRET_KEY'
+		]
+		def missingEnv = requiredEnv.findAll { !System.getenv(it) }
+		if (!missingEnv.isEmpty()) {
+			throw new GradleException("externalIntegrationTest requires environment variables: ${missingEnv.join(', ')}")
+		}
+	}
+	useJUnitPlatform {
+		includeTags 'external'
+	}
 }

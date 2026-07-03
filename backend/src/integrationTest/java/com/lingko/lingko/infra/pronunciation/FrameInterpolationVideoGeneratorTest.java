@@ -8,6 +8,7 @@ import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.util.SyllableMappingUtil;
 import com.lingko.lingko.infra.storage.S3Uploader;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -104,6 +105,7 @@ class FrameInterpolationVideoGeneratorTest {
     }
 
     @Test
+    @Tag("external")
     @DisplayName("영상 생성 - 바 (ㅂ+ㅏ)")
     void video_ba_test() {
         // 바 = ㅂ + ㅏ
@@ -121,6 +123,7 @@ class FrameInterpolationVideoGeneratorTest {
     }
 
     @Test
+    @Tag("external")
     @DisplayName("영상 생성 - 각 (ㄱ+ㅏ+ㄱ, 병합)")
     void video_gak_test() {
         // 각 = ㄱ + ㅏ + ㄱ
@@ -138,6 +141,7 @@ class FrameInterpolationVideoGeneratorTest {
     }
 
     @Test
+    @Tag("external")
     @DisplayName("정적 이미지 - ㅂ")
     void static_image_b_test() {
         // ㅂ
@@ -154,6 +158,7 @@ class FrameInterpolationVideoGeneratorTest {
     }
 
     @Test
+    @Tag("external")
     @DisplayName("전체 플로우 - 밥 (ㅂ+ㅏ+ㅂ)")
     void full_flow_bab_test() {
         // 밥 = ㅂ + ㅏ + ㅂ
@@ -185,6 +190,7 @@ class FrameInterpolationVideoGeneratorTest {
     }
 
     @Test
+    @Tag("external")
     @DisplayName("복잡한 음절 - 강 (ㄱ+ㅏ+ㅇ)")
     void complex_syllable_gang_test() {
         // 강 = ㄱ + ㅏ + ㅇ
