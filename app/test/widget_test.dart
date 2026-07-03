@@ -433,6 +433,38 @@ void main() {
     expect(find.text('Validation failed'), findsOneWidget);
   });
 
+  testWidgets('Practice tab shows input length validation errors', (
+    WidgetTester tester,
+  ) async {
+    final api = FakePronunciationApi(
+      error: 'text must be 100 characters or fewer',
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: api,
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Practice'));
+    await tester.pumpAndSettle();
+
+    final longText = '가' * 101;
+    await tester.enterText(find.byType(TextField), longText);
+    await tester.pump();
+    await tester.tap(find.text('Use this sentence'));
+    await tester.pumpAndSettle();
+
+    expect(api.lastText, longText);
+    expect(find.text('text must be 100 characters or fewer'), findsOneWidget);
+    expect(find.text('Start recording'), findsNothing);
+  });
+
   testWidgets('Home shows loading, empty, and retryable error states', (
     WidgetTester tester,
   ) async {
@@ -499,6 +531,39 @@ void main() {
 
     expect(recorder.permissionChecks, 2);
     expect(find.text('Stop recording'), findsOneWidget);
+  });
+
+  testWidgets('Practice tab keeps upload retry available after quota failure', (
+    WidgetTester tester,
+  ) async {
+    final evaluationApi =
+        FakeEvaluationApi()..error = 'Daily practice quota exceeded';
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: evaluationApi,
+        authService: FakeAppAuthService(),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start recording'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stop recording'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Upload and score'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Daily practice quota exceeded'), findsOneWidget);
+    expect(find.text('Upload and score'), findsOneWidget);
+    expect(find.text('Re-record'), findsOneWidget);
+    expect(find.text('Result'), findsNothing);
   });
 
   testWidgets('leaving Practice tab cancels active recording', (
