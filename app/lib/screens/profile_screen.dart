@@ -18,12 +18,14 @@ class ProfileScreen extends StatefulWidget {
     required this.userPreferencesApi,
     required this.authService,
     required this.onRetryPractice,
+    required this.onSessionChanged,
   });
 
   final EvaluationApi evaluationApi;
   final UserPreferencesApi userPreferencesApi;
   final AppAuthService authService;
   final ValueChanged<PracticeSentence> onRetryPractice;
+  final ValueChanged<AuthSession?> onSessionChanged;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -57,6 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         session = restoredSession;
       });
+      widget.onSessionChanged(restoredSession);
       await Future.wait([
         loadHistory(restoredSession),
         loadPreferences(restoredSession),
@@ -94,6 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         session = nextSession;
       });
+      widget.onSessionChanged(nextSession);
       await Future.wait([
         loadHistory(nextSession),
         loadPreferences(nextSession),
@@ -131,6 +135,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       authErrorText = null;
       preferencesErrorText = null;
     });
+    widget.onSessionChanged(null);
   }
 
   Future<void> loadHistory([AuthSession? authSession]) async {

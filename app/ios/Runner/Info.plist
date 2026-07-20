@@ -12,6 +12,17 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.717500111241-kem934dspf99954d5oalnfj93pucolut</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleName</key>
 	<string>lingko_app</string>
 	<key>CFBundlePackageType</key>
@@ -22,6 +33,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>717500111241-kem934dspf99954d5oalnfj93pucolut.apps.googleusercontent.com</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>LingKo records your pronunciation so it can score your Korean speaking practice.</string>
 	<key>LSRequiresIPhoneOS</key>
