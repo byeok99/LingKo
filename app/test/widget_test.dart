@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:lingko_app/api/evaluation_api.dart';
+import 'package:lingko_app/api/practice_quota_api.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 import 'package:lingko_app/api/sentence_api.dart';
 import 'package:lingko_app/api/user_preferences_api.dart';
 import 'package:lingko_app/app/lingko_app.dart';
 import 'package:lingko_app/models/auth_session.dart';
 import 'package:lingko_app/models/practice_history.dart';
+import 'package:lingko_app/models/practice_quota.dart';
 import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
 import 'package:lingko_app/models/user_preferences.dart';
@@ -167,6 +169,34 @@ class FakeUserPreferencesApi implements UserPreferencesApi {
 
     this.preferences = preferences;
     return preferences;
+  }
+}
+
+class FakePracticeQuotaApi implements PracticeQuotaApi {
+  FakePracticeQuotaApi({
+    this.quota = const PracticeQuota(
+      date: '2026-06-17',
+      freeLimit: 5,
+      freeUsed: 2,
+      rewardedAvailable: 0,
+      remainingPractices: 3,
+      resetAt: null,
+    ),
+  });
+
+  PracticeQuota quota;
+  String? lastAccessToken;
+  Object? error;
+
+  @override
+  Future<PracticeQuota> fetchTodayQuota({required String accessToken}) async {
+    lastAccessToken = accessToken;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return quota;
   }
 }
 
@@ -339,6 +369,7 @@ void main() {
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
         userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(restoreCompleter: restoreCompleter),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -364,6 +395,7 @@ void main() {
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
         userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
         authService: authService,
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -393,6 +425,7 @@ void main() {
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
         userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
         authService: authService,
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -419,6 +452,7 @@ void main() {
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
         userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: recorder,
       ),
@@ -460,6 +494,89 @@ void main() {
       findsOneWidget,
     );
     expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
+  });
+
+  testWidgets('Home shows remaining quota for restored session', (
+    WidgetTester tester,
+  ) async {
+    final quotaApi = FakePracticeQuotaApi();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: quotaApi,
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(quotaApi.lastAccessToken, 'access.jwt');
+    expect(find.text('3 practices left today'), findsOneWidget);
+  });
+
+  testWidgets('Home hides quota error details', (WidgetTester tester) async {
+    final quotaApi =
+        FakePracticeQuotaApi()..error = 'sensitive quota response';
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: quotaApi,
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to load practice quota. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('sensitive quota response'), findsNothing);
+  });
+
+  testWidgets('Practice tab disables recording when quota is exhausted', (
+    WidgetTester tester,
+  ) async {
+    final recorder = FakeAudioRecorderService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(
+          quota: const PracticeQuota(
+            date: '2026-06-17',
+            freeLimit: 5,
+            freeUsed: 5,
+            rewardedAvailable: 0,
+            remainingPractices: 0,
+            resetAt: null,
+          ),
+        ),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: recorder,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No practices left today'), findsOneWidget);
+    await tester.tap(find.text('No practices left today'));
+    await tester.pumpAndSettle();
+
+    expect(recorder.permissionChecks, 0);
+    expect(find.text('Stop recording'), findsNothing);
   });
 
   testWidgets('Practice tab accepts a custom sentence', (

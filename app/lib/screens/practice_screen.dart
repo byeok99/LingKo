@@ -15,6 +15,7 @@ class PracticeScreen extends StatefulWidget {
     required this.onEvaluateRecording,
     required this.onCustomSentence,
     required this.onPrepareCustomSentence,
+    required this.remainingPractices,
   });
 
   final PracticeSentence? sentence;
@@ -23,6 +24,7 @@ class PracticeScreen extends StatefulWidget {
   onEvaluateRecording;
   final ValueChanged<PracticeSentence> onCustomSentence;
   final Future<PracticeSentence> Function(String text) onPrepareCustomSentence;
+  final int? remainingPractices;
 
   @override
   State<PracticeScreen> createState() => _PracticeScreenState();
@@ -152,7 +154,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Future<void> _startRecording() async {
     final sentence = widget.sentence;
 
-    if (sentence == null || isRecording || isUploadingRecording) {
+    if (sentence == null ||
+        isRecording ||
+        isUploadingRecording ||
+        widget.remainingPractices == 0) {
       return;
     }
 
@@ -335,6 +340,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
             hasRecording: recordedAudioPath != null,
             errorText: recordingError,
             wasPermissionDenied: wasPermissionDenied,
+            remainingPractices: widget.remainingPractices,
             onStartRecording: _startRecording,
             onStopRecording: _stopRecording,
             onCancelRecording: _cancelRecording,
@@ -353,6 +359,7 @@ class _PracticeContent extends StatelessWidget {
     required this.hasRecording,
     required this.errorText,
     required this.wasPermissionDenied,
+    required this.remainingPractices,
     required this.onStartRecording,
     required this.onStopRecording,
     required this.onCancelRecording,
@@ -365,6 +372,7 @@ class _PracticeContent extends StatelessWidget {
   final bool hasRecording;
   final String? errorText;
   final bool wasPermissionDenied;
+  final int? remainingPractices;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
   final VoidCallback onCancelRecording;
@@ -449,6 +457,7 @@ class _PracticeContent extends StatelessWidget {
           hasRecording: hasRecording,
           errorText: errorText,
           wasPermissionDenied: wasPermissionDenied,
+          remainingPractices: remainingPractices,
           onStartRecording: onStartRecording,
           onStopRecording: onStopRecording,
           onCancelRecording: onCancelRecording,
@@ -466,6 +475,7 @@ class _RecordingPanel extends StatelessWidget {
     required this.hasRecording,
     required this.errorText,
     required this.wasPermissionDenied,
+    required this.remainingPractices,
     required this.onStartRecording,
     required this.onStopRecording,
     required this.onCancelRecording,
@@ -477,6 +487,7 @@ class _RecordingPanel extends StatelessWidget {
   final bool hasRecording;
   final String? errorText;
   final bool wasPermissionDenied;
+  final int? remainingPractices;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
   final VoidCallback onCancelRecording;
@@ -484,8 +495,12 @@ class _RecordingPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isQuotaExhausted =
+        remainingPractices != null && remainingPractices! <= 0;
     final primaryLabel =
-        isRecording
+        isQuotaExhausted && !isRecording && !hasRecording
+            ? 'No practices left today'
+            : isRecording
             ? 'Stop recording'
             : hasRecording
             ? 'Upload and score'
@@ -499,7 +514,7 @@ class _RecordingPanel extends StatelessWidget {
             ? Icons.cloud_upload_outlined
             : Icons.mic;
     final primaryAction =
-        isUploading
+        isUploading || (isQuotaExhausted && !isRecording && !hasRecording)
             ? null
             : isRecording
             ? onStopRecording
