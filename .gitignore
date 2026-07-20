@@ -46,6 +46,12 @@ application.yaml
 .env.*
 !.env.example
 
+# Local app reference docs
+app/docs/
+!app/docs/
+app/docs/*
+!app/docs/WORK_LOG.md
+
 # Local agent/runtime files
 .dmux/
 .dumx-hooks
