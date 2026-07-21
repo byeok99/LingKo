@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/practice_quota.dart';
 import '../models/practice_sentence.dart';
 import '../widgets/progress_panel.dart';
 import '../widgets/sentence_card.dart';
@@ -11,14 +12,22 @@ class HomeScreen extends StatelessWidget {
     required this.sentences,
     required this.isLoading,
     required this.errorText,
+    required this.quota,
+    required this.isLoadingQuota,
+    required this.quotaErrorText,
     required this.onRetry,
+    required this.onRetryQuota,
     required this.onSelect,
   });
 
   final List<PracticeSentence> sentences;
   final bool isLoading;
   final String? errorText;
+  final PracticeQuota? quota;
+  final bool isLoadingQuota;
+  final String? quotaErrorText;
   final VoidCallback onRetry;
+  final VoidCallback onRetryQuota;
   final ValueChanged<PracticeSentence> onSelect;
 
   @override
@@ -49,13 +58,11 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: 18),
         Text('Today', style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: 10),
-        const Text(
-          '5 free practices left',
-          style: TextStyle(
-            color: Color(0xFF5C7286),
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+        _QuotaSummary(
+          quota: quota,
+          isLoading: isLoadingQuota,
+          errorText: quotaErrorText,
+          onRetry: onRetryQuota,
         ),
         const SizedBox(height: 24),
         const ProgressPanel(),
@@ -89,6 +96,64 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+class _QuotaSummary extends StatelessWidget {
+  const _QuotaSummary({
+    required this.quota,
+    required this.isLoading,
+    required this.errorText,
+    required this.onRetry,
+  });
+
+  final PracticeQuota? quota;
+  final bool isLoading;
+  final String? errorText;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Text('Loading practice quota', style: _quotaTextStyle);
+    }
+
+    if (errorText != null) {
+      return Row(
+        children: [
+          Expanded(
+            child: Text(
+              errorText!,
+              style: _quotaTextStyle.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
+      );
+    }
+
+    final remaining = quota?.remainingPractices;
+    if (remaining == null) {
+      return const Text('Sign in to track practices', style: _quotaTextStyle);
+    }
+
+    if (remaining == 0) {
+      return const Text('No practices left today', style: _quotaTextStyle);
+    }
+
+    final label =
+        remaining == 1
+            ? '1 practice left today'
+            : '$remaining practices left today';
+    return Text(label, style: _quotaTextStyle);
+  }
+}
+
+const _quotaTextStyle = TextStyle(
+  color: Color(0xFF5C7286),
+  fontSize: 15,
+  fontWeight: FontWeight.w600,
+);
 
 class _HomeStatusCard extends StatelessWidget {
   const _HomeStatusCard({required this.text, this.actionLabel, this.onAction});

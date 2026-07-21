@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../api/evaluation_api.dart';
+import '../api/practice_quota_api.dart';
 import '../api/pronunciation_api.dart';
 import '../api/sentence_api.dart';
 import '../api/user_preferences_api.dart';
 import '../models/auth_session.dart';
+import '../models/practice_quota.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../screens/auth_gate_screen.dart';
@@ -25,6 +27,7 @@ class LingKoApp extends StatelessWidget {
     this.sentenceApi,
     this.evaluationApi,
     this.userPreferencesApi,
+    this.practiceQuotaApi,
     this.authService,
     this.audioRecorderService,
   });
@@ -33,6 +36,7 @@ class LingKoApp extends StatelessWidget {
   final SentenceApi? sentenceApi;
   final EvaluationApi? evaluationApi;
   final UserPreferencesApi? userPreferencesApi;
+  final PracticeQuotaApi? practiceQuotaApi;
   final AppAuthService? authService;
   final AudioRecorderService? audioRecorderService;
 
@@ -48,6 +52,7 @@ class LingKoApp extends StatelessWidget {
         sentenceApi: sentenceApi ?? DartIoSentenceApi(),
         evaluationApi: evaluationApi ?? DartIoEvaluationApi(),
         userPreferencesApi: userPreferencesApi ?? DartIoUserPreferencesApi(),
+        practiceQuotaApi: practiceQuotaApi ?? DartIoPracticeQuotaApi(),
         authService: authService ?? DefaultAppAuthService(),
         audioRecorderService:
             audioRecorderService ?? RecordAudioRecorderService(),
@@ -63,6 +68,7 @@ class LingKoShell extends StatefulWidget {
     required this.sentenceApi,
     required this.evaluationApi,
     required this.userPreferencesApi,
+    required this.practiceQuotaApi,
     required this.authService,
     required this.audioRecorderService,
   });
@@ -71,6 +77,7 @@ class LingKoShell extends StatefulWidget {
   final SentenceApi sentenceApi;
   final EvaluationApi evaluationApi;
   final UserPreferencesApi userPreferencesApi;
+  final PracticeQuotaApi practiceQuotaApi;
   final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
 
@@ -93,6 +100,10 @@ class _LingKoShellState extends State<LingKoShell> {
   bool isRestoringSession = true;
   bool isSigningIn = false;
   String? authErrorText;
+  PracticeQuota? practiceQuota;
+  bool isLoadingPracticeQuota = false;
+  String? practiceQuotaError;
+
   // Practice 탭 안에서 연습 화면을 보여줄지, 결과 화면을 보여줄지 결정합니다.
   bool hasResult = false;
 
@@ -155,7 +166,10 @@ class _LingKoShellState extends State<LingKoShell> {
         authErrorText = null;
       });
       if (restoredSession != null) {
-        await loadRecommendedSentences();
+        await Future.wait([
+          loadRecommendedSentences(),
+          loadPracticeQuota(restoredSession),
+        ]);
       }
     } catch (_) {
       if (!mounted) {
@@ -192,7 +206,10 @@ class _LingKoShellState extends State<LingKoShell> {
       setState(() {
         session = nextSession;
       });
-      await loadRecommendedSentences();
+      await Future.wait([
+        loadRecommendedSentences(),
+        loadPracticeQuota(nextSession),
+      ]);
     } catch (_) {
       if (!mounted) {
         return;
@@ -219,6 +236,8 @@ class _LingKoShellState extends State<LingKoShell> {
         latestResult = null;
         hasResult = false;
         authErrorText = null;
+        practiceQuota = null;
+        practiceQuotaError = null;
         recommendedSentences = const [];
         recommendedSentenceError = null;
         isLoadingRecommendedSentences = false;
@@ -231,7 +250,57 @@ class _LingKoShellState extends State<LingKoShell> {
       authErrorText = null;
     });
 
-    await loadRecommendedSentences();
+    await Future.wait([
+      loadRecommendedSentences(),
+      loadPracticeQuota(nextSession),
+    ]);
+  }
+
+  Future<void> loadPracticeQuota([AuthSession? authSession]) async {
+    final currentSession = authSession ?? session;
+    if (currentSession == null) {
+      setState(() {
+        practiceQuota = null;
+        isLoadingPracticeQuota = false;
+        practiceQuotaError = null;
+      });
+      return;
+    }
+
+    setState(() {
+      isLoadingPracticeQuota = true;
+      practiceQuotaError = null;
+    });
+
+    try {
+      final nextQuota = await widget.practiceQuotaApi.fetchTodayQuota(
+        accessToken: currentSession.accessToken,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        practiceQuota = nextQuota;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        practiceQuota = null;
+        practiceQuotaError =
+            'Unable to load practice quota. Please try again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingPracticeQuota = false;
+        });
+      }
+    }
   }
 
   // 홈에서 문장을 선택하면 Practice 탭으로 이동합니다.
@@ -257,6 +326,7 @@ class _LingKoShellState extends State<LingKoShell> {
       latestResult = result;
       hasResult = true;
     });
+    await loadPracticeQuota();
   }
 
   // Practice 탭에서 사용자가 직접 입력한 문장으로 현재 연습 대상을 교체합니다.
@@ -288,7 +358,11 @@ class _LingKoShellState extends State<LingKoShell> {
         sentences: recommendedSentences,
         isLoading: isLoadingRecommendedSentences,
         errorText: recommendedSentenceError,
+        quota: practiceQuota,
+        isLoadingQuota: isLoadingPracticeQuota,
+        quotaErrorText: practiceQuotaError,
         onRetry: loadRecommendedSentences,
+        onRetryQuota: loadPracticeQuota,
         onSelect: openPractice,
       ),
       hasResult && selectedSentence != null
@@ -308,6 +382,7 @@ class _LingKoShellState extends State<LingKoShell> {
             onCustomSentence: useCustomSentence,
             onPrepareCustomSentence:
                 widget.pronunciationApi.prepareCustomSentence,
+            remainingPractices: practiceQuota?.remainingPractices,
           ),
       ProfileScreen(
         evaluationApi: widget.evaluationApi,
