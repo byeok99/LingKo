@@ -1,0 +1,15 @@
+# 작업 이력
+
+## 2026-07-20 - 로그인 게이트, Google 버튼, quota 화면 이력 이전
+
+- 변경 파일: `auth_gate_screen.dart`, `home_screen.dart`, `practice_screen.dart`, `profile_screen.dart`, `WORK_LOG.md`
+- 내용: 세션 복원 중 로고 스플래시와 로그인 필수 게이트를 추가하고 Google 공식 로고 버튼을 적용했다. Home의 잔여 quota 표시, Practice의 quota 소진 시 녹음 제한, Profile 인증 변경 후 quota 갱신을 연결했다.
+- 검증: `cd app && flutter test --reporter compact`, `cd app && flutter analyze`
+- 리스크: 실제 Google 로그인과 quota API 연동은 emulator/device에서 수동 확인 필요
+
+## 2026-07-20 - 작업 이력 파일 초기화
+
+- 변경 파일: `WORK_LOG.md`
+- 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
+- 검증: 파일 생성 여부 확인
+- 리스크: 없음
