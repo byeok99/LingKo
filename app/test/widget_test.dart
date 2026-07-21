@@ -6,10 +6,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingko_app/api/evaluation_api.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 import 'package:lingko_app/api/sentence_api.dart';
+import 'package:lingko_app/api/user_preferences_api.dart';
 import 'package:lingko_app/app/lingko_app.dart';
+import 'package:lingko_app/models/auth_session.dart';
+import 'package:lingko_app/models/practice_history.dart';
 import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
+import 'package:lingko_app/models/user_preferences.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
+import 'package:lingko_app/services/app_auth_service.dart';
+import 'package:lingko_app/widgets/guide_sheet.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
 
 class FakePronunciationApi implements PronunciationApi {
@@ -51,6 +57,33 @@ class FakeEvaluationApi implements EvaluationApi {
   int? lastSentenceId;
   String? lastText;
   Object? error;
+  PracticeHistory history = const PracticeHistory(
+    items: [
+      PracticeHistoryItem(
+        evaluationLogId: 10,
+        sentenceId: 1,
+        source: 'RECOMMENDED',
+        originalText: '맛있겠다.',
+        standardPronunciation: '마싯게따.',
+        recognizedText: '마싯게따.',
+        overallScore: 91,
+        gradeLabel: 'Excellent',
+        summary: 'Clear pronunciation.',
+        scoreBreakdown: PracticeScoreBreakdown(
+          accuracy: 92,
+          fluency: 90,
+          completeness: 93,
+        ),
+        characters: [],
+      ),
+    ],
+    page: 0,
+    size: 10,
+    totalItems: 1,
+    totalPages: 1,
+    hasNext: false,
+    bestScore: 91,
+  );
 
   @override
   Future<PracticeResult> evaluate({
@@ -80,6 +113,59 @@ class FakeEvaluationApi implements EvaluationApi {
       weakCharacters: [],
       characters: [],
     );
+  }
+
+  @override
+  Future<PracticeHistory> fetchHistory({
+    required String accessToken,
+    int page = 0,
+    int size = 10,
+  }) async {
+    if (error != null) {
+      throw error!;
+    }
+
+    return history;
+  }
+}
+
+class FakeUserPreferencesApi implements UserPreferencesApi {
+  UserPreferences preferences = const UserPreferences(
+    displayLanguage: 'ko',
+    nativeLanguage: 'en',
+    targetLevel: LearningLevel.beginner2,
+  );
+  UserPreferences? lastUpdatedPreferences;
+  String? lastAccessToken;
+  Object? error;
+
+  @override
+  Future<UserPreferences> fetchPreferences({
+    required String accessToken,
+  }) async {
+    lastAccessToken = accessToken;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return preferences;
+  }
+
+  @override
+  Future<UserPreferences> updatePreferences({
+    required String accessToken,
+    required UserPreferences preferences,
+  }) async {
+    lastAccessToken = accessToken;
+    lastUpdatedPreferences = preferences;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    this.preferences = preferences;
+    return preferences;
   }
 }
 
@@ -133,6 +219,47 @@ class FakeAudioRecorderService implements AudioRecorderService {
       throw deleteError!;
     }
     deletedPaths.add(path);
+  }
+}
+
+class FakeAppAuthService implements AppAuthService {
+  FakeAppAuthService({this.restoreExistingSession = false});
+
+  final bool restoreExistingSession;
+  bool signInCalled = false;
+  Object? error;
+  AuthSession? session = const AuthSession(
+    tokenType: 'Bearer',
+    accessToken: 'access.jwt',
+    refreshToken: 'refresh.jwt',
+    expiresInSeconds: 1800,
+    user: AuthUser(
+      userId: 7,
+      email: 'user@example.com',
+      name: 'LingKo User',
+      profileImageUrl: 'https://example.com/profile.png',
+    ),
+  );
+
+  @override
+  Future<AuthSession?> restoreSession() async {
+    return restoreExistingSession ? session : null;
+  }
+
+  @override
+  Future<AuthSession> signInWithGoogle() async {
+    signInCalled = true;
+
+    if (error != null) {
+      throw error!;
+    }
+
+    return session!;
+  }
+
+  @override
+  Future<void> signOut() async {
+    session = null;
   }
 }
 
@@ -203,6 +330,8 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
     );
@@ -254,6 +383,8 @@ void main() {
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -284,6 +415,8 @@ void main() {
         pronunciationApi: FakePronunciationApi(error: 'Validation failed'),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -300,6 +433,38 @@ void main() {
     expect(find.text('Validation failed'), findsOneWidget);
   });
 
+  testWidgets('Practice tab shows input length validation errors', (
+    WidgetTester tester,
+  ) async {
+    final api = FakePronunciationApi(
+      error: 'text must be 100 characters or fewer',
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: api,
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Practice'));
+    await tester.pumpAndSettle();
+
+    final longText = '가' * 101;
+    await tester.enterText(find.byType(TextField), longText);
+    await tester.pump();
+    await tester.tap(find.text('Use this sentence'));
+    await tester.pumpAndSettle();
+
+    expect(api.lastText, longText);
+    expect(find.text('text must be 100 characters or fewer'), findsOneWidget);
+    expect(find.text('Start recording'), findsNothing);
+  });
+
   testWidgets('Home shows loading, empty, and retryable error states', (
     WidgetTester tester,
   ) async {
@@ -309,6 +474,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(sentences: const []),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -323,6 +489,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(error: 'Cannot load sentences'),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -341,6 +508,8 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
     );
@@ -364,6 +533,39 @@ void main() {
     expect(find.text('Stop recording'), findsOneWidget);
   });
 
+  testWidgets('Practice tab keeps upload retry available after quota failure', (
+    WidgetTester tester,
+  ) async {
+    final evaluationApi =
+        FakeEvaluationApi()..error = 'Daily practice quota exceeded';
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: evaluationApi,
+        authService: FakeAppAuthService(),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start recording'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stop recording'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Upload and score'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Daily practice quota exceeded'), findsOneWidget);
+    expect(find.text('Upload and score'), findsOneWidget);
+    expect(find.text('Re-record'), findsOneWidget);
+    expect(find.text('Result'), findsNothing);
+  });
+
   testWidgets('leaving Practice tab cancels active recording', (
     WidgetTester tester,
   ) async {
@@ -373,6 +575,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
     );
@@ -391,6 +594,108 @@ void main() {
     expect(recorder.cancelCount, 1);
   });
 
+  testWidgets('Profile shows recent practice history and opens retry', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Practice history'), findsOneWidget);
+    expect(find.text('Best score'), findsOneWidget);
+    expect(find.text('91'), findsWidgets);
+    expect(find.text('맛있겠다.'), findsOneWidget);
+    expect(find.text('Recognized: 마싯게따.'), findsOneWidget);
+
+    await tester.tap(find.text('Practice again'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Practice'), findsWidgets);
+    final retryInput = tester.widget<TextField>(find.byType(TextField));
+    expect(retryInput.controller?.text, '맛있겠다.');
+  });
+
+  testWidgets('Profile signs in with Google and shows account email', (
+    WidgetTester tester,
+  ) async {
+    final authService = FakeAppAuthService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in with Google'), findsOneWidget);
+
+    await tester.tap(find.text('Sign in with Google'));
+    await tester.pumpAndSettle();
+
+    expect(authService.signInCalled, isTrue);
+    expect(find.text('LingKo User'), findsOneWidget);
+    expect(find.text('user@example.com'), findsOneWidget);
+  });
+
+  testWidgets('Profile loads and updates learning preferences', (
+    WidgetTester tester,
+  ) async {
+    final preferencesApi = FakeUserPreferencesApi();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: preferencesApi,
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
+    await tester.pumpAndSettle();
+
+    expect(preferencesApi.lastAccessToken, 'access.jwt');
+    expect(find.text('Display language'), findsOneWidget);
+    expect(find.text('Korean'), findsOneWidget);
+    expect(find.text('Native language'), findsOneWidget);
+    expect(find.text('English'), findsWidgets);
+    expect(find.text('Target level'), findsOneWidget);
+    expect(find.text('Beginner 2'), findsOneWidget);
+
+    await tester.tap(find.text('Target level'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Intermediate 1').last);
+    await tester.pumpAndSettle();
+
+    expect(
+      preferencesApi.lastUpdatedPreferences?.targetLevel,
+      LearningLevel.intermediate1,
+    );
+    expect(find.text('Intermediate 1'), findsOneWidget);
+  });
+
   testWidgets('leaving Practice tab deletes a stopped temporary recording', (
     WidgetTester tester,
   ) async {
@@ -400,6 +705,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
     );
@@ -429,6 +735,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(sentences: _twoSentences),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: recorder,
       ),
     );
@@ -461,6 +768,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(),
         audioRecorderService: FakeAudioRecorderService(
           deleteError: FileSystemException('delete failed'),
         ),
@@ -506,5 +814,31 @@ void main() {
     expect(find.text('Focus on tongue placement'), findsWidgets);
     expect(find.text('Play'), findsOneWidget);
     expect(find.text('Repeat'), findsOneWidget);
+  });
+
+  testWidgets('guide sheet renders available static guide assets first', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '마',
+      score: 0,
+      note: 'Stable vowel shape',
+      kind: 'BOTH',
+      guideStatus: 'AVAILABLE',
+      mouthGuideUrl: 'https://guides/mouth/vowel-a.png',
+      tongueGuideUrl: 'https://guides/tongue/m.png',
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
+    );
+
+    final images = tester.widgetList<Image>(find.byType(Image)).toList();
+
+    expect(images, hasLength(2));
+    expect((images[0].image as NetworkImage).url, character.mouthGuideUrl);
+    expect((images[1].image as NetworkImage).url, character.tongueGuideUrl);
+    expect(find.text('Mouth guide'), findsOneWidget);
+    expect(find.text('Tongue guide'), findsOneWidget);
   });
 }

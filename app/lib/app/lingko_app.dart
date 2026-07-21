@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/evaluation_api.dart';
 import '../api/pronunciation_api.dart';
 import '../api/sentence_api.dart';
+import '../api/user_preferences_api.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../screens/home_screen.dart';
@@ -10,6 +11,7 @@ import '../screens/practice_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/result_screen.dart';
 import '../services/audio_recorder_service.dart';
+import '../services/app_auth_service.dart';
 import 'app_theme.dart';
 
 // 앱 전체 설정을 담당하는 최상위 위젯입니다.
@@ -20,12 +22,16 @@ class LingKoApp extends StatelessWidget {
     this.pronunciationApi,
     this.sentenceApi,
     this.evaluationApi,
+    this.userPreferencesApi,
+    this.authService,
     this.audioRecorderService,
   });
 
   final PronunciationApi? pronunciationApi;
   final SentenceApi? sentenceApi;
   final EvaluationApi? evaluationApi;
+  final UserPreferencesApi? userPreferencesApi;
+  final AppAuthService? authService;
   final AudioRecorderService? audioRecorderService;
 
   @override
@@ -39,6 +45,8 @@ class LingKoApp extends StatelessWidget {
         pronunciationApi: pronunciationApi ?? DartIoPronunciationApi(),
         sentenceApi: sentenceApi ?? DartIoSentenceApi(),
         evaluationApi: evaluationApi ?? DartIoEvaluationApi(),
+        userPreferencesApi: userPreferencesApi ?? DartIoUserPreferencesApi(),
+        authService: authService ?? DefaultAppAuthService(),
         audioRecorderService:
             audioRecorderService ?? RecordAudioRecorderService(),
       ),
@@ -52,12 +60,16 @@ class LingKoShell extends StatefulWidget {
     required this.pronunciationApi,
     required this.sentenceApi,
     required this.evaluationApi,
+    required this.userPreferencesApi,
+    required this.authService,
     required this.audioRecorderService,
   });
 
   final PronunciationApi pronunciationApi;
   final SentenceApi sentenceApi;
   final EvaluationApi evaluationApi;
+  final UserPreferencesApi userPreferencesApi;
+  final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
 
   @override
@@ -188,7 +200,12 @@ class _LingKoShellState extends State<LingKoShell> {
             onPrepareCustomSentence:
                 widget.pronunciationApi.prepareCustomSentence,
           ),
-      const ProfileScreen(),
+      ProfileScreen(
+        evaluationApi: widget.evaluationApi,
+        userPreferencesApi: widget.userPreferencesApi,
+        authService: widget.authService,
+        onRetryPractice: openPractice,
+      ),
     ];
 
     // Scaffold는 일반적인 앱 화면 뼈대입니다.

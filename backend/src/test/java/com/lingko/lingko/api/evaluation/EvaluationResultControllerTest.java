@@ -76,6 +76,24 @@ class EvaluationResultControllerTest {
     }
 
     @Test
+    @DisplayName("sentenceId와 text가 모두 없으면 공통 validation 에러를 반환한다")
+    void sentenceIdOrTextIsRequired() throws Exception {
+        MockMultipartFile audio = new MockMultipartFile(
+                "audio",
+                "recording.wav",
+                "audio/wav",
+                wavBytes(1)
+        );
+
+        mockMvc.perform(multipart("/api/evaluations")
+                        .file(audio))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.message").value("sentenceId or text is required"))
+                .andExpect(jsonPath("$.details.length()").value(0));
+    }
+
+    @Test
     @DisplayName("지원하지 않는 audio 형식이면 415를 반환한다")
     void unsupportedAudio() throws Exception {
         MockMultipartFile audio = new MockMultipartFile(

@@ -5,6 +5,7 @@ import com.lingko.lingko.core.domain.evaluation.dto.AssessmentResult;
 import com.lingko.lingko.core.domain.evaluation.service.SpeechEvaluator;
 import com.lingko.lingko.infra.pronunciation.AzureSpeechEvaluator;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -15,6 +16,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringJUnitConfig(classes = AzureSpeechTest.AzureEvaluatorTestConfig.class)
+@Tag("external")
 public class AzureSpeechTest {
 
     @Autowired

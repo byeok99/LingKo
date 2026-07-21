@@ -127,4 +127,65 @@ void main() {
     expect(result.characterScoreStatus, 'UNAVAILABLE');
     expect(result.characters.single.scoreStatus, 'UNAVAILABLE');
   });
+
+  test('fetchHistory requests my evaluations and maps response', () async {
+    Uri? requestedUri;
+    Map<String, String>? requestedHeaders;
+    final api = DartIoEvaluationApi(
+      client: ApiClient(
+        baseUrl: 'http://localhost:8080',
+        getJsonTransport: (uri, timeout, headers) async {
+          requestedUri = uri;
+          requestedHeaders = headers;
+
+          return ApiResponse(
+            statusCode: 200,
+            body: jsonEncode({
+              'items': [
+                {
+                  'evaluationLogId': 10,
+                  'sentenceId': 1,
+                  'source': 'RECOMMENDED',
+                  'originalText': '맛있겠다.',
+                  'standardPronunciation': '마싯게따.',
+                  'recognizedText': '마싯게따.',
+                  'overallScore': 91,
+                  'gradeLabel': 'Excellent',
+                  'summary': 'Clear pronunciation.',
+                  'scoreBreakdown': {
+                    'accuracy': 92,
+                    'fluency': 90,
+                    'completeness': 93,
+                  },
+                  'characters': [],
+                  'createdAt': '2026-06-26T09:30:00',
+                },
+              ],
+              'page': 0,
+              'size': 2,
+              'totalItems': 1,
+              'totalPages': 1,
+              'hasNext': false,
+              'bestScore': 91,
+            }),
+          );
+        },
+      ),
+    );
+
+    final history = await api.fetchHistory(
+      accessToken: 'access.jwt',
+      page: 0,
+      size: 2,
+    );
+
+    expect(
+      requestedUri.toString(),
+      'http://localhost:8080/api/evaluations/me?page=0&size=2',
+    );
+    expect(requestedHeaders, {'Authorization': 'Bearer access.jwt'});
+    expect(history.bestScore, 91);
+    expect(history.items.single.originalText, '맛있겠다.');
+    expect(history.items.single.scoreBreakdown.accuracy, 92);
+  });
 }

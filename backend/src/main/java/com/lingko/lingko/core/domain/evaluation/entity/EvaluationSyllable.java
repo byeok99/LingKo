@@ -4,7 +4,15 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "evaluation_syllable")
+@Table(
+        name = "evaluation_syllable",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_evaluation_syllable_log_position",
+                        columnNames = {"evaluation_log_idx", "position_no"}
+                )
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -27,4 +35,16 @@ public class EvaluationSyllable {
 
     @Column(name = "score", nullable = false)
     private Integer score;
+
+    @Column(name = "position_no", nullable = false)
+    private Integer positionNo;
+
+    @Column(name = "feedback", length = 500)
+    private String feedback;
+
+    @Column(name = "mouth_guide_url", length = 500)
+    private String mouthGuideUrl;
+
+    @Column(name = "tongue_guide_url", length = 500)
+    private String tongueGuideUrl;
 }

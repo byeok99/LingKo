@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +31,39 @@ public class EvaluationLog {
     @JoinColumn(name="user_idx", nullable = false)
     private User user;
 
-    @Column(name = "original_word", nullable = false, length = 50)
+    @Column(name = "original_word", nullable = false, length = 300)
     private String originalWord;
 
     @Column(name = "score", nullable = false)
     private Integer score;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", nullable = false, length = 30)
+    private PracticeSource source;
+
+    @Column(name = "sentence_id")
+    private Long sentenceId;
+
+    @Column(name = "standard_pronunciation", nullable = false, length = 300)
+    private String standardPronunciation;
+
+    @Column(name = "recognized_text", length = 300)
+    private String recognizedText;
+
+    @Column(name = "accuracy_score", precision = 5, scale = 2)
+    private BigDecimal accuracyScore;
+
+    @Column(name = "fluency_score", precision = 5, scale = 2)
+    private BigDecimal fluencyScore;
+
+    @Column(name = "completeness_score", precision = 5, scale = 2)
+    private BigDecimal completenessScore;
+
+    @Column(name = "pronunciation_score", precision = 5, scale = 2)
+    private BigDecimal pronunciationScore;
+
+    @Column(name = "audio_url", length = 500)
+    private String audioUrl;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -50,5 +79,10 @@ public class EvaluationLog {
         }
         syllableList.add(syllable);
         syllable.setEvaluationLog(this);
+    }
+
+    public enum PracticeSource {
+        RECOMMENDED,
+        CUSTOM
     }
 }
