@@ -4,8 +4,10 @@ import '../api/evaluation_api.dart';
 import '../api/pronunciation_api.dart';
 import '../api/sentence_api.dart';
 import '../api/user_preferences_api.dart';
+import '../models/auth_session.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
+import '../screens/auth_gate_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/practice_screen.dart';
 import '../screens/profile_screen.dart';
@@ -87,14 +89,17 @@ class _LingKoShellState extends State<LingKoShell> {
   bool isLoadingRecommendedSentences = true;
   String? recommendedSentenceError;
   PracticeResult? latestResult;
-
+  AuthSession? session;
+  bool isRestoringSession = true;
+  bool isSigningIn = false;
+  String? authErrorText;
   // Practice 탭 안에서 연습 화면을 보여줄지, 결과 화면을 보여줄지 결정합니다.
   bool hasResult = false;
 
   @override
   void initState() {
     super.initState();
-    loadRecommendedSentences();
+    restoreSession();
   }
 
   @override
@@ -137,6 +142,98 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
+  Future<void> restoreSession() async {
+    try {
+      final restoredSession = await widget.authService.restoreSession();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        session = restoredSession;
+        authErrorText = null;
+      });
+      if (restoredSession != null) {
+        await loadRecommendedSentences();
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        session = null;
+        authErrorText =
+            'Unable to restore your session. Please sign in again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isRestoringSession = false;
+        });
+      }
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    setState(() {
+      isSigningIn = true;
+      authErrorText = null;
+    });
+
+    try {
+      final nextSession = await widget.authService.signInWithGoogle();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        session = nextSession;
+      });
+      await loadRecommendedSentences();
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        authErrorText = 'Unable to sign in with Google. Please try again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSigningIn = false;
+        });
+      }
+    }
+  }
+
+  Future<void> handleSessionChanged(AuthSession? nextSession) async {
+    if (nextSession == null) {
+      setState(() {
+        session = null;
+        selectedTab = 0;
+        selectedSentence = null;
+        latestResult = null;
+        hasResult = false;
+        authErrorText = null;
+        recommendedSentences = const [];
+        recommendedSentenceError = null;
+        isLoadingRecommendedSentences = false;
+      });
+      return;
+    }
+
+    setState(() {
+      session = nextSession;
+      authErrorText = null;
+    });
+
+    await loadRecommendedSentences();
+  }
+
   // 홈에서 문장을 선택하면 Practice 탭으로 이동합니다.
   void openPractice(PracticeSentence sentence) {
     setState(() {
@@ -172,6 +269,18 @@ class _LingKoShellState extends State<LingKoShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (isRestoringSession) {
+      return const SplashScreen();
+    }
+
+    if (session == null) {
+      return LoginScreen(
+        isLoading: isSigningIn,
+        errorText: authErrorText,
+        onSignIn: signInWithGoogle,
+      );
+    }
+
     // Flutter는 화면도 모두 Widget입니다. 조건에 따라 Practice 탭의 내용을
     // 연습 화면 또는 결과 화면으로 바꿔 끼웁니다.
     final pages = [
@@ -205,6 +314,7 @@ class _LingKoShellState extends State<LingKoShell> {
         userPreferencesApi: widget.userPreferencesApi,
         authService: widget.authService,
         onRetryPractice: openPractice,
+        onSessionChanged: handleSessionChanged,
       ),
     ];
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -223,9 +224,13 @@ class FakeAudioRecorderService implements AudioRecorderService {
 }
 
 class FakeAppAuthService implements AppAuthService {
-  FakeAppAuthService({this.restoreExistingSession = false});
+  FakeAppAuthService({
+    this.restoreExistingSession = false,
+    this.restoreCompleter,
+  });
 
   final bool restoreExistingSession;
+  final Completer<AuthSession?>? restoreCompleter;
   bool signInCalled = false;
   Object? error;
   AuthSession? session = const AuthSession(
@@ -243,6 +248,9 @@ class FakeAppAuthService implements AppAuthService {
 
   @override
   Future<AuthSession?> restoreSession() async {
+    if (restoreCompleter != null) {
+      return restoreCompleter!.future;
+    }
     return restoreExistingSession ? session : null;
   }
 
@@ -321,6 +329,86 @@ const _twoSentences = [
 ];
 
 void main() {
+  testWidgets('App shows logo splash while restoring session', (
+    WidgetTester tester,
+  ) async {
+    final restoreCompleter = Completer<AuthSession?>();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(restoreCompleter: restoreCompleter),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('splash-logo')), findsOneWidget);
+    expect(find.text('Sign in with Google'), findsNothing);
+
+    restoreCompleter.complete(null);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in with Google'), findsOneWidget);
+  });
+
+  testWidgets('App requires login before showing Home', (
+    WidgetTester tester,
+  ) async {
+    final authService = FakeAppAuthService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.byKey(const Key('google-sign-in-logo')), findsOneWidget);
+    expect(find.text('Recommended'), findsNothing);
+
+    await tester.tap(find.text('Sign in with Google'));
+    await tester.pumpAndSettle();
+
+    expect(authService.signInCalled, isTrue);
+    expect(find.text('Recommended'), findsOneWidget);
+    expect(find.text('LingKo User'), findsNothing);
+  });
+
+  testWidgets('Login hides authentication error details', (
+    WidgetTester tester,
+  ) async {
+    final authService =
+        FakeAppAuthService()..error = 'sensitive provider response';
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sign in with Google'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to sign in with Google. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('sensitive provider response'), findsNothing);
+  });
+
   testWidgets('LingKo prototype opens recommended sentences', (
     WidgetTester tester,
   ) async {
@@ -331,7 +419,7 @@ void main() {
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
         userPreferencesApi: FakeUserPreferencesApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: recorder,
       ),
     );
@@ -384,7 +472,7 @@ void main() {
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
         userPreferencesApi: FakeUserPreferencesApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -416,7 +504,7 @@ void main() {
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
         userPreferencesApi: FakeUserPreferencesApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -445,7 +533,7 @@ void main() {
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
         userPreferencesApi: FakeUserPreferencesApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -474,12 +562,12 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(sentences: const []),
         evaluationApi: FakeEvaluationApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
 
-    expect(find.text('Loading recommended sentences'), findsOneWidget);
+    expect(find.byKey(const Key('splash-logo')), findsOneWidget);
     await tester.pumpAndSettle();
     expect(find.text('No recommended sentences yet.'), findsOneWidget);
 
@@ -489,14 +577,14 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(error: 'Cannot load sentences'),
         evaluationApi: FakeEvaluationApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('Cannot load sentences'), findsOneWidget);
-    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Recommended'), findsOneWidget);
   });
 
   testWidgets('Practice tab retries microphone permission after denial', (
@@ -509,7 +597,7 @@ void main() {
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
         userPreferencesApi: FakeUserPreferencesApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: recorder,
       ),
     );
@@ -543,7 +631,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: evaluationApi,
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
     );
@@ -575,7 +663,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: recorder,
       ),
     );
@@ -626,10 +714,10 @@ void main() {
     expect(retryInput.controller?.text, '맛있겠다.');
   });
 
-  testWidgets('Profile signs in with Google and shows account email', (
+  testWidgets('Profile shows account and sign out returns to login', (
     WidgetTester tester,
   ) async {
-    final authService = FakeAppAuthService();
+    final authService = FakeAppAuthService(restoreExistingSession: true);
     await tester.pumpWidget(
       LingKoApp(
         pronunciationApi: FakePronunciationApi(),
@@ -645,14 +733,15 @@ void main() {
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in with Google'), findsOneWidget);
-
-    await tester.tap(find.text('Sign in with Google'));
-    await tester.pumpAndSettle();
-
-    expect(authService.signInCalled, isTrue);
     expect(find.text('LingKo User'), findsOneWidget);
     expect(find.text('user@example.com'), findsOneWidget);
+    expect(find.text('Sign out'), findsOneWidget);
+
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Recommended'), findsNothing);
   });
 
   testWidgets('Profile loads and updates learning preferences', (
@@ -705,7 +794,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: recorder,
       ),
     );
@@ -735,7 +824,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(sentences: _twoSentences),
         evaluationApi: FakeEvaluationApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: recorder,
       ),
     );
@@ -768,7 +857,7 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        authService: FakeAppAuthService(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(
           deleteError: FileSystemException('delete failed'),
         ),
