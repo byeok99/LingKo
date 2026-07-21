@@ -32,6 +32,10 @@
 - [보안·개인정보](security/security-and-privacy.md)
 - [기술 부채](technical-debt.md)
 
+### 보관 문서
+
+- [과거 로컬 기획 및 구현 참고 문서](archive/README.md)
+
 ## 문서 책임
 
 문서는 코드 변경과 같은 PR에서 갱신합니다.
