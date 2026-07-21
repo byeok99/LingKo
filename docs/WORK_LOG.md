@@ -1,3 +1,10 @@
+## 2026-07-21 - 브랜치 전략 문서 불일치 해소
+
+- 변경 파일: `architecture/adr/0005-branch-strategy.md`, `architecture/adr/README.md`, `technical-debt.md`, `WORK_LOG.md`
+- 내용: 실제 저장소 운영과 다르던 `main` 단일화 제안을 정리하고 `develop` 통합·`main` 릴리스 전략을 승인 상태로 확정했다. 기술 부채의 오래된 브랜치 상태와 미결정 항목도 제거했다.
+- 검증: 브랜치명 참조 검색, 문서 링크 확인, `git diff --check`
+- 리스크: GitHub 보호 규칙과 CI/CD는 ADR 후속 작업으로 남아 있음
+
 ## 2026-07-21 - 과거 로컬 문서 보존 위치 추가
 
 - 변경 파일: `README.md`, `archive/README.md`, `archive/legacy/*`, `WORK_LOG.md`
