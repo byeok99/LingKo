@@ -3,6 +3,7 @@ package com.lingko.lingko.api.auth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.api.auth.dto.AuthTokenResponse;
 import com.lingko.lingko.api.auth.dto.AuthUserResponse;
+import com.lingko.lingko.api.auth.dto.RefreshTokenRequest;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.auth.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -87,6 +89,70 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "provider", "GOOGLE",
                                 "idToken", "invalid-token"
+                        ))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
+    }
+
+    @Test
+    @DisplayName("Refresh Token 갱신은 회전된 token pair를 반환한다")
+    void refreshReturnsRotatedTokens() throws Exception {
+        when(authService.refresh(any())).thenReturn(AuthTokenResponse.builder()
+                .tokenType("Bearer")
+                .accessToken("next-access.jwt")
+                .refreshToken("next-refresh.jwt")
+                .expiresInSeconds(1800L)
+                .user(AuthUserResponse.builder()
+                        .userId(7L)
+                        .email("user@example.com")
+                        .name("LingKo User")
+                        .build())
+                .build());
+
+        mockMvc.perform(post("/api/auth/token/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "refreshToken", "current-refresh.jwt"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("next-access.jwt"))
+                .andExpect(jsonPath("$.refreshToken").value("next-refresh.jwt"));
+    }
+
+    @Test
+    @DisplayName("로그아웃은 현재 Refresh Token 세션을 폐기하고 204를 반환한다")
+    void logoutRevokesSession() throws Exception {
+        doNothing().when(authService).logout(any(RefreshTokenRequest.class));
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "refreshToken", "current-refresh.jwt"
+                        ))))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Refresh Token은 빈 값일 수 없다")
+    void refreshTokenIsRequired() throws Exception {
+        mockMvc.perform(post("/api/auth/token/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "refreshToken", ""
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+    }
+
+    @Test
+    @DisplayName("폐기된 Refresh Token은 401을 반환한다")
+    void revokedRefreshTokenReturnsUnauthorized() throws Exception {
+        when(authService.refresh(any())).thenThrow(new AuthException("Refresh token revoked"));
+
+        mockMvc.perform(post("/api/auth/token/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "refreshToken", "revoked-refresh.jwt"
                         ))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));

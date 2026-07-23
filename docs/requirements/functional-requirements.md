@@ -124,11 +124,11 @@ MVP에서는 별도 관리자 웹 콘솔을 필수로 하지 않습니다. 운�
 
 | ID | 우선순위 | 기능 | 요구사항 | 완료 기준 | 상태/Issue |
 |---|---|---|---|---|---|
-| FR-AUTH-001 | Must | Google 로그인 | 사용자는 Google ID Token으로 LingKo에 로그인할 수 있어야 한다. | 최초 로그인 시 사용자 생성, 재로그인 시 기존 사용자 반환 | 부분 구현 |
+| FR-AUTH-001 | Must | Google 로그인 | 사용자는 Google ID Token으로 LingKo에 로그인할 수 있어야 한다. | 최초 로그인 시 사용자 생성, 재로그인 시 기존 사용자 반환 | 구현됨 |
 | FR-AUTH-002 | Must | Access Token 인증 | 보호 API는 유효한 Bearer Access Token이 있어야 호출할 수 있어야 한다. | 없음·변조·만료 토큰은 401, 다른 사용자의 데이터 접근 불가 | [#36](https://github.com/byeok99/LingKo/issues/36) |
-| FR-AUTH-003 | Must | 세션 복원 | 앱 재시작 시 보안 저장소의 세션을 읽고 로그인 상태를 복원해야 한다. | 유효한 세션은 홈으로, 복원 불가 시 로그인 화면으로 이동 | 부분 구현 |
-| FR-AUTH-004 | Must | 토큰 갱신 | Access Token 만료 시 Refresh Token으로 자동 갱신해야 한다. | 사용자의 작업을 불필요하게 중단하지 않고 1회 갱신 후 요청 재시도 | [#40](https://github.com/byeok99/LingKo/issues/40) |
-| FR-AUTH-005 | Must | 로그아웃 | 사용자는 현재 기기에서 로그아웃할 수 있어야 한다. | 로컬 토큰 삭제, 서버 Refresh Token 폐기, 보호 API 접근 불가 | [#40](https://github.com/byeok99/LingKo/issues/40) |
+| FR-AUTH-003 | Must | 세션 복원 | 앱 재시작 시 보안 저장소의 세션을 읽고 로그인 상태를 복원해야 한다. | 유효한 세션은 홈으로, 복원 불가 시 로그인 화면으로 이동 | 구현됨 |
+| FR-AUTH-004 | Must | 토큰 갱신 | Access Token 만료 시 Refresh Token으로 자동 갱신해야 한다. | 사용자의 작업을 불필요하게 중단하지 않고 1회 갱신 후 요청 재시도 | 구현됨 |
+| FR-AUTH-005 | Must | 로그아웃 | 사용자는 현재 기기에서 로그아웃할 수 있어야 한다. | 로컬 토큰 삭제, 서버 Refresh Token 폐기, 보호 API 접근 불가 | 구현됨 |
 | FR-AUTH-006 | Must | 회원 탈퇴 | 사용자는 앱 내부에서 계정 삭제를 요청할 수 있어야 한다. | 재인증 또는 확인 후 정책에 따라 개인정보 삭제·익명화 | [#43](https://github.com/byeok99/LingKo/issues/43) |
 | FR-AUTH-007 | Should | 전체 기기 로그아웃 | 사용자는 모든 기기의 세션을 폐기할 수 있어야 한다. | 발급된 모든 Refresh Token이 폐기됨 | [#40](https://github.com/byeok99/LingKo/issues/40) |
 

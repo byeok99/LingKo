@@ -66,6 +66,15 @@ class ApiClient {
     return _decodeResponse(response);
   }
 
+  Future<void> postJsonWithoutResponse(String path, JsonMap body) async {
+    final response = await _postJsonTransport(
+      baseUrl.resolve(path),
+      body,
+      timeout,
+    );
+    _throwIfError(response);
+  }
+
   Future<JsonMap> patchJson(
     String path,
     JsonMap body, [
@@ -92,19 +101,26 @@ class ApiClient {
   JsonMap _decodeResponse(ApiResponse response) {
     final decoded = _tryDecodeJson(response.body);
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final message =
-          decoded is Map<String, Object?> && decoded['message'] is String
-              ? decoded['message'] as String
-              : 'Request failed with status ${response.statusCode}';
-      throw ApiException(message, statusCode: response.statusCode);
-    }
+    _throwIfError(response, decoded);
 
     if (decoded is! Map<String, Object?>) {
       throw const ApiException('Invalid server response');
     }
 
     return decoded;
+  }
+
+  void _throwIfError(ApiResponse response, [Object? decodedBody]) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+
+    final decoded = decodedBody ?? _tryDecodeJson(response.body);
+    final message =
+        decoded is Map<String, Object?> && decoded['message'] is String
+            ? decoded['message'] as String
+            : 'Request failed with status ${response.statusCode}';
+    throw ApiException(message, statusCode: response.statusCode);
   }
 
   Uri _buildUri(String path, Map<String, Object?> query) {

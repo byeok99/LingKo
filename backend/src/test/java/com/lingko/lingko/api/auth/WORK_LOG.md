@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - Refresh Token API 계약 테스트
+
+- 변경 파일: `AuthControllerTest.java`, `WORK_LOG.md`
+- 내용: refresh 성공, logout 204, 빈 토큰 400, 폐기 토큰 401 응답을 검증했다.
+- 검증: AuthController 단위 테스트와 Backend 전체 테스트
+- 리스크: 없음
+
 ## 2026-07-20 - 작업 이력 파일 초기화
 
 - 변경 파일: `WORK_LOG.md`

@@ -17,12 +17,15 @@
 - 백엔드는 자체 Access/Refresh JWT를 발급합니다.
 - Flutter는 토큰을 `flutter_secure_storage`에 저장합니다.
 - Bearer 토큰이 필요한 API는 사용자 ID 쿼리값 대신 JWT subject를 사용합니다.
+- Refresh Token 원문은 서버에 저장하지 않고 SHA-256 해시만 저장합니다.
+- Refresh Token은 사용할 때마다 회전하며 이전 토큰 재사용 시 해당 기기 세션을 폐기합니다.
+- Access Token은 같은 `sid`의 활성 서버 세션을 확인하므로 로그아웃·재사용 탐지 후 즉시 거부됩니다.
+- Refresh Token의 절대 만료는 로그인 시점부터 계산하며 회전으로 연장하지 않습니다.
+- 앱은 동시 refresh를 하나로 합치고 보호 API 요청을 최대 한 번만 재시도합니다.
 
 ### 운영 전 필수
 
-- Refresh Token 회전·폐기 API
 - 키 ID(`kid`)와 JWT 키 회전
-- Refresh Token 서버 측 해시 저장 또는 세션 관리
 - 인증 실패 rate limit
 - 계정 탈취 대응과 전체 세션 로그아웃
 

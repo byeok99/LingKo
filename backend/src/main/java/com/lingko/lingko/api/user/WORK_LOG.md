@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - 활성 로그인 세션 인증 적용
+
+- 변경 파일: `UserPreferencesController.java`, `WORK_LOG.md`
+- 내용: 사용자 설정 API의 Bearer Token 검증을 공통 활성 세션 인증기로 위임했다.
+- 검증: `UserPreferencesControllerTest`
+- 리스크: 없음
+
 ## 2026-07-20 - 작업 이력 파일 초기화
 
 - 변경 파일: `WORK_LOG.md`

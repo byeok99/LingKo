@@ -4,12 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.api.auth.dto.AuthTokenResponse;
 import com.lingko.lingko.api.auth.dto.OAuthLoginRequest;
+import com.lingko.lingko.api.auth.dto.RefreshTokenRequest;
 import com.lingko.lingko.core.config.JwtSettings;
+import com.lingko.lingko.core.domain.auth.entity.RefreshTokenSession;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.auth.repository.RefreshTokenSessionRepository;
 import com.lingko.lingko.core.domain.auth.service.AuthService;
+import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.auth.service.JwtTokenProvider;
 import com.lingko.lingko.core.domain.auth.service.OAuthIdentity;
 import com.lingko.lingko.core.domain.auth.service.OAuthIdentityVerifier;
+import com.lingko.lingko.core.domain.auth.service.RefreshTokenHasher;
 import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -39,7 +44,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "jwt.refresh-token-expire-days=14",
         "jwt.algorithm=HS256"
 })
-@Import({AuthService.class, AuthServiceTest.TestAuthConfig.class})
+@Import({
+        AuthService.class,
+        ActiveSessionAuthenticator.class,
+        RefreshTokenHasher.class,
+        AuthServiceTest.TestAuthConfig.class
+})
 class AuthServiceTest {
 
     @Autowired
@@ -53,6 +63,15 @@ class AuthServiceTest {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private RefreshTokenSessionRepository refreshTokenSessionRepository;
+
+    @Autowired
+    private RefreshTokenHasher refreshTokenHasher;
+
+    @Autowired
+    private ActiveSessionAuthenticator activeSessionAuthenticator;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -74,6 +93,12 @@ class AuthServiceTest {
         JsonNode accessPayload = jwtPayload(response.getAccessToken());
         assertThat(accessPayload.get("sub").asText()).isEqualTo(String.valueOf(user.getUserIdx()));
         assertThat(accessPayload.get("typ").asText()).isEqualTo("access");
+
+        RefreshTokenSession refreshSession = refreshTokenSessionRepository.findAll().getFirst();
+        assertThat(accessPayload.get("sid").asText()).isEqualTo(refreshSession.getSessionId());
+        assertThat(refreshSession.getCurrentTokenHash())
+                .isEqualTo(refreshTokenHasher.hash(response.getRefreshToken()))
+                .doesNotContain(response.getRefreshToken());
     }
 
     @Test
@@ -120,6 +145,81 @@ class AuthServiceTest {
         JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(7L);
 
         assertThatThrownBy(() -> jwtTokenProvider.parseAccessTokenUserId(tokens.refreshToken()))
+                .isInstanceOf(AuthException.class);
+    }
+
+    @Test
+    @DisplayName("Refresh Token 갱신은 같은 세션에서 token pair를 회전한다")
+    void refreshRotatesTokenPair() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+        JwtTokenProvider.RefreshTokenClaims originalClaims =
+                jwtTokenProvider.parseRefreshToken(login.getRefreshToken());
+
+        AuthTokenResponse refreshed = authService.refresh(new RefreshTokenRequest(login.getRefreshToken()));
+        JwtTokenProvider.RefreshTokenClaims refreshedClaims =
+                jwtTokenProvider.parseRefreshToken(refreshed.getRefreshToken());
+
+        assertThat(refreshed.getAccessToken()).isNotEqualTo(login.getAccessToken());
+        assertThat(refreshed.getRefreshToken()).isNotEqualTo(login.getRefreshToken());
+        assertThat(refreshedClaims.sessionId()).isEqualTo(originalClaims.sessionId());
+        assertThat(refreshedClaims.tokenId()).isNotEqualTo(originalClaims.tokenId());
+        assertThat(refreshedClaims.expiresAt()).isEqualTo(originalClaims.expiresAt());
+
+        RefreshTokenSession session = refreshTokenSessionRepository.findById(originalClaims.sessionId()).orElseThrow();
+        assertThat(session.getCurrentTokenHash()).isEqualTo(refreshTokenHasher.hash(refreshed.getRefreshToken()));
+        assertThat(session.isRevoked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("회전 전 Refresh Token 재사용은 세션 전체를 폐기한다")
+    void reusedRefreshTokenRevokesSession() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+        AuthTokenResponse refreshed = authService.refresh(new RefreshTokenRequest(login.getRefreshToken()));
+        String sessionId = jwtTokenProvider.parseRefreshToken(login.getRefreshToken()).sessionId();
+
+        assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(login.getRefreshToken())))
+                .isInstanceOf(AuthException.class);
+
+        RefreshTokenSession session = refreshTokenSessionRepository.findById(sessionId).orElseThrow();
+        assertThat(session.isRevoked()).isTrue();
+        assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(refreshed.getRefreshToken())))
+                .isInstanceOf(AuthException.class);
+    }
+
+    @Test
+    @DisplayName("로그아웃은 현재 Refresh Token 세션을 폐기한다")
+    void logoutRevokesRefreshSession() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+        String sessionId = jwtTokenProvider.parseRefreshToken(login.getRefreshToken()).sessionId();
+
+        assertThat(activeSessionAuthenticator.authenticateBearer("Bearer " + login.getAccessToken()))
+                .isEqualTo(login.getUser().getUserId());
+        authService.logout(new RefreshTokenRequest(login.getRefreshToken()));
+
+        RefreshTokenSession session = refreshTokenSessionRepository.findById(sessionId).orElseThrow();
+        assertThat(session.isRevoked()).isTrue();
+        assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(login.getRefreshToken())))
+                .isInstanceOf(AuthException.class);
+        assertThatThrownBy(() -> activeSessionAuthenticator.authenticateBearer(
+                "Bearer " + login.getAccessToken()
+        )).isInstanceOf(AuthException.class);
+    }
+
+    @Test
+    @DisplayName("DB 세션 절대 만료가 지나면 유효한 JWT도 갱신할 수 없다")
+    void expiredDatabaseSessionIsRejected() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+        String sessionId = jwtTokenProvider.parseRefreshToken(login.getRefreshToken()).sessionId();
+        entityManager.createNativeQuery("""
+                        UPDATE auth_refresh_sessions
+                        SET expires_at = DATEADD('DAY', -1, CURRENT_TIMESTAMP)
+                        WHERE session_id = :sessionId
+                        """)
+                .setParameter("sessionId", sessionId)
+                .executeUpdate();
+        entityManager.clear();
+
+        assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(login.getRefreshToken())))
                 .isInstanceOf(AuthException.class);
     }
 

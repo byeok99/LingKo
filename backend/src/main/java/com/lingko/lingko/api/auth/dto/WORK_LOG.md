@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - Refresh Token 요청 검증 DTO
+
+- 변경 파일: `RefreshTokenRequest.java`, `WORK_LOG.md`
+- 내용: refresh와 logout이 공유하는 필수 Refresh Token 요청 DTO를 추가했다.
+- 검증: 빈 값 400 응답과 정상 API 계약 테스트
+- 리스크: 없음
+
 ## 2026-07-20 - 작업 이력 파일 초기화
 
 - 변경 파일: `WORK_LOG.md`

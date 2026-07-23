@@ -178,8 +178,7 @@ class _LingKoShellState extends State<LingKoShell> {
 
       setState(() {
         session = null;
-        authErrorText =
-            'Unable to restore your session. Please sign in again.';
+        authErrorText = 'Unable to restore your session. Please sign in again.';
       });
     } finally {
       if (mounted) {
@@ -273,8 +272,9 @@ class _LingKoShellState extends State<LingKoShell> {
     });
 
     try {
-      final nextQuota = await widget.practiceQuotaApi.fetchTodayQuota(
-        accessToken: currentSession.accessToken,
+      final nextQuota = await widget.authService.runAuthenticated(
+        (accessToken) =>
+            widget.practiceQuotaApi.fetchTodayQuota(accessToken: accessToken),
       );
 
       if (!mounted) {
@@ -284,6 +284,10 @@ class _LingKoShellState extends State<LingKoShell> {
       setState(() {
         practiceQuota = nextQuota;
       });
+    } on AuthSessionExpiredException {
+      if (mounted) {
+        await handleSessionChanged(null);
+      }
     } catch (_) {
       if (!mounted) {
         return;
@@ -291,8 +295,7 @@ class _LingKoShellState extends State<LingKoShell> {
 
       setState(() {
         practiceQuota = null;
-        practiceQuotaError =
-            'Unable to load practice quota. Please try again.';
+        practiceQuotaError = 'Unable to load practice quota. Please try again.';
       });
     } finally {
       if (mounted) {

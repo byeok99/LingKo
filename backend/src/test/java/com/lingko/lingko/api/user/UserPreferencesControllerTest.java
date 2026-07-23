@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.api.user.dto.UserPreferencesResponse;
 import com.lingko.lingko.api.user.dto.UserPreferencesUpdateRequest;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
-import com.lingko.lingko.core.domain.auth.service.JwtTokenProvider;
+import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.service.UserPreferencesService;
 import org.junit.jupiter.api.DisplayName;
@@ -37,12 +37,12 @@ class UserPreferencesControllerTest {
     private UserPreferencesService preferencesService;
 
     @MockBean
-    private JwtTokenProvider jwtTokenProvider;
+    private ActiveSessionAuthenticator activeSessionAuthenticator;
 
     @Test
     @DisplayName("GET /api/users/me/preferences는 access token 사용자 설정을 반환한다")
     void getMyPreferences() throws Exception {
-        when(jwtTokenProvider.parseAccessTokenUserId("valid-access-token")).thenReturn(7L);
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(preferencesService.findPreferences(7L)).thenReturn(new UserPreferencesResponse(
                 "ko",
                 "en",
@@ -60,7 +60,7 @@ class UserPreferencesControllerTest {
     @Test
     @DisplayName("PATCH /api/users/me/preferences는 사용자 설정을 갱신한다")
     void updateMyPreferences() throws Exception {
-        when(jwtTokenProvider.parseAccessTokenUserId("valid-access-token")).thenReturn(7L);
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(preferencesService.updatePreferences(eq(7L), eq(new UserPreferencesUpdateRequest(
                 "ko",
                 "ja",
@@ -88,6 +88,9 @@ class UserPreferencesControllerTest {
     @Test
     @DisplayName("사용자 설정 조회는 Authorization bearer token이 필요하다")
     void authorizationHeaderIsRequired() throws Exception {
+        when(activeSessionAuthenticator.authenticateBearer(null))
+                .thenThrow(new AuthException("Missing bearer token"));
+
         mockMvc.perform(get("/api/users/me/preferences"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
@@ -96,7 +99,7 @@ class UserPreferencesControllerTest {
     @Test
     @DisplayName("사용자 설정 갱신은 입력값을 검증한다")
     void updatePreferencesValidatesRequest() throws Exception {
-        when(jwtTokenProvider.parseAccessTokenUserId("valid-access-token")).thenReturn(7L);
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
 
         mockMvc.perform(patch("/api/users/me/preferences")
                         .header("Authorization", "Bearer valid-access-token")
@@ -113,7 +116,8 @@ class UserPreferencesControllerTest {
     @Test
     @DisplayName("유효하지 않은 bearer token은 401을 반환한다")
     void invalidBearerTokenReturnsUnauthorized() throws Exception {
-        when(jwtTokenProvider.parseAccessTokenUserId("invalid-token")).thenThrow(new AuthException("Invalid access token"));
+        when(activeSessionAuthenticator.authenticateBearer("Bearer invalid-token"))
+                .thenThrow(new AuthException("Invalid access token"));
 
         mockMvc.perform(get("/api/users/me/preferences")
                         .header("Authorization", "Bearer invalid-token"))

@@ -257,10 +257,12 @@ class FakeAppAuthService implements AppAuthService {
   FakeAppAuthService({
     this.restoreExistingSession = false,
     this.restoreCompleter,
+    this.expireAuthenticatedRequests = false,
   });
 
   final bool restoreExistingSession;
   final Completer<AuthSession?>? restoreCompleter;
+  final bool expireAuthenticatedRequests;
   bool signInCalled = false;
   Object? error;
   AuthSession? session = const AuthSession(
@@ -293,6 +295,21 @@ class FakeAppAuthService implements AppAuthService {
     }
 
     return session!;
+  }
+
+  @override
+  Future<T> runAuthenticated<T>(
+    Future<T> Function(String accessToken) request,
+  ) async {
+    if (expireAuthenticatedRequests) {
+      session = null;
+      throw const AuthSessionExpiredException();
+    }
+    final currentSession = session;
+    if (currentSession == null) {
+      throw const AuthSessionExpiredException();
+    }
+    return request(currentSession.accessToken);
   }
 
   @override
@@ -414,6 +431,29 @@ void main() {
     expect(find.text('LingKo User'), findsNothing);
   });
 
+  testWidgets('Expired refresh session returns the app to login', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(
+          restoreExistingSession: true,
+          expireAuthenticatedRequests: true,
+        ),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Recommended'), findsNothing);
+  });
+
   testWidgets('Login hides authentication error details', (
     WidgetTester tester,
   ) async {
@@ -518,8 +558,7 @@ void main() {
   });
 
   testWidgets('Home hides quota error details', (WidgetTester tester) async {
-    final quotaApi =
-        FakePracticeQuotaApi()..error = 'sensitive quota response';
+    final quotaApi = FakePracticeQuotaApi()..error = 'sensitive quota response';
     await tester.pumpWidget(
       LingKoApp(
         pronunciationApi: FakePronunciationApi(),

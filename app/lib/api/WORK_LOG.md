@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - Refresh Token API client 추가
+
+- 변경 파일: `api_client.dart`, `auth_api.dart`, `WORK_LOG.md`
+- 내용: token refresh와 logout API를 추가하고 204 응답을 본문 파싱 없이 처리하도록 공통 client를 확장했다.
+- 검증: Flutter API·인증 서비스 테스트 및 전체 테스트
+- 리스크: 운영 API 주소는 HTTPS를 사용해야 함
+
 ## 2026-07-20 - quota API 이력 이전
 
 - 변경 파일: `practice_quota_api.dart`, `WORK_LOG.md`

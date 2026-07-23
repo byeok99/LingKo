@@ -2,7 +2,7 @@ package com.lingko.lingko.api.quota;
 
 import com.lingko.lingko.api.quota.dto.PracticeQuotaResponse;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
-import com.lingko.lingko.core.domain.auth.service.JwtTokenProvider;
+import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.quota.service.PracticeQuotaService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,12 +30,12 @@ class PracticeQuotaControllerTest {
     private PracticeQuotaService quotaService;
 
     @MockBean
-    private JwtTokenProvider jwtTokenProvider;
+    private ActiveSessionAuthenticator activeSessionAuthenticator;
 
     @Test
     @DisplayName("GET /api/quota/today는 JWT 사용자 기준 오늘 quota를 반환한다")
     void getTodayQuota() throws Exception {
-        when(jwtTokenProvider.parseAccessTokenUserId("valid-access-token")).thenReturn(7L);
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(quotaService.getTodayQuota(7L)).thenReturn(new PracticeQuotaResponse(
                 LocalDate.of(2026, 6, 29),
                 5,
@@ -59,6 +59,9 @@ class PracticeQuotaControllerTest {
     @Test
     @DisplayName("quota 조회는 Authorization bearer token이 필요하다")
     void authorizationHeaderIsRequired() throws Exception {
+        when(activeSessionAuthenticator.authenticateBearer(null))
+                .thenThrow(new AuthException("Missing bearer token"));
+
         mockMvc.perform(get("/api/quota/today"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
@@ -67,7 +70,8 @@ class PracticeQuotaControllerTest {
     @Test
     @DisplayName("유효하지 않은 bearer token은 401을 반환한다")
     void invalidBearerTokenReturnsUnauthorized() throws Exception {
-        when(jwtTokenProvider.parseAccessTokenUserId("invalid-token")).thenThrow(new AuthException("Invalid access token"));
+        when(activeSessionAuthenticator.authenticateBearer("Bearer invalid-token"))
+                .thenThrow(new AuthException("Invalid access token"));
 
         mockMvc.perform(get("/api/quota/today")
                         .header("Authorization", "Bearer invalid-token"))
