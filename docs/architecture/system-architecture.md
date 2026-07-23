@@ -55,7 +55,7 @@ flowchart LR
 현재 저장소 기준 배포 단위는 두 개입니다.
 
 1. Flutter 앱: Android/iOS 빌드 산출물
-2. Spring Boot 백엔드: Java 17 JAR 또는 Docker 이미지
+2. Spring Boot 백엔드: Java 21 JAR 또는 Docker 이미지
 
 백엔드 Docker 이미지는 빌드 단계와 실행 단계를 분리하며 실행 이미지에 FFmpeg를 설치합니다. 로컬 Docker Compose는 MySQL과 백엔드를 함께 실행합니다.
 

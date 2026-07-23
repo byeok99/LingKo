@@ -20,7 +20,7 @@ cd backend
 docker build -t lingko-backend:<version> .
 ```
 
-이미지는 Java 17 JRE와 FFmpeg를 포함합니다. 운영에서는 MySQL을 같은 Compose 안에 두기보다 관리형 DB 또는 별도 백업 정책이 있는 DB를 권장합니다.
+이미지는 Java 21 JRE와 FFmpeg를 포함합니다. 운영에서는 MySQL을 같은 Compose 안에 두기보다 관리형 DB 또는 별도 백업 정책이 있는 DB를 권장합니다.
 
 ## 헬스 점검
 
