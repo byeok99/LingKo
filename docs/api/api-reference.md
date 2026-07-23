@@ -21,6 +21,30 @@ Google ID Token을 검증하고 LingKo JWT를 발급합니다.
 tokenType, accessToken, refreshToken, expiresInSeconds, user
 ```
 
+### `POST /api/auth/token/refresh`
+
+현재 Refresh Token을 검증하고 새로운 Access/Refresh Token 쌍으로 회전합니다.
+
+```json
+{
+  "refreshToken": "..."
+}
+```
+
+응답 필드는 OAuth 로그인 응답과 같습니다. 만료·폐기·재사용 토큰은 `401 AUTHENTICATION_FAILED`를 반환합니다.
+
+### `POST /api/auth/logout`
+
+현재 기기의 Refresh Token 세션을 폐기합니다.
+
+```json
+{
+  "refreshToken": "..."
+}
+```
+
+성공하면 본문 없이 `204 No Content`를 반환합니다.
+
 ## 문장
 
 ### `GET /api/sentences/recommended`
