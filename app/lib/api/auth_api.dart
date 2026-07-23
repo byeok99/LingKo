@@ -3,6 +3,10 @@ import 'api_client.dart';
 
 abstract class AuthApi {
   Future<AuthSession> loginWithGoogleIdToken(String idToken);
+
+  Future<AuthSession> refreshSession(String refreshToken);
+
+  Future<void> logout(String refreshToken);
 }
 
 class DartIoAuthApi implements AuthApi {
@@ -18,5 +22,21 @@ class DartIoAuthApi implements AuthApi {
     });
 
     return AuthSession.fromJson(json);
+  }
+
+  @override
+  Future<AuthSession> refreshSession(String refreshToken) async {
+    final json = await _client.postJson('/api/auth/token/refresh', {
+      'refreshToken': refreshToken.trim(),
+    });
+
+    return AuthSession.fromJson(json);
+  }
+
+  @override
+  Future<void> logout(String refreshToken) {
+    return _client.postJsonWithoutResponse('/api/auth/logout', {
+      'refreshToken': refreshToken.trim(),
+    });
   }
 }

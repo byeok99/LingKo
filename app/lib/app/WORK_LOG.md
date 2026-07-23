@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - Access Token 자동 갱신 연결
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 보호된 quota 요청을 인증 실행기로 감싸고 refresh 실패 시 세션을 제거해 로그인 화면으로 전환하도록 연결했다.
+- 검증: Flutter widget 테스트 및 전체 테스트
+- 리스크: 평가 API JWT 연결은 Issue #36 범위로 남음
+
 ## 2026-07-20 - 인증 게이트와 quota 상태 연결 이력 이전
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

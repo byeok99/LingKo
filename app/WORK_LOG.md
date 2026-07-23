@@ -1,3 +1,10 @@
+## 2026-07-23 - Flutter 커버리지 산출물 제외
+
+- 변경 파일: `.gitignore`, `WORK_LOG.md`
+- 내용: `flutter test --coverage`가 생성하는 `coverage/` 디렉터리를 Git 추적 대상에서 제외했다.
+- 검증: `git check-ignore app/coverage/lcov.info`
+- 리스크: 없음
+
 ## 2026-07-20 - 기존 앱 이력의 최소 경로별 분배
 
 - 변경 파일: `WORK_LOG.md`, 앱 하위 직접 폴더의 `WORK_LOG.md`

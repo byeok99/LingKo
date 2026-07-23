@@ -120,12 +120,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> signOut() async {
-    await widget.authService.signOut();
+    try {
+      await widget.authService.signOut();
+    } catch (_) {
+      // Local credentials are cleared even when server revocation is unavailable.
+    }
 
     if (!mounted) {
       return;
     }
-
     setState(() {
       session = null;
       history = null;
@@ -155,8 +158,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      final nextHistory = await widget.evaluationApi.fetchHistory(
-        accessToken: currentSession.accessToken,
+      final nextHistory = await widget.authService.runAuthenticated(
+        (accessToken) =>
+            widget.evaluationApi.fetchHistory(accessToken: accessToken),
       );
 
       if (!mounted) {
@@ -166,6 +170,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         history = nextHistory;
       });
+    } on AuthSessionExpiredException {
+      _expireSession();
     } catch (error) {
       if (!mounted) {
         return;
@@ -201,8 +207,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      final nextPreferences = await widget.userPreferencesApi.fetchPreferences(
-        accessToken: currentSession.accessToken,
+      final nextPreferences = await widget.authService.runAuthenticated(
+        (accessToken) => widget.userPreferencesApi.fetchPreferences(
+          accessToken: accessToken,
+        ),
       );
 
       if (!mounted) {
@@ -212,6 +220,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         preferences = nextPreferences;
       });
+    } on AuthSessionExpiredException {
+      _expireSession();
     } catch (error) {
       if (!mounted) {
         return;
@@ -241,11 +251,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      final savedPreferences = await widget.userPreferencesApi
-          .updatePreferences(
-            accessToken: currentSession.accessToken,
-            preferences: nextPreferences,
-          );
+      final savedPreferences = await widget.authService.runAuthenticated(
+        (accessToken) => widget.userPreferencesApi.updatePreferences(
+          accessToken: accessToken,
+          preferences: nextPreferences,
+        ),
+      );
 
       if (!mounted) {
         return;
@@ -254,6 +265,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         preferences = savedPreferences;
       });
+    } on AuthSessionExpiredException {
+      _expireSession();
     } catch (error) {
       if (!mounted) {
         return;
@@ -269,6 +282,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     }
+  }
+
+  void _expireSession() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      session = null;
+      history = null;
+      preferences = null;
+      errorText = null;
+      preferencesErrorText = null;
+    });
+    widget.onSessionChanged(null);
   }
 
   Future<void> selectLanguage({required bool isDisplayLanguage}) async {

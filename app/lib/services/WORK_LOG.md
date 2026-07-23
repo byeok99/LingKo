@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - 동시 요청 안전 Refresh Token 자동 갱신
+
+- 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`
+- 내용: 401 후 refresh와 1회 재시도, 동시 refresh single-flight, 회전 완료 후 늦은 401 경합 처리, 실패 시 Secure Storage 삭제를 구현했다. 세션 revision으로 로그아웃 중 늦은 refresh 응답이 세션을 복원하는 경쟁 조건도 차단했다.
+- 검증: 인증 서비스 단위 테스트 및 Flutter 전체 테스트
+- 리스크: refresh 실패는 보안상 재로그인을 요구하므로 일시적 서버 장애에도 로그인 화면으로 전환됨
+
 ## 2026-07-20 - 작업 이력 파일 초기화
 
 - 변경 파일: `WORK_LOG.md`

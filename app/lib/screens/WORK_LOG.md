@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - Profile 보호 API 갱신·로그아웃 연결
+
+- 변경 파일: `profile_screen.dart`, `WORK_LOG.md`
+- 내용: 기록·설정 API의 401 자동 갱신과 서버 로그아웃을 연결하고 refresh 실패 시 로그인 화면으로 전환했다.
+- 검증: Flutter widget 테스트 및 전체 테스트
+- 리스크: 네트워크 단절 중 로그아웃은 로컬 세션만 즉시 삭제되고 서버 세션은 절대 만료까지 남을 수 있음
+
 ## 2026-07-20 - 로그인 게이트, Google 버튼, quota 화면 이력 이전
 
 - 변경 파일: `auth_gate_screen.dart`, `home_screen.dart`, `practice_screen.dart`, `profile_screen.dart`, `WORK_LOG.md`
