@@ -11,12 +11,13 @@ import org.springframework.stereotype.Component;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {
@@ -40,16 +41,44 @@ public class JwtTokenProvider {
     }
 
     public TokenPair issueTokens(Long userId) {
+        String sessionId = UUID.randomUUID().toString();
+        Instant refreshExpiresAt = Instant.now(clock).plusSeconds(refreshTokenExpiresInSeconds());
+        return issueTokens(userId, sessionId, refreshExpiresAt);
+    }
+
+    public TokenPair issueTokens(Long userId, String sessionId, Instant refreshExpiresAt) {
         validateSettings();
 
         long issuedAt = Instant.now(clock).getEpochSecond();
         long accessExpiresAt = issuedAt + accessTokenExpiresInSeconds();
-        long refreshExpiresAt = issuedAt + refreshTokenExpiresInSeconds();
+        if (refreshExpiresAt.getEpochSecond() <= issuedAt) {
+            throw new AuthException("Expired refresh session");
+        }
 
         return new TokenPair(
-                createToken(userId, "access", issuedAt, accessExpiresAt),
-                createToken(userId, "refresh", issuedAt, refreshExpiresAt),
-                accessTokenExpiresInSeconds()
+                createToken(
+                        userId,
+                        "access",
+                        issuedAt,
+                        accessExpiresAt,
+                        Map.of(
+                                "jti", UUID.randomUUID().toString(),
+                                "sid", sessionId
+                        )
+                ),
+                createToken(
+                        userId,
+                        "refresh",
+                        issuedAt,
+                        refreshExpiresAt.getEpochSecond(),
+                        Map.of(
+                                "jti", UUID.randomUUID().toString(),
+                                "sid", sessionId
+                        )
+                ),
+                accessTokenExpiresInSeconds(),
+                sessionId,
+                refreshExpiresAt
         );
     }
 
@@ -58,25 +87,44 @@ public class JwtTokenProvider {
     }
 
     public Long parseAccessTokenUserId(String token) {
+        return parseAccessToken(token).userId();
+    }
+
+    public AccessTokenClaims parseAccessToken(String token) {
         Map<String, Object> payload = parseAndValidate(token);
 
         if (!"access".equals(payload.get("typ"))) {
             throw new AuthException("Invalid token type");
         }
 
-        Object subject = payload.get("sub");
-        if (!(subject instanceof String subjectText)) {
-            throw new AuthException("Invalid token subject");
-        }
-
-        try {
-            return Long.parseLong(subjectText);
-        } catch (NumberFormatException exception) {
-            throw new AuthException("Invalid token subject");
-        }
+        return new AccessTokenClaims(
+                parseSubject(payload.get("sub")),
+                requiredText(payload.get("sid"), "Invalid access session")
+        );
     }
 
-    private String createToken(Long userId, String type, long issuedAt, long expiresAt) {
+    public RefreshTokenClaims parseRefreshToken(String token) {
+        Map<String, Object> payload = parseAndValidate(token);
+
+        if (!"refresh".equals(payload.get("typ"))) {
+            throw new AuthException("Invalid token type");
+        }
+
+        return new RefreshTokenClaims(
+                parseSubject(payload.get("sub")),
+                requiredText(payload.get("sid"), "Invalid refresh session"),
+                requiredText(payload.get("jti"), "Invalid refresh token id"),
+                Instant.ofEpochSecond(longValue(payload.get("exp")))
+        );
+    }
+
+    private String createToken(
+            Long userId,
+            String type,
+            long issuedAt,
+            long expiresAt,
+            Map<String, Object> additionalClaims
+    ) {
         Map<String, Object> header = new LinkedHashMap<>();
         header.put("alg", JWT_ALGORITHM);
         header.put("typ", "JWT");
@@ -86,6 +134,7 @@ public class JwtTokenProvider {
         payload.put("typ", type);
         payload.put("iat", issuedAt);
         payload.put("exp", expiresAt);
+        payload.putAll(additionalClaims);
 
         String encodedHeader = base64UrlJson(header);
         String encodedPayload = base64UrlJson(payload);
@@ -126,7 +175,10 @@ public class JwtTokenProvider {
         }
 
         String signingInput = parts[0] + "." + parts[1];
-        if (!Objects.equals(sign(signingInput), parts[2])) {
+        if (!MessageDigest.isEqual(
+                sign(signingInput).getBytes(StandardCharsets.US_ASCII),
+                parts[2].getBytes(StandardCharsets.US_ASCII)
+        )) {
             throw new AuthException("Invalid JWT signature");
         }
 
@@ -165,6 +217,25 @@ public class JwtTokenProvider {
         throw new AuthException("Invalid JWT expiry");
     }
 
+    private Long parseSubject(Object value) {
+        if (!(value instanceof String subjectText)) {
+            throw new AuthException("Invalid token subject");
+        }
+
+        try {
+            return Long.parseLong(subjectText);
+        } catch (NumberFormatException exception) {
+            throw new AuthException("Invalid token subject");
+        }
+    }
+
+    private String requiredText(Object value, String errorMessage) {
+        if (value instanceof String text && !text.isBlank()) {
+            return text;
+        }
+        throw new AuthException(errorMessage);
+    }
+
     private long refreshTokenExpiresInSeconds() {
         return jwtSettings.getRefreshTokenExpireDays() * 24L * 60L * 60L;
     }
@@ -187,7 +258,23 @@ public class JwtTokenProvider {
     public record TokenPair(
             String accessToken,
             String refreshToken,
-            long expiresInSeconds
+            long expiresInSeconds,
+            String refreshSessionId,
+            Instant refreshExpiresAt
+    ) {
+    }
+
+    public record RefreshTokenClaims(
+            Long userId,
+            String sessionId,
+            String tokenId,
+            Instant expiresAt
+    ) {
+    }
+
+    public record AccessTokenClaims(
+            Long userId,
+            String sessionId
     ) {
     }
 }

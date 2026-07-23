@@ -2,8 +2,7 @@ package com.lingko.lingko.api.user;
 
 import com.lingko.lingko.api.user.dto.UserPreferencesResponse;
 import com.lingko.lingko.api.user.dto.UserPreferencesUpdateRequest;
-import com.lingko.lingko.core.domain.auth.exception.AuthException;
-import com.lingko.lingko.core.domain.auth.service.JwtTokenProvider;
+import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.user.service.UserPreferencesService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,16 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserPreferencesController {
 
-    private static final String BEARER_PREFIX = "Bearer ";
-
     private final UserPreferencesService preferencesService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final ActiveSessionAuthenticator activeSessionAuthenticator;
 
     @GetMapping
     public UserPreferencesResponse getMyPreferences(
             @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
-        return preferencesService.findPreferences(resolveUserId(authorization));
+        return preferencesService.findPreferences(activeSessionAuthenticator.authenticateBearer(authorization));
     }
 
     @PatchMapping
@@ -36,19 +33,9 @@ public class UserPreferencesController {
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @Valid @RequestBody UserPreferencesUpdateRequest request
     ) {
-        return preferencesService.updatePreferences(resolveUserId(authorization), request);
-    }
-
-    private Long resolveUserId(String authorization) {
-        if (authorization == null || !authorization.startsWith(BEARER_PREFIX)) {
-            throw new AuthException("Missing bearer token");
-        }
-
-        String token = authorization.substring(BEARER_PREFIX.length()).trim();
-        if (token.isEmpty()) {
-            throw new AuthException("Missing bearer token");
-        }
-
-        return jwtTokenProvider.parseAccessTokenUserId(token);
+        return preferencesService.updatePreferences(
+                activeSessionAuthenticator.authenticateBearer(authorization),
+                request
+        );
     }
 }

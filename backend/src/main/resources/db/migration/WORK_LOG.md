@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - Refresh Token 해시 세션 migration
+
+- 변경 파일: `V6__add_auth_refresh_sessions.sql`, `WORK_LOG.md`
+- 내용: 사용자별 기기 세션, 현재 토큰 해시, 절대 만료와 폐기 시각을 저장하는 테이블·인덱스를 추가했다.
+- 검증: H2 migration 구조 테스트와 MySQL Docker migration
+- 리스크: 만료·폐기 세션 정리 배치는 운영 데이터 증가 전에 추가 필요
+
 ## 2026-07-20 - 작업 이력 파일 초기화
 
 - 변경 파일: `WORK_LOG.md`

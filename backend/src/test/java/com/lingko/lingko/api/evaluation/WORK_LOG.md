@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - 활성 세션 기반 학습 기록 인증 테스트
+
+- 변경 파일: `EvaluationHistoryControllerTest.java`, `WORK_LOG.md`
+- 내용: 학습 기록 API가 공통 활성 세션 인증 결과를 사용하고 누락·무효 토큰에 401을 반환하는지 검증했다.
+- 검증: `EvaluationHistoryControllerTest`
+- 리스크: 없음
+
 ## 2026-07-20 - 작업 이력 파일 초기화
 
 - 변경 파일: `WORK_LOG.md`

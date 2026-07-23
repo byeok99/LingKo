@@ -4,7 +4,7 @@ import com.lingko.lingko.api.evaluation.dto.PracticeHistoryItemResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeHistoryResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
-import com.lingko.lingko.core.domain.auth.service.JwtTokenProvider;
+import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationHistoryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class EvaluationHistoryControllerTest {
     private EvaluationHistoryService historyService;
 
     @MockBean
-    private JwtTokenProvider jwtTokenProvider;
+    private ActiveSessionAuthenticator activeSessionAuthenticator;
 
     @Test
     @DisplayName("GET /api/evaluations/me는 JWT principal 기준 학습 기록 page를 반환한다")
@@ -61,7 +61,7 @@ class EvaluationHistoryControllerTest {
                 .hasNext(false)
                 .bestScore(82)
                 .build();
-        when(jwtTokenProvider.parseAccessTokenUserId("valid-access-token")).thenReturn(7L);
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(historyService.findHistory(7L, 0, 10)).thenReturn(response);
 
         mockMvc.perform(get("/api/evaluations/me")
@@ -83,6 +83,9 @@ class EvaluationHistoryControllerTest {
     @Test
     @DisplayName("학습 기록은 Authorization bearer token이 필요하다")
     void authorizationHeaderIsRequired() throws Exception {
+        when(activeSessionAuthenticator.authenticateBearer(null))
+                .thenThrow(new AuthException("Missing bearer token"));
+
         mockMvc.perform(get("/api/evaluations/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
@@ -91,7 +94,8 @@ class EvaluationHistoryControllerTest {
     @Test
     @DisplayName("유효하지 않은 bearer token은 401을 반환한다")
     void invalidBearerTokenReturnsUnauthorized() throws Exception {
-        when(jwtTokenProvider.parseAccessTokenUserId("invalid-token")).thenThrow(new AuthException("Invalid access token"));
+        when(activeSessionAuthenticator.authenticateBearer("Bearer invalid-token"))
+                .thenThrow(new AuthException("Invalid access token"));
 
         mockMvc.perform(get("/api/evaluations/me")
                         .header("Authorization", "Bearer invalid-token"))
@@ -102,7 +106,7 @@ class EvaluationHistoryControllerTest {
     @Test
     @DisplayName("학습 기록 page size는 50 이하로 제한한다")
     void sizeMustBeAtMost50() throws Exception {
-        when(jwtTokenProvider.parseAccessTokenUserId("valid-access-token")).thenReturn(7L);
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
 
         mockMvc.perform(get("/api/evaluations/me")
                         .header("Authorization", "Bearer valid-access-token")

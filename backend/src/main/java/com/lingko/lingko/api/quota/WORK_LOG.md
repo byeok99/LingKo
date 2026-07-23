@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - 활성 로그인 세션 인증 적용
+
+- 변경 파일: `PracticeQuotaController.java`, `WORK_LOG.md`
+- 내용: Bearer Token 검증을 공통 활성 세션 인증기로 위임해 로그아웃·Refresh Token 재사용 탐지 후 quota 접근을 즉시 차단한다.
+- 검증: `PracticeQuotaControllerTest`
+- 리스크: 없음
+
 ## 2026-07-20 - 작업 이력 파일 초기화
 
 - 변경 파일: `WORK_LOG.md`
