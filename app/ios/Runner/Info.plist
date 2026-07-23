@@ -35,6 +35,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>GIDClientID</key>
 	<string>717500111241-kem934dspf99954d5oalnfj93pucolut.apps.googleusercontent.com</string>
+	<key>GIDServerClientID</key>
+	<string>717500111241-rbs3khdg04duemkftocl1p1ekevjl759.apps.googleusercontent.com</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>LingKo records your pronunciation so it can score your Korean speaking practice.</string>
 	<key>LSRequiresIPhoneOS</key>
