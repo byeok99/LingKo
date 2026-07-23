@@ -2,7 +2,7 @@
 
 ## 사전 요구사항
 
-- Java 17
+- Java 21
 - Flutter SDK와 Dart 3.7 이상
 - Android Studio 또는 Xcode
 - Docker Desktop 또는 Docker Engine + Compose

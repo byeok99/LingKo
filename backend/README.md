@@ -4,7 +4,7 @@ LingKo의 Spring Boot REST API입니다. 추천 문장, 표준 발음, 음성 �
 
 ## 기술 스택
 
-- Java 17
+- Java 21
 - Spring Boot 3.4.1
 - Spring MVC / Validation / Data JPA / WebFlux
 - MySQL 8 / Flyway

@@ -1,3 +1,10 @@
+## 2026-07-23 - Backend Java 21 기준 반영
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 프로젝트 기술 스택의 Backend Java 기준을 17에서 21로 갱신했다.
+- 검증: 활성 문서의 Java 17 참조 검색, Java 21 환경의 Backend 테스트와 Docker 빌드 통과
+- 리스크: 로컬 개발 환경에는 JDK 21을 별도로 설치해야 함
+
 ## 2026-07-21 - 최신 문서 체계와 작업 로그 정책 정합화
 
 - 변경 파일: `.gitignore`, `WORK_LOG.md`
