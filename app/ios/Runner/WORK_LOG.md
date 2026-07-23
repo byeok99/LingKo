@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - iOS Google OAuth Server Client ID 기본 설정
+
+- 변경 파일: `Info.plist`, `WORK_LOG.md`
+- 내용: 일반 `flutter run`에서도 백엔드 검증용 Web OAuth Client ID를 사용하도록 `GIDServerClientID`를 등록했다.
+- 검증: `plutil -lint Info.plist`, iOS Debug 빌드, 설치 앱의 OAuth 설정, 실제 Google 로그인과 앱 재실행 후 세션 복원 확인
+- 리스크: Google Cloud Console에서 Web Client ID가 같은 프로젝트에 속하고 백엔드 `GOOGLE_CLIENT_ID`와 일치해야 함
+
 ## 2026-07-20 - iOS Google OAuth 설정 이력 이전
 
 - 변경 파일: `Info.plist`, `WORK_LOG.md`

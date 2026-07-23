@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-23 - iOS Bundle ID를 Google OAuth 설정과 일치시킴
+
+- 변경 파일: `Runner.xcodeproj/project.pbxproj`, `WORK_LOG.md`
+- 내용: Runner의 Debug, Profile, Release Bundle ID를 Google iOS OAuth Client에 등록된 `com.byeok.lingko`로 변경하고 RunnerTests 식별자도 같은 네임스페이스로 맞췄다.
+- 검증: Xcode build settings와 설치 앱 Bundle ID 확인, iOS Debug 빌드 및 실제 Google 로그인 통과
+- 리스크: 실제 기기 실행 시 Apple Developer의 App ID와 provisioning profile도 `com.byeok.lingko`를 허용해야 함
+
 ## 2026-07-20 - iOS 플러그인 프로젝트 반영 이력 이전
 
 - 변경 파일: `Podfile.lock`, `Runner.xcodeproj/project.pbxproj`, `WORK_LOG.md`
