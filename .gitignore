@@ -55,4 +55,3 @@ app/docs/*
 # Local agent/runtime files
 .dmux/
 .dumx-hooks
-AGENTS.md
