@@ -18,6 +18,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 
+/**
+ * Guide Generation Job 업무 규칙을 조율한다.
+ *
+ * 컨트롤러와 외부 어댑터가 정책을 소유하지 않도록 도메인 서비스에 조율을 집중했다.
+ */
 @Service
 @Slf4j
 public class GuideGenerationJobService {
@@ -25,6 +30,7 @@ public class GuideGenerationJobService {
 
     private final VideoGenerator videoGenerator;
     private final Executor executor;
+    // 현재 단일 instance prototype에는 memory 상태를 사용하며 durable job queue가 아님을 명시한다.
     private final ConcurrentHashMap<String, GuideGenerationJobResponse> jobsById = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> jobIdByCacheKey = new ConcurrentHashMap<>();
 
@@ -44,6 +50,7 @@ public class GuideGenerationJobService {
         List<List<String>> normalizedPairs = normalize(urlPairs);
         String trimmedSyllable = syllable.trim();
         String cacheKey = cacheKey(trimmedSyllable, type, normalizedPairs);
+        // cache 조회와 job 등록을 하나의 원자적 중복 제거 결정으로 만들기 위해 동기화한다.
         String existingJobId = jobIdByCacheKey.get(cacheKey);
         if (existingJobId != null) {
             return jobsById.get(existingJobId);
@@ -91,6 +98,7 @@ public class GuideGenerationJobService {
     }
 
     private List<List<String>> normalize(List<List<String>> urlPairs) {
+        // 의미가 같은 요청이 동일한 cache key를 사용하도록 공백을 canonical 형태로 정규화한다.
         return urlPairs.stream()
                 .map(pair -> pair.stream()
                         .map(String::trim)

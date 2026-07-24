@@ -12,6 +12,7 @@ spring:
     driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
   jpa:
     hibernate:
+      # 운영 스키마 변경 이력은 Hibernate 자동 생성이 아니라 Flyway 마이그레이션이 소유한다.
       ddl-auto: ${JPA_DDL_AUTO:none}
     properties:
       hibernate:
@@ -32,6 +33,7 @@ db:
   driver: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
 
 jwt:
+  # 비밀키는 예시 파일에 기록하지 않고 실행 환경에서만 주입한다.
   secret-key: ${JWT_SECRET_KEY:}
   access-token-expire-minutes: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:30}
   refresh-token-expire-days: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS:14}
@@ -42,6 +44,7 @@ openai:
   text-model: ${OPENAI_TEXT_MODEL:gpt-4o-mini}
 
 azure:
+  # 외부 서비스 자격 증명은 빈 기본값으로 두어 저장소에 비밀값이 포함되지 않게 한다.
   secret-key: ${AZURE_SECRET_KEY:}
   region: ${AZURE_REGION:}
   language: ${AZURE_LANGUAGE:ko-KR}

@@ -10,7 +10,7 @@
 | 2 | [#37 평가·쿼터·저장 통합](https://github.com/byeok99/LingKo/issues/37) | 핵심 유스케이스 완결 | #36 |
 | 3 | [#38 쿼터 동시성](https://github.com/byeok99/LingKo/issues/38) | 초과 사용·유실 업데이트 방지 | #37 |
 | 4 | [#39 Idempotency](https://github.com/byeok99/LingKo/issues/39) | 재시도 중복 비용·저장 방지 | #37, #38 |
-| 5 | [#40 Refresh Token](https://github.com/byeok99/LingKo/issues/40) | 안전한 세션 갱신과 폐기 | #36 |
+| 5 | [#40 Refresh Token](https://github.com/byeok99/LingKo/issues/40) — 완료 | 안전한 세션 갱신과 폐기 | #36 |
 | 6 | [#43 음성 보존·삭제·탈퇴](https://github.com/byeok99/LingKo/issues/43) | 개인정보와 스토어 요구사항 충족 | #37 |
 | 7 | [#41 가이드 API 접근 제어](https://github.com/byeok99/LingKo/issues/41) | 비용·자원 남용 차단 | #36 |
 | 8 | [#51 Flutter 스토어 출시](https://github.com/byeok99/LingKo/issues/51) | Android/iOS 실제 배포 준비 | #40, #43 |

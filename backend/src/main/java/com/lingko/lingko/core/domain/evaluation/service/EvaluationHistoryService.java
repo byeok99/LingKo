@@ -16,6 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.Comparator;
 
+/**
+ * Evaluation History 업무 규칙을 조율한다.
+ *
+ * 컨트롤러와 외부 어댑터가 정책을 소유하지 않도록 도메인 서비스에 조율을 집중했다.
+ */
 @Service
 @RequiredArgsConstructor
 public class EvaluationHistoryService {
@@ -30,6 +35,7 @@ public class EvaluationHistoryService {
         if (page < 0) {
             throw new IllegalArgumentException("page must be greater than or equal to 0");
         }
+        // 응답 크기와 child 엔티티 hydration 비용을 제한하기 위해 page size 상한을 둔다.
         if (size < 1 || size > 50) {
             throw new IllegalArgumentException("size must be between 1 and 50");
         }
@@ -68,6 +74,7 @@ public class EvaluationHistoryService {
                         .fluency(toInt(log.getFluencyScore()))
                         .completeness(toInt(log.getCompletenessScore()))
                         .build())
+                // 영속 순서는 표시 순서를 보장하지 않으므로 기록된 문자 위치로 다시 정렬한다.
                 .characters(log.getSyllableList().stream()
                         .sorted(Comparator.comparing(EvaluationSyllable::getPositionNo))
                         .map(this::toCharacter)

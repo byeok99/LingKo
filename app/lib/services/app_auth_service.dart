@@ -1,19 +1,26 @@
+// 파일 의도: app auth 서비스 플랫폼·생명주기 기능을 추상화한다.
+// 선택 이유: 플러그인 세부사항을 UI에서 격리해 오류 처리와 테스트 대역 교체를 가능하게 한다.
+
 import '../api/auth_api.dart';
 import '../api/api_client.dart';
 import '../models/auth_session.dart';
 import 'auth_session_store.dart';
 import 'google_identity_service.dart';
 
+/// 로컬·서버 인증 세션의 앱 수준 생명주기를 소유한다.
 abstract class AppAuthService {
   Future<AuthSession?> restoreSession();
 
   Future<AuthSession> signInWithGoogle();
 
+  /// 보호 요청을 실행하고 401이면 갱신와 재시도를 최대 한 번 수행한다.
   Future<T> runAuthenticated<T>(Future<T> Function(String accessToken) request);
 
+  /// 현재 기기 세션을 폐기하고 로컬 인증 정보을 삭제한다.
   Future<void> signOut();
 }
 
+/// Google 신원, LingKo 토큰, 안전한 로컬 저장을 조율한다.
 class DefaultAppAuthService implements AppAuthService {
   DefaultAppAuthService({
     AuthApi? authApi,
@@ -27,7 +34,9 @@ class DefaultAppAuthService implements AppAuthService {
   final AuthApi _authApi;
   final GoogleIdentityService _googleIdentityService;
   final AuthSessionStore _sessionStore;
+  // 동시 401 응답이 한 번만 회전하도록 모든 호출자가 같은 Future를 공유한다.
   Future<AuthSession>? _refreshInFlight;
+  // 로그인·로그아웃 상태 전이 전에 시작된 네트워크 응답을 무효화한다.
   int _sessionRevision = 0;
 
   @override
@@ -62,6 +71,7 @@ class DefaultAppAuthService implements AppAuthService {
       }
     }
 
+    // 다른 요청이 이미 회전된 최신 토큰 쌍을 저장했을 수 있어 다시 조회한다.
     final latestSession = await _sessionStore.read();
     final refreshed =
         latestSession != null &&
@@ -82,6 +92,7 @@ class DefaultAppAuthService implements AppAuthService {
 
   @override
   Future<void> signOut() async {
+    // 원격 폐기를 시작하기 전에 진행 중인 갱신 응답을 무효화한다.
     _sessionRevision++;
     final session = await _sessionStore.read();
 
@@ -128,11 +139,13 @@ class DefaultAppAuthService implements AppAuthService {
       throw const AuthSessionExpiredException();
     }
 
+    // 로그아웃 시작 후 완료된 갱신 응답은 절대 저장하지 않는다.
     if (revision != _sessionRevision) {
       throw const AuthSessionExpiredException();
     }
 
     await _sessionStore.save(session);
+    // 보안 저장소 쓰기 중 로그아웃이 경합할 수 있어 저장 후 revision을 다시 확인한다.
     if (revision != _sessionRevision) {
       await _clearIfCurrent(session);
       throw const AuthSessionExpiredException();
@@ -141,6 +154,7 @@ class DefaultAppAuthService implements AppAuthService {
   }
 
   Future<void> _clearIfCurrent(AuthSession session) async {
+    // 오래된 갱신 응답을 대체한 최신 로그인 세션을 삭제하지 않도록 현재 토큰을 비교한다.
     final storedSession = await _sessionStore.read();
     if (storedSession?.refreshToken == session.refreshToken) {
       await _sessionStore.clear();
@@ -148,6 +162,7 @@ class DefaultAppAuthService implements AppAuthService {
   }
 }
 
+/// 보호 요청을 중단하고 로그인 화면을 표시해야 함을 나타낸다.
 class AuthSessionExpiredException implements Exception {
   const AuthSessionExpiredException();
 

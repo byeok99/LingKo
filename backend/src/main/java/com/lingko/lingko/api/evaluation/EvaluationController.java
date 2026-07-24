@@ -11,6 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+/**
+ * Evaluation 기능의 HTTP 진입점을 제공한다.
+ *
+ * 컨트롤러는 전송 형식 검증과 응답 변환만 담당하고 업무 결정은 도메인 서비스에 위임한다.
+ */
 @RestController
 @RequestMapping("/api/pronunciation")
 @RequiredArgsConstructor

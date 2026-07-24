@@ -24,6 +24,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Evaluation 업무 규칙을 조율한다.
+ *
+ * 컨트롤러와 외부 어댑터가 정책을 소유하지 않도록 도메인 서비스에 조율을 집중했다.
+ */
 @Service
 public class EvaluationService {
 
@@ -79,6 +84,7 @@ public class EvaluationService {
     }
 
     public List<GuideCharacterResponse> buildGuideCharacters(String standardPronunciation) {
+        // Code points preserve complete Unicode characters; char iteration could split supplementary text.
         List<GuideCharacterResponse> characters = new ArrayList<>();
         int position = 0;
 
@@ -142,6 +148,7 @@ public class EvaluationService {
                 || contentType.equalsIgnoreCase("audio/vnd.wave")
                 || contentType.equalsIgnoreCase("application/octet-stream");
 
+        // 확장자와 MIME은 1차 filter일 뿐이며 아래에서 RIFF/PCM 구조를 다시 검증한다.
         if (!wavName || !wavType || audio.getSize() < MIN_WAV_HEADER_BYTES) {
             return !wavName || !wavType
                     ? AudioValidationStatus.UNSUPPORTED_TYPE
@@ -158,6 +165,7 @@ public class EvaluationService {
     }
 
     private boolean hasValidPcmWavHeader(InputStream input, long fileSize) throws IOException {
+        // 유효한 WAV에도 metadata chunk가 있을 수 있어 고정 44-byte header를 가정하지 않고 chunk를 parsing한다.
         byte[] riffHeader = input.readNBytes(12);
         if (riffHeader.length != 12
                 || !matchesAscii(riffHeader, 0, "RIFF")
@@ -272,6 +280,7 @@ public class EvaluationService {
         Path tempFile = null;
 
         try {
+            // 공급자 API가 파일 경로를 요구하므로 upload byte를 이 호출 동안만 임시 파일로 저장한다.
             tempFile = Files.createTempFile("lingko-evaluation-", ".wav");
             audio.transferTo(tempFile);
 
@@ -292,7 +301,7 @@ public class EvaluationService {
                 try {
                     Files.deleteIfExists(tempFile);
                 } catch (IOException ignored) {
-                    // Best-effort cleanup only.
+                    // 임시 파일 정리 실패가 정상 평가 결과나 원래 예외를 덮어쓰지 않게 한다.
                 }
             }
         }
@@ -312,6 +321,7 @@ public class EvaluationService {
     private PracticeResultResponse toPracticeResult(String referenceText, AssessmentResult result) {
         int overallScore = toScore(result.getPronunciationScore());
         List<GuideCharacterResponse> guideCharacters = buildGuideCharacters(referenceText);
+        // 공급자 문자와 정규화된 기준 문자가 다르면 위치만으로 점수를 연결하지 않는다.
         boolean characterScoresAvailable = hasReliableCharacterScores(guideCharacters, result);
         List<GuideCharacterResponse> characters = guideCharacters.stream()
                 .map(character -> {

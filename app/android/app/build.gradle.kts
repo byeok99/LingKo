@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // Flutter 플러그인은 Android와 Kotlin 확장을 사용하므로 두 플러그인 다음에 적용한다.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -20,10 +20,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // Android 설치 단위를 식별하는 값이며 출시 전 실제 LingKo 패키지로 교체해야 한다.
         applicationId = "com.example.lingko_app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // 사용하는 인증·보안 저장 플러그인의 지원 범위에 맞춰 최소 SDK를 23으로 제한한다.
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -32,8 +31,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // 현재는 로컬 release 실행만 가능하게 debug 서명을 사용하며 실제 배포 전 운영 키로 교체해야 한다.
             signingConfig = signingConfigs.getByName("debug")
         }
     }

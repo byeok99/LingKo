@@ -1,9 +1,13 @@
+// 파일 의도: auth api test 기능의 사용자·API 계약과 회귀 조건을 검증한다.
+// 선택 이유: 네트워크·플랫폼 의존성을 테스트 대역로 통제해 결과를 결정적으로 유지한다.
+
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingko_app/api/api_client.dart';
 import 'package:lingko_app/api/auth_api.dart';
 
+// 로그인, 갱신 회전, 로그아웃의 JSON 계약을 검증한다.
 void main() {
   test('loginWithGoogleIdToken posts OAuth request and maps session', () async {
     Uri? requestedUri;

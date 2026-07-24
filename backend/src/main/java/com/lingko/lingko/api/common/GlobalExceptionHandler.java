@@ -18,6 +18,11 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
 
+/**
+ * validation·도메인·infrastructure 예외를 안전한 HTTP 응답으로 변환한다.
+ *
+ * 컨트롤러의 책임을 줄이고 내부 예외 정보 노출을 막기 위해 예외 매핑을 한곳에 집중했다.
+ */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
@@ -47,6 +52,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<ErrorResponse> handleAuth(AuthException exception) {
+        // 응답 차이로 인증 정보가 추론되지 않도록 인증 세부사항을 의도적으로 고정 메시지로 대체한다.
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.of("AUTHENTICATION_FAILED", "Authentication failed"));
     }
@@ -71,6 +77,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(VideoGenerationException.class)
     public ResponseEntity<ErrorResponse> handleVideoGeneration(VideoGenerationException exception) {
+        // 공급자 세부사항은 서버에만 남기고 클라이언트에는 재시도 가능한 중립 오류를 반환한다.
         log.warn("Pronunciation evaluation failed", exception);
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                 .body(ErrorResponse.of("EVALUATION_FAILED", "Pronunciation evaluation failed. Please try again."));
@@ -78,6 +85,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception exception) {
+        // 예측하지 못한 실패 경로의 임의 예외 메시지를 응답으로 직렬화하지 않는다.
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.of("INTERNAL_SERVER_ERROR", "Unexpected server error"));
     }

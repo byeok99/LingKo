@@ -1,3 +1,6 @@
+// 파일 의도: profile screen 사용자 workflow와 화면 상태를 구성한다.
+// 선택 이유: 화면은 상호작용과 표시 상태를 소유하고 네트워크·플랫폼 작업은 주입된 서비스에 위임한다.
+
 import 'package:flutter/material.dart';
 
 import '../api/evaluation_api.dart';
@@ -11,6 +14,8 @@ import '../services/app_auth_service.dart';
 import '../widgets/settings_row.dart';
 import '../widgets/shared_widgets.dart';
 
+/// Profile Screen 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     super.key,
@@ -31,6 +36,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
+/// Profile Screen State Widget의 변경 가능한 화면 상태와 비동기 생명주기를 관리한다.
+/// 불변 Widget 설정과 실행 시점 상태를 분리하기 위해 전용 State 객체를 사용한다.
 class _ProfileScreenState extends State<ProfileScreen> {
   PracticeHistory? history;
   UserPreferences? preferences;
@@ -119,11 +126,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// 오프라인으로 서버 폐기 요청을 완료하지 못해도
+  /// profile의 인증 상태는 항상 제거한다.
   Future<void> signOut() async {
     try {
       await widget.authService.signOut();
     } catch (_) {
-      // Local credentials are cleared even when server revocation is unavailable.
+      // 서버 폐기가 불가능해도 로컬 인증 정보은 이미 삭제됐으므로 화면 상태를 정리한다.
     }
 
     if (!mounted) {
@@ -141,6 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     widget.onSessionChanged(null);
   }
 
+  /// 자동 토큰 갱신와 1회 재시도를 통해 연습 기록을 조회한다.
   Future<void> loadHistory([AuthSession? authSession]) async {
     final currentSession = authSession ?? session;
     if (currentSession == null) {
@@ -190,6 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// 자동 토큰 갱신와 1회 재시도를 통해 사용자 설정을 조회한다.
   Future<void> loadPreferences([AuthSession? authSession]) async {
     final currentSession = authSession ?? session;
     if (currentSession == null) {
@@ -239,6 +250,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// 동일한 갱신을 인식하는 요청 경계를 통해 사용자 설정을 저장한다.
   Future<void> updatePreferences(UserPreferences nextPreferences) async {
     final currentSession = session;
     if (currentSession == null) {
@@ -284,6 +296,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// root 인증 gate에 알리기 전에 profile 소유 데이터를 삭제한다.
   void _expireSession() {
     if (!mounted) {
       return;
@@ -455,6 +468,8 @@ String languageLabel(String value) {
   };
 }
 
+/// Account Panel 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _AccountPanel extends StatelessWidget {
   const _AccountPanel({
     required this.session,
@@ -542,6 +557,8 @@ class _AccountPanel extends StatelessWidget {
   }
 }
 
+/// Option Sheet 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _OptionSheet<T> extends StatelessWidget {
   const _OptionSheet({
     required this.title,
@@ -580,6 +597,8 @@ class _OptionSheet<T> extends StatelessWidget {
   }
 }
 
+/// History Summary Card 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _HistorySummaryCard extends StatelessWidget {
   const _HistorySummaryCard({required this.history});
 
@@ -616,6 +635,8 @@ class _HistorySummaryCard extends StatelessWidget {
   }
 }
 
+/// History 메시지 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _HistoryMessage extends StatelessWidget {
   const _HistoryMessage({required this.icon, required this.label, this.action});
 
@@ -643,6 +664,8 @@ class _HistoryMessage extends StatelessWidget {
   }
 }
 
+/// Practice History Tile 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _PracticeHistoryTile extends StatelessWidget {
   const _PracticeHistoryTile({required this.item, required this.onRetry});
 
@@ -707,6 +730,8 @@ class _PracticeHistoryTile extends StatelessWidget {
   }
 }
 
+/// Score Badge 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _ScoreBadge extends StatelessWidget {
   const _ScoreBadge({required this.score});
 

@@ -1,3 +1,6 @@
+// 파일 의도: api client 백엔드 통신 경계를 정의한다.
+// 선택 이유: HTTP 전송과 JSON 매핑을 UI에서 분리해 API 변경 영향을 한곳에서 관리한다.
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -25,6 +28,8 @@ typedef MultipartTransport =
       Duration timeout,
     );
 
+/// Api Client 백엔드 요청·응답 매핑을 구현한다.
+/// 전송 실패와 JSON 형식 오류를 API 경계에서 정규화해 UI에는 형식이 지정된 결과만 전달한다.
 class ApiClient {
   ApiClient({
     String? baseUrl,
@@ -66,6 +71,10 @@ class ApiClient {
     return _decodeResponse(response);
   }
 
+  /// 성공 응답에 본문이 없는 계약을 위한 JSON POST를 전송한다.
+  ///
+  /// 로그아웃의 `204 No Content`가 잘못된 JSON으로 처리되지 않게 하면서
+  /// 공통 API 오류 매핑은 그대로 유지한다.
   Future<void> postJsonWithoutResponse(String path, JsonMap body) async {
     final response = await _postJsonTransport(
       baseUrl.resolve(path),
@@ -110,6 +119,7 @@ class ApiClient {
     return decoded;
   }
 
+  /// 모든 non-2xx 전송 결과를 앱의 안정적인 예외 형식으로 변환한다.
   void _throwIfError(ApiResponse response, [Object? decodedBody]) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return;
@@ -158,15 +168,19 @@ String resolveLingKoApiBaseUrl({
   bool? isAndroid,
 }) {
   final trimmedOverride = environmentOverride.trim();
+  // 배포 환경과 실제 기기는 호스트 주소가 서로 다르므로 명시적으로 전달한 주소를 가장 먼저 사용한다.
   if (trimmedOverride.isNotEmpty) {
     return trimmedOverride;
   }
 
+  // Android 에뮬레이터에서 10.0.2.2는 개발 PC의 localhost를 가리키는 예약 주소다.
   return (isAndroid ?? Platform.isAndroid)
       ? 'http://10.0.2.2:8080'
       : 'http://localhost:8080';
 }
 
+/// Api 응답 백엔드 요청·응답 매핑을 구현한다.
+/// 전송 실패와 JSON 형식 오류를 API 경계에서 정규화해 UI에는 형식이 지정된 결과만 전달한다.
 class ApiResponse {
   const ApiResponse({required this.statusCode, required this.body});
 
@@ -174,6 +188,8 @@ class ApiResponse {
   final String body;
 }
 
+/// Api 예외 백엔드 요청·응답 매핑을 구현한다.
+/// 전송 실패와 JSON 형식 오류를 API 경계에서 정규화해 UI에는 형식이 지정된 결과만 전달한다.
 class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode});
 
@@ -184,6 +200,8 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+/// Multipart Upload 백엔드 요청·응답 매핑을 구현한다.
+/// 전송 실패와 JSON 형식 오류를 API 경계에서 정규화해 UI에는 형식이 지정된 결과만 전달한다.
 class MultipartUpload {
   const MultipartUpload({required this.file, this.fields = const {}});
 
@@ -191,6 +209,8 @@ class MultipartUpload {
   final Map<String, String> fields;
 }
 
+/// Multipart File Data 백엔드 요청·응답 매핑을 구현한다.
+/// 전송 실패와 JSON 형식 오류를 API 경계에서 정규화해 UI에는 형식이 지정된 결과만 전달한다.
 class MultipartFileData {
   const MultipartFileData({
     required this.fieldName,

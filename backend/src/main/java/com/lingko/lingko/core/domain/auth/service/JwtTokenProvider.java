@@ -19,6 +19,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * LingKo HS256 Access·갱신 JWT를 발급하고 검증한다.
+ *
+ * <p>두 토큰이 동일한 session ID를 공유해 서버 폐기가 일관되게 적용되며,
+ * 갱신 토큰은 회전마다 고유 ID도 함께 가진다.</p>
+ */
 @Component
 public class JwtTokenProvider {
 
@@ -40,12 +46,18 @@ public class JwtTokenProvider {
         this.clock = clock;
     }
 
+    /**
+     * 무작위 기기 세션 ID로 새로운 토큰 계열을 시작한다.
+     */
     public TokenPair issueTokens(Long userId) {
         String sessionId = UUID.randomUUID().toString();
         Instant refreshExpiresAt = Instant.now(clock).plusSeconds(refreshTokenExpiresInSeconds());
         return issueTokens(userId, sessionId, refreshExpiresAt);
     }
 
+    /**
+     * 갱신 세션의 절대 만료를 연장하지 않고 토큰 계열을 회전한다.
+     */
     public TokenPair issueTokens(Long userId, String sessionId, Instant refreshExpiresAt) {
         validateSettings();
 
@@ -86,10 +98,16 @@ public class JwtTokenProvider {
         return jwtSettings.getAccessTokenExpireMinutes() * 60L;
     }
 
+    /**
+     * Access 토큰 subject만 필요한 호출자를 위해 사용자 ID를 추출한다.
+     */
     public Long parseAccessTokenUserId(String token) {
         return parseAccessToken(token).userId();
     }
 
+    /**
+     * Access 토큰을 검증하고 활성 세션 조회에 필요한 claim을 반환한다.
+     */
     public AccessTokenClaims parseAccessToken(String token) {
         Map<String, Object> payload = parseAndValidate(token);
 
@@ -103,6 +121,9 @@ public class JwtTokenProvider {
         );
     }
 
+    /**
+     * 갱신 토큰을 검증하고 토큰 계열·회전 metadata를 반환한다.
+     */
     public RefreshTokenClaims parseRefreshToken(String token) {
         Map<String, Object> payload = parseAndValidate(token);
 
@@ -174,6 +195,7 @@ public class JwtTokenProvider {
             throw new AuthException("Invalid JWT");
         }
 
+        // 일치하는 signature prefix가 노출되지 않도록 constant-time으로 비교한다.
         String signingInput = parts[0] + "." + parts[1];
         if (!MessageDigest.isEqual(
                 sign(signingInput).getBytes(StandardCharsets.US_ASCII),
@@ -255,6 +277,9 @@ public class JwtTokenProvider {
         }
     }
 
+    /**
+     * 클라이언트에 전달할 토큰 쌍과 서버 세션 metadata를 함께 보관한다.
+     */
     public record TokenPair(
             String accessToken,
             String refreshToken,
@@ -264,6 +289,9 @@ public class JwtTokenProvider {
     ) {
     }
 
+    /**
+     * 갱신 Session 하나를 조회하고 회전하는 데 필요한 claim이다.
+     */
     public record RefreshTokenClaims(
             Long userId,
             String sessionId,
@@ -272,6 +300,9 @@ public class JwtTokenProvider {
     ) {
     }
 
+    /**
+     * Access 토큰을 활성 서버 세션에 연결하는 데 필요한 claim이다.
+     */
     public record AccessTokenClaims(
             Long userId,
             String sessionId

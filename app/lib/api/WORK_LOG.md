@@ -1,5 +1,20 @@
 # 작업 이력
 
+## 2026-07-24 - 한국어 의도 중심 주석 보강
+
+- 변경 파일: `api_client.dart`, `auth_api.dart`, `evaluation_api.dart`, `practice_quota_api.dart`, `pronunciation_api.dart`, `sentence_api.dart`, `user_preferences_api.dart`, `WORK_LOG.md`
+- 내용: 해당 폴더의 코드에 의도, 업무 의미, 구현 이유, 선택 기준을 설명하는 한국어 주석을 보강했다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 동작 변경 없음
+
+
+## 2026-07-23 - 인증 API 코드 목적 주석 보완
+
+- 변경 파일: `api_client.dart`, `auth_api.dart`, `WORK_LOG.md`
+- 내용: 204 응답 처리와 로그인·회전·폐기 API의 책임을 Dartdoc으로 명시했다.
+- 검증: `flutter analyze`, `flutter test`
+- 리스크: 동작 변경 없음
+
 ## 2026-07-23 - Refresh Token API client 추가
 
 - 변경 파일: `api_client.dart`, `auth_api.dart`, `WORK_LOG.md`

@@ -11,6 +11,7 @@ description = 'Demo project for Spring Boot'
 
 java {
 	toolchain {
+		// 개발 PC와 CI가 같은 언어 기능과 바이트코드를 사용하도록 Java 21 도구 체인을 고정한다.
 		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
@@ -22,6 +23,7 @@ configurations {
 }
 
 sourceSets {
+	// 외부 유료 서비스 없이 DB와 Spring 경계를 검증하는 통합 테스트를 단위 테스트와 분리한다.
 	integrationTest {
 		compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
 		runtimeClasspath += output + compileClasspath
@@ -91,6 +93,7 @@ tasks.register('externalIntegrationTest', Test) {
 	shouldRunAfter integrationTest
 	systemProperty 'spring.profiles.active', 'integration'
 	doFirst {
+		// 외부 호출을 시작하기 전에 필수 비밀값 누락을 한 번에 알려 불완전한 검증을 막는다.
 		def requiredEnv = [
 				'AZURE_SECRET_KEY',
 				'AZURE_REGION',

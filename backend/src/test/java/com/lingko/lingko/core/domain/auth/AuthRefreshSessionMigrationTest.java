@@ -12,6 +12,9 @@ import java.sql.ResultSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Flyway가 갱신 Session table과 보안 제약을 생성하는지 검증한다.
+ */
 class AuthRefreshSessionMigrationTest {
 
     @Test

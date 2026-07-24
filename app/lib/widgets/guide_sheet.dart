@@ -1,3 +1,6 @@
+// 파일 의도: guide sheet 표시 단위를 재사용 가능한 Widget으로 제공한다.
+// 선택 이유: 화면의 상태 조율과 순수 표시를 분리하기 위해 작은 Widget 경계를 선택했다.
+
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -5,6 +8,8 @@ import '../models/practice_sentence.dart';
 import 'guide_painter.dart';
 import 'shared_widgets.dart';
 
+/// Guide Sheet 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class GuideSheet extends StatelessWidget {
   const GuideSheet({super.key, required this.result});
 
@@ -12,6 +17,7 @@ class GuideSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 서버가 제공한 실제 입·혀 가이드를 우선하고, URL이 없을 때만 로컬 도식으로 대체한다.
     final guideAssets = _staticGuideAssets(result);
 
     return Padding(
@@ -111,6 +117,8 @@ bool _hasGuideUrl(String? value) {
   return value != null && value.trim().isNotEmpty;
 }
 
+/// Guide Asset 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class _GuideAsset {
   const _GuideAsset({required this.label, required this.url});
 
@@ -118,6 +126,8 @@ class _GuideAsset {
   final String url;
 }
 
+/// Static Guide Assets 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class _StaticGuideAssets extends StatelessWidget {
   const _StaticGuideAssets({required this.assets});
 
@@ -139,6 +149,8 @@ class _StaticGuideAssets extends StatelessWidget {
   }
 }
 
+/// Static Guide Asset 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class _StaticGuideAsset extends StatelessWidget {
   const _StaticGuideAsset({required this.asset});
 
@@ -158,6 +170,7 @@ class _StaticGuideAsset extends StatelessWidget {
               asset.url,
               fit: BoxFit.contain,
               errorBuilder:
+                  // 외부 이미지 한 건의 실패가 전체 가이드 시트를 깨뜨리지 않도록 해당 영역만 대체한다.
                   (context, error, stackTrace) =>
                       const _UnavailableGuideAsset(),
             ),
@@ -168,6 +181,8 @@ class _StaticGuideAsset extends StatelessWidget {
   }
 }
 
+/// Unavailable Guide Asset 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class _UnavailableGuideAsset extends StatelessWidget {
   const _UnavailableGuideAsset();
 
@@ -184,6 +199,8 @@ class _UnavailableGuideAsset extends StatelessWidget {
   }
 }
 
+/// 대체 Guide 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class _FallbackGuide extends StatelessWidget {
   const _FallbackGuide({required this.result});
 

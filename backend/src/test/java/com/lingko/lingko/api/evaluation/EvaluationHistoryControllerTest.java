@@ -21,6 +21,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * 활성 세션 인증을 통한 평가 기록 소유권을 검증한다.
+ */
 @WebMvcTest(EvaluationHistoryController.class)
 class EvaluationHistoryControllerTest {
 

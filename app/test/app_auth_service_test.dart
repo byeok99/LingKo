@@ -1,3 +1,6 @@
+// 파일 의도: app auth 서비스 test 기능의 사용자·API 계약과 회귀 조건을 검증한다.
+// 선택 이유: 네트워크·플랫폼 의존성을 테스트 대역로 통제해 결과를 결정적으로 유지한다.
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +11,7 @@ import 'package:lingko_app/services/app_auth_service.dart';
 import 'package:lingko_app/services/auth_session_store.dart';
 import 'package:lingko_app/services/google_identity_service.dart';
 
+// 갱신 토큰 회전, single-flight 재시도, 로그아웃, 생명주기 경합을 검증한다.
 void main() {
   test('401 response refreshes the session and retries exactly once', () async {
     final store = AuthSessionStore(storage: MemoryTokenStorage());
@@ -159,6 +163,8 @@ const _nextSession = AuthSession(
   user: AuthUser(userId: 7, email: 'user@example.com', name: 'LingKo User'),
 );
 
+/// 테스트에서 Fake Auth Api 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakeAuthApi implements AuthApi {
   FakeAuthApi({
     this.refreshedSession,
@@ -198,11 +204,15 @@ class FakeAuthApi implements AuthApi {
   }
 }
 
+/// 테스트에서 Fake Google Identity 서비스 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakeGoogleIdentityService implements GoogleIdentityService {
   @override
   Future<String> signInAndGetIdToken() async => 'google-id-token';
 }
 
+/// 테스트에서 Memory 토큰 저장소 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class MemoryTokenStorage implements TokenStorage {
   final values = <String, String>{};
 

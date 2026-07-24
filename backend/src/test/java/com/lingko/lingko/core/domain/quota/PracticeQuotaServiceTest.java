@@ -23,6 +23,11 @@ import java.time.ZoneId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * Practice 할당량 서비스 Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 @DataJpaTest(properties = {
         "spring.datasource.url=jdbc:h2:mem=practice_quota;MODE=MySQL;DATABASE_TO_UPPER=false",
         "spring.datasource.driver-class-name=org.h2.Driver",

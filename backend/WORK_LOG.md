@@ -1,3 +1,17 @@
+## 2026-07-24 - Refresh Token 백엔드 문서 정합화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 갱신·폐기 API가 미구현이라는 과거 주의사항을 현재 구현 상태로 교체하고 운영 전 동시 갱신 부하 검증을 후속 리스크로 분리했다.
+- 검증: Refresh Token endpoint·서비스·테스트와 README 대조, `git diff --check`
+- 리스크: 실제 MySQL 환경의 동시 DB refresh 부하 테스트 필요
+
+## 2026-07-24 - 한국어 의도 중심 주석 보강
+
+- 변경 파일: `Dockerfile`, `application.example.yaml`, `build.gradle`, `docker-compose.yml`, `settings.gradle`, `WORK_LOG.md`
+- 내용: 해당 폴더의 코드에 의도, 업무 의미, 구현 이유, 선택 기준을 설명하는 한국어 주석을 보강했다.
+- 검증: Java 21에서 `./gradlew test integrationTest` 통과, `git diff --check` 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-07-23 - Java 21 toolchain과 Docker 런타임 전환
 
 - 변경 파일: `build.gradle`, `Dockerfile`, `README.md`, `WORK_LOG.md`

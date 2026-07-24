@@ -10,6 +10,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+/**
+ * Google 신원 검증을 LingKo의 공급자 중립 인증 경계에 연결한다.
+ *
+ * 도메인이 검증된 신원 정보에만 의존하도록 Google 전용 세부사항을 infrastructure에 격리했다.
+ */
 @Component
 @RequiredArgsConstructor
 public class GoogleOAuthIdentityVerifier implements OAuthIdentityVerifier {
@@ -24,6 +29,7 @@ public class GoogleOAuthIdentityVerifier implements OAuthIdentityVerifier {
         validateSettings();
 
         try {
+            // tokeninfo를 검증 경계로 사용하며 정규화된 신원 정보만 어댑터 밖으로 전달한다.
             GoogleTokenInfoResponse response = webClientBuilder.build()
                     .get()
                     .uri(GOOGLE_TOKENINFO_URL, builder -> builder.queryParam("id_token", idToken).build())
@@ -38,6 +44,7 @@ public class GoogleOAuthIdentityVerifier implements OAuthIdentityVerifier {
     }
 
     private OAuthIdentity toIdentity(GoogleTokenInfoResponse response) {
+        // 다른 Google OAuth client용 토큰이 인증에 사용되지 않도록 audience를 결합한다.
         if (response == null
                 || isBlank(response.sub())
                 || !googleOAuthSettings.getClientId().equals(response.aud())

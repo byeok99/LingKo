@@ -1,3 +1,6 @@
+// 파일 의도: widget test 기능의 사용자·API 계약과 회귀 조건을 검증한다.
+// 선택 이유: 네트워크·플랫폼 의존성을 테스트 대역로 통제해 결과를 결정적으로 유지한다.
+
 import 'dart:async';
 import 'dart:io';
 
@@ -21,6 +24,8 @@ import 'package:lingko_app/services/app_auth_service.dart';
 import 'package:lingko_app/widgets/guide_sheet.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
 
+/// 테스트에서 Fake Pronunciation Api 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakePronunciationApi implements PronunciationApi {
   FakePronunciationApi({this.error});
 
@@ -55,6 +60,8 @@ class FakePronunciationApi implements PronunciationApi {
   }
 }
 
+/// 테스트에서 Fake Evaluation Api 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakeEvaluationApi implements EvaluationApi {
   String? lastAudioPath;
   int? lastSentenceId;
@@ -132,6 +139,8 @@ class FakeEvaluationApi implements EvaluationApi {
   }
 }
 
+/// 테스트에서 Fake User Preferences Api 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakeUserPreferencesApi implements UserPreferencesApi {
   UserPreferences preferences = const UserPreferences(
     displayLanguage: 'ko',
@@ -172,6 +181,8 @@ class FakeUserPreferencesApi implements UserPreferencesApi {
   }
 }
 
+/// 테스트에서 Fake Practice 할당량 Api 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakePracticeQuotaApi implements PracticeQuotaApi {
   FakePracticeQuotaApi({
     this.quota = const PracticeQuota(
@@ -200,6 +211,8 @@ class FakePracticeQuotaApi implements PracticeQuotaApi {
   }
 }
 
+/// 테스트에서 Fake Audio Recorder 서비스 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakeAudioRecorderService implements AudioRecorderService {
   FakeAudioRecorderService({
     List<bool> permissions = const [true],
@@ -253,6 +266,8 @@ class FakeAudioRecorderService implements AudioRecorderService {
   }
 }
 
+/// 테스트에서 Fake App Auth 서비스 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakeAppAuthService implements AppAuthService {
   FakeAppAuthService({
     this.restoreExistingSession = false,
@@ -318,6 +333,8 @@ class FakeAppAuthService implements AppAuthService {
   }
 }
 
+/// 테스트에서 Fake Sentence Api 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakeSentenceApi implements SentenceApi {
   FakeSentenceApi({this.error, this.sentences = _defaultSentences});
 
@@ -375,6 +392,7 @@ const _twoSentences = [
   ),
 ];
 
+// 앱 workflow의 인증 gate와 갱신 토큰 만료 동작을 검증한다.
 void main() {
   testWidgets('App shows logo splash while restoring session', (
     WidgetTester tester,

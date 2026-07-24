@@ -16,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
+/**
+ * 외부 신원 검증과 LingKo 토큰 세션 생명주기를 조율한다.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -28,6 +31,9 @@ public class AuthService {
     private final RefreshTokenSessionRepository refreshTokenSessionRepository;
     private final RefreshTokenHasher refreshTokenHasher;
 
+    /**
+     * Google 사용자를 생성·갱신하고 독립적으로 폐기 가능한 새 세션을 시작한다.
+     */
     @Transactional
     public AuthTokenResponse loginWithOAuth(OAuthLoginRequest request) {
         if (!GOOGLE_PROVIDER.equals(request.normalizedProvider())) {
@@ -49,6 +55,12 @@ public class AuthService {
         return toTokenResponse(user, tokens);
     }
 
+    /**
+     * 절대 만료를 유지하면서 유효한 갱신 토큰을 원자적으로 회전한다.
+     *
+     * <p>요청이 실패해도 재사용 탐지에 따른 폐기는 커밋되어야 하므로
+     * {@link RefreshTokenReuseException}에 명시적인 no-rollback 규칙을 적용한다.</p>
+     */
     @Transactional(noRollbackFor = RefreshTokenReuseException.class)
     public AuthTokenResponse refresh(RefreshTokenRequest request) {
         String refreshToken = request.trimmedRefreshToken();
@@ -61,6 +73,7 @@ public class AuthService {
             throw new AuthException("Refresh session unavailable");
         }
         if (!refreshTokenHasher.matches(refreshToken, session.getCurrentTokenHash())) {
+            // 해시 불일치는 같은 계열의 이전 토큰이 재사용됐다는 의미다.
             session.revoke(now);
             throw new RefreshTokenReuseException();
         }
@@ -75,6 +88,9 @@ public class AuthService {
         return toTokenResponse(session.getUser(), tokens);
     }
 
+    /**
+     * 제출된 갱신 토큰이 식별하는 현재 기기 세션만 폐기한다.
+     */
     @Transactional
     public void logout(RefreshTokenRequest request) {
         String refreshToken = request.trimmedRefreshToken();

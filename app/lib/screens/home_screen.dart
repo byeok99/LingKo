@@ -1,3 +1,6 @@
+// 파일 의도: home screen 사용자 workflow와 화면 상태를 구성한다.
+// 선택 이유: 화면은 상호작용과 표시 상태를 소유하고 네트워크·플랫폼 작업은 주입된 서비스에 위임한다.
+
 import 'package:flutter/material.dart';
 
 import '../models/practice_quota.dart';
@@ -6,6 +9,8 @@ import '../widgets/progress_panel.dart';
 import '../widgets/sentence_card.dart';
 import '../widgets/shared_widgets.dart';
 
+/// Home Screen 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
     super.key,
@@ -97,6 +102,8 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+/// 할당량 Summary 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _QuotaSummary extends StatelessWidget {
   const _QuotaSummary({
     required this.quota,
@@ -155,6 +162,8 @@ const _quotaTextStyle = TextStyle(
   fontWeight: FontWeight.w600,
 );
 
+/// Home Status Card 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _HomeStatusCard extends StatelessWidget {
   const _HomeStatusCard({required this.text, this.actionLabel, this.onAction});
 

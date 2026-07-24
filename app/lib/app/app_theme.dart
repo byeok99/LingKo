@@ -1,5 +1,10 @@
+// 파일 의도: app 테마 앱 구성과 전역 표시 정책을 정의한다.
+// 선택 이유: 기능 화면이 bootstrap·테마·navigation 세부사항에 의존하지 않도록 app 계층에 둔다.
+
 import 'package:flutter/material.dart';
 
+/// App Colors 앱 전역 구성 책임을 제공한다.
+/// 기능별 화면이 전역 테마·최상위 화면 전환 결정을 중복하지 않도록 중앙화했다.
 class AppColors {
   const AppColors._();
 
@@ -15,6 +20,8 @@ class AppColors {
   static const success = Color(0xFF2E7D61);
 }
 
+/// App 테마 앱 전역 구성 책임을 제공한다.
+/// 기능별 화면이 전역 테마·최상위 화면 전환 결정을 중복하지 않도록 중앙화했다.
 class AppTheme {
   const AppTheme._();
 

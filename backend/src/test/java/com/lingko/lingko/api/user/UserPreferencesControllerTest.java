@@ -24,6 +24,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * 활성 세션 인증을 통한 사용자 설정 조회·변경을 검증한다.
+ */
 @WebMvcTest(UserPreferencesController.class)
 class UserPreferencesControllerTest {
 

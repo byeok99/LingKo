@@ -1,5 +1,10 @@
+// 파일 의도: practice sentence의 앱 내부 데이터 의미와 API 매핑을 정의한다.
+// 선택 이유: 동적 JSON을 형식이 지정된 model로 변환해 잘못된 응답을 UI 경계 전에 차단한다.
+
 // 화면에 표시할 학습 문장 하나를 표현하는 임시 데이터 모델입니다.
 // 나중에 백엔드 API가 붙으면 이 값들은 서버 응답 DTO와 매핑됩니다.
+/// Practice Sentence 값의 의미와 불변 데이터 구조를 나타낸다.
+/// UI가 Map key나 nullable JSON 세부사항을 직접 다루지 않도록 형식이 지정된 model을 선택했다.
 class PracticeSentence {
   const PracticeSentence({
     this.sentenceId,
@@ -121,6 +126,8 @@ List<CharacterResult> _buildCustomCharacters(String text) {
 }
 
 // 평가 결과에서 글자별 점수와 피드백을 보여주기 위한 모델입니다.
+/// Character Result 값의 의미와 불변 데이터 구조를 나타낸다.
+/// UI가 Map key나 nullable JSON 세부사항을 직접 다루지 않도록 형식이 지정된 model을 선택했다.
 class CharacterResult {
   const CharacterResult({
     required this.character,

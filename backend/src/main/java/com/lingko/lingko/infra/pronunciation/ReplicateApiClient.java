@@ -13,6 +13,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Map;
 
+/**
+ * Replicate prediction API를 호출하고 비동기 job 생명주기를 정규화한다.
+ *
+ * polling과 응답 검증을 이 경계에서 처리해 도메인 서비스가 공급자 전송 형식에 의존하지 않게 한다.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

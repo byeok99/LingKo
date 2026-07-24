@@ -1,5 +1,20 @@
 # 작업 이력
 
+## 2026-07-24 - 한국어 의도 중심 주석 보강
+
+- 변경 파일: `AuthException.java`, `RefreshTokenReuseException.java`, `WORK_LOG.md`
+- 내용: 해당 폴더의 코드에 의도, 업무 의미, 구현 이유, 선택 기준을 설명하는 한국어 주석을 보강했다.
+- 검증: Java 21에서 `./gradlew test integrationTest` 통과
+- 리스크: 동작 변경 없음
+
+
+## 2026-07-23 - 재사용 예외 목적 주석 보완
+
+- 변경 파일: `RefreshTokenReuseException.java`, `WORK_LOG.md`
+- 내용: 실패 응답과 세션 폐기 commit을 함께 보장하기 위한 전용 예외 목적을 명시했다.
+- 검증: Backend 전체 테스트
+- 리스크: 동작 변경 없음
+
 ## 2026-07-23 - Refresh Token 재사용 탐지 예외
 
 - 변경 파일: `RefreshTokenReuseException.java`, `WORK_LOG.md`

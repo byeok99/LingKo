@@ -1,3 +1,6 @@
+// 파일 의도: practice screen 사용자 workflow와 화면 상태를 구성한다.
+// 선택 이유: 화면은 상호작용과 표시 상태를 소유하고 네트워크·플랫폼 작업은 주입된 서비스에 위임한다.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -7,6 +10,8 @@ import '../models/practice_sentence.dart';
 import '../services/audio_recorder_service.dart';
 import '../widgets/shared_widgets.dart';
 
+/// Practice Screen 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class PracticeScreen extends StatefulWidget {
   const PracticeScreen({
     super.key,
@@ -30,6 +35,8 @@ class PracticeScreen extends StatefulWidget {
   State<PracticeScreen> createState() => _PracticeScreenState();
 }
 
+/// Practice Screen State Widget의 변경 가능한 화면 상태와 비동기 생명주기를 관리한다.
+/// 불변 Widget 설정과 실행 시점 상태를 분리하기 위해 전용 State 객체를 사용한다.
 class _PracticeScreenState extends State<PracticeScreen> {
   final TextEditingController customSentenceController =
       TextEditingController();
@@ -57,6 +64,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.sentence?.text != widget.sentence?.text) {
+      // 이전 문장의 임시 녹음이 새 문장의 평가 요청에 연결되지 않도록 문장 전환 시 정리한다.
       unawaited(_cleanupRecording(reportErrors: false));
       _syncControllerWithSentence();
       _focusEmptyPracticeInput();
@@ -65,6 +73,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   @override
   void dispose() {
+    // dispose는 비동기를 기다릴 수 없으므로 임시 파일 삭제는 최선 노력 방식으로 시작한다.
     unawaited(_cleanupRecording(reportErrors: false));
     customSentenceController.removeListener(_syncCustomSentenceState);
     customSentenceController.dispose();
@@ -283,6 +292,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
     try {
       await widget.onEvaluateRecording(sentence, audioPath);
+      // 평가가 성공한 뒤에만 파일을 지워 전송 실패 시 사용자가 같은 녹음으로 재시도할 수 있게 한다.
       await _deleteRecordingBestEffort(audioPath);
       if (mounted) {
         setState(() {
@@ -310,7 +320,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
     try {
       await widget.audioRecorderService.delete(audioPath);
     } catch (_) {
-      // Cleanup must not block a successfully produced evaluation result.
+      // 임시 파일 정리 실패가 이미 생성된 평가 결과 화면을 가리지 않게 한다.
     }
   }
 
@@ -351,6 +361,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 }
 
+/// Practice Content 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _PracticeContent extends StatelessWidget {
   const _PracticeContent({
     required this.sentence,
@@ -468,6 +480,8 @@ class _PracticeContent extends StatelessWidget {
   }
 }
 
+/// Recording Panel 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _RecordingPanel extends StatelessWidget {
   const _RecordingPanel({
     required this.isRecording,
@@ -572,6 +586,8 @@ class _RecordingPanel extends StatelessWidget {
   }
 }
 
+/// 선택된 문장이 없을 때 다음 행동을 안내하는 불변 빈 상태 화면이다.
+/// 별도 상태가 필요하지 않아 `StatelessWidget`으로 유지한다.
 class _EmptyPracticeState extends StatelessWidget {
   const _EmptyPracticeState();
 
@@ -593,6 +609,8 @@ class _EmptyPracticeState extends StatelessWidget {
   }
 }
 
+/// Custom Sentence Card 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _CustomSentenceCard extends StatelessWidget {
   const _CustomSentenceCard({
     required this.controller,

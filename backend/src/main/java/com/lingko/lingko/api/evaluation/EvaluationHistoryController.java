@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 
+/**
+ * 인증된 활성 세션 사용자가 소유한 평가 기록을 page 단위로 제공한다.
+ */
 @Validated
 @RestController
 @RequestMapping("/api/evaluations")
@@ -22,6 +25,9 @@ public class EvaluationHistoryController {
     private final EvaluationHistoryService historyService;
     private final ActiveSessionAuthenticator activeSessionAuthenticator;
 
+    /**
+     * 활성 Bearer 세션 사용자의 기록을 제한된 크기의 한 page로 반환한다.
+     */
     @GetMapping("/me")
     public PracticeHistoryResponse getMyEvaluationHistory(
             @RequestHeader(value = "Authorization", required = false) String authorization,
