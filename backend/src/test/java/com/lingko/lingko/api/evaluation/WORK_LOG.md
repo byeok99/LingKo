@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - MockBean 제거 예정 API 교체
+
+- 변경 파일: `EvaluationControllerPrepareTest.java`, `EvaluationHistoryControllerTest.java`, `EvaluationResultControllerTest.java`, `GuideGenerationJobControllerTest.java`, `WORK_LOG.md`
+- 내용: Spring Boot 4에서 제거 예정인 `@MockBean`을 Spring Framework의 `@MockitoBean`으로 교체해 평가 Controller slice test의 mock Bean 재정의 동작을 유지했다.
+- 검증: 영향받은 Controller 테스트, `./gradlew cleanTest test integrationTest`, deprecated `MockBean` 검색 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `EvaluationControllerPrepareTest.java`, `EvaluationHistoryControllerTest.java`, `EvaluationResultControllerTest.java`, `GuideGenerationJobControllerTest.java`, `WORK_LOG.md`
