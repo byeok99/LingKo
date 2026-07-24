@@ -14,6 +14,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
+/**
+ * 외부 media URL을 애플리케이션이 사용하기 전에 검증하고 정규화한다.
+ *
+ * scheme·host·내부망 차단 정책을 호출부마다 반복하지 않도록 보안 경계로 분리했다.
+ */
 @Component
 public class ExternalMediaUrlValidator {
 
@@ -53,6 +58,7 @@ public class ExternalMediaUrlValidator {
         URI uri = parse(rawUrl);
         validateScheme(uri);
         validateHost(uri.getHost());
+        // 허용된 형태의 host도 DNS에서 내부 주소로 해석될 수 있어 host allowlist만으로는 충분하지 않다.
         validateResolvedAddresses(uri.getHost());
     }
 
@@ -63,6 +69,7 @@ public class ExternalMediaUrlValidator {
             HttpURLConnection connection = connectionFactory.apply(url);
             connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
             connection.setReadTimeout(READ_TIMEOUT_MS);
+            // 허용 host가 downloader를 내부망으로 redirect하지 못하도록 redirect를 비활성화한다.
             connection.setInstanceFollowRedirects(false);
             int responseCode = connection.getResponseCode();
             if (responseCode >= 300 && responseCode < 400) {
@@ -106,6 +113,7 @@ public class ExternalMediaUrlValidator {
         if (getExactAllowedHosts().contains(normalizedHost)) {
             return;
         }
+        // Replicate는 동적 하위 도메인을 사용하므로 통제된 이 접미사에만 와일드카드를 허용한다.
         if (normalizedHost.endsWith(".replicate.delivery")) {
             return;
         }
@@ -165,6 +173,7 @@ public class ExternalMediaUrlValidator {
     }
 
     private boolean isPrivateAddress(InetAddress address) {
+        // SSRF 변형을 차단하기 위해 IPv4 local range와 IPv6 unique-local 주소를 모두 거부한다.
         if (address.isAnyLocalAddress()
                 || address.isLoopbackAddress()
                 || address.isLinkLocalAddress()

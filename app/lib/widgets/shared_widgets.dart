@@ -1,8 +1,13 @@
+// 파일 의도: shared widgets 표시 단위를 재사용 가능한 Widget으로 제공한다.
+// 선택 이유: 화면의 상태 조율과 순수 표시를 분리하기 위해 작은 Widget 경계를 선택했다.
+
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
 import '../models/practice_sentence.dart';
 
+/// Top Bar 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class TopBar extends StatelessWidget {
   const TopBar({super.key, required this.title});
 
@@ -25,6 +30,8 @@ class TopBar extends StatelessWidget {
   }
 }
 
+/// Section Header 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({super.key, required this.title, this.trailing});
 
@@ -44,6 +51,8 @@ class SectionHeader extends StatelessWidget {
   }
 }
 
+/// Action Button 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class ActionButton extends StatelessWidget {
   const ActionButton({
     super.key,
@@ -72,6 +81,8 @@ class ActionButton extends StatelessWidget {
   }
 }
 
+/// Character Chip 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class CharacterChip extends StatelessWidget {
   const CharacterChip({super.key, required this.result});
 
@@ -113,6 +124,8 @@ class CharacterChip extends StatelessWidget {
   }
 }
 
+/// Character Badge 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class CharacterBadge extends StatelessWidget {
   const CharacterBadge({super.key, required this.text, this.large = false});
 
@@ -143,6 +156,8 @@ class CharacterBadge extends StatelessWidget {
   }
 }
 
+/// Meta Pill 표시를 재사용 가능한 Widget으로 제공한다.
+/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class MetaPill extends StatelessWidget {
   const MetaPill({super.key, required this.label});
 

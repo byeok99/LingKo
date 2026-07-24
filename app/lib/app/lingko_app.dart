@@ -1,3 +1,6 @@
+// 파일 의도: lingko app 앱 구성과 전역 표시 정책을 정의한다.
+// 선택 이유: 기능 화면이 bootstrap·테마·navigation 세부사항에 의존하지 않도록 app 계층에 둔다.
+
 import 'package:flutter/material.dart';
 
 import '../api/evaluation_api.dart';
@@ -20,6 +23,8 @@ import 'app_theme.dart';
 
 // 앱 전체 설정을 담당하는 최상위 위젯입니다.
 // 여기서는 앱 이름, 테마 색상, 기본 글자 스타일, 첫 화면을 정합니다.
+/// Ling Ko App 앱 전역 구성 책임을 제공한다.
+/// 기능별 화면이 전역 테마·최상위 화면 전환 결정을 중복하지 않도록 중앙화했다.
 class LingKoApp extends StatelessWidget {
   const LingKoApp({
     super.key,
@@ -61,6 +66,8 @@ class LingKoApp extends StatelessWidget {
   }
 }
 
+/// Ling Ko Shell 앱 전역 구성 책임을 제공한다.
+/// 기능별 화면이 전역 테마·최상위 화면 전환 결정을 중복하지 않도록 중앙화했다.
 class LingKoShell extends StatefulWidget {
   const LingKoShell({
     super.key,
@@ -85,6 +92,8 @@ class LingKoShell extends StatefulWidget {
   State<LingKoShell> createState() => _LingKoShellState();
 }
 
+/// Ling Ko Shell State Widget의 변경 가능한 화면 상태와 비동기 생명주기를 관리한다.
+/// 불변 Widget 설정과 실행 시점 상태를 분리하기 위해 전용 State 객체를 사용한다.
 class _LingKoShellState extends State<LingKoShell> {
   // 하단 탭 index입니다. 0: Home, 1: Practice, 2: Profile.
   int selectedTab = 0;
@@ -154,6 +163,7 @@ class _LingKoShellState extends State<LingKoShell> {
   }
 
   Future<void> restoreSession() async {
+    // 보안 저장소 확인이 끝날 때까지 시작 화면을 유지해 로그인 화면과 홈 화면의 순간 전환을 막는다.
     try {
       final restoredSession = await widget.authService.restoreSession();
 
@@ -166,6 +176,7 @@ class _LingKoShellState extends State<LingKoShell> {
         authErrorText = null;
       });
       if (restoredSession != null) {
+        // 문장과 할당량는 서로 의존하지 않으므로 동시에 조회해 인증 후 대기 시간을 줄인다.
         await Future.wait([
           loadRecommendedSentences(),
           loadPracticeQuota(restoredSession),
@@ -228,6 +239,7 @@ class _LingKoShellState extends State<LingKoShell> {
 
   Future<void> handleSessionChanged(AuthSession? nextSession) async {
     if (nextSession == null) {
+      // 다른 사용자의 문장·평가·할당량가 다음 로그인에 노출되지 않도록 사용자 종속 상태를 함께 비운다.
       setState(() {
         session = null;
         selectedTab = 0;
@@ -255,6 +267,9 @@ class _LingKoShellState extends State<LingKoShell> {
     ]);
   }
 
+  /// 갱신을 인식하는 인증 경계를 통해 할당량을 조회한다.
+  ///
+  /// 복구할 수 없는 세션 실패는 전체 shell을 로그인 gate 상태로 되돌린다.
   Future<void> loadPracticeQuota([AuthSession? authSession]) async {
     final currentSession = authSession ?? session;
     if (currentSession == null) {
@@ -319,6 +334,7 @@ class _LingKoShellState extends State<LingKoShell> {
     PracticeSentence sentence,
     String audioPath,
   ) async {
+    // 추천 문장은 서버 ID로, 사용자 입력 문장은 원문으로 보내 두 입력을 동시에 허용하지 않는 API 계약을 지킨다.
     final result = await widget.evaluationApi.evaluate(
       audioPath: audioPath,
       sentenceId: sentence.source == 'RECOMMENDED' ? sentence.sentenceId : null,

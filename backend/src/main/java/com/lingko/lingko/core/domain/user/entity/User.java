@@ -7,6 +7,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * User 상태를 영속화하고 불변 조건를 지키는 상태 전이를 소유한다.
+ *
+ * 어떤 서비스가 호출해도 동일한 규칙이 유지되어야 하는 동작이므로 데이터를 가진 엔티티에 배치했다.
+ */
 @Entity
 @Table(
         name = "users",
@@ -63,12 +68,14 @@ public class User {
     private LocalDateTime lastLoginAt;
 
     public void updateOAuthProfile(String email, String name, String profileImageUrl) {
+        // provider profile field는 로그인 시 갱신하는 시점 데이터이며 로컬 학습 설정은 변경하지 않는다.
         this.email = email;
         this.name = name;
         this.profileImageUrl = profileImageUrl;
     }
 
     public void updateLearningPreferences(String displayLanguage, String nativeLanguage, LearningLevel targetLevel) {
+        // 요청이 학습 profile 일부만 적용하지 않도록 설정 묶음을 함께 갱신한다.
         this.displayLanguage = displayLanguage;
         this.nativeLanguage = nativeLanguage;
         this.targetLevel = targetLevel;

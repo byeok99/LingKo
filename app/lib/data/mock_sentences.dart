@@ -1,3 +1,6 @@
+// 파일 의도: mock sentences에서 사용하는 정적·seed 데이터를 제공한다.
+// 선택 이유: 변경이 적은 content를 화면 로직과 분리해 재사용과 검증을 단순화한다.
+
 import '../models/practice_sentence.dart';
 
 // 백엔드가 붙기 전 디자인을 확인하기 위한 더미 데이터입니다.

@@ -20,6 +20,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * 공통 활성 세션 인증 경계를 통한 할당량 접근을 검증한다.
+ */
 @WebMvcTest(PracticeQuotaController.class)
 class PracticeQuotaControllerTest {
 

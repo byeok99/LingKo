@@ -16,6 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Evaluation Persistence 업무 규칙을 조율한다.
+ *
+ * 컨트롤러와 외부 어댑터가 정책을 소유하지 않도록 도메인 서비스에 조율을 집중했다.
+ */
 @Service
 @RequiredArgsConstructor
 public class EvaluationPersistenceService {
@@ -25,6 +30,7 @@ public class EvaluationPersistenceService {
 
     @Transactional
     public EvaluationLog saveResult(SaveEvaluationResultCommand command) {
+        // 부분 평가 결과가 노출되지 않도록 log와 모든 문자 child를 하나의 aggregate로 저장한다.
         validate(command);
 
         PracticeResultResponse result = command.result();
@@ -53,6 +59,7 @@ public class EvaluationPersistenceService {
 
     private EvaluationSyllable toSyllableResult(GuideCharacterResponse character) {
         String text = requireText(character.getText(), "character text");
+        // 표준 음절 metadata를 재사용하고 새 문자가 처음 등장할 때만 생성한다.
         Syllable syllable = syllableRepository.findById(text)
                 .orElseGet(() -> syllableRepository.save(Syllable.builder()
                         .syllableChar(text)

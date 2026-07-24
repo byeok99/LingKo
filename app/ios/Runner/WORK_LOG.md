@@ -1,5 +1,13 @@
 # 작업 이력
 
+## 2026-07-24 - 한국어 의도 중심 주석 보강
+
+- 변경 파일: `AppDelegate.swift`, `WORK_LOG.md`
+- 내용: 해당 폴더의 코드에 의도, 업무 의미, 구현 이유, 선택 기준을 설명하는 한국어 주석을 보강했다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 동작 변경 없음, 네이티브 실기기 빌드는 미실행
+
+
 ## 2026-07-23 - iOS Google OAuth Server Client ID 기본 설정
 
 - 변경 파일: `Info.plist`, `WORK_LOG.md`

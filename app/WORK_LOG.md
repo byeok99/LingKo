@@ -1,3 +1,10 @@
+## 2026-07-24 - Refresh Token 앱 문서 정합화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 자동 갱신이 미구현이라는 과거 설명을 제거하고 401 후 회전, 1회 재시도, 동시 갱신 단일화와 실패 시 재로그인 동작을 현재 구현에 맞게 기록했다.
+- 검증: Refresh Token 관련 활성 문서 상태 검색, `git diff --check`
+- 리스크: 실제 Access Token 만료를 기다리는 Android/iOS 실기기 E2E는 출시 전 확인 필요
+
 ## 2026-07-23 - Flutter 커버리지 산출물 제외
 
 - 변경 파일: `.gitignore`, `WORK_LOG.md`

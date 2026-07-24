@@ -8,6 +8,7 @@ services:
     ports:
       - "${DB_PORT:-3306}:3306"
     environment:
+      # root는 컨테이너 초기화에만 쓰고 애플리케이션은 DB_USER의 일반 계정으로 접속한다.
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required in .env}"
       MYSQL_DATABASE: "${DB_NAME:-lingko}"
       MYSQL_USER: "${DB_USER:-lingko}"
@@ -24,6 +25,7 @@ services:
       retries: 10
       start_period: 30s
     volumes:
+      # 컨테이너를 다시 만들어도 개발 데이터가 유지되도록 Docker 관리 볼륨을 사용한다.
       - mysql_data:/var/lib/mysql
 
   backend:
@@ -35,11 +37,13 @@ services:
     env_file:
       - .env
     depends_on:
+      # 포트가 열리는 시점이 아니라 MySQL healthcheck가 성공한 뒤 백엔드를 시작한다.
       mysql:
         condition: service_healthy
     ports:
       - "${APP_PORT:-8080}:8080"
     environment:
+      # 컨테이너 내부에서는 localhost가 아닌 Compose 서비스 이름으로 MySQL을 찾는다.
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: "${DB_NAME:-lingko}"

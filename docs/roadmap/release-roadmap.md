@@ -55,7 +55,7 @@ flowchart LR
 
 | 작업 | Issue | 출시 차단 사유 |
 |---|---|---|
-| Refresh Token 회전·폐기·로그아웃 | [#40](https://github.com/byeok99/LingKo/issues/40) | 만료 UX와 탈취 대응 부족 |
+| ~~Refresh Token 회전·폐기·로그아웃~~ | [#40](https://github.com/byeok99/LingKo/issues/40) 완료 | 구현 완료, 실기기 만료 E2E·동시 DB 부하는 운영 검증으로 추적 |
 | 가이드 생성 API 접근 제어 | [#41](https://github.com/byeok99/LingKo/issues/41) | 외부 비용과 서버 자원 남용 가능 |
 | 음성 보존·삭제·회원 탈퇴 | [#43](https://github.com/byeok99/LingKo/issues/43) | 개인정보·스토어 심사·저장 비용 위험 |
 

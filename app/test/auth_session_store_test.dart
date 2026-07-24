@@ -1,3 +1,6 @@
+// 파일 의도: auth session store test 기능의 사용자·API 계약과 회귀 조건을 검증한다.
+// 선택 이유: 네트워크·플랫폼 의존성을 테스트 대역로 통제해 결과를 결정적으로 유지한다.
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingko_app/models/auth_session.dart';
 import 'package:lingko_app/services/auth_session_store.dart';
@@ -34,6 +37,8 @@ void main() {
   });
 }
 
+/// 테스트에서 Memory 토큰 저장소 의존성을 결정적으로 대체한다.
+/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class MemoryTokenStorage implements TokenStorage {
   final values = <String, String>{};
 

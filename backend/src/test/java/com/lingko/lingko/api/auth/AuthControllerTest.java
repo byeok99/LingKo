@@ -23,6 +23,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * 로그인, 갱신 토큰 회전, 현재 기기 로그아웃의 HTTP 계약을 검증한다.
+ */
 @WebMvcTest(AuthController.class)
 class AuthControllerTest {
 

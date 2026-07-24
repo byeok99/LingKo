@@ -9,6 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * User Preferences 업무 규칙을 조율한다.
+ *
+ * 컨트롤러와 외부 어댑터가 정책을 소유하지 않도록 도메인 서비스에 조율을 집중했다.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserPreferencesService {

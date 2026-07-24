@@ -1,5 +1,20 @@
 # 작업 이력
 
+## 2026-07-24 - 한국어 의도 중심 주석 보강
+
+- 변경 파일: `app_auth_service_test.dart`, `auth_api_test.dart`, `auth_session_store_test.dart`, `evaluation_api_test.dart`, `practice_quota_api_test.dart`, `pronunciation_api_test.dart`, `sentence_api_test.dart`, `user_preferences_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: 해당 폴더의 코드에 의도, 업무 의미, 구현 이유, 선택 기준을 설명하는 한국어 주석을 보강했다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 동작 변경 없음
+
+
+## 2026-07-23 - 인증 테스트 목적 주석 보완
+
+- 변경 파일: `app_auth_service_test.dart`, `auth_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: 각 테스트 파일이 보장하는 인증 계약과 경쟁 조건 범위를 명시했다.
+- 검증: `flutter test`
+- 리스크: 동작 변경 없음
+
 ## 2026-07-23 - Refresh Token 회전·자동 갱신 테스트
 
 - 변경 파일: `auth_api_test.dart`, `app_auth_service_test.dart`, `widget_test.dart`, `WORK_LOG.md`

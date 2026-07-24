@@ -13,6 +13,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * Daily Practice 할당량 상태를 영속화하고 불변 조건를 지키는 상태 전이를 소유한다.
+ *
+ * 어떤 서비스가 호출해도 동일한 규칙이 유지되어야 하는 동작이므로 데이터를 가진 엔티티에 배치했다.
+ */
 @Entity
 @Table(
         name = "daily_practice_quota",
@@ -79,6 +84,7 @@ public class DailyPracticeQuota {
     }
 
     public int remainingPractices() {
+        // 손상된 과거 계수가 음수 할당량을 노출하지 않도록 무료 잔여량의 최솟값을 0으로 제한한다.
         return Math.max(0, freeLimit - freeUsed) + rewardedAvailable;
     }
 
@@ -87,6 +93,7 @@ public class DailyPracticeQuota {
     }
 
     public void consumePractice() {
+        // 획득한 보상 가치를 보존하기 위해 무료 제공량을 보상보다 먼저 사용한다.
         if (freeUsed < freeLimit) {
             freeUsed++;
             return;

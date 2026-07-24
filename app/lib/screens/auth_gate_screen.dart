@@ -1,7 +1,12 @@
+// 파일 의도: auth gate screen 사용자 workflow와 화면 상태를 구성한다.
+// 선택 이유: 화면은 상호작용과 표시 상태를 소유하고 네트워크·플랫폼 작업은 주입된 서비스에 위임한다.
+
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
 
+/// Splash Screen 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
@@ -20,6 +25,8 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
+/// Login Screen 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class LoginScreen extends StatelessWidget {
   const LoginScreen({
     super.key,
@@ -74,6 +81,8 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
+/// Auth Frame 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _AuthFrame extends StatelessWidget {
   const _AuthFrame({required this.child});
 
@@ -98,6 +107,8 @@ class _AuthFrame extends StatelessWidget {
   }
 }
 
+/// Google Sign In Button 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _GoogleSignInButton extends StatelessWidget {
   const _GoogleSignInButton({required this.isLoading, required this.onPressed});
 
@@ -147,6 +158,8 @@ class _GoogleSignInButton extends StatelessWidget {
   }
 }
 
+/// Logo Image 사용자 화면과 interaction 경계를 제공한다.
+/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _LogoImage extends StatelessWidget {
   const _LogoImage({super.key, required this.size});
 

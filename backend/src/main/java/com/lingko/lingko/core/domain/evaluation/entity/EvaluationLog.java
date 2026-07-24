@@ -10,6 +10,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Evaluation Log 상태를 영속화하고 불변 조건를 지키는 상태 전이를 소유한다.
+ *
+ * 어떤 서비스가 호출해도 동일한 규칙이 유지되어야 하는 동작이므로 데이터를 가진 엔티티에 배치했다.
+ */
 @Entity
 @Table(
         name = "evaluation_log",
@@ -77,6 +82,7 @@ public class EvaluationLog {
         if (syllable == null) {
             throw new IllegalArgumentException("syllable must not be null");
         }
+        // JPA cascade는 aggregate root에서 시작하지만 foreign key는 child가 소유하므로 양방향 관계를 함께 맞춘다.
         syllableList.add(syllable);
         syllable.setEvaluationLog(this);
     }

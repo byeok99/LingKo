@@ -1,5 +1,20 @@
 # 작업 이력
 
+## 2026-07-24 - 한국어 의도 중심 주석 보강
+
+- 변경 파일: `auth_gate_screen.dart`, `home_screen.dart`, `practice_screen.dart`, `profile_screen.dart`, `result_screen.dart`, `WORK_LOG.md`
+- 내용: 해당 폴더의 코드에 의도, 업무 의미, 구현 이유, 선택 기준을 설명하는 한국어 주석을 보강했다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 동작 변경 없음
+
+
+## 2026-07-23 - 프로필 세션 처리 목적 주석 보완
+
+- 변경 파일: `profile_screen.dart`, `WORK_LOG.md`
+- 내용: 오프라인 로그아웃과 인증 만료 시 프로필 상태 삭제 목적을 명시했다.
+- 검증: `flutter analyze`, `flutter test`
+- 리스크: 동작 변경 없음
+
 ## 2026-07-23 - Profile 보호 API 갱신·로그아웃 연결
 
 - 변경 파일: `profile_screen.dart`, `WORK_LOG.md`

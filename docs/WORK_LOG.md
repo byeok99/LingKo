@@ -1,3 +1,10 @@
+## 2026-07-24 - Refresh Token 기술부채 완료 처리
+
+- 변경 파일: `technical-debt.md`, `WORK_LOG.md`
+- 내용: 구현 완료된 Refresh Token 정책을 P0 기술부채와 미결정 항목에서 제거하고 DB 해시 저장·회전·폐기·자동 갱신 결정을 완료 기록으로 옮겼다.
+- 검증: Refresh Token 구현·ADR·테스트 이력과 문서 대조, `git diff --check`
+- 리스크: 실제 만료 기반 실기기 E2E와 동시 DB 부하 테스트는 운영 전 후속 검증 필요
+
 ## 2026-07-21 - 브랜치 전략 문서 불일치 해소
 
 - 변경 파일: `architecture/adr/0005-branch-strategy.md`, `architecture/adr/README.md`, `technical-debt.md`, `WORK_LOG.md`

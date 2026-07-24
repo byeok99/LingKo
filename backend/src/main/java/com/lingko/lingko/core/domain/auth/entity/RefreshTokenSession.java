@@ -16,6 +16,12 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
+/**
+ * 일반적으로 앱 설치 또는 기기 하나에 대응하는 독립 폐기 가능한 로그인 세션을 나타낸다.
+ *
+ * <p>현재 갱신 토큰 해시만 보관하며 회전 시 해당 해시를 교체한다.
+ * 로그아웃이나 재사용 탐지는 되돌릴 수 없는 폐기 시각을 기록한다.</p>
+ */
 @Entity
 @Table(name = "auth_refresh_sessions")
 @Getter
@@ -59,6 +65,9 @@ public class RefreshTokenSession {
         this.expiresAt = expiresAt;
     }
 
+    /**
+     * 새로 발급한 토큰 계열의 초기 영속 상태를 생성한다.
+     */
     public static RefreshTokenSession create(
             String sessionId,
             User user,
@@ -68,20 +77,32 @@ public class RefreshTokenSession {
         return new RefreshTokenSession(sessionId, user, currentTokenHash, expiresAt);
     }
 
+    /**
+     * 세션을 새로 발급한 갱신 토큰 fingerprint로 전진시킨다.
+     */
     public void rotate(String nextTokenHash) {
         currentTokenHash = nextTokenHash;
     }
 
+    /**
+     * 최초 폐기 시각을 보존하면서 세션을 최종 폐기 상태로 표시한다.
+     */
     public void revoke(Instant revokedAt) {
         if (this.revokedAt == null) {
             this.revokedAt = revokedAt;
         }
     }
 
+    /**
+     * 이 토큰 계열이 최종 폐기됐는지 반환한다.
+     */
     public boolean isRevoked() {
         return revokedAt != null;
     }
 
+    /**
+     * 토큰 회전으로 연장되지 않는 세션 절대 수명을 판정한다.
+     */
     public boolean isExpired(Instant now) {
         return !expiresAt.isAfter(now);
     }

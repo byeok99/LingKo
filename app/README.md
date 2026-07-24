@@ -11,6 +11,7 @@ LingKo의 iOS/Android 모바일 클라이언트입니다. 추천 문장 또는 �
 - 취약 글자와 입·혀 가이드 표시
 - Google 로그인
 - Access/Refresh Token 보안 저장소 저장
+- Access Token 만료 시 Refresh Token 회전과 요청 1회 재시도
 - 로그인 세션 복원과 로그아웃
 - 개인 연습 기록 조회
 - 표시 언어·모국어·목표 레벨 설정
@@ -75,7 +76,7 @@ flowchart TD
 3. LingKo Access/Refresh Token 수신
 4. `flutter_secure_storage`에 세션 저장
 
-현재 Refresh Token 자동 갱신은 구현되지 않았습니다.
+보호 API가 `401`을 반환하면 Refresh Token을 한 번 회전하고 원래 요청을 한 번만 재시도합니다. 동시 `401`은 하나의 갱신 요청을 공유하며, 갱신 실패 또는 재시도 후 `401`이면 로컬 세션을 삭제하고 재로그인을 요구합니다.
 
 ### 녹음
 
@@ -130,7 +131,7 @@ flutter test
 flutter build apk --debug
 ```
 
-릴리스 전에는 Android/iOS 실기기에서 마이크 권한, 실제 녹음, Google 로그인, 앱 재시작 후 세션 복원을 확인합니다.
+릴리스 전에는 Android/iOS 실기기에서 마이크 권한, 실제 녹음, Google 로그인, 앱 재시작 후 세션 복원과 실제 Access Token 만료 후 자동 갱신을 확인합니다.
 
 ## 구조 원칙
 
@@ -143,7 +144,6 @@ flutter build apk --debug
 ## 현재 제한
 
 - 일일 쿼터 조회 UI와 평가 시 실제 차감 흐름은 완전히 연결되지 않았습니다.
-- Refresh Token 자동 갱신이 없습니다.
 - 가이드 영상 생성 작업은 백엔드의 인메모리 작업 상태에 의존합니다.
 - 일부 오래된 mock 데이터와 설명성 코드 정리가 필요합니다.
 

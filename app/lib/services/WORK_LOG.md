@@ -1,5 +1,20 @@
 # 작업 이력
 
+## 2026-07-24 - 한국어 의도 중심 주석 보강
+
+- 변경 파일: `app_auth_service.dart`, `audio_recorder_service.dart`, `auth_session_store.dart`, `google_identity_service.dart`, `WORK_LOG.md`
+- 내용: 해당 폴더의 코드에 의도, 업무 의미, 구현 이유, 선택 기준을 설명하는 한국어 주석을 보강했다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 동작 변경 없음
+
+
+## 2026-07-23 - 인증 동시성 코드 목적 주석 보완
+
+- 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`
+- 내용: single-flight refresh와 세션 revision 경쟁 조건 방어의 목적을 Dartdoc과 블록 주석으로 명시했다.
+- 검증: `flutter analyze`, `flutter test`
+- 리스크: 동작 변경 없음
+
 ## 2026-07-23 - 동시 요청 안전 Refresh Token 자동 갱신
 
 - 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`

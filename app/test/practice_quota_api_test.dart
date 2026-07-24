@@ -1,3 +1,6 @@
+// 파일 의도: practice 할당량 api test 기능의 사용자·API 계약과 회귀 조건을 검증한다.
+// 선택 이유: 네트워크·플랫폼 의존성을 테스트 대역로 통제해 결과를 결정적으로 유지한다.
+
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';

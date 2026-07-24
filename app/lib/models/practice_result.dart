@@ -1,5 +1,10 @@
+// 파일 의도: practice result의 앱 내부 데이터 의미와 API 매핑을 정의한다.
+// 선택 이유: 동적 JSON을 형식이 지정된 model로 변환해 잘못된 응답을 UI 경계 전에 차단한다.
+
 import 'practice_sentence.dart';
 
+/// Practice Result 값의 의미와 불변 데이터 구조를 나타낸다.
+/// UI가 Map key나 nullable JSON 세부사항을 직접 다루지 않도록 형식이 지정된 model을 선택했다.
 class PracticeResult {
   const PracticeResult({
     required this.overallScore,
@@ -49,6 +54,8 @@ class PracticeResult {
   final List<CharacterResult> characters;
 }
 
+/// Practice Score Breakdown 값의 의미와 불변 데이터 구조를 나타낸다.
+/// UI가 Map key나 nullable JSON 세부사항을 직접 다루지 않도록 형식이 지정된 model을 선택했다.
 class PracticeScoreBreakdown {
   const PracticeScoreBreakdown({
     required this.accuracy,

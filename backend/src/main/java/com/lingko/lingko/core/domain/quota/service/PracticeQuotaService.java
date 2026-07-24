@@ -16,10 +16,16 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 
+/**
+ * Practice 할당량 업무 규칙을 조율한다.
+ *
+ * 컨트롤러와 외부 어댑터가 정책을 소유하지 않도록 도메인 서비스에 조율을 집중했다.
+ */
 @Service
 public class PracticeQuotaService {
 
     public static final int DAILY_FREE_LIMIT = 5;
+    // 서버 배포 시간대와 무관하게 한국 서비스 날짜를 기준으로 할당량을 초기화한다.
     public static final ZoneId RESET_ZONE = ZoneId.of("Asia/Seoul");
 
     private final DailyPracticeQuotaRepository quotaRepository;
@@ -43,6 +49,7 @@ public class PracticeQuotaService {
 
     @Transactional
     public PracticeQuotaResponse consumePractice(Long userId) {
+        // 호출자가 차감 전 시점 데이터을 받지 않도록 조회와 변경을 하나의 트랜잭션에서 처리한다.
         DailyPracticeQuota quota = findOrCreateTodayQuota(userId);
         if (!quota.hasRemainingPractice()) {
             throw new QuotaExceededException("Daily practice quota exceeded");

@@ -15,6 +15,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Replicate Api Client Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 @SpringBootTest
 @Tag("external")
 public class ReplicateApiClientTest {
@@ -24,11 +29,11 @@ public class ReplicateApiClientTest {
     @Test
     @DisplayName("Frame Interpolation Test")
     void interpolate_test() throws InterruptedException {
-        // Given
+        // 준비
         String frame1 = "https://lingko.s3.ap-northeast-2.amazonaws.com/guides/mouth/bilabial-consonants.png";
         String frame2 = "https://lingko.s3.ap-northeast-2.amazonaws.com/guides/mouth/vowel-a.png";
 
-        // When
+        // 실행
         String result = replicateApiClient.interpolate(frame1, frame2);
 
         // Then

@@ -15,6 +15,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * 생성된 발음 guide clip을 하나의 전달 가능한 media 파일로 병합한다.
+ *
+ * FFmpeg process와 임시 파일 관리를 도메인 서비스에서 분리하기 위해 전용 infrastructure component를 사용한다.
+ */
 @Component
 @Slf4j
 @RequiredArgsConstructor
