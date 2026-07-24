@@ -45,7 +45,7 @@
 ## 완료된 의사결정
 
 - 브랜치 전략: [ADR-0005](architecture/adr/0005-branch-strategy.md)에 따라 `develop`을 통합 브랜치, `main`을 릴리스 브랜치로 사용합니다.
-- Refresh Token 정책: DB에 현재 토큰의 SHA-256 해시를 저장하고 원자적 회전, 이전 토큰 재사용 시 현재 기기 세션 폐기, 절대 만료, 앱의 401 후 1회 자동 갱신을 적용합니다. 운영 전 실제 만료 기반 실기기 E2E와 동시 DB 부하 검증은 후속 검증으로 남습니다.
+- Refresh Token 정책: DB에 현재 토큰의 SHA-256 해시를 저장하고 원자적 회전, 이전 토큰 재사용 시 현재 기기 세션 폐기, 절대 만료, 앱의 401 후 1회 자동 갱신을 적용합니다. 운영 전 [#60](https://github.com/byeok99/LingKo/issues/60) 실제 만료 기반 실기기 E2E와 [#62](https://github.com/byeok99/LingKo/issues/62) 동시 DB 부하 검증을 수행합니다.
 
 ## 완료 기록 방식
 

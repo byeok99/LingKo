@@ -27,6 +27,9 @@
 | 6 | [#46 평가 저장 최적화](https://github.com/byeok99/LingKo/issues/46) | 음절 반복 쿼리와 저장 비용 감소 |
 | 7 | [#52 SLO·부하 테스트](https://github.com/byeok99/LingKo/issues/52) | 안전 처리량과 Scale-out 기준 확보 |
 | 8 | [#42 가이드 Worker](https://github.com/byeok99/LingKo/issues/42) | 작업 영속화와 API 자원 분리 |
+| 9 | [#60 실기기 Token 만료 E2E](https://github.com/byeok99/LingKo/issues/60) | 실제 만료·회전·세션 복원 검증 |
+| 10 | [#62 Refresh Token 동시 갱신 부하](https://github.com/byeok99/LingKo/issues/62) | MySQL 잠금·재사용 폐기·처리량 검증 |
+| 11 | [#61 전체 기기 로그아웃](https://github.com/byeok99/LingKo/issues/61) | 사용자 보안 대응을 위한 세션 일괄 폐기 |
 
 ## P2: 트래픽 증가 전 구조 확장
 

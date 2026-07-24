@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - 전체 기기 로그아웃 Issue 연결
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: FR-AUTH-007의 후속 작업을 새 GitHub Issue #61에 연결했다.
+- 검증: 생성된 GitHub Issue 제목·완료 기준과 요구사항 대조, `git diff --check`
+- 리스크: 전체 기기 로그아웃 API와 UI는 미구현
+
 ## 2026-07-24 - 전체 기기 로그아웃 후속 범위 분리
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`

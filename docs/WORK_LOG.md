@@ -1,3 +1,10 @@
+## 2026-07-24 - Refresh Token 운영 검증 Issue 연결
+
+- 변경 파일: `technical-debt.md`, `WORK_LOG.md`
+- 내용: 남아 있던 실기기 만료 E2E와 동시 DB 부하 검증을 새 GitHub Issue #60·#62에 연결했다.
+- 검증: 생성된 GitHub Issue 제목·완료 기준과 기술부채 문서 대조, `git diff --check`
+- 리스크: 두 운영 검증 Issue는 미착수
+
 ## 2026-07-24 - Refresh Token 기술부채 완료 처리
 
 - 변경 파일: `technical-debt.md`, `WORK_LOG.md`

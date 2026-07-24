@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - Refresh Token 후속 Issue 연결
+
+- 변경 파일: `release-roadmap.md`, `issue-backlog.md`, `WORK_LOG.md`
+- 내용: 실기기 만료 E2E #60, 전체 기기 로그아웃 #61, MySQL 동시 갱신 부하 #62를 로드맵과 운영 backlog에 연결했다.
+- 검증: 생성된 GitHub Issue 번호·제목과 문서 링크 대조, `git diff --check`
+- 리스크: 각 Issue의 구현·검증은 미착수
+
 ## 2026-07-24 - Refresh Token Issue 완료 상태 반영
 
 - 변경 파일: `release-roadmap.md`, `issue-backlog.md`, `WORK_LOG.md`

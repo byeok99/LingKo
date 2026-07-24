@@ -130,7 +130,7 @@ MVP에서는 별도 관리자 웹 콘솔을 필수로 하지 않습니다. 운�
 | FR-AUTH-004 | Must | 토큰 갱신 | Access Token 만료 시 Refresh Token으로 자동 갱신해야 한다. | 사용자의 작업을 불필요하게 중단하지 않고 1회 갱신 후 요청 재시도 | 구현됨 |
 | FR-AUTH-005 | Must | 로그아웃 | 사용자는 현재 기기에서 로그아웃할 수 있어야 한다. | 로컬 토큰 삭제, 서버 Refresh Token 폐기, 보호 API 접근 불가 | 구현됨 |
 | FR-AUTH-006 | Must | 회원 탈퇴 | 사용자는 앱 내부에서 계정 삭제를 요청할 수 있어야 한다. | 재인증 또는 확인 후 정책에 따라 개인정보 삭제·익명화 | [#43](https://github.com/byeok99/LingKo/issues/43) |
-| FR-AUTH-007 | Should | 전체 기기 로그아웃 | 사용자는 모든 기기의 세션을 폐기할 수 있어야 한다. | 발급된 모든 Refresh Token이 폐기됨 | 후속 Issue 필요 |
+| FR-AUTH-007 | Should | 전체 기기 로그아웃 | 사용자는 모든 기기의 세션을 폐기할 수 있어야 한다. | 발급된 모든 Refresh Token이 폐기됨 | [#61](https://github.com/byeok99/LingKo/issues/61) |
 
 ### 8.2 문장 선택과 발음 준비
 
