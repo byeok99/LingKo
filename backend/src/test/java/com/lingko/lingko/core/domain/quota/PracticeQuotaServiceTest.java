@@ -104,6 +104,54 @@ class PracticeQuotaServiceTest {
                 .isInstanceOf(QuotaExceededException.class);
     }
 
+    @Test
+    @DisplayName("무료 quota 예약을 취소하면 동일 날짜의 무료 사용량이 복구된다")
+    void releasesReservedFreeQuota() {
+        User user = saveUser();
+
+        PracticeQuotaService.PracticeQuotaReservation reservation =
+                quotaService.reservePractice(user.getUserIdx());
+        quotaService.releasePractice(reservation);
+
+        PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
+        assertThat(reservation.source()).isEqualTo(PracticeQuotaService.QuotaSource.FREE);
+        assertThat(response.freeUsed()).isZero();
+        assertThat(response.remainingPractices()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("무료 quota 예약을 확정하면 예약량이 사용량으로 전환된다")
+    void confirmsReservedFreeQuota() {
+        User user = saveUser();
+
+        PracticeQuotaService.PracticeQuotaReservation reservation =
+                quotaService.reservePractice(user.getUserIdx());
+        quotaService.confirmPractice(reservation);
+
+        PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
+        assertThat(response.freeUsed()).isEqualTo(1);
+        assertThat(response.remainingPractices()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("보상 quota 예약을 취소하면 보상 횟수가 복구된다")
+    void releasesReservedRewardedQuota() {
+        User user = saveUser();
+        DailyPracticeQuota quota = DailyPracticeQuota.create(user, LocalDate.of(2026, 6, 29), 5);
+        quota.useFreePractices(5);
+        quota.addRewardedPractices(1);
+        quotaRepository.save(quota);
+
+        PracticeQuotaService.PracticeQuotaReservation reservation =
+                quotaService.reservePractice(user.getUserIdx());
+        quotaService.releasePractice(reservation);
+
+        PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
+        assertThat(reservation.source()).isEqualTo(PracticeQuotaService.QuotaSource.REWARDED);
+        assertThat(response.rewardedAvailable()).isEqualTo(1);
+        assertThat(response.remainingPractices()).isEqualTo(1);
+    }
+
     private User saveUser() {
         return userRepository.save(User.builder()
                 .socialId("google-sub-123")

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - 인증 평가 통합 유스케이스 연결
+
+- 변경 파일: `EvaluationResultController.java`, `WORK_LOG.md`
+- 내용: 평가 생성 API가 활성 Bearer 세션의 사용자 ID로 평가·쿼터·결과 저장 통합 유스케이스를 호출하도록 변경했다.
+- 검증: `EvaluationResultControllerTest`, `EvaluationApplicationFlowIntegrationTest`
+- 리스크: 중복 요청 멱등성은 #39에서 추가 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `EvaluationController.java`, `EvaluationHistoryController.java`, `EvaluationResultController.java`, `GuideGenerationJobController.java`, `WORK_LOG.md`

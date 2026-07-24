@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - 평가·쿼터·결과 저장 유스케이스 통합
+
+- 변경 파일: `EvaluationApplicationService.java`, `EvaluationCompletionService.java`, `EvaluationService.java`, `WORK_LOG.md`
+- 내용: 문장 메타데이터 확정, 쿼터 예약, 외부 평가, 결과 저장·예약 확정과 실패 보상을 조율하는 application flow를 추가했다.
+- 검증: 핵심 단위 테스트와 Spring/JPA 통합 테스트 통과
+- 리스크: 프로세스 비정상 종료 시 장기 예약 회수 정책과 요청 멱등성은 후속 작업
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `EvaluationHistoryService.java`, `EvaluationPersistenceService.java`, `EvaluationService.java`, `GuideGenerationJobService.java`, `SpeechEvaluator.java`, `VideoGenerator.java`, `WORK_LOG.md`

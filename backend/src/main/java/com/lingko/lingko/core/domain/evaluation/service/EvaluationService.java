@@ -277,6 +277,10 @@ public class EvaluationService {
 
     public PracticeResultResponse evaluatePronunciation(MultipartFile audio, Long sentenceId, String text) {
         String referenceText = resolveReferenceText(sentenceId, text);
+        return evaluatePronunciation(audio, referenceText);
+    }
+
+    public PracticeResultResponse evaluatePronunciation(MultipartFile audio, String referenceText) {
         Path tempFile = null;
 
         try {

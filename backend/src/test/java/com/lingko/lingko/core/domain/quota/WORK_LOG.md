@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - 쿼터 예약 lifecycle·migration 테스트
+
+- 변경 파일: `PracticeQuotaServiceTest.java`, `PracticeQuotaMigrationTest.java`, `WORK_LOG.md`
+- 내용: 무료·보상 예약의 확정·복구와 V7 migration의 예약 컬럼 생성을 검증했다.
+- 검증: quota 관련 단위·migration 테스트 통과
+- 리스크: 동시성 테스트는 #38 범위
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `PracticeQuotaServiceTest.java`, `WORK_LOG.md`

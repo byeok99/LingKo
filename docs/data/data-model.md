@@ -64,7 +64,9 @@
       date quota_date
       int free_limit
       int free_used
+      int free_reserved
       int rewarded_available
+      int rewarded_reserved
       datetime created_at
       datetime updated_at
     }
@@ -87,6 +89,7 @@
 - `evaluation_syllable`: `(evaluation_log_idx, position_no)` 유일
 - `daily_practice_quota`: `(user_idx, quota_date)` 유일
 - `daily_practice_quota.quota_date` 인덱스
+- `free_reserved`, `rewarded_reserved`는 외부 평가 중 확보한 횟수이며 성공 시 사용량으로 확정하고 실패 시 복구
 - `auth_refresh_sessions.current_token_hash` 유일
 - `auth_refresh_sessions`: `(user_idx, revoked_at)`, `expires_at` 조회 인덱스
 
