@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - 평가 통합 유스케이스 단위 테스트
+
+- 변경 파일: `EvaluationApplicationServiceTest.java`, `WORK_LOG.md`
+- 내용: 추천·자유 문장 저장 metadata, 평가 실패와 저장 실패의 쿼터 보상을 검증했다.
+- 검증: `EvaluationApplicationServiceTest` 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `EvaluationHistoryServiceTest.java`, `EvaluationPersistenceMigrationTest.java`, `EvaluationPersistenceRepositoryTest.java`, `EvaluationPersistenceServiceTest.java`, `EvaluationServicePrepareTest.java`, `EvaluationServiceResultTest.java`, `EvaluationServiceTest.java`, `GuideGenerationJobServiceTest.java`, `WORK_LOG.md`

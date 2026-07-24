@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - 평가 통합 요구사항 구현 상태 반영
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: 인증 평가, 쿼터 확인·차감, 결과 저장, 실패 보상과 기록 내용 요구사항을 구현 완료로 갱신했다.
+- 검증: 단위·Controller·Spring/JPA 통합 테스트와 대조
+- 리스크: 쿼터 동시성·요청 멱등성은 #38·#39 미구현
+
 ## 2026-07-24 - 전체 기기 로그아웃 Issue 연결
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - 일일 쿼터 예약 계수 migration
+
+- 변경 파일: `V7__add_practice_quota_reservations.sql`, `WORK_LOG.md`
+- 내용: 외부 평가 진행 중 무료·보상 횟수를 사용량과 분리하기 위한 예약 계수를 추가했다.
+- 검증: H2 MySQL 모드 migration 테스트와 JPA 통합 테스트 통과, 실제 MySQL migration은 미실행
+- 리스크: 배포 전 MySQL migration 검증 필요
+
 ## 2026-07-23 - Refresh Token 해시 세션 migration
 
 - 변경 파일: `V6__add_auth_refresh_sessions.sql`, `WORK_LOG.md`

@@ -55,6 +55,14 @@ public class DailyPracticeQuota {
     @Column(name = "rewarded_available", nullable = false)
     private int rewardedAvailable;
 
+    @Column(name = "free_reserved", nullable = false)
+    @Builder.Default
+    private int freeReserved = 0;
+
+    @Column(name = "rewarded_reserved", nullable = false)
+    @Builder.Default
+    private int rewardedReserved = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -80,12 +88,15 @@ public class DailyPracticeQuota {
                 .freeLimit(freeLimit)
                 .freeUsed(0)
                 .rewardedAvailable(0)
+                .freeReserved(0)
+                .rewardedReserved(0)
                 .build();
     }
 
     public int remainingPractices() {
         // 손상된 과거 계수가 음수 할당량을 노출하지 않도록 무료 잔여량의 최솟값을 0으로 제한한다.
-        return Math.max(0, freeLimit - freeUsed) + rewardedAvailable;
+        return Math.max(0, freeLimit - freeUsed - freeReserved)
+                + Math.max(0, rewardedAvailable - rewardedReserved);
     }
 
     public boolean hasRemainingPractice() {
@@ -106,6 +117,48 @@ public class DailyPracticeQuota {
         throw new IllegalStateException("quota is exhausted");
     }
 
+    public ReservationSource reservePractice() {
+        // 외부 평가 중에는 횟수를 사용 완료로 기록하지 않고 별도 예약 계수로 격리한다.
+        if (freeUsed + freeReserved < freeLimit) {
+            freeReserved++;
+            return ReservationSource.FREE;
+        }
+        if (rewardedReserved < rewardedAvailable) {
+            rewardedReserved++;
+            return ReservationSource.REWARDED;
+        }
+
+        throw new IllegalStateException("quota is exhausted");
+    }
+
+    public void confirmReservation(ReservationSource source) {
+        if (source == ReservationSource.FREE && freeReserved > 0) {
+            freeReserved--;
+            freeUsed++;
+            return;
+        }
+        if (source == ReservationSource.REWARDED && rewardedReserved > 0) {
+            rewardedReserved--;
+            rewardedAvailable--;
+            return;
+        }
+
+        throw new IllegalStateException("quota reservation does not exist");
+    }
+
+    public void releaseReservation(ReservationSource source) {
+        if (source == ReservationSource.FREE && freeReserved > 0) {
+            freeReserved--;
+            return;
+        }
+        if (source == ReservationSource.REWARDED && rewardedReserved > 0) {
+            rewardedReserved--;
+            return;
+        }
+
+        throw new IllegalStateException("quota reservation does not exist");
+    }
+
     public void useFreePractices(int count) {
         if (count < 0 || freeUsed + count > freeLimit) {
             throw new IllegalArgumentException("invalid free practice count");
@@ -120,5 +173,10 @@ public class DailyPracticeQuota {
         }
 
         rewardedAvailable += count;
+    }
+
+    public enum ReservationSource {
+        FREE,
+        REWARDED
     }
 }

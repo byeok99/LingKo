@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - 평가 쿼터 예약 상태 추가
+
+- 변경 파일: `DailyPracticeQuota.java`, `WORK_LOG.md`
+- 내용: 무료·보상 예약량을 사용량과 분리하고 예약 확정·복구 상태 전이를 추가했다.
+- 검증: `PracticeQuotaServiceTest`, `EvaluationApplicationFlowIntegrationTest`
+- 리스크: 동시 예약 원자성은 #38에서 강화 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `DailyPracticeQuota.java`, `WORK_LOG.md`

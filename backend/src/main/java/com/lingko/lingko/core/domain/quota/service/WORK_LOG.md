@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - 쿼터 예약·확정·복구 서비스 추가
+
+- 변경 파일: `PracticeQuotaService.java`, `WORK_LOG.md`
+- 내용: 원래 날짜와 무료·보상 출처를 보존하는 예약 token으로 평가 성공 시 확정하고 실패 시 정확히 복구하도록 했다.
+- 검증: `PracticeQuotaServiceTest`, `EvaluationApplicationFlowIntegrationTest`
+- 리스크: 동일 사용자 동시 요청의 DB 원자성은 #38 범위
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `PracticeQuotaService.java`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-24 - 인증 평가 생성 Controller 테스트
+
+- 변경 파일: `EvaluationResultControllerTest.java`, `WORK_LOG.md`
+- 내용: 활성 세션 사용자 ID가 통합 유스케이스로 전달되고 인증 누락이 401로 거부되는 계약을 추가했다.
+- 검증: `EvaluationResultControllerTest` 통과
+- 리스크: 없음
+
 ## 2026-07-24 - MockBean 제거 예정 API 교체
 
 - 변경 파일: `EvaluationControllerPrepareTest.java`, `EvaluationHistoryControllerTest.java`, `EvaluationResultControllerTest.java`, `GuideGenerationJobControllerTest.java`, `WORK_LOG.md`

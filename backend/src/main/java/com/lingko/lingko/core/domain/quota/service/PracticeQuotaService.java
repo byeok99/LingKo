@@ -59,6 +59,33 @@ public class PracticeQuotaService {
         return toResponse(quota);
     }
 
+    @Transactional
+    public PracticeQuotaReservation reservePractice(Long userId) {
+        DailyPracticeQuota quota = findOrCreateTodayQuota(userId);
+        if (!quota.hasRemainingPractice()) {
+            throw new QuotaExceededException("Daily practice quota exceeded");
+        }
+
+        DailyPracticeQuota.ReservationSource source = quota.reservePractice();
+        return new PracticeQuotaReservation(
+                userId,
+                quota.getQuotaDate(),
+                QuotaSource.valueOf(source.name())
+        );
+    }
+
+    @Transactional
+    public void confirmPractice(PracticeQuotaReservation reservation) {
+        DailyPracticeQuota quota = findReservationQuota(reservation);
+        quota.confirmReservation(DailyPracticeQuota.ReservationSource.valueOf(reservation.source().name()));
+    }
+
+    @Transactional
+    public void releasePractice(PracticeQuotaReservation reservation) {
+        DailyPracticeQuota quota = findReservationQuota(reservation);
+        quota.releaseReservation(DailyPracticeQuota.ReservationSource.valueOf(reservation.source().name()));
+    }
+
     private DailyPracticeQuota findOrCreateTodayQuota(Long userId) {
         LocalDate today = today();
         return quotaRepository.findByUserUserIdxAndQuotaDate(userId, today)
@@ -72,6 +99,21 @@ public class PracticeQuotaService {
     private User findAuthenticatedUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new AuthException("Authenticated user not found"));
+    }
+
+    private DailyPracticeQuota findReservationQuota(PracticeQuotaReservation reservation) {
+        if (reservation == null
+                || reservation.userId() == null
+                || reservation.quotaDate() == null
+                || reservation.source() == null) {
+            throw new IllegalArgumentException("quota reservation must be complete");
+        }
+
+        return quotaRepository.findByUserUserIdxAndQuotaDate(
+                        reservation.userId(),
+                        reservation.quotaDate()
+                )
+                .orElseThrow(() -> new IllegalStateException("quota reservation does not exist"));
     }
 
     private PracticeQuotaResponse toResponse(DailyPracticeQuota quota) {
@@ -93,5 +135,20 @@ public class PracticeQuotaService {
         return quotaDate.plusDays(1)
                 .atStartOfDay(RESET_ZONE)
                 .toOffsetDateTime();
+    }
+
+    public enum QuotaSource {
+        FREE,
+        REWARDED
+    }
+
+    /**
+     * 날짜가 바뀐 뒤 보상하더라도 원래 예약한 일자의 정확한 횟수를 복구하기 위한 내부 token이다.
+     */
+    public record PracticeQuotaReservation(
+            Long userId,
+            LocalDate quotaDate,
+            QuotaSource source
+    ) {
     }
 }

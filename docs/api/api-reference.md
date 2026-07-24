@@ -87,7 +87,7 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 
 ### `POST /api/evaluations`
 
-`multipart/form-data`
+인증 필요. `multipart/form-data`
 
 | 필드 | 필수 | 설명 |
 |---|---:|---|
@@ -96,6 +96,8 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 | `text` | 조건부 | 자유 문장 원문 |
 
 `sentenceId`와 `text` 중 하나는 필요합니다.
+
+서버는 인증 사용자 기준으로 쿼터 1회를 예약한 뒤 평가를 실행합니다. 성공하면 결과와 글자별 점수를 저장하면서 예약을 사용량으로 확정하고, 외부 평가 또는 저장 실패 시 예약을 복구합니다. 남은 횟수가 없으면 외부 API 호출 전에 `429 QUOTA_EXCEEDED`를 반환합니다.
 
 대표 응답:
 
@@ -133,7 +135,7 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 
 인증 필요. Asia/Seoul 기준 오늘의 무료·보상·잔여 횟수와 다음 갱신 시각을 반환합니다.
 
-현재 평가 업로드와 쿼터 차감은 연결되지 않았습니다.
+평가 진행 중 예약된 횟수는 `remainingPractices`에서 제외되며, 평가 성공 시 사용량으로 확정되고 시스템 오류 시 복구됩니다.
 
 ## 사용자 설정
 
