@@ -28,6 +28,7 @@
 
 - [로컬 개발](development/local-development.md)
 - [테스트·트러블슈팅](development/testing-and-troubleshooting.md)
+- [트러블슈팅 노트](troubleshooting/README.md)
 - [운영 Runbook](operations/operations-runbook.md)
 - [보안·개인정보](security/security-and-privacy.md)
 - [기술 부채](technical-debt.md)
@@ -49,6 +50,7 @@
 | 외부 서비스·컴포넌트 변경 | `architecture/` |
 | 환경변수·실행 명령 변경 | `development/` |
 | 장애·배포·복구 절차 변경 | `operations/` |
+| 재발 가능한 성능·정합성·운영·보안 문제 해결 | `troubleshooting/` |
 | 인증·토큰·개인정보 변경 | `security/` |
 | 출시 우선순위·일정 변경 | `roadmap/` |
 
