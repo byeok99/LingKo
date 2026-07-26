@@ -1,11 +1,18 @@
 # 작업 이력
 
+## 2026-07-26 - 동시 상태 전이 책임을 저장소로 이동
+
+- 변경 파일: `DailyPracticeQuota.java`, `WORK_LOG.md`
+- 내용: 동시 예약에 안전하지 않은 엔티티 상태 전이 메서드를 제거하고 원자 DB UPDATE가 동시성 invariant를 소유하도록 책임을 명확히 했다.
+- 검증: `PracticeQuotaServiceTest`, `PracticeQuotaConcurrencyTest`
+- 리스크: 관리·테스트용 단일 transaction 계산 메서드는 동시 요청 경로에서 사용하지 않아야 함
+
 ## 2026-07-24 - 평가 쿼터 예약 상태 추가
 
 - 변경 파일: `DailyPracticeQuota.java`, `WORK_LOG.md`
 - 내용: 무료·보상 예약량을 사용량과 분리하고 예약 확정·복구 상태 전이를 추가했다.
 - 검증: `PracticeQuotaServiceTest`, `EvaluationApplicationFlowIntegrationTest`
-- 리스크: 동시 예약 원자성은 #38에서 강화 필요
+- 리스크: 당시 남은 동시 예약 원자성은 2026-07-26 작업에서 보완됨
 
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 

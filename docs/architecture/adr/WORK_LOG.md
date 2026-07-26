@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-26 - 일일 쿼터 동시성 결정 기록
+
+- 변경 파일: `0006-atomic-practice-quota-transitions.md`, `README.md`, `WORK_LOG.md`
+- 내용: 일반 상태 전이는 조건부 원자 UPDATE, 최초 생성만 짧은 사용자 부모 lock으로 처리하고 외부 호출 중 lock을 유지하지 않는 결정을 승인했다.
+- 검증: 구현, H2·MySQL 동시성 테스트와 ADR의 선택·대안·결과를 대조
+- 리스크: 비정상 종료 예약 회수와 운영 lock 지표는 후속 작업
+
 ## 2026-07-23 - JWT Refresh Session 결정 보완
 
 - 변경 파일: `0002-google-oauth-and-jwt.md`, `WORK_LOG.md`

@@ -1,11 +1,18 @@
 # 작업 이력
 
+## 2026-07-26 - 쿼터 동시성 회귀 테스트 추가
+
+- 변경 파일: `PracticeQuotaConcurrencyTest.java`, `WORK_LOG.md`
+- 내용: 남은 1회 예약, 신규 행 생성, 동일 예약 확정·복구에 동시 요청 10개를 실행하고 H2와 실제 MySQL datasource를 선택할 수 있게 했다.
+- 검증: H2 MySQL mode와 MySQL 8에서 예약·생성 반복 테스트 및 상태 전이 테스트 통과
+- 리스크: CI 기본 경로는 H2이며 실제 MySQL 검증에는 별도 datasource 환경변수가 필요
+
 ## 2026-07-24 - 쿼터 예약 lifecycle·migration 테스트
 
 - 변경 파일: `PracticeQuotaServiceTest.java`, `PracticeQuotaMigrationTest.java`, `WORK_LOG.md`
 - 내용: 무료·보상 예약의 확정·복구와 V7 migration의 예약 컬럼 생성을 검증했다.
 - 검증: quota 관련 단위·migration 테스트 통과
-- 리스크: 동시성 테스트는 #38 범위
+- 리스크: 당시 남은 동시성 테스트는 2026-07-26 작업에서 추가됨
 
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 

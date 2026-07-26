@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-26 - 쿼터 상태 전이 원자 UPDATE 추가
+
+- 변경 파일: `DailyPracticeQuotaRepository.java`, `WORK_LOG.md`
+- 내용: 무료·보상 예약과 확정·복구를 업무 조건이 포함된 원자 UPDATE로 처리하고 최초 행 생성 재확인용 locking read를 추가했다.
+- 검증: H2 MySQL mode와 실제 MySQL 8에서 `PracticeQuotaConcurrencyTest` 통과
+- 리스크: native SQL 컬럼 변경 시 동시성 테스트로 회귀를 확인해야 함
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `DailyPracticeQuotaRepository.java`, `WORK_LOG.md`

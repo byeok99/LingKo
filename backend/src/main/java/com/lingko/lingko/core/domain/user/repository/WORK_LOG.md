@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-26 - 사용자별 쿼터 최초 생성 lock 추가
+
+- 변경 파일: `UserRepository.java`, `WORK_LOG.md`
+- 내용: 아직 child 쿼터 행이 없는 생성 경쟁을 직렬화할 수 있도록 사용자 행 비관적 lock 조회를 추가했다.
+- 검증: H2 MySQL mode와 실제 MySQL 8에서 신규 쿼터 동시 생성 테스트 통과
+- 리스크: 사용자 행을 잠그는 다른 기능 추가 시 lock 획득 순서 검토 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `UserRepository.java`, `WORK_LOG.md`

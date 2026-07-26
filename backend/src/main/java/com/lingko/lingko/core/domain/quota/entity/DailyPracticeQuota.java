@@ -14,9 +14,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Daily Practice 할당량 상태를 영속화하고 불변 조건를 지키는 상태 전이를 소유한다.
+ * Daily Practice 할당량 상태와 단일 aggregate 내부 계산 규칙을 영속화한다.
  *
- * 어떤 서비스가 호출해도 동일한 규칙이 유지되어야 하는 동작이므로 데이터를 가진 엔티티에 배치했다.
+ * 동시 요청의 예약·확정·복구는 조건부 DB UPDATE가 원자성을 소유하고, 이 엔티티는 조회 결과 계산과
+ * 테스트·관리 작업에서 사용하는 단일 transaction 상태 전이만 담당한다.
  */
 @Entity
 @Table(
@@ -117,48 +118,6 @@ public class DailyPracticeQuota {
         throw new IllegalStateException("quota is exhausted");
     }
 
-    public ReservationSource reservePractice() {
-        // 외부 평가 중에는 횟수를 사용 완료로 기록하지 않고 별도 예약 계수로 격리한다.
-        if (freeUsed + freeReserved < freeLimit) {
-            freeReserved++;
-            return ReservationSource.FREE;
-        }
-        if (rewardedReserved < rewardedAvailable) {
-            rewardedReserved++;
-            return ReservationSource.REWARDED;
-        }
-
-        throw new IllegalStateException("quota is exhausted");
-    }
-
-    public void confirmReservation(ReservationSource source) {
-        if (source == ReservationSource.FREE && freeReserved > 0) {
-            freeReserved--;
-            freeUsed++;
-            return;
-        }
-        if (source == ReservationSource.REWARDED && rewardedReserved > 0) {
-            rewardedReserved--;
-            rewardedAvailable--;
-            return;
-        }
-
-        throw new IllegalStateException("quota reservation does not exist");
-    }
-
-    public void releaseReservation(ReservationSource source) {
-        if (source == ReservationSource.FREE && freeReserved > 0) {
-            freeReserved--;
-            return;
-        }
-        if (source == ReservationSource.REWARDED && rewardedReserved > 0) {
-            rewardedReserved--;
-            return;
-        }
-
-        throw new IllegalStateException("quota reservation does not exist");
-    }
-
     public void useFreePractices(int count) {
         if (count < 0 || freeUsed + count > freeLimit) {
             throw new IllegalArgumentException("invalid free practice count");
@@ -173,10 +132,5 @@ public class DailyPracticeQuota {
         }
 
         rewardedAvailable += count;
-    }
-
-    public enum ReservationSource {
-        FREE,
-        REWARDED
     }
 }
