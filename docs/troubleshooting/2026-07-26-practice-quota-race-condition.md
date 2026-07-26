@@ -6,7 +6,7 @@
 - 심각도: SEV-3
 - 영역: Backend / DB / Concurrency
 - 관련 Issue: [#38](https://github.com/byeok99/LingKo/issues/38)
-- 관련 PR: 현재 작업 PR 생성 후 번호 갱신
+- 관련 PR: [#63](https://github.com/byeok99/LingKo/pull/63)
 
 ## 문제 현상
 

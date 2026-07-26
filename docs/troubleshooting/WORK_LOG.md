@@ -5,7 +5,7 @@
 - 변경 파일: `2026-07-26-practice-quota-race-condition.md`, `README.md`, `WORK_LOG.md`
 - 내용: 초과 예약·신규 행 생성 경쟁의 재현, MySQL Repeatable Read 조사, 원자 UPDATE와 짧은 부모 lock 해결 및 남은 위험을 기록했다.
 - 검증: H2 MySQL mode와 실제 MySQL 8 테스트 결과 및 코드와 사실 관계 대조
-- 리스크: PR 생성 후 실제 번호 링크로 교체 필요
+- 리스크: 운영 부하에서 응답시간과 lock wait 측정 필요
 
 ## 2026-07-24 - 선별적 트러블슈팅 문서 체계 추가
 
