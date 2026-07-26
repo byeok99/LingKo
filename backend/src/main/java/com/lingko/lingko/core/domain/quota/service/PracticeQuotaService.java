@@ -15,6 +15,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 
 /**
  * Practice 할당량 업무 규칙을 조율한다.
@@ -44,76 +45,88 @@ public class PracticeQuotaService {
 
     @Transactional
     public PracticeQuotaResponse getTodayQuota(Long userId) {
-        return toResponse(findOrCreateTodayQuota(userId));
+        LocalDate today = today();
+        return toResponse(findOrCreateQuota(userId, today));
     }
 
     @Transactional
     public PracticeQuotaResponse consumePractice(Long userId) {
-        // 호출자가 차감 전 시점 데이터을 받지 않도록 조회와 변경을 하나의 트랜잭션에서 처리한다.
-        DailyPracticeQuota quota = findOrCreateTodayQuota(userId);
-        if (!quota.hasRemainingPractice()) {
-            throw new QuotaExceededException("Daily practice quota exceeded");
-        }
-
-        quota.consumePractice();
-        return toResponse(quota);
+        PracticeQuotaReservation reservation = reservePractice(userId);
+        confirmPractice(reservation);
+        return toResponse(findQuota(userId, reservation.quotaDate()));
     }
 
     @Transactional
     public PracticeQuotaReservation reservePractice(Long userId) {
-        DailyPracticeQuota quota = findOrCreateTodayQuota(userId);
-        if (!quota.hasRemainingPractice()) {
-            throw new QuotaExceededException("Daily practice quota exceeded");
+        LocalDate today = today();
+        findOrCreateQuota(userId, today);
+
+        if (quotaRepository.reserveFreePractice(userId, today) == 1) {
+            return new PracticeQuotaReservation(userId, today, QuotaSource.FREE);
+        }
+        if (quotaRepository.reserveRewardedPractice(userId, today) == 1) {
+            return new PracticeQuotaReservation(userId, today, QuotaSource.REWARDED);
         }
 
-        DailyPracticeQuota.ReservationSource source = quota.reservePractice();
-        return new PracticeQuotaReservation(
-                userId,
-                quota.getQuotaDate(),
-                QuotaSource.valueOf(source.name())
-        );
+        // 조건부 UPDATE가 0이면 다른 요청이 먼저 마지막 횟수를 확보했거나 이미 소진된 상태다.
+        throw new QuotaExceededException("Daily practice quota exceeded");
     }
 
     @Transactional
     public void confirmPractice(PracticeQuotaReservation reservation) {
-        DailyPracticeQuota quota = findReservationQuota(reservation);
-        quota.confirmReservation(DailyPracticeQuota.ReservationSource.valueOf(reservation.source().name()));
+        validateReservation(reservation);
+        int updated = reservation.source() == QuotaSource.FREE
+                ? quotaRepository.confirmFreePractice(reservation.userId(), reservation.quotaDate())
+                : quotaRepository.confirmRewardedPractice(reservation.userId(), reservation.quotaDate());
+        requireReservationUpdate(updated);
     }
 
     @Transactional
     public void releasePractice(PracticeQuotaReservation reservation) {
-        DailyPracticeQuota quota = findReservationQuota(reservation);
-        quota.releaseReservation(DailyPracticeQuota.ReservationSource.valueOf(reservation.source().name()));
+        validateReservation(reservation);
+        int updated = reservation.source() == QuotaSource.FREE
+                ? quotaRepository.releaseFreePractice(reservation.userId(), reservation.quotaDate())
+                : quotaRepository.releaseRewardedPractice(reservation.userId(), reservation.quotaDate());
+        requireReservationUpdate(updated);
     }
 
-    private DailyPracticeQuota findOrCreateTodayQuota(Long userId) {
-        LocalDate today = today();
-        return quotaRepository.findByUserUserIdxAndQuotaDate(userId, today)
+    private DailyPracticeQuota findOrCreateQuota(Long userId, LocalDate quotaDate) {
+        Optional<DailyPracticeQuota> existingQuota =
+                quotaRepository.findByUserUserIdxAndQuotaDate(userId, quotaDate);
+        if (existingQuota.isPresent()) {
+            return existingQuota.get();
+        }
+
+        // 잠글 quota 행이 없는 최초 생성 경쟁은 항상 존재하는 user 행으로 직렬화한다.
+        User user = userRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new AuthException("Authenticated user not found"));
+        // Repeatable Read snapshot 재조회 대신 locking read 결과를 그대로 사용해야 앞선 transaction의 생성을 볼 수 있다.
+        return quotaRepository.findByUserAndDateForUpdate(userId, quotaDate)
                 .orElseGet(() -> quotaRepository.save(DailyPracticeQuota.create(
-                        findAuthenticatedUser(userId),
-                        today,
+                        user,
+                        quotaDate,
                         DAILY_FREE_LIMIT
                 )));
     }
 
-    private User findAuthenticatedUser(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new AuthException("Authenticated user not found"));
+    private DailyPracticeQuota findQuota(Long userId, LocalDate quotaDate) {
+        return quotaRepository.findByUserUserIdxAndQuotaDate(userId, quotaDate)
+                .orElseThrow(() -> new IllegalStateException("daily practice quota does not exist"));
     }
 
-    private DailyPracticeQuota findReservationQuota(PracticeQuotaReservation reservation) {
+    private void validateReservation(PracticeQuotaReservation reservation) {
         if (reservation == null
                 || reservation.userId() == null
                 || reservation.quotaDate() == null
                 || reservation.source() == null) {
             throw new IllegalArgumentException("quota reservation must be complete");
         }
+    }
 
-        return quotaRepository.findByUserUserIdxAndQuotaDate(
-                        reservation.userId(),
-                        reservation.quotaDate()
-                )
-                .orElseThrow(() -> new IllegalStateException("quota reservation does not exist"));
+    private void requireReservationUpdate(int updated) {
+        if (updated != 1) {
+            throw new IllegalStateException("quota reservation does not exist");
+        }
     }
 
     private PracticeQuotaResponse toResponse(DailyPracticeQuota quota) {

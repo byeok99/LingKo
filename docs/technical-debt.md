@@ -15,7 +15,6 @@
 - Azure·Replicate·S3 호출별 타임아웃, 재시도, 지수 백오프
 - 외부 서비스 회로 차단기
 - 평가 요청 멱등성 및 중복 업로드 처리
-- 일일 쿼터 동시성 제어
 - 가이드 작업 worker 동시성·메모리·디스크 제한
 - Spring Boot Actuator와 readiness/liveness
 - 구조화 로그, 요청 ID, 메트릭, 알림
@@ -42,7 +41,7 @@
 
 - 브랜치 전략: [ADR-0005](architecture/adr/0005-branch-strategy.md)에 따라 `develop`을 통합 브랜치, `main`을 릴리스 브랜치로 사용합니다.
 - Refresh Token 정책: DB에 현재 토큰의 SHA-256 해시를 저장하고 원자적 회전, 이전 토큰 재사용 시 현재 기기 세션 폐기, 절대 만료, 앱의 401 후 1회 자동 갱신을 적용합니다. 운영 전 [#60](https://github.com/byeok99/LingKo/issues/60) 실제 만료 기반 실기기 E2E와 [#62](https://github.com/byeok99/LingKo/issues/62) 동시 DB 부하 검증을 수행합니다.
-- 평가 쿼터 정책: 외부 평가 전에 무료 우선으로 횟수를 예약하고, 성공 시 결과 저장과 함께 사용량으로 확정하며 외부 평가·DB 저장 실패 시 동일 날짜와 종류의 예약을 복구합니다. 동시 요청 원자성은 [#38](https://github.com/byeok99/LingKo/issues/38)에서 강화합니다.
+- 평가 쿼터 정책: 외부 평가 전에 무료 우선으로 횟수를 예약하고, 성공 시 결과 저장과 함께 사용량으로 확정하며 외부 평가·DB 저장 실패 시 동일 날짜와 종류의 예약을 복구합니다. [ADR-0006](architecture/adr/0006-atomic-practice-quota-transitions.md)에 따라 예약·확정·복구는 조건부 원자 UPDATE로 처리하고, 최초 행 생성만 짧은 사용자 부모 lock으로 직렬화합니다. 비정상 종료로 남은 예약의 회수 정책은 후속 작업입니다.
 
 ## 완료 기록 방식
 

@@ -224,13 +224,15 @@ Redis는 실제 읽기 병목을 확인한 후 도입합니다. 정확성이 중
 
 ```sql
 UPDATE daily_practice_quota
-SET free_used = free_used + 1
+SET free_reserved = free_reserved + 1
 WHERE user_idx = :userId
   AND quota_date = :today
-  AND free_used < free_limit;
+  AND free_used + free_reserved < free_limit;
 ```
 
-영향받은 행이 1이면 성공, 0이면 소진 또는 행 부재입니다. 일일 행 생성 경쟁은 `(user_idx, quota_date)` Unique 제약으로 방어하고 충돌 시 재조회합니다.
+영향받은 행이 1이면 성공, 0이면 소진 또는 행 부재입니다. 보상 예약과 예약 확정·복구도 각각 업무 조건을 포함한 원자 UPDATE로 처리합니다. 마지막 횟수 경쟁은 재시도하지 않고 HTTP 429로 반환합니다.
+
+일일 행이 없는 최초 생성은 항상 존재하는 사용자 부모 행에 짧은 비관적 lock을 획득한 뒤 쿼터를 locking read로 재확인해 사용자·날짜별 행 하나만 생성합니다. 외부 평가 호출 전에 예약 transaction을 끝내므로 외부 응답 대기 중에는 DB lock을 유지하지 않습니다. 상세 결정은 [ADR-0006](../architecture/adr/0006-atomic-practice-quota-transitions.md)을 따릅니다.
 
 ### Idempotency
 

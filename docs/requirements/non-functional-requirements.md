@@ -76,8 +76,8 @@ MVP 운영 가정은 영구 아키텍처 결정이 아닙니다. 실제 트래�
 | NFR-DB-002 | P1 | 기록 페이지 크기가 증가해도 쿼리 수가 페이지 항목 수에 비례해 증가하지 않아야 한다. | N+1 제거, SQL 수 테스트 | [#45](https://github.com/byeok99/LingKo/issues/45) |
 | NFR-DB-003 | P1 | 평가 저장 시 음절 조회 쿼리는 문장 길이와 무관한 제한된 횟수로 실행되어야 한다. | `findAllById` 등 일괄 처리, 전후 SQL 비교 | [#46](https://github.com/byeok99/LingKo/issues/46) |
 | NFR-DB-004 | P1 | 깊은 기록 탐색은 Cursor 페이지네이션을 사용해야 한다. | 중복·누락 0건, 동일 시각 안정 정렬 | [#45](https://github.com/byeok99/LingKo/issues/45) |
-| NFR-DB-005 | P0 | 일일 쿼터 차감은 동시 요청에서도 원자적이어야 한다. | 남은 1회에 N개 동시 요청 시 1개만 성공 | [#38](https://github.com/byeok99/LingKo/issues/38) |
-| NFR-DB-006 | P0 | 사용자·날짜 조합의 쿼터 행은 하나만 존재해야 한다. | Unique 제약 및 경쟁 조건 테스트 | [#38](https://github.com/byeok99/LingKo/issues/38) |
+| NFR-DB-005 | P0 | 일일 쿼터 차감은 동시 요청에서도 원자적이어야 한다. | 남은 1회에 N개 동시 요청 시 1개만 성공 | 구현됨 · [#38](https://github.com/byeok99/LingKo/issues/38) |
+| NFR-DB-006 | P0 | 사용자·날짜 조합의 쿼터 행은 하나만 존재해야 한다. | Unique 제약 및 경쟁 조건 테스트 | 구현됨 · [#38](https://github.com/byeok99/LingKo/issues/38) |
 | NFR-DB-007 | P0 | 적용된 Flyway 마이그레이션 파일은 수정하지 않는다. | 모든 스키마 변경은 신규 버전 파일로 추가 | 운영 규칙 |
 
 ## 7. 가용성과 복원력
