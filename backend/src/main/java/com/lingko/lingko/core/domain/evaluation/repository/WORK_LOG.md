@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 작업 claim 조회 추가
+
+- 변경 파일: `EvaluationJobRepository.java`, `WORK_LOG.md`
+- 내용: 사용자·Idempotency 조회와 단일 Worker의 비관적 잠금 기반 다음 작업 claim 쿼리를 추가했다.
+- 검증: Worker·마이그레이션 테스트 통과
+- 리스크: 다중 Worker 확장 시 SKIP LOCKED 또는 Queue 전환 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `EvaluationLogRepository.java`, `EvaluationSyllableRepository.java`, `SyllableRepository.java`, `WORK_LOG.md`

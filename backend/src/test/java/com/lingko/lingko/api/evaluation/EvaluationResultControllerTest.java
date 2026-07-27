@@ -27,7 +27,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
  */
-@WebMvcTest(EvaluationResultController.class)
+@WebMvcTest(
+        value = EvaluationResultController.class,
+        properties = "evaluation.legacy-multipart-enabled=true"
+)
 class EvaluationResultControllerTest {
 
     @Autowired

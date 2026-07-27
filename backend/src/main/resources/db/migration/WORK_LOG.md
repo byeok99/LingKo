@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 작업 테이블 마이그레이션
+
+- 변경 파일: `V8__add_evaluation_jobs.sql`, `WORK_LOG.md`
+- 내용: 작업 상태, Idempotency, S3 object 소유, lease·retry·결과를 저장하는 `evaluation_jobs`를 추가했다.
+- 검증: H2 마이그레이션 테스트와 MySQL 8 임시 DB의 V1~V8 연속 적용·제약·인덱스 확인 통과
+- 리스크: 운영 적용 전 백업과 Flyway 실행 권한 확인 필요
+
 ## 2026-07-24 - 일일 쿼터 예약 계수 migration
 
 - 변경 파일: `V7__add_practice_quota_reservations.sql`, `WORK_LOG.md`

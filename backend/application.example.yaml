@@ -69,5 +69,16 @@ aws:
     access-key: ${AWS_ACCESS_KEY:}
     secret-key: ${AWS_SECRET_KEY:}
 
+evaluation:
+  # 신규 앱은 S3 직접 업로드와 DB Worker를 사용하며 multipart 평가 경로는 기본 비활성화한다.
+  legacy-multipart-enabled: ${EVALUATION_LEGACY_MULTIPART_ENABLED:false}
+  upload-url-expire-minutes: ${EVALUATION_UPLOAD_URL_EXPIRE_MINUTES:10}
+  worker:
+    enabled: ${EVALUATION_WORKER_ENABLED:true}
+    poll-delay-ms: ${EVALUATION_WORKER_POLL_DELAY_MS:1000}
+    lease-seconds: ${EVALUATION_WORKER_LEASE_SECONDS:60}
+    retry-delay-seconds: ${EVALUATION_WORKER_RETRY_DELAY_SECONDS:5}
+    max-attempts: ${EVALUATION_WORKER_MAX_ATTEMPTS:3}
+
 ffmpeg:
   path: ${FFMPEG_PATH:ffmpeg}

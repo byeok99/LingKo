@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 음성 S3 저장 경계 구현
+
+- 변경 파일: `S3EvaluationAudioStorage.java`, `WORK_LOG.md`
+- 내용: 사용자별 presigned PUT, HEAD 메타데이터 검증, Worker 다운로드와 성공·실패 후 삭제를 구현했다.
+- 검증: S3 경계 단위 테스트 및 Backend 전체 테스트 통과
+- 리스크: Bucket CORS·Lifecycle은 AWS 운영 설정 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `ExternalMediaUrlValidator.java`, `WORK_LOG.md`

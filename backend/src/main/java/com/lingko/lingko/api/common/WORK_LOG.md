@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 작업 오류 응답 추가
+
+- 변경 파일: `GlobalExceptionHandler.java`, `WORK_LOG.md`
+- 내용: Idempotency 충돌과 사용자 소유 평가 작업 미존재를 409·404 표준 오류로 매핑했다.
+- 검증: Backend 테스트 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `ErrorResponse.java`, `GlobalExceptionHandler.java`, `WORK_LOG.md`

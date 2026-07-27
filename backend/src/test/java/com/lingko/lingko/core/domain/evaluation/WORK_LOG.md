@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 작업 생명주기 회귀 테스트
+
+- 변경 파일: `EvaluationJobMigrationTest.java`, `EvaluationJobServiceTest.java`, `EvaluationJobTest.java`, `EvaluationJobWorkerTest.java`, `EvaluationApplicationServiceTest.java`, `WORK_LOG.md`
+- 내용: 상태 전이, Idempotency, JSON 결과 복원, Worker 성공·재시도·최종 실패, 스키마 제약을 검증했다.
+- 검증: 대상 테스트 및 Backend 전체 테스트 통과
+- 리스크: 실제 Azure·S3 E2E는 별도 환경 필요
+
 ## 2026-07-24 - 평가 통합 유스케이스 단위 테스트
 
 - 변경 파일: `EvaluationApplicationServiceTest.java`, `WORK_LOG.md`
