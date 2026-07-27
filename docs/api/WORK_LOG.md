@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 비동기 평가 API와 오류 계약 문서화
+
+- 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`
+- 내용: S3 업로드 티켓, 작업 생성·조회, Idempotency와 작업 오류 코드를 현재 구현에 맞게 반영했다.
+- 검증: Controller·DTO·예외 처리 코드와 대조
+- 리스크: 실제 운영 base URL과 S3 CORS는 배포 시 확인 필요
+
 ## 2026-07-24 - 인증 평가·쿼터 lifecycle 명세 반영
 
 - 변경 파일: `api-reference.md`, `WORK_LOG.md`

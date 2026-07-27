@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - S3 직접 업로드·DB Worker ADR 추가
+
+- 변경 파일: `0007-s3-direct-upload-and-db-evaluation-worker.md`, `README.md`, `WORK_LOG.md`
+- 내용: Queue 없이 MVP를 보호하는 영속 작업 Worker 선택과 대안·확장 조건을 기록했다.
+- 검증: 구현·운영 문서와 의사결정 대조
+- 리스크: 트래픽 증가 전 Queue 전환 지표 수집 필요
+
 ## 2026-07-26 - 일일 쿼터 동시성 결정 기록
 
 - 변경 파일: `0006-atomic-practice-quota-transitions.md`, `README.md`, `WORK_LOG.md`

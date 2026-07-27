@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 음성 평가 부하 격리 단계 갱신
+
+- 변경 파일: `scalability-plan.md`, `WORK_LOG.md`
+- 내용: API 서버 multipart 처리 제거와 단일 DB Worker 도입 상태, Queue 전환 조건을 반영했다.
+- 검증: ADR·구현 구조와 대조
+- 리스크: 실제 처리량과 작업 대기시간 측정 필요
+
 ## 2026-07-26 - 쿼터 동시성 설계 구현 상태 반영
 
 - 변경 파일: `scalability-plan.md`, `WORK_LOG.md`

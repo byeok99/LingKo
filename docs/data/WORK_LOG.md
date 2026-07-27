@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 작업 데이터 모델 추가
+
+- 변경 파일: `data-model.md`, `WORK_LOG.md`
+- 내용: `evaluation_jobs` 관계, 상태·lease·Idempotency 제약과 S3 원본 삭제 소유권을 문서화했다.
+- 검증: V8 Flyway migration과 Entity 대조
+- 리스크: 운영 MySQL 8 연속 migration 확인 필요
+
 ## 2026-07-24 - 일일 쿼터 예약 데이터 모델 반영
 
 - 변경 파일: `data-model.md`, `WORK_LOG.md`

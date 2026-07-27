@@ -85,38 +85,87 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 
 ## 발음 평가
 
-### `POST /api/evaluations`
+### `POST /api/evaluations/uploads`
 
-인증 필요. `multipart/form-data`
-
-| 필드 | 필수 | 설명 |
-|---|---:|---|
-| `audio` | 예 | 10MiB 이하 16-bit mono PCM WAV |
-| `sentenceId` | 조건부 | 추천 문장 ID |
-| `text` | 조건부 | 자유 문장 원문 |
-
-`sentenceId`와 `text` 중 하나는 필요합니다.
-
-서버는 인증 사용자 기준으로 쿼터 1회를 예약한 뒤 평가를 실행합니다. 성공하면 결과와 글자별 점수를 저장하면서 예약을 사용량으로 확정하고, 외부 평가 또는 저장 실패 시 예약을 복구합니다. 남은 횟수가 없으면 외부 API 호출 전에 `429 QUOTA_EXCEEDED`를 반환합니다.
-
-대표 응답:
+인증 필요. 앱이 API 서버를 거치지 않고 비공개 S3에 직접 PUT할 URL을 발급합니다.
 
 ```json
 {
-  "overallScore": 82,
-  "gradeLabel": "Good",
-  "summary": "...",
-  "recognizedText": "...",
-  "characterScoreStatus": "AVAILABLE",
-  "scoreBreakdown": {
-    "accuracy": 84,
-    "fluency": 80,
-    "completeness": 83
-  },
-  "weakCharacters": [],
-  "characters": []
+  "fileName": "recording.wav",
+  "contentType": "audio/wav",
+  "contentLength": 32044
 }
 ```
+
+응답 `201 Created`:
+
+```json
+{
+  "objectKey": "evaluation-audio/7/uuid.wav",
+  "uploadUrl": "https://signed-s3-url",
+  "expiresAt": "2026-07-27T01:10:00Z"
+}
+```
+
+앱은 `uploadUrl`에 `Content-Type: audio/wav`와 발급 요청과 같은 길이로 WAV를 PUT합니다. URL 전체는 로그에 기록하지 않습니다.
+
+### `POST /api/evaluations/jobs`
+
+인증과 `Idempotency-Key` header가 필요합니다.
+
+```json
+{
+  "objectKey": "evaluation-audio/7/uuid.wav",
+  "sentenceId": 12
+}
+```
+
+자유 문장은 `sentenceId` 대신 `text`를 사용합니다. 서버는 object 소유권과 metadata를 확인한 뒤 쿼터 예약과 `PENDING` 작업 생성을 하나의 transaction으로 처리합니다.
+
+응답 `202 Accepted`:
+
+```json
+{
+  "jobId": "uuid",
+  "status": "PENDING",
+  "result": null,
+  "errorCode": null,
+  "createdAt": "2026-07-27T01:00:00Z",
+  "updatedAt": "2026-07-27T01:00:00Z"
+}
+```
+
+동일 사용자·동일 Key·동일 payload 재호출은 기존 작업을 반환하며 다른 payload는 `409 IDEMPOTENCY_CONFLICT`입니다.
+
+### `GET /api/evaluations/jobs/{jobId}`
+
+인증 필요. 상태는 `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`입니다. 성공 시 `result`에 기존 평가 결과 계약을 반환합니다.
+
+대표 성공 결과:
+
+```json
+{
+  "jobId": "uuid",
+  "status": "SUCCEEDED",
+  "result": {
+    "overallScore": 82,
+    "gradeLabel": "Good",
+    "summary": "...",
+    "recognizedText": "...",
+    "characterScoreStatus": "AVAILABLE",
+    "scoreBreakdown": {
+      "accuracy": 84,
+      "fluency": 80,
+      "completeness": 83
+    },
+    "weakCharacters": [],
+    "characters": []
+  },
+  "errorCode": null
+}
+```
+
+기존 `POST /api/evaluations` multipart endpoint는 기본 비활성화되며 임시 호환이 필요할 때만 `EVALUATION_LEGACY_MULTIPART_ENABLED=true`로 활성화합니다.
 
 ## 사용자 연습 기록
 

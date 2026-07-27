@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 Worker 구현 상태 로드맵 반영
+
+- 변경 파일: `issue-backlog.md`, `release-roadmap.md`, `WORK_LOG.md`
+- 내용: S3 직접 업로드와 DB Worker 1단계 완료 범위, Queue·timeout 등 후속 과제를 구분했다.
+- 검증: 구현·ADR과 Issue 범위 대조
+- 리스크: GitHub Issue 상태는 병합 시 별도 동기화 필요
+
 ## 2026-07-24 - Refresh Token 후속 Issue 연결
 
 - 변경 파일: `release-roadmap.md`, `issue-backlog.md`, `WORK_LOG.md`

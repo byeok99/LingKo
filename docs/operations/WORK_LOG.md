@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 Worker 운영 절차 추가
+
+- 변경 파일: `operations-runbook.md`, `WORK_LOG.md`
+- 내용: Worker 설정, S3 CORS·Lifecycle, 작업 적체와 실패 확인 절차를 추가했다.
+- 검증: 설정 예시·Worker 상태 전이와 대조
+- 리스크: Azure timeout과 알림 임계치는 운영 측정 후 확정 필요
+
 ## 2026-07-23 - 운영 Docker 런타임을 Java 21로 갱신
 
 - 변경 파일: `operations-runbook.md`, `WORK_LOG.md`

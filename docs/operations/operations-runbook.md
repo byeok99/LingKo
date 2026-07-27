@@ -10,6 +10,7 @@
 - Flyway 신규 마이그레이션 검토
 - 환경변수와 비밀값 존재 확인
 - 외부 서비스 쿼터와 권한 확인
+- S3 버킷 비공개 차단, Presigned PUT·삭제 권한과 Lifecycle 확인
 - `.env`, 토큰, 키가 Git diff에 포함되지 않았는지 확인
 - DB 백업 또는 복구 지점 확인
 
@@ -66,10 +67,26 @@ docker build -t lingko-backend:<version> .
 
 ### 평가 요청 급증 또는 Azure 장애
 
-- 502 비율과 평균·상위 지연시간 확인
+- `evaluation_jobs`의 `PENDING`·`PROCESSING` 수와 가장 오래된 작업 확인
 - Azure 상태·쿼터·키 유효성 확인
-- 필요하면 평가 기능을 일시적으로 비활성화
+- Worker를 중지하려면 `EVALUATION_WORKER_ENABLED=false`로 배포하되 PENDING 작업은 DB에 보존
 - 무제한 즉시 재시도 금지
+
+### 평가 작업 정체
+
+- Worker 활성화 여부와 `EVALUATION_WORKER_*` 설정 확인
+- `lease_expires_at`이 지난 `PROCESSING` 작업이 다시 claim되는지 확인
+- Azure 호출이 종료되지 않는 경우 Worker 프로세스를 재시작하고 #44 timeout 적용 상태 확인
+- 실패 작업의 `attempt_count`, `error_code`와 쿼터 복구 여부 확인
+- DB 상태를 수동 수정하기 전에 S3 object와 예약 쿼터를 함께 확인
+
+### 평가 음성 S3 설정
+
+- 버킷 Public Access Block을 활성화하고 object ACL을 공개하지 않음
+- Backend 자격 증명에는 해당 bucket prefix의 PUT, HEAD, GET, DELETE만 허용
+- `evaluation-audio/` prefix에 보존 정책에서 정한 짧은 Lifecycle 만료 규칙 적용
+- 앱 로그, Backend 로그와 analytics에 Presigned URL 전체를 기록하지 않음
+- 성공·최종 실패 후 object 삭제와 Lifecycle 만료를 운영 환경에서 표본 검증
 
 ### 가이드 작업이 사라짐
 
@@ -116,6 +133,7 @@ docker build -t lingko-backend:<version> .
 - DB connection pool 사용량
 - JVM heap·GC·CPU
 - 가이드 작업 상태별 수와 처리시간
+- 평가 작업 상태별 수, oldest pending age, 시도 횟수와 lease 만료 재claim 수
 - 음성 업로드 크기 분포
 
 ## 사고 기록 템플릿
