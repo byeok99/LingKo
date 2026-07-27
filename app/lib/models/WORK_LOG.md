@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 작업 상태 모델 추가
+
+- 변경 파일: `evaluation_job.dart`, `WORK_LOG.md`
+- 내용: 업로드 티켓과 평가 작업 상태·결과 JSON을 앱 계약으로 표현하는 모델을 추가했다.
+- 검증: `flutter analyze`, 대상 API 테스트 통과
+- 리스크: 서버 오류 코드별 사용자 메시지는 후속 세분화 가능
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `auth_session.dart`, `practice_history.dart`, `practice_quota.dart`, `practice_result.dart`, `practice_sentence.dart`, `user_preferences.dart`, `WORK_LOG.md`

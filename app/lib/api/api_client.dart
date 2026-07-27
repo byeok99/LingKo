@@ -14,6 +14,20 @@ typedef GetJsonTransport =
     );
 typedef PostJsonTransport =
     Future<ApiResponse> Function(Uri uri, JsonMap body, Duration timeout);
+typedef PostJsonWithHeadersTransport =
+    Future<ApiResponse> Function(
+      Uri uri,
+      JsonMap body,
+      Duration timeout,
+      Map<String, String> headers,
+    );
+typedef PutFileTransport =
+    Future<ApiResponse> Function(
+      Uri uri,
+      String filePath,
+      String contentType,
+      Duration timeout,
+    );
 typedef PatchJsonTransport =
     Future<ApiResponse> Function(
       Uri uri,
@@ -34,20 +48,29 @@ class ApiClient {
   ApiClient({
     String? baseUrl,
     this.timeout = const Duration(seconds: 8),
+    this.uploadTimeout = const Duration(seconds: 60),
     GetJsonTransport? getJsonTransport,
     PostJsonTransport? postJsonTransport,
+    PostJsonWithHeadersTransport? postJsonWithHeadersTransport,
+    PutFileTransport? putFileTransport,
     PatchJsonTransport? patchJsonTransport,
     MultipartTransport? multipartTransport,
   }) : baseUrl = Uri.parse(baseUrl ?? resolveLingKoApiBaseUrl()),
        _getJsonTransport = getJsonTransport ?? _getJsonWithDartIo,
        _postJsonTransport = postJsonTransport ?? _postJsonWithDartIo,
+       _postJsonWithHeadersTransport =
+           postJsonWithHeadersTransport ?? _postJsonWithHeadersWithDartIo,
+       _putFileTransport = putFileTransport ?? _putFileWithDartIo,
        _patchJsonTransport = patchJsonTransport ?? _patchJsonWithDartIo,
        _multipartTransport = multipartTransport ?? _postMultipartWithDartIo;
 
   final Uri baseUrl;
   final Duration timeout;
+  final Duration uploadTimeout;
   final GetJsonTransport _getJsonTransport;
   final PostJsonTransport _postJsonTransport;
+  final PostJsonWithHeadersTransport _postJsonWithHeadersTransport;
+  final PutFileTransport _putFileTransport;
   final PatchJsonTransport _patchJsonTransport;
   final MultipartTransport _multipartTransport;
 
@@ -69,6 +92,34 @@ class ApiClient {
       timeout,
     );
     return _decodeResponse(response);
+  }
+
+  Future<JsonMap> postJsonWithHeaders(
+    String path,
+    JsonMap body,
+    Map<String, String> headers,
+  ) async {
+    final response = await _postJsonWithHeadersTransport(
+      baseUrl.resolve(path),
+      body,
+      timeout,
+      headers,
+    );
+    return _decodeResponse(response);
+  }
+
+  Future<void> putFile({
+    required String url,
+    required String filePath,
+    required String contentType,
+  }) async {
+    final response = await _putFileTransport(
+      Uri.parse(url),
+      filePath,
+      contentType,
+      uploadTimeout,
+    );
+    _throwIfError(response);
   }
 
   /// 성공 응답에 본문이 없는 계약을 위한 JSON POST를 전송한다.
@@ -272,6 +323,60 @@ Future<ApiResponse> _postJsonWithDartIo(
     throw const ApiException('Request timed out');
   } on SocketException {
     throw const ApiException('Cannot connect to LingKo server');
+  } finally {
+    client.close(force: true);
+  }
+}
+
+Future<ApiResponse> _postJsonWithHeadersWithDartIo(
+  Uri uri,
+  JsonMap body,
+  Duration timeout,
+  Map<String, String> headers,
+) async {
+  final client = HttpClient();
+
+  try {
+    final request = await client.postUrl(uri).timeout(timeout);
+    request.headers.contentType = ContentType.json;
+    for (final header in headers.entries) {
+      request.headers.set(header.key, header.value);
+    }
+    request.write(jsonEncode(body));
+
+    final response = await request.close().timeout(timeout);
+    final responseBody = await response.transform(utf8.decoder).join();
+    return ApiResponse(statusCode: response.statusCode, body: responseBody);
+  } on TimeoutException {
+    throw const ApiException('Request timed out');
+  } on SocketException {
+    throw const ApiException('Cannot connect to LingKo server');
+  } finally {
+    client.close(force: true);
+  }
+}
+
+Future<ApiResponse> _putFileWithDartIo(
+  Uri uri,
+  String filePath,
+  String contentType,
+  Duration timeout,
+) async {
+  final client = HttpClient();
+  final file = File(filePath);
+
+  try {
+    final request = await client.putUrl(uri).timeout(timeout);
+    request.headers.set(HttpHeaders.contentTypeHeader, contentType);
+    request.contentLength = await file.length();
+    await request.addStream(file.openRead()).timeout(timeout);
+    final response = await request.close().timeout(timeout);
+    final responseBody = await response.transform(utf8.decoder).join();
+    return ApiResponse(statusCode: response.statusCode, body: responseBody);
+  } on TimeoutException {
+    throw const ApiException('Audio upload timed out');
+  } on SocketException {
+    throw const ApiException('Cannot upload audio');
   } finally {
     client.close(force: true);
   }
