@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 작업 API 계약 테스트
+
+- 변경 파일: `EvaluationJobControllerTest.java`, `EvaluationResultControllerTest.java`, `WORK_LOG.md`
+- 내용: 업로드·작업 생성·조회 인증 계약을 추가하고 legacy multipart 활성 조건을 테스트에 명시했다.
+- 검증: 대상 Controller 테스트 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 인증 평가 생성 Controller 테스트
 
 - 변경 파일: `EvaluationResultControllerTest.java`, `WORK_LOG.md`

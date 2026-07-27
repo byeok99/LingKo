@@ -1,14 +1,18 @@
 // 파일 의도: lingko app 앱 구성과 전역 표시 정책을 정의한다.
 // 선택 이유: 기능 화면이 bootstrap·테마·navigation 세부사항에 의존하지 않도록 app 계층에 둔다.
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
+import '../api/api_client.dart';
 import '../api/evaluation_api.dart';
 import '../api/practice_quota_api.dart';
 import '../api/pronunciation_api.dart';
 import '../api/sentence_api.dart';
 import '../api/user_preferences_api.dart';
 import '../models/auth_session.dart';
+import '../models/evaluation_job.dart';
 import '../models/practice_quota.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
@@ -334,18 +338,60 @@ class _LingKoShellState extends State<LingKoShell> {
     PracticeSentence sentence,
     String audioPath,
   ) async {
-    // 추천 문장은 서버 ID로, 사용자 입력 문장은 원문으로 보내 두 입력을 동시에 허용하지 않는 API 계약을 지킨다.
-    final result = await widget.evaluationApi.evaluate(
+    final upload = await widget.authService.runAuthenticated(
+      (accessToken) => widget.evaluationApi.prepareUpload(
+        accessToken: accessToken,
+        audioPath: audioPath,
+      ),
+    );
+    await widget.evaluationApi.uploadAudio(
+      upload: upload,
       audioPath: audioPath,
-      sentenceId: sentence.source == 'RECOMMENDED' ? sentence.sentenceId : null,
-      text: sentence.source == 'RECOMMENDED' ? null : sentence.text,
+    );
+    final idempotencyKey = _newEvaluationIdempotencyKey();
+    EvaluationJob job = await widget.authService.runAuthenticated(
+      (accessToken) => widget.evaluationApi.createJob(
+        accessToken: accessToken,
+        idempotencyKey: idempotencyKey,
+        objectKey: upload.objectKey,
+        sentenceId:
+            sentence.source == 'RECOMMENDED' ? sentence.sentenceId : null,
+        text: sentence.source == 'RECOMMENDED' ? null : sentence.text,
+      ),
     );
 
-    setState(() {
-      latestResult = result;
-      hasResult = true;
-    });
-    await loadPracticeQuota();
+    for (var attempt = 0; attempt < 120; attempt++) {
+      if (job.status == EvaluationJobStatus.succeeded && job.result != null) {
+        setState(() {
+          latestResult = job.result;
+          hasResult = true;
+        });
+        await loadPracticeQuota();
+        return;
+      }
+      if (job.status == EvaluationJobStatus.failed) {
+        throw ApiException(
+          job.errorCode == null
+              ? 'Pronunciation evaluation failed'
+              : 'Pronunciation evaluation failed: ${job.errorCode}',
+        );
+      }
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+      job = await widget.authService.runAuthenticated(
+        (accessToken) => widget.evaluationApi.fetchJob(
+          accessToken: accessToken,
+          jobId: job.jobId,
+        ),
+      );
+    }
+
+    throw const ApiException('Pronunciation evaluation timed out');
+  }
+
+  String _newEvaluationIdempotencyKey() {
+    final random = Random.secure().nextInt(1 << 32);
+    return 'evaluation-${DateTime.now().microsecondsSinceEpoch}-$random';
   }
 
   // Practice 탭에서 사용자가 직접 입력한 문장으로 현재 연습 대상을 교체합니다.

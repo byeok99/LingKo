@@ -32,24 +32,23 @@
 
 ### 2.1 동기 음성 평가
 
-현재 API 서버가 multipart WAV를 받고 임시 파일을 생성한 뒤 Azure 평가가 끝날 때까지 HTTP 요청을 유지합니다.
+2026-07-27부터 앱은 Presigned URL로 비공개 S3에 WAV를 직접 업로드하고 API는 DB 평가 작업 ID를 즉시 반환합니다. 단일 제한 Worker가 DB를 polling해 Azure 평가를 처리합니다.
 
 위험:
 
-- 큰 파일이 API 서버 네트워크와 메모리·디스크를 통과
-- 외부 서비스 지연 동안 요청 스레드와 연결 점유
-- Azure 장애가 API 처리량에 직접 전파
-- 재시도 시 외부 비용과 쿼터가 중복될 수 있음
-- API 서버와 평가 처리량을 독립적으로 확장하기 어려움
+- 현재 Worker는 같은 Spring 배포 단위에서 한 작업씩 처리
+- Azure timeout·Circuit Breaker가 아직 없어 Worker 정체 가능
+- S3 Lifecycle과 실제 기기 E2E는 운영 환경 설정 필요
+- 다중 Worker 처리량과 Queue 기반 독립 확장은 미구현
 
 단계적 대응:
 
-1. 업로드 크기·시간 제한과 타임아웃 적용
-2. Idempotency와 쿼터 예약 구현
-3. Presigned URL로 S3 직접 업로드
-4. 평가 요청을 Queue에 등록
-5. Evaluation Worker에서 외부 평가와 결과 저장
-6. 앱은 Polling으로 상태 조회, 필요 시 Push 추가
+1. 완료: 업로드 크기 제한, 쿼터 예약과 작업 생성 Idempotency
+2. 완료: Presigned URL S3 직접 업로드
+3. 완료: DB 영속 작업과 단일 제한 Worker, 앱 Polling
+4. 후속: Azure timeout·Circuit Breaker와 작업 메트릭
+5. 후속: 처리량 증가 시 SQS에 `jobId` 등록, Worker 독립 배포
+6. 후속: 필요 시 Push 알림 추가
 
 관련 Issue: [#39](https://github.com/byeok99/LingKo/issues/39), [#44](https://github.com/byeok99/LingKo/issues/44), [#47](https://github.com/byeok99/LingKo/issues/47)
 

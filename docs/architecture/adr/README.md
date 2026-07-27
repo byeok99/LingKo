@@ -10,6 +10,7 @@ ADR은 중요한 기술 선택의 배경과 결과를 보존합니다.
 | [0004](0004-separate-external-integration-tests.md) | 승인 | 외부 서비스 통합 테스트 별도 실행 |
 | [0005](0005-branch-strategy.md) | 승인 | `develop` 통합, `main` 릴리스 브랜치 운영 |
 | [0006](0006-atomic-practice-quota-transitions.md) | 승인 | 조건부 DB UPDATE와 최초 생성용 짧은 부모 lock으로 쿼터 원자성 보장 |
+| [0007](0007-s3-direct-upload-and-db-evaluation-worker.md) | 승인 | 비공개 S3 직접 업로드와 영속 DB Worker로 평가 요청 분리 |
 
 ## 작성 형식
 

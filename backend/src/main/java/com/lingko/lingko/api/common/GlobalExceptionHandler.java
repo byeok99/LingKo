@@ -1,6 +1,8 @@
 package com.lingko.lingko.api.common;
 
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
+import com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobConflictException;
+import com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobNotFoundException;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
 import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
@@ -67,6 +69,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleQuotaExceeded(QuotaExceededException exception) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(ErrorResponse.of("QUOTA_EXCEEDED", "Daily practice quota exceeded"));
+    }
+
+    @ExceptionHandler(EvaluationJobConflictException.class)
+    public ResponseEntity<ErrorResponse> handleEvaluationJobConflict(
+            EvaluationJobConflictException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(
+                        "IDEMPOTENCY_CONFLICT",
+                        "Idempotency key was already used for a different request"
+                ));
+    }
+
+    @ExceptionHandler(EvaluationJobNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEvaluationJobNotFound(
+            EvaluationJobNotFoundException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of("EVALUATION_JOB_NOT_FOUND", "Evaluation job not found"));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

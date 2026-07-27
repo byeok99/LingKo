@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 직접 업로드·폴링 회귀 테스트
+
+- 변경 파일: `evaluation_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: S3 PUT 헤더와 작업 API 직렬화, 앱의 새 평가 호출 계약을 검증하도록 테스트를 갱신했다.
+- 검증: 대상 Flutter 테스트 통과
+- 리스크: 실제 S3·백엔드 연계 E2E는 별도 환경 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `app_auth_service_test.dart`, `auth_api_test.dart`, `auth_session_store_test.dart`, `evaluation_api_test.dart`, `practice_quota_api_test.dart`, `pronunciation_api_test.dart`, `sentence_api_test.dart`, `user_preferences_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`

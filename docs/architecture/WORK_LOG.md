@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - S3·DB Worker 평가 구조 반영
+
+- 변경 파일: `evaluation-flow.md`, `system-architecture.md`, `WORK_LOG.md`
+- 내용: 앱 직접 업로드, MySQL 작업 상태, 단일 Worker 처리와 폴링 흐름으로 아키텍처 문서를 갱신했다.
+- 검증: Backend·Flutter 구현 흐름과 대조
+- 리스크: 독립 Worker·Queue 확장은 후속 단계
+
 ## 2026-07-24 - 평가 통합 흐름과 트랜잭션 경계 확정
 
 - 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`

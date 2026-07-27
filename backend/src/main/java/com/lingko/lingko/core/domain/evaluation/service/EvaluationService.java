@@ -311,6 +311,30 @@ public class EvaluationService {
         }
     }
 
+    /**
+     * Worker가 S3에서 받은 로컬 WAV를 다시 복사하지 않고 공급자 평가에 전달한다.
+     */
+    public PracticeResultResponse evaluatePronunciation(Path audioPath, String referenceText) {
+        try {
+            long fileSize = Files.size(audioPath);
+            try (InputStream input = Files.newInputStream(audioPath)) {
+                if (!hasValidPcmWavHeader(input, fileSize)) {
+                    throw new VideoGenerationException("Invalid uploaded WAV audio");
+                }
+            }
+            AssessmentResult assessmentResult = requireSpeechEvaluator()
+                    .evaluate(audioPath.toString(), referenceText);
+            return toPracticeResult(referenceText, assessmentResult);
+        } catch (IOException exception) {
+            throw new VideoGenerationException("Failed to read uploaded audio", exception);
+        } catch (RuntimeException exception) {
+            if (exception instanceof VideoGenerationException) {
+                throw exception;
+            }
+            throw new VideoGenerationException("Speech evaluation failed", exception);
+        }
+    }
+
     private String resolveReferenceText(Long sentenceId, String text) {
         if (sentenceId != null) {
             RecommendedSentence sentence = requireSentenceRepository()

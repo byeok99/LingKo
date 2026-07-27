@@ -14,6 +14,7 @@ import 'package:lingko_app/api/sentence_api.dart';
 import 'package:lingko_app/api/user_preferences_api.dart';
 import 'package:lingko_app/app/lingko_app.dart';
 import 'package:lingko_app/models/auth_session.dart';
+import 'package:lingko_app/models/evaluation_job.dart';
 import 'package:lingko_app/models/practice_history.dart';
 import 'package:lingko_app/models/practice_quota.dart';
 import 'package:lingko_app/models/practice_result.dart';
@@ -96,12 +97,39 @@ class FakeEvaluationApi implements EvaluationApi {
   );
 
   @override
-  Future<PracticeResult> evaluate({
+  Future<EvaluationUpload> prepareUpload({
+    required String accessToken,
     required String audioPath,
+  }) async {
+    lastAudioPath = audioPath;
+    if (error != null) {
+      throw error!;
+    }
+    return EvaluationUpload(
+      objectKey: 'evaluation-audio/7/test.wav',
+      uploadUrl: 'https://signed.example/test',
+      expiresAt: DateTime.utc(2026, 7, 27, 1, 10),
+    );
+  }
+
+  @override
+  Future<void> uploadAudio({
+    required EvaluationUpload upload,
+    required String audioPath,
+  }) async {
+    if (error != null) {
+      throw error!;
+    }
+  }
+
+  @override
+  Future<EvaluationJob> createJob({
+    required String accessToken,
+    required String idempotencyKey,
+    required String objectKey,
     int? sentenceId,
     String? text,
   }) async {
-    lastAudioPath = audioPath;
     lastSentenceId = sentenceId;
     lastText = text;
 
@@ -109,20 +137,32 @@ class FakeEvaluationApi implements EvaluationApi {
       throw error!;
     }
 
-    return const PracticeResult(
-      overallScore: 91,
-      gradeLabel: 'Excellent',
-      summary: 'Clear pronunciation.',
-      recognizedText: '마싯게따.',
-      characterScoreStatus: 'UNAVAILABLE',
-      scoreBreakdown: PracticeScoreBreakdown(
-        accuracy: 92,
-        fluency: 90,
-        completeness: 93,
+    return const EvaluationJob(
+      jobId: 'job-id',
+      status: EvaluationJobStatus.succeeded,
+      result: PracticeResult(
+        overallScore: 91,
+        gradeLabel: 'Excellent',
+        summary: 'Clear pronunciation.',
+        recognizedText: '마싯게따.',
+        characterScoreStatus: 'UNAVAILABLE',
+        scoreBreakdown: PracticeScoreBreakdown(
+          accuracy: 92,
+          fluency: 90,
+          completeness: 93,
+        ),
+        weakCharacters: [],
+        characters: [],
       ),
-      weakCharacters: [],
-      characters: [],
     );
+  }
+
+  @override
+  Future<EvaluationJob> fetchJob({
+    required String accessToken,
+    required String jobId,
+  }) async {
+    throw StateError('completed fake jobs must not be polled');
   }
 
   @override

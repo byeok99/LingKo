@@ -122,9 +122,9 @@ flowchart LR
 | 기록 조회 N+1·Cursor 전환 | [#45](https://github.com/byeok99/LingKo/issues/45) | 기록량 증가에도 쿼리 수와 지연 안정화 |
 | 음절 반복 조회 제거 | [#46](https://github.com/byeok99/LingKo/issues/46) | 평가 저장 쿼리 수 제한 |
 | SLO와 부하 테스트 | [#52](https://github.com/byeok99/LingKo/issues/52) | 안전 처리량과 Scale-out 기준 확보 |
-| S3 직접 업로드·비동기 평가 | [#47](https://github.com/byeok99/LingKo/issues/47) | 큰 트래픽에서 API와 Worker 독립 확장 |
+| S3 직접 업로드·비동기 평가 후속 | [#47](https://github.com/byeok99/LingKo/issues/47) | 직접 업로드·DB Worker 구현 완료, 부하 측정 후 SQS와 독립 배포 |
 
-비동기 평가 전환은 초기 비공개 베타의 필수 조건은 아닐 수 있지만, 공개 트래픽이 늘기 전에 설계와 전환 기준을 확정합니다.
+비공개 S3 직접 업로드와 영속 DB Worker는 MVP 필수 구조로 적용했습니다. SQS와 Worker 독립 배포는 부하 측정 결과가 전환 기준을 충족할 때 진행합니다.
 
 ## 6단계: 제한 공개
 

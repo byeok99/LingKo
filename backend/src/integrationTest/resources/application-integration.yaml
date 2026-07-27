@@ -35,5 +35,10 @@ aws:
     access-key: integration-test-access-key
     secret-key: integration-test-secret-key
 
+evaluation:
+  legacy-multipart-enabled: true
+  worker:
+    enabled: false
+
 ffmpeg:
   path: ffmpeg

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - S3 업로드 검증 오류 테스트
+
+- 변경 파일: `S3EvaluationAudioStorageTest.java`, `WORK_LOG.md`
+- 내용: 존재하지 않는 업로드 객체가 내부 오류가 아닌 입력 오류로 변환되는 계약을 검증했다.
+- 검증: 대상 단위 테스트 통과
+- 리스크: 실제 AWS 권한·CORS는 운영 환경 검증 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `ExternalMediaUrlValidatorTest.java`, `WORK_LOG.md`

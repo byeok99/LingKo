@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * Evaluation Result 기능의 HTTP 진입점을 제공한다.
@@ -25,6 +26,10 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/evaluations")
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+        name = "evaluation.legacy-multipart-enabled",
+        havingValue = "true"
+)
 public class EvaluationResultController {
 
     private final EvaluationService evaluationService;

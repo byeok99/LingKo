@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -79,7 +80,8 @@ class EvaluationApplicationServiceTest {
         when(userRepository.findById(7L)).thenReturn(Optional.of(user));
         when(sentenceRepository.findBySentenceIdAndActiveTrue(12L)).thenReturn(Optional.of(sentence));
         when(quotaService.reservePractice(7L)).thenReturn(reservation);
-        when(evaluationService.evaluatePronunciation(any(), eq("마싣껟따."))).thenReturn(result);
+        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("마싣껟따.")))
+                .thenReturn(result);
 
         PracticeResultResponse response = applicationService.evaluate(7L, audio(), 12L, null);
 
@@ -108,7 +110,8 @@ class EvaluationApplicationServiceTest {
         when(userRepository.findById(7L)).thenReturn(Optional.of(user));
         when(evaluationService.convertToStandardPronunciation("안녕하세요.")).thenReturn("안녕하세여.");
         when(quotaService.reservePractice(7L)).thenReturn(reservation);
-        when(evaluationService.evaluatePronunciation(any(), eq("안녕하세여."))).thenReturn(result);
+        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("안녕하세여.")))
+                .thenReturn(result);
 
         applicationService.evaluate(7L, audio(), null, "  안녕하세요.  ");
 
@@ -132,7 +135,7 @@ class EvaluationApplicationServiceTest {
         when(userRepository.findById(7L)).thenReturn(Optional.of(user));
         when(evaluationService.convertToStandardPronunciation("안녕하세요.")).thenReturn("안녕하세여.");
         when(quotaService.reservePractice(7L)).thenReturn(reservation);
-        when(evaluationService.evaluatePronunciation(any(), eq("안녕하세여.")))
+        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("안녕하세여.")))
                 .thenThrow(new IllegalStateException("provider failed"));
 
         assertThatThrownBy(() -> applicationService.evaluate(7L, audio(), null, "안녕하세요."))
@@ -153,7 +156,8 @@ class EvaluationApplicationServiceTest {
         when(userRepository.findById(7L)).thenReturn(Optional.of(user));
         when(evaluationService.convertToStandardPronunciation("안녕하세요.")).thenReturn("안녕하세여.");
         when(quotaService.reservePractice(7L)).thenReturn(reservation);
-        when(evaluationService.evaluatePronunciation(any(), eq("안녕하세여."))).thenReturn(result(82));
+        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("안녕하세여.")))
+                .thenReturn(result(82));
         org.mockito.Mockito.doThrow(new IllegalStateException("database failed"))
                 .when(completionService)
                 .complete(any(), any());

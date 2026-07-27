@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - DB 기반 음성 평가 Worker 구현
+
+- 변경 파일: `EvaluationAudioStorage.java`, `EvaluationJobCreationService.java`, `EvaluationJobProcessingService.java`, `EvaluationJobService.java`, `EvaluationJobWorker.java`, `EvaluationService.java`, `WORK_LOG.md`
+- 내용: 쿼터 예약과 Idempotency 작업 생성, lease claim, S3 음성 평가·재시도·원자적 성공 저장·실패 복구를 구현했다.
+- 검증: Service·Worker·전체 Backend 테스트 통과
+- 리스크: Azure 호출 timeout은 후속 운영 과제
+
 ## 2026-07-24 - 평가·쿼터·결과 저장 유스케이스 통합
 
 - 변경 파일: `EvaluationApplicationService.java`, `EvaluationCompletionService.java`, `EvaluationService.java`, `WORK_LOG.md`

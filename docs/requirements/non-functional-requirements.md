@@ -159,8 +159,8 @@ MVP 운영 가정은 영구 아키텍처 결정이 아닙니다. 실제 트래�
 | NFR-SCALE-001 | P1 | API 서버는 사용자 세션과 영구 작업 상태를 로컬 메모리에 의존하지 않아야 한다. | 인스턴스 교체 후 세션·데이터 접근 가능 |
 | NFR-SCALE-002 | P1 | 영구 파일은 API 서버 로컬 디스크에 저장하지 않아야 한다. | 임시 파일은 처리 후 삭제, 영구 파일은 객체 저장소 사용 |
 | NFR-SCALE-003 | P1 | 동일 애플리케이션 인스턴스를 2개 이상 실행해도 기능 정합성이 유지되어야 한다. | Sticky Session 없이 E2E 통과 |
-| NFR-SCALE-004 | P2 | 음성 파일은 Presigned URL로 객체 저장소에 직접 업로드할 수 있어야 한다. | API 서버가 음성 본문을 중계하지 않음 |
-| NFR-SCALE-005 | P2 | 발음 평가는 Queue 기반 Worker로 분리할 수 있어야 한다. | API는 작업 ID를 반환하고 Worker가 비동기 처리 |
+| NFR-SCALE-004 | P0 | 음성 파일은 Presigned URL로 객체 저장소에 직접 업로드할 수 있어야 한다. | 구현됨 · API 서버가 음성 본문을 중계하지 않음 · [#47](https://github.com/byeok99/LingKo/issues/47) |
+| NFR-SCALE-005 | P0 | 발음 평가는 영속 작업 저장소 기반 Worker로 분리하고 Queue 전환이 가능해야 한다. | DB Worker 1단계 구현 · API는 작업 ID 반환 · SQS 독립 확장은 후속 [#47](https://github.com/byeok99/LingKo/issues/47) |
 | NFR-SCALE-006 | P2 | 추천 문장·표준 발음·가이드 등 읽기 중심 데이터는 캐시할 수 있어야 한다. | 캐시 적중률·무효화·TTL 메트릭 존재 |
 | NFR-SCALE-007 | P2 | 캐시 장애가 핵심 데이터 정합성을 깨뜨리지 않아야 한다. | 쿼터·결제성 데이터는 원자 저장소를 기준으로 처리 |
 

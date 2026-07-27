@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 비동기 평가 작업 API 추가
+
+- 변경 파일: `EvaluationJobController.java`, `EvaluationResultController.java`, `WORK_LOG.md`
+- 내용: 업로드 티켓·작업 생성·상태 조회 endpoint를 추가하고 기존 multipart endpoint는 기본 비활성화했다.
+- 검증: Controller 테스트 및 Backend 전체 테스트 통과
+- 리스크: 기존 클라이언트는 호환 설정 없이는 multipart endpoint를 사용할 수 없음
+
 ## 2026-07-24 - 인증 평가 통합 유스케이스 연결
 
 - 변경 파일: `EvaluationResultController.java`, `WORK_LOG.md`

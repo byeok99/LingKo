@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 음성 저장·Worker 비기능 요구 반영
+
+- 변경 파일: `non-functional-requirements.md`, `WORK_LOG.md`
+- 내용: 비공개 직접 업로드, 영속 작업·재시도, 임시 파일 정리와 운영 확장 요구를 추가했다.
+- 검증: ADR·보안·운영 문서와 교차 확인
+- 리스크: 수치 SLO는 부하 측정 후 확정 필요
+
 ## 2026-07-26 - 쿼터 DB 정합성 요구사항 구현 반영
 
 - 변경 파일: `non-functional-requirements.md`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 업로드·작업 DTO 추가
+
+- 변경 파일: `EvaluationUploadRequest.java`, `EvaluationUploadResponse.java`, `EvaluationJobRequest.java`, `EvaluationJobResponse.java`, `WORK_LOG.md`
+- 내용: S3 업로드 발급과 비동기 평가 작업 요청·상태 응답 계약을 정의했다.
+- 검증: Controller·JSON 왕복 테스트 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `GuideCharacterResponse.java`, `GuideGenerationJobRequest.java`, `GuideGenerationJobResponse.java`, `PracticeHistoryCharacterResponse.java`, `PracticeHistoryItemResponse.java`, `PracticeHistoryResponse.java`, `PracticeResultResponse.java`, `PronunciationPrepareRequest.java`, `PronunciationPrepareResponse.java`, `StandardPronunciationRequest.java`, `StandardPronunciationResponse.java`, `WORK_LOG.md`

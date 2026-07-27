@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 평가 Worker와 S3 signer 설정
+
+- 변경 파일: `S3Config.java`, `EvaluationJobSettings.java`, `EvaluationWorkerConfig.java`, `WORK_LOG.md`
+- 내용: S3Presigner bean과 Worker scheduling, 업로드 만료·lease·재시도 설정을 추가했다.
+- 검증: Backend 테스트 및 integrationTest 통과
+- 리스크: 다중 인스턴스 Worker 운영은 현재 지원 범위가 아님
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `AwsSettings.java`, `AzureSettings.java`, `DBSettings.java`, `FfmpegSettings.java`, `GoogleOAuthSettings.java`, `GoogleSettings.java`, `JwtSettings.java`, `ReplicateSettings.java`, `WebClientConfig.java`, `WORK_LOG.md`

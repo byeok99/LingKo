@@ -1,3 +1,10 @@
+## 2026-07-27 - 평가 Worker 운영 설정 예시 추가
+
+- 변경 파일: `application.example.yaml`, `WORK_LOG.md`
+- 내용: presigned URL 만료와 DB Worker polling·lease·retry 설정 예시를 추가했다.
+- 검증: Backend 테스트 및 integrationTest 통과
+- 리스크: 운영 환경에서 Azure 처리시간에 맞춘 lease 조정 필요
+
 ## 2026-07-24 - Refresh Token 백엔드 문서 정합화
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

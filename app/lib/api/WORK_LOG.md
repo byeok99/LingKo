@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - S3 직접 업로드와 평가 작업 API 연동
+
+- 변경 파일: `api_client.dart`, `evaluation_api.dart`, `WORK_LOG.md`
+- 내용: 인증 JSON POST, presigned URL PUT, 평가 작업 생성·조회 API를 추가하고 기존 multipart 평가 호출을 대체했다.
+- 검증: `flutter analyze`, 대상 API·위젯 테스트 통과
+- 리스크: 실제 S3 CORS·서명 정책은 배포 환경 검증 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `api_client.dart`, `auth_api.dart`, `evaluation_api.dart`, `practice_quota_api.dart`, `pronunciation_api.dart`, `sentence_api.dart`, `user_preferences_api.dart`, `WORK_LOG.md`

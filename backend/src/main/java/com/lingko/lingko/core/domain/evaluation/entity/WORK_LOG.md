@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 영속 평가 작업 상태 모델 추가
+
+- 변경 파일: `EvaluationJob.java`, `WORK_LOG.md`
+- 내용: PENDING·PROCESSING·SUCCEEDED·FAILED 전이와 lease, retry, 결과 payload를 저장하는 엔티티를 추가했다.
+- 검증: 상태 전이 단위 테스트 통과
+- 리스크: 장시간 외부 호출 시 운영 lease 값 조정 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `EvaluationLog.java`, `EvaluationSyllable.java`, `Syllable.java`, `WORK_LOG.md`

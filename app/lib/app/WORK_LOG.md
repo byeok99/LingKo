@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-27 - 비동기 음성 평가 흐름 적용
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 녹음 파일 업로드 티켓 발급, S3 PUT, Idempotency 작업 생성, 완료 상태 폴링 순서로 평가 흐름을 변경했다.
+- 검증: `flutter analyze`, 대상 위젯 테스트 통과
+- 리스크: 네트워크 단절 시 작업 재조회 UX는 후속 보완 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `app_theme.dart`, `lingko_app.dart`, `WORK_LOG.md`

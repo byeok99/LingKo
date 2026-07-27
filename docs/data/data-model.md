@@ -5,6 +5,7 @@
 ```mermaid
  erDiagram
     USERS ||--o{ EVALUATION_LOG : records
+    USERS ||--o{ EVALUATION_JOBS : submits
     USERS ||--o{ DAILY_PRACTICE_QUOTA : owns
     USERS ||--o{ AUTH_REFRESH_SESSIONS : authenticates
     EVALUATION_LOG ||--o{ EVALUATION_SYLLABLE : contains
@@ -52,6 +53,29 @@
       varchar tongue_guide_url
     }
 
+    EVALUATION_JOBS {
+      char job_id PK
+      bigint user_idx FK
+      varchar idempotency_key
+      char request_hash
+      varchar audio_object_key
+      varchar source
+      bigint sentence_id
+      varchar original_text
+      varchar standard_pronunciation
+      date quota_date
+      varchar quota_source
+      varchar status
+      int attempt_count
+      datetime next_attempt_at
+      datetime lease_expires_at
+      longtext result_payload
+      varchar error_code
+      datetime completed_at
+      datetime created_at
+      datetime updated_at
+    }
+
     SYLLABLES {
       varchar syllable_char PK
       varchar mouth_url
@@ -87,6 +111,9 @@
 - `users`: `(social_id, social_type)` 유일
 - `evaluation_log`: `(user_idx, created_at)` 조회 인덱스
 - `evaluation_syllable`: `(evaluation_log_idx, position_no)` 유일
+- `evaluation_jobs`: `(user_idx, idempotency_key)`, `audio_object_key` 유일
+- `evaluation_jobs`: `(status, next_attempt_at, lease_expires_at, created_at)` Worker claim 인덱스
+- `evaluation_jobs.status`: `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`
 - `daily_practice_quota`: `(user_idx, quota_date)` 유일
 - `daily_practice_quota.quota_date` 인덱스
 - `free_reserved`, `rewarded_reserved`는 외부 평가 중 확보한 횟수이며 성공 시 사용량으로 확정하고 실패 시 복구
@@ -100,7 +127,8 @@
 | 사용자 프로필 | 사용자 | 회원 탈퇴 정책 필요 |
 | 학습 설정 | 사용자 | 사용자와 함께 삭제 |
 | 평가 기록 | 사용자 | 사용자 삭제·보존 정책 필요 |
-| 음성 URL | 사용자 평가 | 실제 S3 객체와 동기 삭제 필요 |
+| 평가 작업 | 사용자 | 사용자 삭제 시 cascade, 운영 보존 기간 결정 필요 |
+| 평가 원본 음성 | 사용자 평가 작업 | 성공·최종 실패 후 삭제, S3 Lifecycle로 유실 정리 보완 |
 | 음절 가이드 | 서비스 공용 | 콘텐츠 관리 정책 적용 |
 | 일일 쿼터 | 사용자·날짜 | 운영상 보존 기간 결정 필요 |
 | Refresh 세션 | 사용자·기기 | 로그아웃·만료·회원 탈퇴 시 폐기 또는 삭제 |
@@ -111,4 +139,7 @@
 - `sentence_id`는 추천 문장 참조지만 현재 엔티티 연관관계가 아닌 값으로 저장됩니다.
 - 가이드 생성 작업은 DB 모델이 없으며 현재 메모리에만 저장됩니다.
 - Refresh Token 원문은 저장하지 않고 현재 토큰의 SHA-256 해시만 저장합니다.
-- 사용자 삭제 cascade 및 S3 객체 삭제 정책은 아직 명확하지 않습니다.
+- 평가 작업은 MySQL을 상태의 원본으로 사용하며 Worker 재시작 후에도 재시도할 수 있습니다.
+- 평가 성공 시 결과는 `evaluation_log`와 `evaluation_jobs.result_payload`에 저장되고 원본 S3 객체는 삭제합니다.
+- 작업 생성 전 업로드됐지만 제출되지 않은 객체나 삭제 실패 객체는 S3 Lifecycle 정책이 필요합니다.
+- 사용자 삭제 시 `evaluation_jobs`는 cascade되지만 남은 S3 객체 삭제는 별도 검증이 필요합니다.
