@@ -92,10 +92,18 @@ flutter run --dart-define=LINGKO_API_BASE_URL=http://192.168.0.10:8080
 Google 로그인까지 사용할 때:
 
 ```bash
-flutter run \
-  --dart-define=LINGKO_API_BASE_URL=http://192.168.0.10:8080 \
-  --dart-define=GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID
+cd app
+
+GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
+DEVICE_ID=Flutter-Device-ID \
+./scripts/run-local.sh ios
+
+GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
+DEVICE_ID=emulator-5554 \
+./scripts/run-local.sh android
 ```
+
+`run-local.sh`는 iOS에 `http://localhost:8080`, Android emulator에 `http://10.0.2.2:8080`을 자동 적용합니다. Android 실기기는 `API_URL=http://개발-PC-IP:8080`을 추가합니다.
 
 ## Google OAuth 구성
 
@@ -104,6 +112,15 @@ flutter run \
 - iOS 앱은 iOS OAuth Client를 별도로 만들고 Bundle ID를 등록합니다.
 - Flutter가 얻은 Google ID Token의 audience는 서버의 `GOOGLE_CLIENT_ID`와 일치해야 합니다.
 - Client Secret은 모바일 앱에 포함하지 않습니다.
+
+현재 Android Debug 등록값은 다음 명령으로 확인합니다.
+
+```bash
+cd app/android
+./gradlew signingReport
+```
+
+Google Cloud의 Android OAuth Client에는 package name `com.byeok.lingko`와 `Variant: debug`의 SHA-1을 등록해야 합니다. 계정 선택 후 로그인 창이 취소되는 것처럼 보이면 package name, SHA-1, Web Client ID 순서로 확인합니다.
 
 ## 권한
 

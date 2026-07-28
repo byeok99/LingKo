@@ -1,4 +1,4 @@
-package com.example.lingko_app
+package com.byeok.lingko
 
 import io.flutter.embedding.android.FlutterActivity
 

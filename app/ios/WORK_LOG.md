@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-28 - iOS 실기기 Development Team 설정
+
+- 변경 파일: `Runner.xcodeproj/project.pbxproj`, `WORK_LOG.md`
+- 내용: `com.byeok.lingko`를 실제 iPhone에 자동 서명·설치할 수 있도록 Runner의 Debug, Profile, Release 구성에 Apple Development Team을 설정했다.
+- 검증: 실제 iPhone Debug 설치·실행, `flutter build ios --debug --no-codesign` 통과
+- 리스크: 다른 개발자는 자신의 Apple Team으로 서명 설정을 변경해야 할 수 있음
+
 ## 2026-07-23 - iOS Bundle ID를 Google OAuth 설정과 일치시킴
 
 - 변경 파일: `Runner.xcodeproj/project.pbxproj`, `WORK_LOG.md`

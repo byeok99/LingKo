@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-07-27 - Android OAuth 패키지 문서 정합화
+
+- 변경 파일: `local-development.md`, `testing-and-troubleshooting.md`, `WORK_LOG.md`
+- 내용: Android 앱의 정식 package 적용에 맞춰 Google OAuth 등록 및 로그인 진단 기준을 `com.byeok.lingko`로 갱신했다.
+- 검증: Android Gradle 설정 및 Kotlin package와 문서 대조
+- 리스크: Google Cloud에 등록한 Debug SHA-1이 실제 서명 인증서와 일치해야 함
+
+## 2026-07-27 - Android 로컬 Google 로그인 실행 절차 추가
+
+- 변경 파일: `local-development.md`, `testing-and-troubleshooting.md`, `WORK_LOG.md`
+- 내용: iOS·Android 공통 실행 스크립트, 플랫폼별 Backend 주소와 Android OAuth package·SHA-1 확인 및 계정 선택 실패 진단 절차를 추가했다.
+- 검증: 앱 설정·실행 스크립트와 문서 대조
+- 리스크: Android OAuth Client 등록과 실기기 네트워크는 환경별 확인 필요
+
 ## 2026-07-23 - 로컬 Backend 요구사항을 Java 21로 갱신
 
 - 변경 파일: `local-development.md`, `WORK_LOG.md`
