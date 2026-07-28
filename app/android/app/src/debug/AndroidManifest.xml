@@ -4,4 +4,6 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- 로컬 개발 Backend가 HTTP를 사용하므로 Debug 빌드에서만 cleartext 통신을 허용한다. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>

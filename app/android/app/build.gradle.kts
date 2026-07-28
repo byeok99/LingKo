@@ -6,11 +6,14 @@ plugins {
 }
 
 android {
-    namespace = "com.example.lingko_app"
-    compileSdk = flutter.compileSdkVersion
+    namespace = "com.byeok.lingko"
+    // flutter_secure_storage 10.x가 사용하는 Android API와 맞추기 위해 SDK 36으로 컴파일한다.
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
     compileOptions {
+        // minSdk 23에서도 plugin의 최신 Java API를 사용할 수 있도록 D8 core library desugaring을 활성화한다.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -20,8 +23,8 @@ android {
     }
 
     defaultConfig {
-        // Android 설치 단위를 식별하는 값이며 출시 전 실제 LingKo 패키지로 교체해야 한다.
-        applicationId = "com.example.lingko_app"
+        // Google OAuth와 앱 배포에서 동일한 LingKo 설치 단위를 식별하는 정식 패키지명이다.
+        applicationId = "com.byeok.lingko"
         // 사용하는 인증·보안 저장 플러그인의 지원 범위에 맞춰 최소 SDK를 23으로 제한한다.
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
@@ -39,4 +42,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
 }
