@@ -94,6 +94,23 @@ flutter run
 
 세 값이 같은 서버 Client ID를 가리키는지 확인합니다.
 
+### Android Google 계정 선택 후 진행되지 않음
+
+Android Credential Manager는 OAuth 설정 오류를 사용자 취소처럼 반환할 수 있습니다. 다음 순서로 확인합니다.
+
+1. `GOOGLE_SERVER_CLIENT_ID`가 Web application Client ID인지 확인
+2. Google Cloud Android OAuth Client의 package name이 `com.byeok.lingko`인지 확인
+3. `cd app/android && ./gradlew signingReport`의 Debug SHA-1이 등록됐는지 확인
+4. Android emulator에서는 Backend 주소로 `http://10.0.2.2:8080` 사용
+5. 설정 변경 후 기존 앱을 삭제하고 다시 설치
+
+```bash
+cd app
+GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
+DEVICE_ID=emulator-5554 \
+./scripts/run-local.sh android
+```
+
 ### WAV 415 오류
 
 - 확장자가 `.wav`인지 확인

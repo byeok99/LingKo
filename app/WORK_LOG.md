@@ -1,3 +1,17 @@
+## 2026-07-27 - Android OAuth 패키지 안내 갱신
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: Android 앱의 정식 package 적용에 맞춰 Google OAuth Client 등록 package 안내를 `com.byeok.lingko`로 변경했다.
+- 검증: Android Gradle 설정과 문서 대조
+- 리스크: Google Cloud 설정 반영 후 에뮬레이터 로그인 수동 확인 필요
+
+## 2026-07-27 - 플랫폼별 Google 로그인 실행 방법 추가
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 공통 실행 스크립트의 iOS·Android 사용법, emulator Backend 주소와 Android OAuth package·SHA-1 등록 절차를 문서화했다.
+- 검증: 스크립트 구문·앱 정적 분석 및 Android Debug 빌드
+- 리스크: Google Cloud Android OAuth Client 등록은 저장소 밖 운영 설정임
+
 ## 2026-07-24 - Refresh Token 앱 문서 정합화
 
 - 변경 파일: `README.md`, `WORK_LOG.md`
