@@ -4,7 +4,7 @@
 - 날짜: 2026-07-29
 - 관련 Issue: [#47](https://github.com/byeok99/LingKo/issues/47)
 - 후속 검증 Issue: [#69](https://github.com/byeok99/LingKo/issues/69)
-- 관련 PR: 현재 작업 PR 생성 시 연결
+- 관련 PR: [#70](https://github.com/byeok99/LingKo/pull/70)
 - 대체 대상: [ADR-0008](0008-sqs-independent-evaluation-workers.md)
 
 ## 배경
