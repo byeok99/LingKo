@@ -6,7 +6,7 @@
 - 심각도: SEV-3
 - 영역: Backend / DB / Concurrency
 - 관련 Issue: [#39](https://github.com/byeok99/LingKo/issues/39)
-- 관련 PR: 미생성 — 로컬 변경 검토 후 실제 PR 링크로 교체
+- 관련 PR: [#66](https://github.com/byeok99/LingKo/pull/66)
 
 ## 문제 현상
 
@@ -115,7 +115,6 @@ Idempotency는 Unique 제약만으로 완성되지 않습니다. 경쟁 요청�
 
 - 실제 MySQL 격리 수준과 운영 수준 동시 부하에서 lock wait을 검증하지 않았습니다.
 - 정리 속도가 신규 완료 작업 증가량보다 느리면 backlog가 쌓일 수 있습니다.
-- PR 생성 전이므로 관련 PR 링크를 후속 갱신해야 합니다.
 
 ## 관련 코드와 문서
 
