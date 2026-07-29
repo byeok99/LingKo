@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - SQS 독립 평가 흐름 반영
+
+- 변경 파일: `evaluation-flow.md`, `system-architecture.md`, `WORK_LOG.md`
+- 내용: API dispatcher, SQS jobId, 독립 Worker, DB lease와 재발행 복구 흐름 및 배포 단위를 반영했다.
+- 검증: Queue 구현·Docker Compose와 문서 흐름 대조
+- 리스크: 운영 SQS 장애 복구와 강제 종료 검증 필요
+
 ## 2026-07-29 - 평가 Idempotency 동시성·만료 흐름 반영
 
 - 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`

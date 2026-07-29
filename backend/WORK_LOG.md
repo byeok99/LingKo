@@ -1,3 +1,10 @@
+## 2026-07-29 - SQS 독립 평가 Worker 실행 구성
+
+- 변경 파일: `.env.example`, `application.example.yaml`, `build.gradle`, `docker-compose.yml`, `README.md`, `WORK_LOG.md`
+- 내용: SQS 설정과 의존성을 추가하고 같은 image를 API와 web 없는 평가 Worker로 분리해 replica를 독립 조절하도록 구성했다.
+- 검증: `./gradlew test integrationTest`와 Queue profile `docker compose config --quiet` 통과
+- 리스크: 실제 AWS SQS·MySQL·Azure 부하와 DLQ 정책은 운영 환경에서 확인 필요
+
 ## 2026-07-29 - 평가 Idempotency 정리 설정 예시 추가
 
 - 변경 파일: `application.example.yaml`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 Queue 발행 복구 migration
+
+- 변경 파일: `V10__add_evaluation_job_queue_dispatch.sql`, `WORK_LOG.md`
+- 내용: `enqueued_at`과 PENDING 재발행 조회용 복합 인덱스를 추가했다.
+- 검증: H2 MySQL mode V1~V10 마이그레이션 테스트 통과
+- 리스크: 실제 MySQL V1~V10 연속 migration과 실행 계획은 미검증
+
 ## 2026-07-29 - 평가 완료 작업 정리 인덱스
 
 - 변경 파일: `V9__add_evaluation_job_cleanup_index.sql`, `WORK_LOG.md`

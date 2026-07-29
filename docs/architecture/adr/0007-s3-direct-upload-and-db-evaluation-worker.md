@@ -50,3 +50,5 @@ Redis persistence, pending message 회수, eviction과 별도 failover 정책이
 - API와 Worker가 같은 Spring 배포 단위에 있지만 HTTP thread와 작업 상태는 분리됩니다.
 - 운영 S3 Lifecycle, 실제 Presigned PUT E2E, Azure timeout·재시도 고도화는 배포 전 검증이 필요합니다.
 - 다중 Worker 또는 독립 확장이 필요하면 SQS를 추가하되 DB 상태와 Idempotency를 진실의 원천으로 유지합니다.
+
+이 후속 확장 결정과 구현은 [ADR-0008](0008-sqs-independent-evaluation-workers.md)에 기록합니다.

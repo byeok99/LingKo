@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Issue #47 Queue 후속 구현 상태 반영
+
+- 변경 파일: `issue-backlog.md`, `release-roadmap.md`, `WORK_LOG.md`
+- 내용: SQS 전환과 Worker 독립 배포를 구현 완료로 표시하고 운영 처리량 측정을 #52 범위로 유지했다.
+- 검증: 구현·테스트·ADR과 로드맵 대조
+- 리스크: GitHub Issue 상태는 병합 시 별도 동기화 필요
+
 ## 2026-07-27 - 평가 Worker 구현 상태 로드맵 반영
 
 - 변경 파일: `issue-backlog.md`, `release-roadmap.md`, `WORK_LOG.md`

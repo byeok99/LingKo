@@ -14,7 +14,7 @@
 | 6 | [#43 음성 보존·삭제·탈퇴](https://github.com/byeok99/LingKo/issues/43) | 개인정보와 스토어 요구사항 충족 | #37 |
 | 7 | [#41 가이드 API 접근 제어](https://github.com/byeok99/LingKo/issues/41) | 비용·자원 남용 차단 | #36 |
 | 8 | [#51 Flutter 스토어 출시](https://github.com/byeok99/LingKo/issues/51) | Android/iOS 실제 배포 준비 | #40, #43 |
-| 9 | [#47 S3 직접 업로드·비동기 평가](https://github.com/byeok99/LingKo/issues/47) — 1단계 구현 | WAV API 우회와 영속 DB Worker | #37, #38 |
+| 9 | [#47 S3 직접 업로드·비동기 평가](https://github.com/byeok99/LingKo/issues/47) — 구현 완료 | WAV API 우회, SQS와 독립 Worker 확장 | #37, #38 |
 
 ## P1: 안정적인 운영과 초기 확장
 
@@ -34,7 +34,7 @@
 
 ## P2: 트래픽 증가 전 구조 확장
 
-현재 별도 항목은 없습니다. #47의 SQS 전환과 Worker 독립 배포는 DB Worker의 실제 처리량 측정 후 같은 Issue의 후속 단계로 진행합니다.
+현재 별도 항목은 없습니다. #47의 SQS 전환과 Worker 독립 배포는 구현됐고 실제 운영 처리량·자동 확장 기준은 #52에서 측정합니다.
 
 ## 한 번에 하나씩 해결하는 방법
 

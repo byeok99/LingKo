@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - SQS Worker 모드 설정
+
+- 변경 파일: `EvaluationJobSettings.java`, `SqsConfig.java`, `WORK_LOG.md`
+- 내용: database fallback과 SQS 모드, dispatcher·long polling·visibility·재발행 설정 및 조건부 SQS client를 추가했다.
+- 검증: 설정 binding compile과 Queue 대상 테스트 통과
+- 리스크: 운영에서는 Queue URL·region·credential 누락 시 SQS mode가 기동하지 않음
+
 ## 2026-07-29 - 평가 완료 작업 정리 설정 추가
 
 - 변경 파일: `EvaluationJobSettings.java`, `WORK_LOG.md`

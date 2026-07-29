@@ -1,14 +1,11 @@
 package com.lingko.lingko.core.domain.evaluation.service;
 
-import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.nio.file.Path;
 import java.util.Optional;
 
 /**
@@ -18,17 +15,14 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-@Slf4j
-@ConditionalOnProperty(
-        name = "evaluation.worker.enabled",
-        havingValue = "true",
-        matchIfMissing = true
-)
+@ConditionalOnExpression("""
+        ${evaluation.worker.enabled:true}
+        and '${evaluation.worker.mode:database}'.equalsIgnoreCase('database')
+        """)
 public class EvaluationJobWorker {
 
     private final EvaluationJobProcessingService processingService;
-    private final EvaluationAudioStorage audioStorage;
-    private final EvaluationService evaluationService;
+    private final EvaluationJobExecutor executor;
 
     @Scheduled(fixedDelayString = "${evaluation.worker.poll-delay-ms:1000}")
     public void processNext() {
@@ -36,27 +30,6 @@ public class EvaluationJobWorker {
         if (claimed.isEmpty()) {
             return;
         }
-
-        EvaluationJob job = claimed.get();
-        Path localAudio = null;
-        try {
-            localAudio = audioStorage.download(job.getAudioObjectKey());
-            PracticeResultResponse result = evaluationService.evaluatePronunciation(
-                    localAudio,
-                    job.getStandardPronunciation()
-            );
-            processingService.complete(job, result);
-            audioStorage.delete(job.getAudioObjectKey());
-        } catch (RuntimeException failure) {
-            log.warn("Evaluation job failed: jobId={}, attempt={}",
-                    job.getJobId(), job.getAttemptCount(), failure);
-            if (processingService.fail(job, failure)) {
-                audioStorage.delete(job.getAudioObjectKey());
-            }
-        } finally {
-            if (localAudio != null) {
-                audioStorage.deleteLocal(localAudio);
-            }
-        }
+        executor.execute(claimed.get());
     }
 }

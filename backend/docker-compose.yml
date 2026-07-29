@@ -51,6 +51,35 @@ services:
       DB_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required in .env}"
       DB_DRIVER: "${DB_DRIVER:-com.mysql.cj.jdbc.Driver}"
       FFMPEG_PATH: ffmpeg
+      EVALUATION_WORKER_MODE: "${EVALUATION_WORKER_MODE:-database}"
+      EVALUATION_WORKER_ENABLED: "${EVALUATION_API_WORKER_ENABLED:-true}"
+      EVALUATION_QUEUE_DISPATCHER_ENABLED: "${EVALUATION_QUEUE_DISPATCHER_ENABLED:-true}"
+
+  evaluation-worker:
+    profiles: ["queue"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # 같은 image를 web server 없이 실행해 API와 Worker replica 수를 독립 조절한다.
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: "${DB_NAME:-lingko}"
+      DB_USER: "${DB_USER:-lingko}"
+      DB_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required in .env}"
+      DB_DRIVER: "${DB_DRIVER:-com.mysql.cj.jdbc.Driver}"
+      FFMPEG_PATH: ffmpeg
+      EVALUATION_WORKER_MODE: sqs
+      EVALUATION_WORKER_ENABLED: "true"
+      EVALUATION_QUEUE_DISPATCHER_ENABLED: "false"
+      EVALUATION_CLEANUP_ENABLED: "false"
 
 volumes:
   mysql_data:

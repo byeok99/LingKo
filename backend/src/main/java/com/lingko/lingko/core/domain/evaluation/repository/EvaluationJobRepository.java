@@ -5,8 +5,10 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -32,6 +34,36 @@ public interface EvaluationJobRepository extends JpaRepository<EvaluationJob, St
             @Param("terminalStatuses") List<EvaluationJob.Status> terminalStatuses,
             @Param("cutoff") Instant cutoff,
             Pageable pageable
+    );
+
+    @Query("""
+            select job.jobId
+            from EvaluationJob job
+            where job.status = :pendingStatus
+              and job.nextAttemptAt <= :now
+              and (job.enqueuedAt is null or job.enqueuedAt <= :redispatchCutoff)
+            order by job.nextAttemptAt asc, job.createdAt asc
+            """)
+    List<String> findQueueDispatchCandidates(
+            @Param("pendingStatus") EvaluationJob.Status pendingStatus,
+            @Param("now") Instant now,
+            @Param("redispatchCutoff") Instant redispatchCutoff,
+            Pageable pageable
+    );
+
+    @Modifying
+    @Transactional
+    @Query("""
+            update EvaluationJob job
+            set job.enqueuedAt = :enqueuedAt
+            where job.jobId = :jobId
+              and job.status = com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob.Status.PENDING
+              and job.nextAttemptAt <= :now
+            """)
+    int markEnqueuedIfPending(
+            @Param("jobId") String jobId,
+            @Param("enqueuedAt") Instant enqueuedAt,
+            @Param("now") Instant now
     );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
