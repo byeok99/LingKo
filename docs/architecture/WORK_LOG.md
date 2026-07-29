@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Queue 없는 독립 DB Worker 흐름 반영
+
+- 변경 파일: `evaluation-flow.md`, `system-architecture.md`, `WORK_LOG.md`
+- 내용: SQS dispatcher·메시지를 제거하고 API와 web 없는 DB polling Worker 한 개의 배포·복구 흐름으로 갱신했다.
+- 검증: Backend·Compose·통합 테스트와 문서 흐름 대조
+- 리스크: 같은 호스트 자원 공유와 실제 MySQL lease 복구 검증 필요
+
 ## 2026-07-29 - SQS 독립 평가 흐름 반영
 
 - 변경 파일: `evaluation-flow.md`, `system-architecture.md`, `WORK_LOG.md`

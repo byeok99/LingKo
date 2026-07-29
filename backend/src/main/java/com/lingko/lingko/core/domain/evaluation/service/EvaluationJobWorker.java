@@ -2,7 +2,7 @@ package com.lingko.lingko.core.domain.evaluation.service;
 
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -15,21 +15,23 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-@ConditionalOnExpression("""
-        ${evaluation.worker.enabled:true}
-        and '${evaluation.worker.mode:database}'.equalsIgnoreCase('database')
-        """)
+@ConditionalOnProperty(
+        name = "evaluation.worker.enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class EvaluationJobWorker {
 
     private final EvaluationJobProcessingService processingService;
     private final EvaluationJobExecutor executor;
 
     @Scheduled(fixedDelayString = "${evaluation.worker.poll-delay-ms:1000}")
-    public void processNext() {
+    public boolean processNext() {
         Optional<EvaluationJob> claimed = processingService.claimNext();
         if (claimed.isEmpty()) {
-            return;
+            return false;
         }
         executor.execute(claimed.get());
+        return true;
     }
 }

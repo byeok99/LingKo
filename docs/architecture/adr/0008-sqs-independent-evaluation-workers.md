@@ -1,9 +1,12 @@
 # ADR-0008 SQS 기반 독립 평가 Worker
 
-- 상태: 승인
+- 상태: 폐기
 - 날짜: 2026-07-29
 - 관련 Issue: [#47](https://github.com/byeok99/LingKo/issues/47)
 - 관련 PR: [#68](https://github.com/byeok99/LingKo/pull/68)
+- 대체 ADR: [ADR-0009](0009-independent-db-evaluation-worker.md)
+
+> 초기 운영에 Queue를 도입하지 않기로 결정해 이 설계의 SQS 코드와 설정은 제거했습니다. 아래 내용은 당시 선택과 구현 이력을 보존합니다.
 
 ## 배경
 

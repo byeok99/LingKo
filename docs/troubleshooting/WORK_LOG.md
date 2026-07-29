@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 작업 상태 유실 노트를 DB Worker 기준으로 갱신
+
+- 변경 파일: `2026-07-29-evaluation-job-status-lost-after-quota-update.md`, `WORK_LOG.md`
+- 내용: 재현·검증 명령과 남은 위험을 현재 단일 DB Worker·실제 MySQL lease 복구 기준으로 갱신했다.
+- 검증: 변경된 통합 테스트와 문서 사실 관계 대조
+- 리스크: 실제 MySQL 환경 검증 미실행
+
 ## 2026-07-29 - 평가 작업 완료 상태 유실 해결 기록
 
 - 변경 파일: `2026-07-29-evaluation-job-status-lost-after-quota-update.md`, `README.md`, `WORK_LOG.md`

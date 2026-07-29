@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 독립 DB Worker 결정으로 SQS ADR 대체
+
+- 변경 파일: `0007-s3-direct-upload-and-db-evaluation-worker.md`, `0008-sqs-independent-evaluation-workers.md`, `0009-independent-db-evaluation-worker.md`, `README.md`, `WORK_LOG.md`
+- 내용: ADR-0008을 폐기하고 Queue 없이 DB polling Worker 한 개를 API와 분리 운영하는 ADR-0009를 승인했으며 실제 MySQL 복구 검증은 Issue #69로 연결했다.
+- 검증: 구현·Compose·운영 문서와 결정 대조
+- 리스크: Issue #69의 강제 종료·lease 복구와 운영 측정 후 Worker 확장 또는 Queue 선택 재결정 필요
+
 ## 2026-07-29 - SQS 독립 Worker ADR 추가
 
 - 변경 파일: `0007-s3-direct-upload-and-db-evaluation-worker.md`, `0008-sqs-independent-evaluation-workers.md`, `README.md`, `WORK_LOG.md`

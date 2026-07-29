@@ -122,9 +122,9 @@ flowchart LR
 | 기록 조회 N+1·Cursor 전환 | [#45](https://github.com/byeok99/LingKo/issues/45) | 기록량 증가에도 쿼리 수와 지연 안정화 |
 | 음절 반복 조회 제거 | [#46](https://github.com/byeok99/LingKo/issues/46) | 평가 저장 쿼리 수 제한 |
 | SLO와 부하 테스트 | [#52](https://github.com/byeok99/LingKo/issues/52) | 안전 처리량과 Scale-out 기준 확보 |
-| S3 직접 업로드·비동기 평가 | [#47](https://github.com/byeok99/LingKo/issues/47) | 직접 업로드, DB 작업, SQS 전달과 독립 Worker 구현 완료 |
+| S3 직접 업로드·비동기 평가 | [#47](https://github.com/byeok99/LingKo/issues/47) | 직접 업로드, DB 작업과 독립 DB Worker 구현 완료 |
 
-비공개 S3 직접 업로드, 영속 DB 작업과 SQS 기반 독립 Worker를 MVP 구조로 적용했습니다. 실제 운영 처리량, Queue 지연과 자동 확장 기준은 #52에서 확정합니다.
+비공개 S3 직접 업로드, 영속 DB 작업과 독립 DB Worker 한 개를 MVP 구조로 적용했습니다. 실제 운영 처리량, DB lock과 Queue 도입 기준은 #52에서 확정합니다.
 
 ## 6단계: 제한 공개
 

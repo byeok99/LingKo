@@ -29,9 +29,9 @@
 | 공개 방식 | 초대 기반 비공개 베타 |
 | 사용자 규모 | 10~100명부터 시작해 단계적으로 확대 |
 | 서버 구조 | Spring Boot API 1개 이상, MySQL, 외부 음성·미디어 서비스 |
-| 평가 방식 | S3 직접 업로드 후 DB·SQS 기반 비동기 평가 |
+| 평가 방식 | S3 직접 업로드 후 독립 DB Worker 기반 비동기 평가 |
 | 저장소 | DB는 관리형 MySQL 권장, 미디어는 S3 계열 객체 저장소 권장 |
-| 확장 기준 | SLO 미달, 외부 호출 대기 포화, 업로드 네트워크 병목 발생 시 Worker·Queue 전환 |
+| 확장 기준 | SLO 미달, 외부 호출 대기 포화, DB backlog 증가 시 Worker 확장·Queue를 측정 후 검토 |
 
 [#47](https://github.com/byeok99/LingKo/issues/47)의 비동기 평가와 독립 Worker 구조는 구현됐으며 실제 트래픽과 비용 측정은 [#52](https://github.com/byeok99/LingKo/issues/52)에서 수행합니다.
 
@@ -64,7 +64,7 @@
 | NFR-PERF-006 | P1 | staging에서 일반 API 20 RPS를 10분간 처리할 수 있어야 한다. | 오류율 1% 미만, p95 목표 충족, DB Pool 고갈 없음 |
 | NFR-PERF-007 | P1 | 실제 또는 Stub 외부 평가 환경에서 평가 접수 2 RPS를 10분간 처리할 수 있어야 한다. | 요청 유실·중복 저장·중복 차감 0건 |
 | NFR-PERF-008 | P1 | CPU, 메모리, DB Pool, 외부 호출 대기열 중 어느 자원이 먼저 포화되는지 식별해야 한다. | 부하 테스트 결과와 Scale-out 기준 문서화 |
-| NFR-PERF-009 | P2 | 비동기 평가 전환 후 API와 Worker를 독립 확장할 수 있어야 한다. | 구현됨 · 같은 image의 API와 web 없는 Worker replica를 별도 조절 · 4 Worker/40 작업 정합성 통합 테스트 |
+| NFR-PERF-009 | P2 | 비동기 평가 전환 후 API와 Worker를 독립 배포할 수 있어야 한다. | 구현됨 · 같은 image의 API와 web 없는 DB Worker를 별도 실행 · 초기 replica 1개 |
 
 위 처리량은 초기 베타 검증 기준이지 최종 서비스 용량 약속이 아닙니다. [#52](https://github.com/byeok99/LingKo/issues/52)에서 실제 안전 처리량을 확정합니다.
 
@@ -160,7 +160,7 @@
 | NFR-SCALE-002 | P1 | 영구 파일은 API 서버 로컬 디스크에 저장하지 않아야 한다. | 임시 파일은 처리 후 삭제, 영구 파일은 객체 저장소 사용 |
 | NFR-SCALE-003 | P1 | 동일 애플리케이션 인스턴스를 2개 이상 실행해도 기능 정합성이 유지되어야 한다. | Sticky Session 없이 E2E 통과 |
 | NFR-SCALE-004 | P0 | 음성 파일은 Presigned URL로 객체 저장소에 직접 업로드할 수 있어야 한다. | 구현됨 · API 서버가 음성 본문을 중계하지 않음 · [#47](https://github.com/byeok99/LingKo/issues/47) |
-| NFR-SCALE-005 | P0 | 발음 평가는 영속 작업 저장소 기반 Worker로 분리하고 Queue 전환이 가능해야 한다. | 구현됨 · MySQL 상태 원본, SQS `jobId`, 중복 전달 방어, DB polling fallback · [#47](https://github.com/byeok99/LingKo/issues/47) |
+| NFR-SCALE-005 | P0 | 발음 평가는 영속 작업 저장소 기반 Worker로 분리해야 한다. | 구현됨 · MySQL 작업 원본과 lease, API와 독립 DB polling Worker 1개 · [#47](https://github.com/byeok99/LingKo/issues/47) |
 | NFR-SCALE-006 | P2 | 추천 문장·표준 발음·가이드 등 읽기 중심 데이터는 캐시할 수 있어야 한다. | 캐시 적중률·무효화·TTL 메트릭 존재 |
 | NFR-SCALE-007 | P2 | 캐시 장애가 핵심 데이터 정합성을 깨뜨리지 않아야 한다. | 쿼터·결제성 데이터는 원자 저장소를 기준으로 처리 |
 

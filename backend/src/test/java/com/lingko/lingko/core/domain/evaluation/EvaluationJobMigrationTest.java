@@ -27,11 +27,12 @@ class EvaluationJobMigrationTest {
             runMigration(connection, "V8__add_evaluation_jobs.sql");
             runMigration(connection, "V9__add_evaluation_job_cleanup_index.sql");
             runMigration(connection, "V10__add_evaluation_job_queue_dispatch.sql");
+            runMigration(connection, "V11__remove_evaluation_job_queue_dispatch.sql");
 
             assertColumn(connection, "evaluation_jobs", "status");
             assertColumn(connection, "evaluation_jobs", "lease_expires_at");
             assertColumn(connection, "evaluation_jobs", "result_payload");
-            assertColumn(connection, "evaluation_jobs", "enqueued_at");
+            assertColumnMissing(connection, "evaluation_jobs", "enqueued_at");
             assertUniqueConstraint(
                     connection,
                     "evaluation_jobs",
@@ -44,7 +45,7 @@ class EvaluationJobMigrationTest {
             );
             assertIndex(connection, "evaluation_jobs", "idx_evaluation_jobs_claim");
             assertIndex(connection, "evaluation_jobs", "idx_evaluation_jobs_cleanup");
-            assertIndex(connection, "evaluation_jobs", "idx_evaluation_jobs_dispatch");
+            assertIndexMissing(connection, "evaluation_jobs", "idx_evaluation_jobs_dispatch");
         }
     }
 
@@ -87,6 +88,33 @@ class EvaluationJobMigrationTest {
             assertThat(found)
                     .as("index %s.%s exists", tableName, indexName)
                     .isTrue();
+        }
+    }
+
+    private void assertColumnMissing(
+            Connection connection,
+            String tableName,
+            String columnName
+    ) throws Exception {
+        try (ResultSet columns = connection.getMetaData()
+                .getColumns(null, null, tableName, columnName)) {
+            assertThat(columns.next())
+                    .as("column %s.%s does not exist", tableName, columnName)
+                    .isFalse();
+        }
+    }
+
+    private void assertIndexMissing(
+            Connection connection,
+            String tableName,
+            String indexName
+    ) throws Exception {
+        try (ResultSet indexes = connection.getMetaData()
+                .getIndexInfo(null, null, tableName, false, false)) {
+            while (indexes.next()) {
+                assertThat(indexes.getString("INDEX_NAME"))
+                        .isNotEqualToIgnoringCase(indexName);
+            }
         }
     }
 

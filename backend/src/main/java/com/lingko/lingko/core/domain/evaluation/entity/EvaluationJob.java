@@ -92,9 +92,6 @@ public class EvaluationJob {
     @Column(name = "lease_expires_at")
     private Instant leaseExpiresAt;
 
-    @Column(name = "enqueued_at")
-    private Instant enqueuedAt;
-
     @Column(name = "result_payload", columnDefinition = "LONGTEXT")
     private String resultPayload;
 
@@ -185,16 +182,8 @@ public class EvaluationJob {
     public void scheduleRetry(Instant nextAttemptAt, String errorCode) {
         status = Status.PENDING;
         this.nextAttemptAt = nextAttemptAt;
-        enqueuedAt = nextAttemptAt;
         this.errorCode = errorCode;
         leaseExpiresAt = null;
-    }
-
-    /**
-     * SQS 전송 성공 시각을 기록해 정상 메시지의 즉시 중복 발행을 억제한다.
-     */
-    public void markEnqueued(Instant enqueuedAt) {
-        this.enqueuedAt = enqueuedAt;
     }
 
     public void succeed(String resultPayload, Instant completedAt) {

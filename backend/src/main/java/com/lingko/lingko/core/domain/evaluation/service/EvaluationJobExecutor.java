@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Path;
 
 /**
- * DB polling과 SQS Worker가 공유하는 단일 평가 실행·보상 절차를 소유한다.
+ * 독립 DB polling Worker의 평가 실행·보상 절차를 소유한다.
  */
 @Service
 @RequiredArgsConstructor

@@ -11,7 +11,8 @@ ADR은 중요한 기술 선택의 배경과 결과를 보존합니다.
 | [0005](0005-branch-strategy.md) | 승인 | `develop` 통합, `main` 릴리스 브랜치 운영 |
 | [0006](0006-atomic-practice-quota-transitions.md) | 승인 | 조건부 DB UPDATE와 최초 생성용 짧은 부모 lock으로 쿼터 원자성 보장 |
 | [0007](0007-s3-direct-upload-and-db-evaluation-worker.md) | 승인 | 비공개 S3 직접 업로드와 영속 DB Worker로 평가 요청 분리 |
-| [0008](0008-sqs-independent-evaluation-workers.md) | 승인 | DB 상태를 원본으로 유지하고 SQS 기반 평가 Worker를 독립 확장 |
+| [0008](0008-sqs-independent-evaluation-workers.md) | 폐기 | SQS 기반 독립 평가 Worker 검토·구현 이력 |
+| [0009](0009-independent-db-evaluation-worker.md) | 승인 | Queue 없이 DB polling Worker 한 개를 API와 별도 프로세스로 운영 |
 
 ## 작성 형식
 

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 독립 DB Worker 계약으로 테스트 정리
+
+- 변경 파일: `EvaluationJobMigrationTest.java`, `EvaluationJobQueueDispatcherTest.java`, `EvaluationJobQueueWorkerTest.java`, `EvaluationJobTest.java`, `EvaluationJobWorkerTest.java`, `EvaluationWorkerDeploymentConditionTest.java`, `WORK_LOG.md`
+- 내용: SQS 전용 테스트를 제거하고 API 비활성·독립 Worker 활성, 처리 여부와 V11 스키마 제거 계약을 검증했다.
+- 검증: 대상 단위 테스트 통과
+- 리스크: Docker 프로세스 강제 종료 E2E는 미실행
+
 ## 2026-07-29 - Queue Worker·dispatcher 계약 테스트
 
 - 변경 파일: `EvaluationJobExecutorTest.java`, `EvaluationJobMigrationTest.java`, `EvaluationJobQueueDispatcherTest.java`, `EvaluationJobQueueWorkerTest.java`, `EvaluationJobTest.java`, `EvaluationJobWorkerTest.java`, `EvaluationWorkerModeConditionTest.java`, `WORK_LOG.md`

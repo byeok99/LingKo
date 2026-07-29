@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - SQS 설정 제거
+
+- 변경 파일: `EvaluationJobSettings.java`, `SqsConfig.java`, `WORK_LOG.md`
+- 내용: Queue URL·dispatcher·visibility와 Worker mode를 제거하고 DB Worker 활성화·lease·retry 설정만 유지했다.
+- 검증: 설정 compile과 Worker 배포 조건 테스트 통과
+- 리스크: Queue 재도입 시 현재 운영 측정에 기반한 새 ADR 필요
+
 ## 2026-07-29 - SQS Worker 모드 설정
 
 - 변경 파일: `EvaluationJobSettings.java`, `SqsConfig.java`, `WORK_LOG.md`

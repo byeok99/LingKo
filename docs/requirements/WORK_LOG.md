@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Queue 없는 독립 Worker 요구 반영
+
+- 변경 파일: `non-functional-requirements.md`, `WORK_LOG.md`
+- 내용: SQS·4 replica 완료 표현을 제거하고 API와 독립 DB Worker 한 개 운영을 현재 완료 기준으로 갱신했다.
+- 검증: Compose·Worker 배포 조건·통합 테스트 대조
+- 리스크: 다중 Worker 또는 Queue 요구는 #52 측정 후 재정의 필요
+
 ## 2026-07-29 - 평가 Worker 독립 확장 요구 구현 반영
 
 - 변경 파일: `non-functional-requirements.md`, `WORK_LOG.md`

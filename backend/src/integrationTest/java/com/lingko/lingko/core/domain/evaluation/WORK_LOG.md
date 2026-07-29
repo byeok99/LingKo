@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 단일 독립 DB Worker 처리 검증
+
+- 변경 파일: `IndependentEvaluationWorkerIntegrationTest.java`, `EvaluationQueueScalingIntegrationTest.java`, `WORK_LOG.md`
+- 내용: Queue·4 Worker 테스트를 단일 DB polling Worker가 40개 작업을 결과·쿼터 중복 없이 처리하는 계약으로 교체했다.
+- 검증: H2 MySQL mode 대상 통합 테스트 통과
+- 리스크: 실제 MySQL lock wait·처리량과 별도 프로세스 강제 종료는 미측정
+
 ## 2026-07-29 - 독립 Queue Worker 확장·중복 전달 검증
 
 - 변경 파일: `EvaluationQueueScalingIntegrationTest.java`, `WORK_LOG.md`

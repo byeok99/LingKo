@@ -75,21 +75,10 @@ evaluation:
   upload-url-expire-minutes: ${EVALUATION_UPLOAD_URL_EXPIRE_MINUTES:10}
   worker:
     enabled: ${EVALUATION_WORKER_ENABLED:true}
-    # database는 단일 배포 fallback, sqs는 API와 독립 Worker 배포에 사용한다.
-    mode: ${EVALUATION_WORKER_MODE:database}
     poll-delay-ms: ${EVALUATION_WORKER_POLL_DELAY_MS:1000}
     lease-seconds: ${EVALUATION_WORKER_LEASE_SECONDS:60}
     retry-delay-seconds: ${EVALUATION_WORKER_RETRY_DELAY_SECONDS:5}
     max-attempts: ${EVALUATION_WORKER_MAX_ATTEMPTS:3}
-  queue:
-    dispatcher-enabled: ${EVALUATION_QUEUE_DISPATCHER_ENABLED:true}
-    url: ${EVALUATION_QUEUE_URL:}
-    endpoint: ${EVALUATION_QUEUE_ENDPOINT:}
-    dispatch-delay-ms: ${EVALUATION_QUEUE_DISPATCH_DELAY_MS:500}
-    dispatch-batch-size: ${EVALUATION_QUEUE_DISPATCH_BATCH_SIZE:100}
-    redispatch-seconds: ${EVALUATION_QUEUE_REDISPATCH_SECONDS:120}
-    receive-wait-seconds: ${EVALUATION_QUEUE_RECEIVE_WAIT_SECONDS:10}
-    visibility-timeout-seconds: ${EVALUATION_QUEUE_VISIBILITY_TIMEOUT_SECONDS:120}
   # 성공·최종 실패 작업은 재호출 응답을 위해 보존한 뒤 작은 batch로 정리한다.
   cleanup:
     enabled: ${EVALUATION_CLEANUP_ENABLED:true}

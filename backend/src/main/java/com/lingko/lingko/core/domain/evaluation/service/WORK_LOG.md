@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Queue 없는 독립 DB Worker로 단순화
+
+- 변경 파일: `EvaluationJobExecutor.java`, `EvaluationJobProcessingService.java`, `EvaluationJobQueue.java`, `EvaluationJobQueueDispatcher.java`, `EvaluationJobQueueWorker.java`, `EvaluationJobWorker.java`, `WORK_LOG.md`
+- 내용: SQS 계약·dispatcher·consumer claim을 제거하고 별도 프로세스의 DB polling Worker가 공통 평가 실행기를 호출하도록 유지했다.
+- 검증: Worker 단위·배포 조건·단일 Worker 40건 통합 테스트 통과
+- 리스크: 단일 Worker 처리량과 강제 종료 lease 복구는 실제 MySQL에서 확인 필요
+
 ## 2026-07-29 - SQS 독립 평가 Worker와 공통 실행 경계
 
 - 변경 파일: `EvaluationJobExecutor.java`, `EvaluationJobProcessingService.java`, `EvaluationJobQueue.java`, `EvaluationJobQueueDispatcher.java`, `EvaluationJobQueueWorker.java`, `EvaluationJobWorker.java`, `WORK_LOG.md`

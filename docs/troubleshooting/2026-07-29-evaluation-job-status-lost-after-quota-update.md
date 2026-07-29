@@ -27,13 +27,13 @@
 ## 재현 방법
 
 1. 평가 작업 40건을 생성합니다.
-2. 4개 논리 Queue Worker로 모든 작업을 처리합니다.
+2. 독립 DB Worker 한 개로 모든 작업을 처리합니다.
 3. 평가 결과 수, 쿼터 사용량과 작업 상태를 각각 조회합니다.
 4. 수정 전에는 결과·쿼터는 40건 완료되지만 작업 상태는 `PROCESSING`에 남습니다.
 
 ## 조사 과정
 
-1. Worker ACK와 Queue 중복 여부를 확인했습니다.
+1. Worker의 DB claim과 완료 transaction 경계를 확인했습니다.
 2. 결과 저장 수와 쿼터 확정 수가 작업 수와 일치해 외부 평가·저장 실패를 제외했습니다.
 3. 완료 transaction의 호출 순서와 쿼터 native UPDATE 설정을 비교했습니다.
 4. `clearAutomatically=true` 실행 뒤 작업 엔티티가 detached되어 이후 `succeed` 또는 `fail` 변경이 flush되지 않음을 확인했습니다.
@@ -66,7 +66,7 @@
 
 ## 검증 방법
 
-- `./gradlew integrationTest --tests '*EvaluationQueueScalingIntegrationTest' --rerun-tasks`
+- `./gradlew integrationTest --tests '*IndependentEvaluationWorkerIntegrationTest' --rerun-tasks`
 - `./gradlew test integrationTest`
 
 ## 변경 전후 결과
@@ -99,12 +99,12 @@
 ## 남은 위험
 
 - 실제 MySQL에서 transaction flush 순서와 부하 상황을 별도로 검증해야 합니다.
-- Worker 강제 종료 시 lease 만료와 메시지 재노출 복구는 운영 SQS 환경에서 확인해야 합니다.
+- Worker 강제 종료 시 DB lease 만료 후 재claim은 실제 MySQL 환경에서 확인해야 합니다.
 
 ## 관련 코드와 문서
 
 - `backend/src/main/java/com/lingko/lingko/core/domain/evaluation/service/EvaluationJobProcessingService.java`
-- `backend/src/integrationTest/java/com/lingko/lingko/core/domain/evaluation/EvaluationQueueScalingIntegrationTest.java`
-- [`ADR-0008`](../architecture/adr/0008-sqs-independent-evaluation-workers.md)
+- `backend/src/integrationTest/java/com/lingko/lingko/core/domain/evaluation/IndependentEvaluationWorkerIntegrationTest.java`
+- [`ADR-0009`](../architecture/adr/0009-independent-db-evaluation-worker.md)
 - [`평가 흐름`](../architecture/evaluation-flow.md)
 - [`운영 Runbook`](../operations/operations-runbook.md)

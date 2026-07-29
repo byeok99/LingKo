@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Queue 발행 상태 제거
+
+- 변경 파일: `EvaluationJob.java`, `WORK_LOG.md`
+- 내용: SQS 발행 복구에만 사용하던 `enqueuedAt` 상태와 재시도 연동을 제거했다.
+- 검증: 상태 전이·V11 마이그레이션 테스트 통과
+- 리스크: 없음
+
 ## 2026-07-29 - Queue 발행 복구 시각 추가
 
 - 변경 파일: `EvaluationJob.java`, `WORK_LOG.md`
