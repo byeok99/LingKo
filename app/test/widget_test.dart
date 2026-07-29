@@ -842,13 +842,22 @@ void main() {
     expect(find.text('맛있겠다.'), findsNothing);
     expect(find.text('Start recording'), findsNothing);
 
-    await tester.enterText(find.byType(TextField), '오늘 날씨가 좋아요.');
+    await tester.enterText(
+      find.byType(TextField),
+      '안녕하세요! @LingKo #1 (연습)_테스트-좋아요.😊₩',
+    );
     await tester.pump();
+
+    final customSentenceField = tester.widget<TextField>(
+      find.byType(TextField),
+    );
+    expect(customSentenceField.controller?.text, '안녕하세요 LingKo 1 연습테스트좋아요');
+
     await tester.tap(find.text('Use this sentence'));
     await tester.pumpAndSettle();
 
-    expect(api.lastText, '오늘 날씨가 좋아요.');
-    expect(find.text('오늘 날씨가 좋아요.'), findsWidgets);
+    expect(api.lastText, '안녕하세요 LingKo 1 연습테스트좋아요');
+    expect(find.text('안녕하세요 LingKo 1 연습테스트좋아요'), findsWidgets);
     expect(find.text('서버 표준 발음'), findsOneWidget);
   });
 
