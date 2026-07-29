@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 단일 DB Worker 확장 정책 반영
+
+- 변경 파일: `scalability-plan.md`, `WORK_LOG.md`
+- 내용: SQS·4 Worker 완료 표현을 제거하고 독립 DB Worker 한 개·40 작업 검증과 측정 후 확장 원칙을 반영했다.
+- 검증: 독립 Worker 통합 테스트 결과와 문서 수치 대조
+- 리스크: 실제 RPS·p95·DB lock wait 미측정
+
 ## 2026-07-29 - SQS Worker 독립 확장 상태 반영
 
 - 변경 파일: `scalability-plan.md`, `WORK_LOG.md`

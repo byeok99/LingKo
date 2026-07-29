@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 독립 DB Worker 1개 운영 절차
+
+- 변경 파일: `operations-runbook.md`, `WORK_LOG.md`
+- 내용: SQS·DLQ 절차를 제거하고 API/Worker 설정 분리, DB backlog·lease 복구와 단일 replica 운영 절차를 추가했다.
+- 검증: Compose 환경변수와 DB Worker 상태 전이 대조
+- 리스크: 운영 자원 제한과 경보 임계값 미확정
+
 ## 2026-07-29 - SQS Worker 배포·장애 대응 절차
 
 - 변경 파일: `operations-runbook.md`, `WORK_LOG.md`

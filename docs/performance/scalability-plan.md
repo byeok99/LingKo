@@ -32,23 +32,23 @@
 
 ### 2.1 동기 음성 평가
 
-앱은 Presigned URL로 비공개 S3에 WAV를 직접 업로드하고 API는 DB 평가 작업 ID를 즉시 반환합니다. 2026-07-29부터 API dispatcher는 `jobId`만 SQS에 발행하고 독립 Worker가 DB lease를 획득해 Azure 평가를 처리할 수 있습니다.
+앱은 Presigned URL로 비공개 S3에 WAV를 직접 업로드하고 API는 DB 평가 작업 ID를 즉시 반환합니다. Compose 운영에서는 API와 분리된 DB polling Worker 한 개가 lease를 획득해 Azure 평가를 처리합니다.
 
 위험:
 
 - Azure timeout·Circuit Breaker가 아직 없어 Worker 정체 가능
 - S3 Lifecycle과 실제 기기 E2E는 운영 환경 설정 필요
-- 실제 AWS SQS·MySQL·Azure 조합의 안전 처리량과 비용은 미측정
-- Queue depth·oldest age·DLQ metric과 자동 확장 정책은 미구현
+- 실제 MySQL·Azure 조합의 안전 처리량과 비용은 미측정
+- Worker backlog·oldest pending·DB lock metric과 자동 확장 정책은 미구현
 
 단계적 대응:
 
 1. 완료: 업로드 크기 제한, 쿼터 예약과 작업 생성 Idempotency
 2. 완료: Presigned URL S3 직접 업로드
 3. 완료: DB 영속 작업과 단일 제한 Worker, 앱 Polling
-4. 완료: SQS `jobId` 전달, DB 재발행 복구와 Worker 독립 배포
-5. 완료: 4개 논리 Worker·40개 작업 및 중복 전달 정합성 통합 테스트
-6. 후속: Azure timeout·Circuit Breaker와 작업·Queue 메트릭
+4. 완료: API와 web 없는 DB polling Worker의 독립 배포
+5. 완료: 단일 독립 Worker·40개 작업 정합성 통합 테스트
+6. 후속: Azure timeout·Circuit Breaker와 작업·DB lock 메트릭
 7. 후속: 실제 운영 인프라 부하 측정과 필요 시 Push 알림
 
 관련 Issue: [#39](https://github.com/byeok99/LingKo/issues/39), [#44](https://github.com/byeok99/LingKo/issues/44), [#47](https://github.com/byeok99/LingKo/issues/47)
@@ -378,13 +378,13 @@ errorCode
 
 ### Evaluation Worker
 
-- Queue depth
-- oldest message age
+- DB `PENDING` 작업 수
+- oldest pending age
 - 평가 완료 SLO 위반
 - Azure 동시 호출 제한
 - Worker replica별 처리량과 오류율
 
-현재 코드 수준 검증은 4개 논리 Worker가 40개 작업을 모두 `SUCCEEDED`로 완료하고 결과·쿼터를 한 번씩 확정하는 범위입니다. 실제 RPS, p95, CPU, DB Pool과 AWS SQS 지연은 측정하지 않았으며 [#52](https://github.com/byeok99/LingKo/issues/52)에서 환경과 수치를 고정해 검증합니다.
+현재 코드 수준 검증은 독립 DB Worker 한 개가 40개 작업을 모두 `SUCCEEDED`로 완료하고 결과·쿼터를 한 번씩 확정하는 범위입니다. 실제 RPS, p95, CPU, DB Pool과 lock wait은 측정하지 않았으며 [#52](https://github.com/byeok99/LingKo/issues/52)에서 환경과 수치를 고정해 검증합니다.
 
 ### Guide Worker
 

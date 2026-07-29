@@ -1,3 +1,10 @@
+## 2026-07-29 - SQS 제거와 독립 DB Worker 1개 운영
+
+- 변경 파일: `.env.example`, `application.example.yaml`, `build.gradle`, `docker-compose.yml`, `README.md`, `WORK_LOG.md`
+- 내용: SQS 의존성·설정을 제거하고 API 내부 Worker를 끈 채 web 없는 DB polling Worker 컨테이너 한 개를 기본 실행하도록 단순화했다.
+- 검증: `./gradlew test integrationTest`와 기본 `docker compose config --quiet` 통과
+- 리스크: 같은 Docker 호스트의 자원은 공유하며 실제 MySQL lock·처리량은 미측정
+
 ## 2026-07-29 - SQS 독립 평가 Worker 실행 구성
 
 - 변경 파일: `.env.example`, `application.example.yaml`, `build.gradle`, `docker-compose.yml`, `README.md`, `WORK_LOG.md`

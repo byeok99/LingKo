@@ -34,8 +34,9 @@ class EvaluationJobWorkerTest {
         when(processingService.claimNext()).thenReturn(Optional.of(job));
         EvaluationJobWorker worker = new EvaluationJobWorker(processingService, executor);
 
-        worker.processNext();
+        boolean processed = worker.processNext();
 
+        org.assertj.core.api.Assertions.assertThat(processed).isTrue();
         verify(executor).execute(job);
     }
 
@@ -45,8 +46,9 @@ class EvaluationJobWorkerTest {
         when(processingService.claimNext()).thenReturn(Optional.empty());
         EvaluationJobWorker worker = new EvaluationJobWorker(processingService, executor);
 
-        worker.processNext();
+        boolean processed = worker.processNext();
 
+        org.assertj.core.api.Assertions.assertThat(processed).isFalse();
         verify(executor, never()).execute(org.mockito.ArgumentMatchers.any());
     }
 }

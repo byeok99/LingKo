@@ -11,7 +11,6 @@
 - 환경변수와 비밀값 존재 확인
 - 외부 서비스 쿼터와 권한 확인
 - S3 버킷 비공개 차단, Presigned PUT·삭제 권한과 Lifecycle 확인
-- SQS Standard Queue URL, DLQ와 redrive 정책 확인
 - `.env`, 토큰, 키가 Git diff에 포함되지 않았는지 확인
 - DB 백업 또는 복구 지점 확인
 
@@ -24,22 +23,20 @@ docker build -t lingko-backend:<version> .
 
 이미지는 Java 21 JRE와 FFmpeg를 포함합니다. 운영에서는 MySQL을 같은 Compose 안에 두기보다 관리형 DB 또는 별도 백업 정책이 있는 DB를 권장합니다.
 
-### SQS 기반 독립 평가 Worker
+### 독립 DB 평가 Worker
 
-API와 Worker에 같은 `EVALUATION_QUEUE_URL`·AWS region·credential을 주입합니다. API는 dispatcher만 실행하고 Worker는 HTTP server와 dispatcher를 끕니다.
+API와 Worker는 같은 MySQL·S3·Azure 설정을 사용합니다. API는 평가 Worker를 끄고 Worker는 HTTP server와 완료 작업 cleanup을 끈 채 DB polling만 수행합니다.
 
 ```bash
 cd backend
-EVALUATION_WORKER_MODE=sqs \
-EVALUATION_API_WORKER_ENABLED=false \
-docker compose --profile queue up --build --scale evaluation-worker=4
+docker compose up --build
 ```
 
-- API: `EVALUATION_WORKER_MODE=sqs`, `EVALUATION_API_WORKER_ENABLED=false`, `EVALUATION_QUEUE_DISPATCHER_ENABLED=true`
-- Worker: `SPRING_MAIN_WEB_APPLICATION_TYPE=none`, `EVALUATION_WORKER_MODE=sqs`, `EVALUATION_WORKER_ENABLED=true`, dispatcher·cleanup 비활성
-- 작은 개발 환경 또는 Queue 장애 fallback: `EVALUATION_WORKER_MODE=database`, API 내부 Worker 활성
-- Queue에는 `jobId`만 저장하고 작업 상태·결과·Idempotency는 MySQL에서 확인
-- Queue visibility timeout은 정상 평가 처리시간보다 길게 설정하고 DLQ redrive 횟수는 애플리케이션 최대 재시도와 혼동하지 않도록 별도로 기록
+- API: `EVALUATION_API_WORKER_ENABLED=false`
+- Worker: `SPRING_MAIN_WEB_APPLICATION_TYPE=none`, `EVALUATION_WORKER_ENABLED=true`, cleanup 비활성
+- 작업 상태·결과·Idempotency와 대기열은 MySQL `evaluation_jobs`에서 확인
+- 초기 운영 Worker replica는 한 개로 유지
+- 같은 Docker 호스트에서는 CPU·메모리·디스크·네트워크를 공유하므로 자원 제한과 사용률을 함께 확인
 
 ## 헬스 점검
 
@@ -93,21 +90,19 @@ docker compose --profile queue up --build --scale evaluation-worker=4
 ### 평가 작업 정체
 
 - Worker 활성화 여부와 `EVALUATION_WORKER_*` 설정 확인
-- SQS mode에서는 Queue URL, depth, oldest message age, DLQ와 Worker replica 수 확인
-- `PENDING`의 `enqueued_at`이 재발행 기준보다 오래됐는데 Queue depth가 늘지 않으면 API dispatcher와 AWS 권한 확인
+- `PENDING` 수와 oldest pending age, Worker 프로세스와 DB 연결 확인
 - `lease_expires_at`이 지난 `PROCESSING` 작업이 다시 claim되는지 확인
 - Azure 호출이 종료되지 않는 경우 Worker 프로세스를 재시작하고 #44 timeout 적용 상태 확인
 - 실패 작업의 `attempt_count`, `error_code`와 쿼터 복구 여부 확인
 - DB 상태를 수동 수정하기 전에 S3 object와 예약 쿼터를 함께 확인
 
-### Queue 장애 또는 중복 전달
+### Worker 장애 또는 재시작
 
-- SQS Standard Queue의 중복 메시지는 정상 가능성이 있으므로 수동으로 작업을 복제하지 않음
-- 완료 작업 메시지는 Worker가 DB 상태 확인 후 ACK하며 결과·쿼터를 다시 확정하지 않음
-- Queue 발행 실패 후 `PENDING` 작업은 `EVALUATION_QUEUE_REDISPATCH_SECONDS`가 지나면 재발행
-- Worker 종료 시 visibility timeout과 DB lease가 모두 만료된 뒤 다른 Worker가 재처리
-- DLQ 이동 작업은 DB 상태, `attempt_count`, S3 object와 예약 쿼터를 함께 확인한 후 redrive
-- Queue 장애 중에는 API가 작업을 DB에 보존하므로 신규 작업 중복 생성 대신 dispatcher 복구를 우선
+- Worker만 중지하고 API는 계속 서비스할 수 있지만 신규 작업은 `PENDING`으로 누적됨
+- 처리 중 종료된 작업은 `lease_expires_at`이 지난 뒤 Worker가 다시 claim
+- Worker를 재기동하기 전 `PROCESSING` 상태를 수동 변경하지 않음
+- 반복 실패 작업은 `attempt_count`, S3 object와 예약 쿼터를 함께 확인
+- backlog가 지속 증가해도 측정 없이 Worker 수를 늘리지 말고 Azure 지연과 DB lock을 먼저 확인
 
 ### 평가 작업 Idempotency 보존·정리
 
@@ -171,8 +166,8 @@ docker compose --profile queue up --build --scale evaluation-worker=4
 - JVM heap·GC·CPU
 - 가이드 작업 상태별 수와 처리시간
 - 평가 작업 상태별 수, oldest pending age, 시도 횟수와 lease 만료 재claim 수
-- SQS queue depth, oldest message age, receive/delete 오류, DLQ message 수
-- dispatcher 발행·실패·재발행 수와 Worker 완료·재시도 처리량
+- 평가 작업 상태별 수와 oldest pending age
+- Worker 완료·재시도 처리량, DB claim lock wait과 lease 만료 재claim 수
 - 음성 업로드 크기 분포
 
 ## 사고 기록 템플릿

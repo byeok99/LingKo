@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Queue 발행 스키마 제거 migration
+
+- 변경 파일: `V11__remove_evaluation_job_queue_dispatch.sql`, `WORK_LOG.md`
+- 내용: 적용 가능성이 있는 V10을 수정하지 않고 후속 migration으로 dispatch 인덱스와 `enqueued_at`을 제거했다.
+- 검증: H2 MySQL mode V1·V8~V11 연속 적용과 제거 상태 확인 통과
+- 리스크: 실제 MySQL V1~V11 연속 migration은 미실행
+
 ## 2026-07-29 - 평가 Queue 발행 복구 migration
 
 - 변경 파일: `V10__add_evaluation_job_queue_dispatch.sql`, `WORK_LOG.md`

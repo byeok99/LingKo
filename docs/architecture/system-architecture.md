@@ -15,17 +15,15 @@ flowchart LR
       CTRL[REST Controllers]
       DOM[Domain Services]
       JPA[JPA Repositories]
-      DISP[Evaluation Queue Dispatcher]
       JOB[Guide Job Service]
       EXT[External Adapters]
     end
 
     subgraph WorkerBackend[Spring Boot Worker]
-      EJOB[Evaluation Queue Worker]
+      EJOB[Evaluation DB Worker]
     end
 
     DB[(MySQL 8)]
-    SQS[AWS SQS]
     GOOGLE[Google OAuth]
     AZURE[Azure Speech]
     REP[Replicate]
@@ -37,9 +35,6 @@ flowchart LR
     AUTH --> API
     REC -->|Presigned PUT| S3
     API --> CTRL
-    DISP --> DB
-    DISP --> SQS
-    SQS --> EJOB
     EJOB --> DB
     EJOB --> S3
     EJOB --> AZURE
@@ -61,8 +56,7 @@ flowchart LR
 | REST Controller | HTTP 계약·입력 검증·인증 토큰 해석 |
 | Domain Service | 표준 발음, 평가, 기록, 설정, 쿼터, 작업 규칙 |
 | JPA/Flyway | 영속 모델과 스키마 버전 관리 |
-| Evaluation Queue Dispatcher | 실행 가능한 DB 작업의 `jobId`를 SQS에 발행하고 오래된 PENDING을 재발행 |
-| Evaluation Queue Worker | SQS long polling, DB lease claim, S3 다운로드, Azure 평가, 결과·쿼터 완료 |
+| Evaluation DB Worker | DB polling과 lease claim, S3 다운로드, Azure 평가, 결과·쿼터 완료 |
 | 외부 어댑터 | Azure Speech, Replicate, S3, FFmpeg 호출 |
 
 ## 배포 단위
@@ -73,7 +67,7 @@ flowchart LR
 2. Spring Boot API: Java 21 JAR 또는 Docker 이미지
 3. Spring Boot 평가 Worker: API와 같은 image를 web server 없이 실행
 
-백엔드 Docker 이미지는 빌드 단계와 실행 단계를 분리하며 실행 이미지에 FFmpeg를 설치합니다. Queue profile에서는 API 내부 Worker를 끄고 `evaluation-worker` replica 수를 독립 조절합니다.
+백엔드 Docker 이미지는 빌드 단계와 실행 단계를 분리하며 실행 이미지에 FFmpeg를 설치합니다. Compose는 API 내부 Worker를 끄고 web 없는 `evaluation-worker` 한 개를 별도 프로세스로 실행합니다.
 
 ## 동기·비동기 경계
 
@@ -86,10 +80,10 @@ flowchart LR
 
 ### 비동기
 
-- S3 직접 업로드 후 DB 상태와 SQS 전달을 사용하는 발음 평가 작업
+- S3 직접 업로드 후 영속 DB 작업을 사용하는 발음 평가
 - 가이드 영상 생성 작업
 
-평가 작업은 MySQL에 영속화되고 SQS에는 `jobId`만 전달됩니다. 중복 메시지는 DB lock과 lease가 흡수하며 발행 유실은 오래된 `PENDING` 재발행으로 복구합니다. 가이드 작업은 여전히 `ConcurrentHashMap`과 프로세스 내 Executor를 사용하므로 서버 재시작 시 상태가 사라집니다.
+평가 작업은 MySQL에 영속화되고 독립 Worker 한 개가 DB를 polling합니다. claim 시 DB lock과 lease를 기록하므로 Worker 재시작 후 만료 작업을 복구할 수 있습니다. 가이드 작업은 여전히 `ConcurrentHashMap`과 프로세스 내 Executor를 사용하므로 서버 재시작 시 상태가 사라집니다.
 
 ## 신뢰 경계
 
@@ -107,8 +101,8 @@ flowchart LR
 | Replicate 실패 | 영상 생성 실패 | 작업 FAILED | 영속 큐·백오프 |
 | S3 실패 | 미디어 저장 실패 | 예외 처리 | 재시도·수명주기 정책 |
 | FFmpeg 실패 | 영상 합성 실패 | 작업 FAILED | 리소스 제한·관측성 |
-| API 재시작 | Queue 발행 지연 | DB PENDING 재발행 | dispatcher 지표·알림 |
-| Worker 재시작 | 처리 중 작업 중단 | DB lease와 SQS 재노출 후 재claim | DLQ·Worker 상태 메트릭 |
+| API 재시작 | 작업 생성 일시 중단 | 기존 DB 작업은 Worker가 계속 처리 | API 상태 메트릭 |
+| Worker 재시작 | 처리 중 작업 중단 | DB lease 만료 후 재claim | Worker 상태·oldest pending 메트릭 |
 | JWT 키 변경 | 기존 토큰 무효 | 수동 | 키 회전 절차 |
 
 ## 확장 방향
@@ -117,7 +111,7 @@ flowchart LR
 
 1. 운영 S3 Lifecycle과 Presigned PUT E2E 검증
 2. Azure 타임아웃·Circuit Breaker·작업 메트릭 도입
-3. 운영 SQS DLQ·redrive와 Worker 독립 배포 검증
+3. 독립 DB Worker 한 개의 처리량과 강제 종료 복구 검증
 4. 가이드 작업을 DB 또는 메시지 큐로 이전
 5. CI/CD와 환경별 설정 분리
 6. 로그·메트릭·트레이싱과 장애 알림 추가

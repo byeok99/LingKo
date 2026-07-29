@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - SQS dispatcher 쿼리 제거
+
+- 변경 파일: `EvaluationJobRepository.java`, `WORK_LOG.md`
+- 내용: `enqueued_at` 기반 발행 후보 조회·갱신을 제거하고 DB polling claim 쿼리만 유지했다.
+- 검증: 독립 DB Worker 40건 통합 테스트 통과
+- 리스크: Worker 다중화 전 실제 MySQL lock 경합 검증 필요
+
 ## 2026-07-29 - Queue 발행 대상과 전송 시각 갱신 쿼리
 
 - 변경 파일: `EvaluationJobRepository.java`, `WORK_LOG.md`

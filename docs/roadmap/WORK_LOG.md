@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - SQS 보류와 단일 DB Worker 로드맵 반영
+
+- 변경 파일: `issue-backlog.md`, `release-roadmap.md`, `WORK_LOG.md`
+- 내용: #47 완료 범위를 S3 직접 업로드·독립 DB Worker로 정정하고 Queue 도입은 #52 측정 이후 결정하도록 갱신했다.
+- 검증: 현재 구현·ADR-0009와 로드맵 대조
+- 리스크: GitHub Issue #47 본문·종료 상태와 범위 정합화 필요
+
 ## 2026-07-29 - Issue #47 Queue 후속 구현 상태 반영
 
 - 변경 파일: `issue-backlog.md`, `release-roadmap.md`, `WORK_LOG.md`
