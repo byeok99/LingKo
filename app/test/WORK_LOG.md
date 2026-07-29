@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 자유 문장 특수 기호 정규화 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 문장부호·통화기호·이모지가 포함된 입력에서 한글·영문·숫자·공백만 화면과 자유 문장 준비 API에 전달되는 회귀 조건을 추가했다.
+- 검증: 대상 widget test 통과
+- 리스크: 실제 한국어 IME 붙여넣기·조합 입력은 실기기 확인 필요
+
 ## 2026-07-29 - 회원 탈퇴 앱 회귀 테스트
 
 - 변경 파일: `auth_api_test.dart`, `app_auth_service_test.dart`, `widget_test.dart`, `WORK_LOG.md`

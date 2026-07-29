@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app/app_theme.dart';
 import '../models/evaluation_progress.dart';
@@ -10,6 +11,17 @@ import '../models/practice_sentence.dart';
 import '../services/audio_recorder_service.dart';
 import '../widgets/evaluation_progress_panel.dart';
 import '../widgets/shared_widgets.dart';
+
+final RegExp _customSentenceSpecialCharacterPattern = RegExp(
+  r'[\p{P}\p{S}]',
+  unicode: true,
+);
+final TextInputFormatter _customSentenceSpecialCharacterFormatter =
+    FilteringTextInputFormatter.deny(_customSentenceSpecialCharacterPattern);
+
+String _normalizeCustomSentence(String value) {
+  return value.replaceAll(_customSentenceSpecialCharacterPattern, '').trim();
+}
 
 class PracticeScreen extends StatefulWidget {
   const PracticeScreen({
@@ -82,7 +94,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   void _syncCustomSentenceState() {
-    final next = customSentenceController.text.trim().isNotEmpty;
+    final next =
+        _normalizeCustomSentence(customSentenceController.text).isNotEmpty;
     if (next != canSubmitCustomSentence) {
       setState(() => canSubmitCustomSentence = next);
     }
@@ -103,7 +116,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   Future<void> _submitCustomSentence() async {
-    final text = customSentenceController.text.trim();
+    final text = _normalizeCustomSentence(customSentenceController.text);
     if (text.isEmpty || isPreparingCustomSentence) {
       return;
     }
@@ -660,6 +673,8 @@ class _CustomSentenceCard extends StatelessWidget {
           TextField(
             controller: controller,
             focusNode: focusNode,
+            // 문장부호·기호가 평가 글자로 전달되지 않도록 입력과 붙여넣기 단계에서 즉시 제거한다.
+            inputFormatters: [_customSentenceSpecialCharacterFormatter],
             minLines: 1,
             maxLines: 4,
             textInputAction: TextInputAction.done,

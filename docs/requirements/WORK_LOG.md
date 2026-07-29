@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 자유 문장 특수 기호 정규화 반영
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: FR-SENT-005에 앱 자유 문장 입력의 Unicode 문장부호·기호 즉시 제거 범위를 반영했다.
+- 검증: Flutter 구현·widget test와 대조
+- 리스크: 연속 공백과 서버 정규화는 부분 구현 상태
+
 ## 2026-07-29 - 회원 탈퇴·음성 보존 요구 구현 반영
 
 - 변경 파일: `functional-requirements.md`, `non-functional-requirements.md`, `WORK_LOG.md`
