@@ -113,7 +113,7 @@ Idempotency는 Unique 제약만으로 완성되지 않습니다. 경쟁 요청�
 
 ## 남은 위험
 
-- 실제 MySQL 격리 수준과 운영 수준 동시 부하에서 lock wait을 검증하지 않았습니다.
+- 실제 MySQL 격리 수준과 운영 수준 동시 부하의 lock wait 검증은 [#67](https://github.com/byeok99/LingKo/issues/67)에서 추적합니다.
 - 정리 속도가 신규 완료 작업 증가량보다 느리면 backlog가 쌓일 수 있습니다.
 
 ## 관련 코드와 문서
