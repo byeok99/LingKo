@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 탈퇴 사용자 Refresh 세션 일괄 삭제
+
+- 변경 파일: `RefreshTokenSessionRepository.java`, `WORK_LOG.md`
+- 내용: 회원 탈퇴 transaction에서 사용자별 모든 기기 세션을 bulk 삭제하는 query를 추가했다.
+- 검증: 계정 삭제 JPA 테스트와 Backend 전체 테스트 통과
+- 리스크: 실제 MySQL 실행 계획은 미측정
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `RefreshTokenSessionRepository.java`, `WORK_LOG.md`

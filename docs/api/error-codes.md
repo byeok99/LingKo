@@ -26,6 +26,7 @@
 | 415 | `INVALID_WAV` | PCM·채널·비트·헤더 불일치 | 녹음 서비스 설정 확인 |
 | 429 | `QUOTA_EXCEEDED` | 무료·보상 횟수 모두 소진 | 리셋 시각 또는 보상 흐름 표시 |
 | 502 | `EVALUATION_FAILED` | 음성 평가 또는 영상 처리 외부 연동 실패 | 잠시 후 재시도 |
+| 503 | `ACCOUNT_DELETION_UNAVAILABLE` | 회원 탈퇴 중 S3 음성 삭제 실패 | 로그인 상태를 유지하고 잠시 후 재시도 |
 | 500 | `INTERNAL_SERVER_ERROR` | 처리되지 않은 서버 오류 | 일반 오류와 문의 경로 표시 |
 
 ## 앱 처리 원칙

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 계정 삭제 성공 후 로컬 세션 정리
+
+- 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`
+- 내용: 서버 탈퇴 성공 때만 Secure Storage 세션을 삭제하고 실패 시 동일 세션으로 재시도할 수 있게 보존했다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 네트워크 중단 실기기 재시도 UX는 수동 확인 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `app_auth_service.dart`, `audio_recorder_service.dart`, `auth_session_store.dart`, `google_identity_service.dart`, `WORK_LOG.md`

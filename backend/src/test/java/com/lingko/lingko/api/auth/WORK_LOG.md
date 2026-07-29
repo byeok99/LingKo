@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 회원 탈퇴 HTTP 계약 테스트
+
+- 변경 파일: `AuthControllerTest.java`, `WORK_LOG.md`
+- 내용: Access·Refresh Token 전달, 204 성공과 내부 원인을 숨긴 503 오류 계약을 검증했다.
+- 검증: 대상 테스트와 Backend 전체 테스트 통과
+- 리스크: 없음
+
 ## 2026-07-24 - MockBean 제거 예정 API 교체
 
 - 변경 파일: `AuthControllerTest.java`, `WORK_LOG.md`

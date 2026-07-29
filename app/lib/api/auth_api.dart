@@ -14,6 +14,9 @@ abstract class AuthApi {
 
   /// [refreshToken]이 나타내는 기기 세션을 폐기한다.
   Future<void> logout(String refreshToken);
+
+  /// 현재 두 토큰을 재확인하고 계정과 사용자 소유 데이터를 삭제한다.
+  Future<void> deleteAccount(String accessToken, String refreshToken);
 }
 
 /// 앱의 Dart IO JSON client로 [AuthApi]를 구현한다.
@@ -46,5 +49,14 @@ class DartIoAuthApi implements AuthApi {
     return _client.postJsonWithoutResponse('/api/auth/logout', {
       'refreshToken': refreshToken.trim(),
     });
+  }
+
+  @override
+  Future<void> deleteAccount(String accessToken, String refreshToken) {
+    return _client.deleteJsonWithoutResponse(
+      '/api/auth/account',
+      {'refreshToken': refreshToken.trim()},
+      {'Authorization': 'Bearer ${accessToken.trim()}'},
+    );
   }
 }

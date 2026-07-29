@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 프로필 회원 탈퇴 확인 흐름
+
+- 변경 파일: `profile_screen.dart`, `WORK_LOG.md`
+- 내용: 삭제 범위 경고와 명시적 확인 후 계정을 삭제하고, 실패 시 로그인 상태를 유지하며 재시도를 안내한다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 실제 기기 접근성·스토어 심사 문구는 수동 확인 필요
+
 ## 2026-07-28 - UI 최종 접근성 검토
 
 - 변경 파일: `auth_gate_screen.dart`, `practice_screen.dart`, `WORK_LOG.md`

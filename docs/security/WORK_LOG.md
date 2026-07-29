@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 음성 1일 보존·회원 탈퇴 정책 확정
+
+- 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`
+- 내용: 평가 종료 즉시 삭제, 미제출 객체 1일 만료와 S3 version 우선 삭제 후 DB transaction 정책을 명시했다.
+- 검증: 저장소·탈퇴 서비스·Lifecycle 파일과 대조
+- 리스크: 실제 AWS 적용은 #71, 개인정보처리방침 반영은 출시 작업에서 추적
+
 ## 2026-07-27 - 음성 직접 업로드 보안 정책 갱신
 
 - 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`

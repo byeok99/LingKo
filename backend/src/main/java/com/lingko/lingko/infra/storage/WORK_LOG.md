@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 탈퇴 사용자 S3 prefix 완전 삭제
+
+- 변경 파일: `S3EvaluationAudioStorage.java`, `WORK_LOG.md`
+- 내용: 사용자 prefix의 current object를 batch 삭제하고 Versioning 버킷의 과거 version·delete marker까지 반복 삭제한다.
+- 검증: current·version·장애 단위 테스트와 Backend 전체 테스트 통과
+- 리스크: 실제 AWS IAM ListBucketVersions·DeleteObjectVersion 권한과 대량 object 처리시간은 미검증
+
 ## 2026-07-27 - 평가 음성 S3 저장 경계 구현
 
 - 변경 파일: `S3EvaluationAudioStorage.java`, `WORK_LOG.md`

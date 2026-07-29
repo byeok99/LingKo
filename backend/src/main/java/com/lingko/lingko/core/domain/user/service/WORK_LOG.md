@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - S3 우선 회원 탈퇴 조율
+
+- 변경 파일: `AccountDeletionService.java`, `AccountDeletionPersistenceService.java`, `AccountDeletionUnavailableException.java`, `WORK_LOG.md`
+- 내용: 현재 token 재확인 후 S3를 먼저 정리하고 성공 시 사용자 소유 DB 데이터를 하나의 transaction으로 삭제한다.
+- 검증: 순서·실패 보존 단위 테스트, JPA 삭제 테스트와 Backend 전체 테스트 통과
+- 리스크: S3 성공 뒤 DB 장애 시 음성만 먼저 삭제될 수 있으며 동일 세션으로 DB 삭제를 재시도해야 함
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `UserPreferencesService.java`, `WORK_LOG.md`

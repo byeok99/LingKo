@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 회원 탈퇴 일시 실패 오류 매핑
+
+- 변경 파일: `GlobalExceptionHandler.java`, `WORK_LOG.md`
+- 내용: S3 정리 실패를 내부 원인 없는 503 `ACCOUNT_DELETION_UNAVAILABLE`으로 반환한다.
+- 검증: 안전한 오류 응답 Controller 테스트와 Backend 전체 테스트 통과
+- 리스크: 오류율 alert는 관측성 작업에서 추가 필요
+
 ## 2026-07-27 - 평가 작업 오류 응답 추가
 
 - 변경 파일: `GlobalExceptionHandler.java`, `WORK_LOG.md`

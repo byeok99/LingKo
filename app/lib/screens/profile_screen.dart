@@ -34,6 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   UserPreferences? preferences;
   bool isLoading = true;
   bool isSaving = false;
+  bool isDeletingAccount = false;
   String? errorText;
   String? savedMessage;
 
@@ -112,6 +113,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await widget.authService.signOut();
     } finally {
       widget.onSessionChanged(null);
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete your account?'),
+            content: const Text(
+              'Your profile, sessions, practice history, quota, and uploaded audio will be deleted.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Delete account'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() {
+      isDeletingAccount = true;
+      errorText = null;
+    });
+    try {
+      await widget.authService.deleteAccount();
+      widget.onSessionChanged(null);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          errorText =
+              'Account could not be deleted. Check your connection and try again.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isDeletingAccount = false);
+      }
     }
   }
 
@@ -242,11 +289,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
         const SizedBox(height: AppSpacing.section),
         OutlinedButton.icon(
-          onPressed: signOut,
+          onPressed: isDeletingAccount ? null : signOut,
           icon: const Icon(Icons.logout, color: AppColors.error),
           label: const Text(
             'Sign out',
             style: TextStyle(color: AppColors.error),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        TextButton.icon(
+          onPressed: isDeletingAccount ? null : deleteAccount,
+          icon: const Icon(Icons.delete_forever, color: AppColors.error),
+          label: Text(
+            isDeletingAccount ? 'Deleting account' : 'Delete account',
+            style: const TextStyle(color: AppColors.error),
           ),
         ),
       ],

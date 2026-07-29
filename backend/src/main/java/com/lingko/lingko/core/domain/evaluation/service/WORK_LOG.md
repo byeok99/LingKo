@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 사용자별 원격 음성 삭제 계약
+
+- 변경 파일: `EvaluationAudioStorage.java`, `WORK_LOG.md`
+- 내용: 회원 탈퇴 시 제출 여부와 무관하게 사용자 prefix의 원격 음성을 일괄 삭제하는 저장소 경계를 추가했다.
+- 검증: S3 구현 단위 테스트와 Backend 전체 테스트 통과
+- 리스크: 실제 AWS 권한·Versioning 동작은 운영 환경 검증 필요
+
 ## 2026-07-29 - Queue 없는 독립 DB Worker로 단순화
 
 - 변경 파일: `EvaluationJobExecutor.java`, `EvaluationJobProcessingService.java`, `EvaluationJobQueue.java`, `EvaluationJobQueueDispatcher.java`, `EvaluationJobQueueWorker.java`, `EvaluationJobWorker.java`, `WORK_LOG.md`

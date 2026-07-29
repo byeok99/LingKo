@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 회원 탈퇴·음성 보존 요구 구현 반영
+
+- 변경 파일: `functional-requirements.md`, `non-functional-requirements.md`, `WORK_LOG.md`
+- 내용: FR-AUTH-006과 개인정보 삭제 경로를 완료하고 음성 1일 Lifecycle·S3 우선 삭제 정책을 명시했다.
+- 검증: 앱·Backend·Lifecycle 구현과 대조
+- 리스크: 실제 AWS 적용과 실기기 E2E는 #71에서 추적
+
 ## 2026-07-29 - Queue 없는 독립 Worker 요구 반영
 
 - 변경 파일: `non-functional-requirements.md`, `WORK_LOG.md`

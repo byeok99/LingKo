@@ -16,6 +16,13 @@ public interface EvaluationAudioStorage {
 
     void delete(String objectKey);
 
+    /**
+     * 회원 탈퇴 시 제출 여부와 무관하게 사용자 prefix의 원격 음성을 모두 삭제한다.
+     *
+     * @return 삭제 요청한 object 수
+     */
+    int deleteAllForUser(Long userId);
+
     void deleteLocal(Path path);
 
     record UploadTicket(String objectKey, String uploadUrl, Instant expiresAt) {

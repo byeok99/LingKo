@@ -6,6 +6,7 @@ import com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobNotFoundE
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
 import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
+import com.lingko.lingko.core.domain.user.service.AccountDeletionUnavailableException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -102,6 +103,18 @@ public class GlobalExceptionHandler {
         log.warn("Pronunciation evaluation failed", exception);
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                 .body(ErrorResponse.of("EVALUATION_FAILED", "Pronunciation evaluation failed. Please try again."));
+    }
+
+    @ExceptionHandler(AccountDeletionUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleAccountDeletionUnavailable(
+            AccountDeletionUnavailableException exception
+    ) {
+        log.warn("Account deletion deferred because remote cleanup failed", exception);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.of(
+                        "ACCOUNT_DELETION_UNAVAILABLE",
+                        "Account deletion is temporarily unavailable. Please try again."
+                ));
     }
 
     @ExceptionHandler(Exception.class)

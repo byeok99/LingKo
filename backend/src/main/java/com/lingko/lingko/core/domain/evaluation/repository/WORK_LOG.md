@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 탈퇴 사용자 평가 데이터 bulk 삭제
+
+- 변경 파일: `EvaluationJobRepository.java`, `EvaluationLogRepository.java`, `EvaluationSyllableRepository.java`, `WORK_LOG.md`
+- 내용: 사용자 평가 작업과 결과·음절 점수를 foreign key 순서로 삭제하는 query를 추가했다.
+- 검증: 계정 삭제 JPA 테스트와 Backend 전체 `test integrationTest` 통과
+- 리스크: 실제 운영 MySQL 대량 이력 삭제 시간은 미측정
+
 ## 2026-07-29 - SQS dispatcher 쿼리 제거
 
 - 변경 파일: `EvaluationJobRepository.java`, `WORK_LOG.md`

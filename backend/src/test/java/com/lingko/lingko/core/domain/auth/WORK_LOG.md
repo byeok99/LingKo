@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 회원 탈퇴 token 재확인 테스트
+
+- 변경 파일: `AuthServiceTest.java`, `WORK_LOG.md`
+- 내용: 현재 Refresh Token 승인과 다른 사용자·회전 전 token 거부를 검증했다.
+- 검증: 대상 테스트와 Backend 전체 테스트 통과
+- 리스크: 실제 동시 회전 부하는 #62 범위
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `AuthRefreshSessionMigrationTest.java`, `AuthServiceTest.java`, `WORK_LOG.md`

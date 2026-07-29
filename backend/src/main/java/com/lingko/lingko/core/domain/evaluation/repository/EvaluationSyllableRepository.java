@@ -2,6 +2,9 @@ package com.lingko.lingko.core.domain.evaluation.repository;
 
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationSyllable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -11,4 +14,15 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface EvaluationSyllableRepository extends JpaRepository<EvaluationSyllable, Long> {
+
+    @Modifying
+    @Query("""
+            delete from EvaluationSyllable syllable
+            where syllable.evaluationLog.evaluationLogIdx in (
+                select log.evaluationLogIdx
+                from EvaluationLog log
+                where log.user.userIdx = :userId
+            )
+            """)
+    int deleteAllByUserId(@Param("userId") Long userId);
 }

@@ -11,7 +11,7 @@
 | 3 | [#38 쿼터 동시성](https://github.com/byeok99/LingKo/issues/38) | 초과 사용·유실 업데이트 방지 | #37 |
 | 4 | [#39 Idempotency](https://github.com/byeok99/LingKo/issues/39) | 재시도 중복 비용·저장 방지 | #37, #38 |
 | 5 | [#40 Refresh Token](https://github.com/byeok99/LingKo/issues/40) — 완료 | 안전한 세션 갱신과 폐기 | #36 |
-| 6 | [#43 음성 보존·삭제·탈퇴](https://github.com/byeok99/LingKo/issues/43) | 개인정보와 스토어 요구사항 충족 | #37 |
+| 6 | [#43 음성 보존·삭제·탈퇴](https://github.com/byeok99/LingKo/issues/43) — 구현 완료 | 개인정보와 스토어 요구사항 충족 | #37 |
 | 7 | [#41 가이드 API 접근 제어](https://github.com/byeok99/LingKo/issues/41) | 비용·자원 남용 차단 | #36 |
 | 8 | [#51 Flutter 스토어 출시](https://github.com/byeok99/LingKo/issues/51) | Android/iOS 실제 배포 준비 | #40, #43 |
 | 9 | [#47 S3 직접 업로드·비동기 평가](https://github.com/byeok99/LingKo/issues/47) — 구현 완료 | WAV API 우회와 독립 DB Worker | #37, #38 |
@@ -31,6 +31,7 @@
 | 9 | [#60 실기기 Token 만료 E2E](https://github.com/byeok99/LingKo/issues/60) | 실제 만료·회전·세션 복원 검증 |
 | 10 | [#62 Refresh Token 동시 갱신 부하](https://github.com/byeok99/LingKo/issues/62) | MySQL 잠금·재사용 폐기·처리량 검증 |
 | 11 | [#61 전체 기기 로그아웃](https://github.com/byeok99/LingKo/issues/61) | 사용자 보안 대응을 위한 세션 일괄 폐기 |
+| 12 | [#71 S3 Lifecycle 운영 적용·회원 탈퇴 E2E](https://github.com/byeok99/LingKo/issues/71) | #43 저장소 구현의 실제 AWS·Versioning·장애 재시도 검증 |
 
 ## P2: 트래픽 증가 전 구조 확장
 

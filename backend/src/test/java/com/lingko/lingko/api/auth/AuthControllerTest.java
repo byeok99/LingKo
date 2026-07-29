@@ -5,7 +5,10 @@ import com.lingko.lingko.api.auth.dto.AuthTokenResponse;
 import com.lingko.lingko.api.auth.dto.AuthUserResponse;
 import com.lingko.lingko.api.auth.dto.RefreshTokenRequest;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.auth.service.AuthService;
+import com.lingko.lingko.core.domain.user.service.AccountDeletionService;
+import com.lingko.lingko.core.domain.user.service.AccountDeletionUnavailableException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +20,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,6 +43,10 @@ class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+    @MockitoBean
+    private ActiveSessionAuthenticator activeSessionAuthenticator;
+    @MockitoBean
+    private AccountDeletionService accountDeletionService;
 
     @Test
     @DisplayName("Google OAuth 로그인은 access/refresh token과 사용자 정보를 반환한다")
@@ -159,5 +169,48 @@ class AuthControllerTest {
                         ))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴는 Access Token과 현재 Refresh Token을 검증하고 204를 반환한다")
+    void deleteAccountRemovesAuthenticatedUser() throws Exception {
+        when(activeSessionAuthenticator.authenticateBearer("Bearer access.jwt")).thenReturn(7L);
+
+        mockMvc.perform(delete("/api/auth/account")
+                        .header("Authorization", "Bearer access.jwt")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "refreshToken", "current-refresh.jwt"
+                        ))))
+                .andExpect(status().isNoContent());
+
+        verify(accountDeletionService).deleteAccount(
+                7L,
+                new RefreshTokenRequest("current-refresh.jwt")
+        );
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴 S3 정리 실패는 내부 원인을 숨긴 재시도 가능 503으로 반환한다")
+    void deleteAccountReturnsSafeRetryableFailure() throws Exception {
+        when(activeSessionAuthenticator.authenticateBearer("Bearer access.jwt")).thenReturn(7L);
+        doThrow(new AccountDeletionUnavailableException(
+                new IllegalStateException("sensitive S3 detail")
+        )).when(accountDeletionService).deleteAccount(
+                7L,
+                new RefreshTokenRequest("current-refresh.jwt")
+        );
+
+        mockMvc.perform(delete("/api/auth/account")
+                        .header("Authorization", "Bearer access.jwt")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "refreshToken", "current-refresh.jwt"
+                        ))))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("ACCOUNT_DELETION_UNAVAILABLE"))
+                .andExpect(jsonPath("$.message").value(
+                        "Account deletion is temporarily unavailable. Please try again."
+                ));
     }
 }

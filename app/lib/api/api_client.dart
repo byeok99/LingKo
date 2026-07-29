@@ -21,6 +21,13 @@ typedef PostJsonWithHeadersTransport =
       Duration timeout,
       Map<String, String> headers,
     );
+typedef DeleteJsonWithHeadersTransport =
+    Future<ApiResponse> Function(
+      Uri uri,
+      JsonMap body,
+      Duration timeout,
+      Map<String, String> headers,
+    );
 typedef PutFileTransport =
     Future<ApiResponse> Function(
       Uri uri,
@@ -52,6 +59,7 @@ class ApiClient {
     GetJsonTransport? getJsonTransport,
     PostJsonTransport? postJsonTransport,
     PostJsonWithHeadersTransport? postJsonWithHeadersTransport,
+    DeleteJsonWithHeadersTransport? deleteJsonWithHeadersTransport,
     PutFileTransport? putFileTransport,
     PatchJsonTransport? patchJsonTransport,
     MultipartTransport? multipartTransport,
@@ -60,6 +68,8 @@ class ApiClient {
        _postJsonTransport = postJsonTransport ?? _postJsonWithDartIo,
        _postJsonWithHeadersTransport =
            postJsonWithHeadersTransport ?? _postJsonWithHeadersWithDartIo,
+       _deleteJsonWithHeadersTransport =
+           deleteJsonWithHeadersTransport ?? _deleteJsonWithHeadersWithDartIo,
        _putFileTransport = putFileTransport ?? _putFileWithDartIo,
        _patchJsonTransport = patchJsonTransport ?? _patchJsonWithDartIo,
        _multipartTransport = multipartTransport ?? _postMultipartWithDartIo;
@@ -70,6 +80,7 @@ class ApiClient {
   final GetJsonTransport _getJsonTransport;
   final PostJsonTransport _postJsonTransport;
   final PostJsonWithHeadersTransport _postJsonWithHeadersTransport;
+  final DeleteJsonWithHeadersTransport _deleteJsonWithHeadersTransport;
   final PutFileTransport _putFileTransport;
   final PatchJsonTransport _patchJsonTransport;
   final MultipartTransport _multipartTransport;
@@ -131,6 +142,21 @@ class ApiClient {
       baseUrl.resolve(path),
       body,
       timeout,
+    );
+    _throwIfError(response);
+  }
+
+  /// 인증된 DELETE 요청의 JSON 확인 정보를 전송하고 본문 없는 성공 응답을 처리한다.
+  Future<void> deleteJsonWithoutResponse(
+    String path,
+    JsonMap body,
+    Map<String, String> headers,
+  ) async {
+    final response = await _deleteJsonWithHeadersTransport(
+      baseUrl.resolve(path),
+      body,
+      timeout,
+      headers,
     );
     _throwIfError(response);
   }
@@ -338,6 +364,34 @@ Future<ApiResponse> _postJsonWithHeadersWithDartIo(
 
   try {
     final request = await client.postUrl(uri).timeout(timeout);
+    request.headers.contentType = ContentType.json;
+    for (final header in headers.entries) {
+      request.headers.set(header.key, header.value);
+    }
+    request.write(jsonEncode(body));
+
+    final response = await request.close().timeout(timeout);
+    final responseBody = await response.transform(utf8.decoder).join();
+    return ApiResponse(statusCode: response.statusCode, body: responseBody);
+  } on TimeoutException {
+    throw const ApiException('Request timed out');
+  } on SocketException {
+    throw const ApiException('Cannot connect to LingKo server');
+  } finally {
+    client.close(force: true);
+  }
+}
+
+Future<ApiResponse> _deleteJsonWithHeadersWithDartIo(
+  Uri uri,
+  JsonMap body,
+  Duration timeout,
+  Map<String, String> headers,
+) async {
+  final client = HttpClient();
+
+  try {
+    final request = await client.deleteUrl(uri).timeout(timeout);
     request.headers.contentType = ContentType.json;
     for (final header in headers.entries) {
       request.headers.set(header.key, header.value);

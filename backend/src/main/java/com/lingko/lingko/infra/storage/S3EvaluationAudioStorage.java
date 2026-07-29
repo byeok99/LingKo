@@ -10,9 +10,14 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectVersionsRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -26,7 +31,9 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * 사용자별 비공개 S3 object의 제한 시간 PUT 서명과 Worker 다운로드·삭제를 구현한다.
@@ -123,6 +130,85 @@ public class S3EvaluationAudioStorage implements EvaluationAudioStorage {
         } catch (RuntimeException exception) {
             // Lifecycle가 최종 안전망이며 평가 결과를 S3 정리 실패로 되돌리지 않는다.
             log.warn("Failed to delete evaluation audio: objectKey={}", objectKey, exception);
+        }
+    }
+
+    @Override
+    public int deleteAllForUser(Long userId) {
+        if (userId == null || userId < 1) {
+            throw new IllegalArgumentException("userId must be positive");
+        }
+
+        try {
+            String prefix = userPrefix(userId);
+            return deleteCurrentObjects(prefix) + deleteObjectVersions(prefix);
+        } catch (RuntimeException exception) {
+            throw new IllegalStateException("Failed to delete account audio", exception);
+        }
+    }
+
+    private int deleteCurrentObjects(String prefix) {
+        int deletedCount = 0;
+        while (true) {
+            List<ObjectIdentifier> objects = s3Client.listObjectsV2(
+                            ListObjectsV2Request.builder()
+                                    .bucket(bucket())
+                                    .prefix(prefix)
+                                    .maxKeys(1_000)
+                                    .build()
+                    )
+                    .contents()
+                    .stream()
+                    .map(object -> ObjectIdentifier.builder().key(object.key()).build())
+                    .toList();
+            if (objects.isEmpty()) {
+                return deletedCount;
+            }
+            deleteObjects(objects);
+            deletedCount += objects.size();
+        }
+    }
+
+    private int deleteObjectVersions(String prefix) {
+        int deletedCount = 0;
+        while (true) {
+            var response = s3Client.listObjectVersions(ListObjectVersionsRequest.builder()
+                    .bucket(bucket())
+                    .prefix(prefix)
+                    .maxKeys(1_000)
+                    .build());
+            // Versioning 사용 여부와 관계없이 과거 원본과 delete marker까지 제거해야 탈퇴 즉시 삭제가 성립한다.
+            List<ObjectIdentifier> objects = Stream.concat(
+                            response.versions().stream()
+                                    .map(version -> ObjectIdentifier.builder()
+                                            .key(version.key())
+                                            .versionId(version.versionId())
+                                            .build()),
+                            response.deleteMarkers().stream()
+                                    .map(marker -> ObjectIdentifier.builder()
+                                            .key(marker.key())
+                                            .versionId(marker.versionId())
+                                            .build())
+                    )
+                    .toList();
+            if (objects.isEmpty()) {
+                return deletedCount;
+            }
+            deleteObjects(objects);
+            deletedCount += objects.size();
+        }
+    }
+
+    private void deleteObjects(List<ObjectIdentifier> objects) {
+        var response = s3Client.deleteObjects(DeleteObjectsRequest.builder()
+                .bucket(bucket())
+                .delete(Delete.builder()
+                        .objects(objects)
+                        .quiet(true)
+                        .build())
+                .build());
+        if (!response.errors().isEmpty()) {
+            throw new IllegalStateException("S3 rejected account audio deletion");
         }
     }
 

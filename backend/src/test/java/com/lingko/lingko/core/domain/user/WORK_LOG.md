@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 회원 탈퇴 서비스·DB 삭제 테스트
+
+- 변경 파일: `AccountDeletionServiceTest.java`, `AccountDeletionPersistenceServiceTest.java`, `WORK_LOG.md`
+- 내용: 재확인→S3→DB 순서, S3 실패 시 DB 보존과 사용자 소유 데이터 삭제·공용 음절 보존을 검증했다.
+- 검증: 대상 테스트와 Backend 전체 `test integrationTest` 통과
+- 리스크: 실제 MySQL 대량 데이터 성능은 미측정
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `UserPreferencesServiceTest.java`, `WORK_LOG.md`

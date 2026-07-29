@@ -135,6 +135,42 @@ void main() {
     await expectLater(request, throwsA(isA<AuthSessionExpiredException>()));
     expect(await store.read(), isNull);
   });
+
+  test('deleteAccount removes the server account and local session', () async {
+    final store = AuthSessionStore(storage: MemoryTokenStorage());
+    await store.save(_session);
+    final authApi = FakeAuthApi();
+    final service = DefaultAppAuthService(
+      authApi: authApi,
+      googleIdentityService: FakeGoogleIdentityService(),
+      sessionStore: store,
+    );
+
+    await service.deleteAccount();
+
+    expect(authApi.accountDeletionTokens, [('access.jwt', 'refresh.jwt')]);
+    expect(await store.read(), isNull);
+  });
+
+  test('deleteAccount failure preserves the local session for retry', () async {
+    final store = AuthSessionStore(storage: MemoryTokenStorage());
+    await store.save(_session);
+    final authApi = FakeAuthApi(
+      accountDeletionError: const ApiException(
+        'temporary storage failure',
+        statusCode: 503,
+      ),
+    );
+    final service = DefaultAppAuthService(
+      authApi: authApi,
+      googleIdentityService: FakeGoogleIdentityService(),
+      sessionStore: store,
+    );
+
+    await expectLater(service.deleteAccount(), throwsA(isA<ApiException>()));
+
+    expect(await store.read(), _session);
+  });
 }
 
 Future<void> _waitFor(bool Function() condition) async {
@@ -171,14 +207,17 @@ class FakeAuthApi implements AuthApi {
     this.refreshCompleter,
     this.refreshError,
     this.logoutError,
+    this.accountDeletionError,
   });
 
   final AuthSession? refreshedSession;
   final Completer<AuthSession>? refreshCompleter;
   final Object? refreshError;
   final Object? logoutError;
+  final Object? accountDeletionError;
   final refreshTokens = <String>[];
   final logoutTokens = <String>[];
+  final accountDeletionTokens = <(String, String)>[];
 
   @override
   Future<AuthSession> loginWithGoogleIdToken(String idToken) async => _session;
@@ -200,6 +239,14 @@ class FakeAuthApi implements AuthApi {
     logoutTokens.add(refreshToken);
     if (logoutError != null) {
       throw logoutError!;
+    }
+  }
+
+  @override
+  Future<void> deleteAccount(String accessToken, String refreshToken) async {
+    accountDeletionTokens.add((accessToken, refreshToken));
+    if (accountDeletionError != null) {
+      throw accountDeletionError!;
     }
   }
 }

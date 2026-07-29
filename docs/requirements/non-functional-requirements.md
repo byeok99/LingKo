@@ -150,7 +150,7 @@
 | NFR-PRIV-005 | P0 | 사용자는 앱 내부에서 개인정보처리방침과 계정 삭제 경로에 접근할 수 있어야 한다. | 실기기에서 링크·삭제 경로 검증 |
 | NFR-PRIV-006 | P1 | 개발·테스트 환경에서 실제 사용자 음성을 사용하지 않는다. | 익명·합성 테스트 데이터 사용 |
 
-정확한 보존 기간은 제품·법률·비용 정책 결정이 필요하며, 값이 확정되기 전에는 공개 출시할 수 없습니다. 관련 Issue는 [#43](https://github.com/byeok99/LingKo/issues/43)입니다.
+원본 음성은 평가 성공·최종 실패 후 즉시 삭제하고 미제출·삭제 실패 객체는 `evaluation-audio/` 1일 Lifecycle로 만료합니다. 회원 탈퇴는 S3 current object·version·delete marker를 먼저 삭제한 뒤 사용자 소유 DB 데이터를 transaction으로 삭제합니다. 저장소 구현과 설정 파일은 [#43](https://github.com/byeok99/LingKo/issues/43) 범위로 완료했으며 공개 출시 전 실제 AWS 적용과 표본 검증은 [#71](https://github.com/byeok99/LingKo/issues/71)에서 수행합니다.
 
 ## 11. 확장성 요구사항
 

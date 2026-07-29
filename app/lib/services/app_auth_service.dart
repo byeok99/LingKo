@@ -18,6 +18,9 @@ abstract class AppAuthService {
 
   /// 현재 기기 세션을 폐기하고 로컬 인증 정보을 삭제한다.
   Future<void> signOut();
+
+  /// 서버 계정 삭제가 성공한 경우에만 로컬 인증 정보를 제거한다.
+  Future<void> deleteAccount();
 }
 
 /// Google 신원, LingKo 토큰, 안전한 로컬 저장을 조율한다.
@@ -103,6 +106,16 @@ class DefaultAppAuthService implements AppAuthService {
     } finally {
       await _sessionStore.clear();
     }
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    // 탈퇴 전에 시작된 token 갱신이 삭제된 계정을 로컬에 복원하지 못하게 무효화한다.
+    _sessionRevision++;
+    final session = await _requireSession();
+
+    await _authApi.deleteAccount(session.accessToken, session.refreshToken);
+    await _clearIfCurrent(session);
   }
 
   Future<AuthSession> _requireSession() async {
