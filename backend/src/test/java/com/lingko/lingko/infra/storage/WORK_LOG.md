@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - S3 탈퇴 삭제 회귀 테스트
+
+- 변경 파일: `S3EvaluationAudioStorageTest.java`, `WORK_LOG.md`
+- 내용: 사용자 prefix batch 삭제, Versioning 과거 원본·delete marker 삭제와 장애 전파를 검증했다.
+- 검증: 대상 테스트와 Backend 전체 테스트 통과
+- 리스크: 실제 AWS E2E는 미실행
+
 ## 2026-07-27 - S3 업로드 검증 오류 테스트
 
 - 변경 파일: `S3EvaluationAudioStorageTest.java`, `WORK_LOG.md`

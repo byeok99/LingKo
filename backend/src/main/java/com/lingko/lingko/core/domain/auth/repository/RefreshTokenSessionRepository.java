@@ -4,6 +4,7 @@ import com.lingko.lingko.core.domain.auth.entity.RefreshTokenSession;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -20,4 +21,8 @@ public interface RefreshTokenSessionRepository extends JpaRepository<RefreshToke
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select session from RefreshTokenSession session where session.sessionId = :sessionId")
     Optional<RefreshTokenSession> findBySessionIdForUpdate(@Param("sessionId") String sessionId);
+
+    @Modifying
+    @Query("delete from RefreshTokenSession session where session.user.userIdx = :userId")
+    int deleteAllByUserId(@Param("userId") Long userId);
 }

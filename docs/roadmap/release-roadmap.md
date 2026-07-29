@@ -58,14 +58,14 @@ flowchart LR
 | ~~Refresh Token 회전·폐기·로그아웃~~ | [#40](https://github.com/byeok99/LingKo/issues/40) 완료 | 구현 완료, [#60](https://github.com/byeok99/LingKo/issues/60) 실기기 만료 E2E와 [#62](https://github.com/byeok99/LingKo/issues/62) 동시 DB 부하를 운영 검증으로 추적 |
 | 전체 기기 로그아웃 | [#61](https://github.com/byeok99/LingKo/issues/61) | 탈취 의심 또는 계정 보호 시 모든 세션을 일괄 폐기할 수 없음 |
 | 가이드 생성 API 접근 제어 | [#41](https://github.com/byeok99/LingKo/issues/41) | 외부 비용과 서버 자원 남용 가능 |
-| 음성 보존·삭제·회원 탈퇴 | [#43](https://github.com/byeok99/LingKo/issues/43) | 개인정보·스토어 심사·저장 비용 위험 |
+| ~~음성 보존·삭제·회원 탈퇴~~ | [#43](https://github.com/byeok99/LingKo/issues/43) 구현 완료 | 1일 Lifecycle의 AWS 적용과 표본 검증은 [#71](https://github.com/byeok99/LingKo/issues/71)에서 추적 |
 
 ### 반드시 결정할 정책
 
 1. Access Token과 Refresh Token 만료 시간
 2. 사용자별 동시 로그인 기기 수
-3. 원본 음성 저장 여부와 보존 기간
-4. 회원 탈퇴 시 즉시 삭제할 데이터와 법적 보존 데이터
+3. ~~원본 음성 저장 여부와 보존 기간~~ — 평가 종료 즉시 삭제, 미제출·삭제 실패 객체 1일 만료
+4. ~~회원 탈퇴 시 즉시 삭제할 데이터~~ — 사용자 소유 S3 음성과 DB 데이터 삭제, 공용 음절 기준 보존
 5. 평가 실패 유형별 쿼터 복구 여부
 6. 가이드 생성 권한을 관리자에게만 줄지 내부 Worker에만 허용할지
 

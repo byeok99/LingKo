@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 회원 탈퇴 API·오류 계약 문서화
+
+- 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`
+- 내용: `DELETE /api/auth/account`, 두 token 재확인, S3 우선 삭제와 재시도 가능한 503 계약을 추가했다.
+- 검증: Controller·서비스·오류 handler와 대조
+- 리스크: 운영 API E2E는 미실행
+
 ## 2026-07-29 - 평가 Idempotency 보존 계약 추가
 
 - 변경 파일: `api-reference.md`, `WORK_LOG.md`

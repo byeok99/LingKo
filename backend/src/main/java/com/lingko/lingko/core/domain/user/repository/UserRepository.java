@@ -4,6 +4,7 @@ import com.lingko.lingko.core.domain.user.entity.User;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -27,4 +28,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select user from User user where user.userIdx = :userId")
     Optional<User> findByIdForUpdate(@Param("userId") Long userId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("delete from User user where user.userIdx = :userId")
+    int deleteAccountById(@Param("userId") Long userId);
 }

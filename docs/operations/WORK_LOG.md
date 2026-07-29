@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Lifecycle 적용·탈퇴 장애 절차
+
+- 변경 파일: `operations-runbook.md`, `WORK_LOG.md`
+- 내용: S3 IAM 권한, Lifecycle 적용·조회 명령과 회원 탈퇴 503 장애 대응·수동 삭제 금지를 추가했다.
+- 검증: Lifecycle JSON과 Backend 삭제 순서 대조
+- 리스크: AWS CLI 미설치로 실제 명령 실행은 미검증이며 #71에서 추적
+
 ## 2026-07-29 - 독립 DB Worker 1개 운영 절차
 
 - 변경 파일: `operations-runbook.md`, `WORK_LOG.md`

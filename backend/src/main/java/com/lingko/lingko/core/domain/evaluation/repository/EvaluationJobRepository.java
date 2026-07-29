@@ -5,6 +5,7 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -37,6 +38,10 @@ public interface EvaluationJobRepository extends JpaRepository<EvaluationJob, St
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select job from EvaluationJob job where job.jobId = :jobId")
     Optional<EvaluationJob> findByIdForUpdate(@Param("jobId") String jobId);
+
+    @Modifying
+    @Query("delete from EvaluationJob job where job.user.userIdx = :userId")
+    int deleteAllByUserId(@Param("userId") Long userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

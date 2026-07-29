@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 회원 탈퇴 현재 세션 재확인
+
+- 변경 파일: `AuthService.java`, `WORK_LOG.md`
+- 내용: 탈퇴 전 Access Token 사용자와 만료·폐기되지 않은 현재 Refresh Token 소유자·hash 일치를 검증한다.
+- 검증: 현재·다른 사용자·회전 전 token 대상 테스트와 Backend 전체 테스트 통과
+- 리스크: 실제 동시 token 회전과 탈퇴 경합은 운영 부하 테스트 필요
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `ActiveSessionAuthenticator.java`, `AuthService.java`, `JwtTokenProvider.java`, `OAuthIdentity.java`, `OAuthIdentityVerifier.java`, `RefreshTokenHasher.java`, `WORK_LOG.md`

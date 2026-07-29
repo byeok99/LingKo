@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 회원 탈퇴 DELETE API 연동
+
+- 변경 파일: `api_client.dart`, `auth_api.dart`, `WORK_LOG.md`
+- 내용: Access Token header와 현재 Refresh Token body를 함께 전송하는 계정 삭제 요청을 추가했다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 실제 운영 API 연계 E2E는 미실행
+
 ## 2026-07-27 - S3 직접 업로드와 평가 작업 API 연동
 
 - 변경 파일: `api_client.dart`, `evaluation_api.dart`, `WORK_LOG.md`

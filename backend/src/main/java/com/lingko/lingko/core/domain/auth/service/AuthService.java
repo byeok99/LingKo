@@ -100,6 +100,26 @@ public class AuthService {
         session.revoke(Instant.now());
     }
 
+    /**
+     * 되돌릴 수 없는 회원 탈퇴 전에 현재 Refresh Token과 Access Token 사용자가 같은지 재확인한다.
+     */
+    @Transactional(readOnly = true)
+    public void validateCurrentRefreshToken(Long authenticatedUserId, RefreshTokenRequest request) {
+        String refreshToken = request.trimmedRefreshToken();
+        JwtTokenProvider.RefreshTokenClaims claims = jwtTokenProvider.parseRefreshToken(refreshToken);
+        RefreshTokenSession session = refreshTokenSessionRepository.findById(claims.sessionId())
+                .orElseThrow(() -> new AuthException("Refresh session not found"));
+        validateSessionOwner(session, claims.userId());
+
+        Instant now = Instant.now();
+        if (!claims.userId().equals(authenticatedUserId)
+                || session.isRevoked()
+                || session.isExpired(now)
+                || !refreshTokenHasher.matches(refreshToken, session.getCurrentTokenHash())) {
+            throw new AuthException("Current refresh token required");
+        }
+    }
+
     private RefreshTokenSession findSessionForUpdate(String sessionId) {
         return refreshTokenSessionRepository.findBySessionIdForUpdate(sessionId)
                 .orElseThrow(() -> new AuthException("Refresh session not found"));

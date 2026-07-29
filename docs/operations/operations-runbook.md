@@ -115,10 +115,33 @@ docker compose up --build
 ### 평가 음성 S3 설정
 
 - 버킷 Public Access Block을 활성화하고 object ACL을 공개하지 않음
-- Backend 자격 증명에는 해당 bucket prefix의 PUT, HEAD, GET, DELETE만 허용
-- `evaluation-audio/` prefix에 보존 정책에서 정한 짧은 Lifecycle 만료 규칙 적용
+- Backend 자격 증명에는 해당 bucket의 ListBucket·ListBucketVersions와 `evaluation-audio/` prefix의 PUT, HEAD, GET, DeleteObject·DeleteObjectVersion만 허용
+- `evaluation-audio/` prefix의 현재·과거 version을 1일 후 만료하고 incomplete multipart upload를 1일 후 중단
 - 앱 로그, Backend 로그와 analytics에 Presigned URL 전체를 기록하지 않음
 - 성공·최종 실패 후 object 삭제와 Lifecycle 만료를 운영 환경에서 표본 검증
+
+Lifecycle은 저장소에만 추가해도 AWS에 적용되지 않습니다. Backend 디렉터리에서 배포 권한이 있는 운영자가 다음 명령으로 적용·조회합니다.
+
+```bash
+aws s3api put-bucket-lifecycle-configuration \
+  --bucket "$AWS_S3_BUCKET" \
+  --lifecycle-configuration file://aws/s3-lifecycle.json
+
+aws s3api get-bucket-lifecycle-configuration \
+  --bucket "$AWS_S3_BUCKET"
+```
+
+적용 후 테스트 object를 `evaluation-audio/lifecycle-check/`에 올려 Lifecycle rule이 매칭되는지 S3 Inventory 또는 object Lifecycle 상태로 확인하고 테스트 object를 즉시 삭제합니다. S3 만료는 비동기이므로 생성 후 정확히 24시간에 삭제되는 것을 완료 기준으로 사용하지 않습니다.
+
+실제 AWS 적용, Versioning 삭제와 앱·Backend 회원 탈퇴 E2E 결과는 [#71](https://github.com/byeok99/LingKo/issues/71)에 기록합니다.
+
+### 회원 탈퇴 실패
+
+- 앱의 삭제 확인 후 `DELETE /api/auth/account`가 204를 반환하면 로그인 화면으로 전환되는지 확인
+- 503 `ACCOUNT_DELETION_UNAVAILABLE`이면 DB 계정과 로컬 세션이 유지되므로 사용자에게 재시도 안내
+- `Account audio cleanup failed` 로그의 사용자 ID와 AWS 오류 분류만 확인하고 토큰·object 내용은 기록하지 않음
+- IAM의 ListBucketVersions·DeleteObjectVersion 누락과 S3 일시 장애를 먼저 확인
+- DB 사용자를 수동 삭제하면 S3 재시도 주체가 사라지므로 S3 prefix 정리 전 수동 DB 삭제 금지
 
 ### 가이드 작업이 사라짐
 
@@ -152,8 +175,8 @@ docker compose up --build
 
 - MySQL 자동 백업 주기와 보존 기간
 - 복구 훈련 주기
-- S3 versioning·lifecycle·삭제 정책
-- 사용자 탈퇴 시 DB와 S3 동시 삭제
+- S3 versioning과 Lifecycle 적용 상태
+- 사용자 탈퇴 S3 우선 삭제와 DB transaction 표본 검증
 - 로그 보존 기간
 
 ## 관측성 권장 지표

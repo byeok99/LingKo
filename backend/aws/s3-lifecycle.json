@@ -1,0 +1,30 @@
+{
+  "Rules": [
+    {
+      "ID": "expire-evaluation-audio",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": "evaluation-audio/"
+      },
+      "Expiration": {
+        "Days": 1
+      },
+      "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 1
+      },
+      "AbortIncompleteMultipartUpload": {
+        "DaysAfterInitiation": 1
+      }
+    },
+    {
+      "ID": "remove-evaluation-audio-delete-markers",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": "evaluation-audio/"
+      },
+      "Expiration": {
+        "ExpiredObjectDeleteMarker": true
+      }
+    }
+  ]
+}

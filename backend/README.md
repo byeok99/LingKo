@@ -64,6 +64,8 @@ API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB loc
 
 자세한 계약은 [API 레퍼런스](../docs/api/api-reference.md)를 참고합니다.
 
+`DELETE /api/auth/account`는 현재 Access Token과 Refresh Token을 함께 재확인한 뒤 사용자 소유 S3 음성 version과 DB 데이터를 삭제합니다. 운영 버킷에는 미제출·삭제 실패 음성을 최대 1일 뒤 만료시키는 [`aws/s3-lifecycle.json`](aws/s3-lifecycle.json)을 별도로 적용해야 하며 실제 AWS 검증은 [#71](https://github.com/byeok99/LingKo/issues/71)에서 추적합니다.
+
 ## 환경변수
 
 전체 목록은 `.env.example`과 [로컬 개발 가이드](../docs/development/local-development.md)를 기준으로 합니다. 실제 비밀값은 커밋하지 않습니다.
@@ -73,4 +75,5 @@ API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB loc
 - 현재 평가 Worker는 Queue 없이 MySQL을 polling하므로 Worker 수를 늘리기 전에 DB lock 경합을 검증해야 합니다.
 - 가이드 작업 상태는 서버 메모리에 저장됩니다.
 - Refresh Token 갱신·폐기 API는 구현됐으며 운영 전 실제 동시 갱신 부하를 확인해야 합니다.
+- S3 Lifecycle 파일은 저장소 산출물이며 AWS 운영 버킷에는 자동 적용되지 않습니다.
 - 운영 전 Actuator, 관측성, 외부 호출 복원력, 백업 정책이 필요합니다.

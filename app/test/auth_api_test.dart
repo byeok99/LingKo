@@ -110,4 +110,27 @@ void main() {
     expect(requestedUri.toString(), 'http://localhost:8080/api/auth/logout');
     expect(requestedBody, {'refreshToken': 'current-refresh.jwt'});
   });
+
+  test('deleteAccount sends both access and current refresh tokens', () async {
+    Uri? requestedUri;
+    Map<String, Object?>? requestedBody;
+    Map<String, String>? requestedHeaders;
+    final api = DartIoAuthApi(
+      client: ApiClient(
+        baseUrl: 'http://localhost:8080',
+        deleteJsonWithHeadersTransport: (uri, body, timeout, headers) async {
+          requestedUri = uri;
+          requestedBody = body;
+          requestedHeaders = headers;
+          return const ApiResponse(statusCode: 204, body: '');
+        },
+      ),
+    );
+
+    await api.deleteAccount('access.jwt', 'refresh.jwt');
+
+    expect(requestedUri.toString(), 'http://localhost:8080/api/auth/account');
+    expect(requestedBody, {'refreshToken': 'refresh.jwt'});
+    expect(requestedHeaders, {'Authorization': 'Bearer access.jwt'});
+  });
 }

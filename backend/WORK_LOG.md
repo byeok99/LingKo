@@ -1,3 +1,10 @@
+## 2026-07-29 - 회원 탈퇴·음성 보존 정책 안내
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 계정 삭제 API의 S3 우선 삭제와 1일 Lifecycle 설정 파일·수동 적용 책임을 안내했다.
+- 검증: Backend 전체 `test integrationTest` 통과
+- 리스크: 실제 AWS Lifecycle 적용과 표본 만료 검증은 #71에서 추적
+
 ## 2026-07-29 - SQS 제거와 독립 DB Worker 1개 운영
 
 - 변경 파일: `.env.example`, `application.example.yaml`, `build.gradle`, `docker-compose.yml`, `README.md`, `WORK_LOG.md`

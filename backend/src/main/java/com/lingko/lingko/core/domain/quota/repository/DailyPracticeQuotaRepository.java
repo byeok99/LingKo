@@ -120,4 +120,8 @@ public interface DailyPracticeQuotaRepository extends JpaRepository<DailyPractic
             @Param("userId") Long userId,
             @Param("quotaDate") LocalDate quotaDate
     );
+
+    @Modifying
+    @Query("delete from DailyPracticeQuota quota where quota.user.userIdx = :userId")
+    int deleteAllByUserId(@Param("userId") Long userId);
 }

@@ -324,6 +324,8 @@ class FakeAppAuthService implements AppAuthService {
   final Completer<AuthSession?>? restoreCompleter;
   final bool expireAuthenticatedRequests;
   bool signInCalled = false;
+  bool deleteAccountCalled = false;
+  Object? deleteAccountError;
   Object? error;
   AuthSession? session = const AuthSession(
     tokenType: 'Bearer',
@@ -374,6 +376,15 @@ class FakeAppAuthService implements AppAuthService {
 
   @override
   Future<void> signOut() async {
+    session = null;
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    deleteAccountCalled = true;
+    if (deleteAccountError != null) {
+      throw deleteAccountError!;
+    }
     session = null;
   }
 }
@@ -1107,6 +1118,44 @@ void main() {
 
     expect(find.text('Sign in with Google'), findsOneWidget);
     expect(find.text('Recommended for you'), findsNothing);
+  });
+
+  testWidgets('Profile requires confirmation before deleting the account', (
+    WidgetTester tester,
+  ) async {
+    final authService = FakeAppAuthService(restoreExistingSession: true);
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(_navigationLabel('Profile'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Delete account'), 300);
+    await tester.tap(find.text('Delete account'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete your account?'), findsOneWidget);
+    expect(
+      find.text(
+        'Your profile, sessions, practice history, quota, and uploaded audio will be deleted.',
+      ),
+      findsOneWidget,
+    );
+    expect(authService.deleteAccountCalled, isFalse);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));
+    await tester.pumpAndSettle();
+
+    expect(authService.deleteAccountCalled, isTrue);
+    expect(find.text('Sign in with Google'), findsOneWidget);
   });
 
   testWidgets('Profile loads and updates learning preferences', (

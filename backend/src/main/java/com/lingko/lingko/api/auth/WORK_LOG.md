@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 회원 탈퇴 API 추가
+
+- 변경 파일: `AuthController.java`, `WORK_LOG.md`
+- 내용: Bearer Access Token과 현재 Refresh Token을 요구하는 `DELETE /api/auth/account`를 추가했다.
+- 검증: Controller 대상 테스트와 Backend 전체 테스트 통과
+- 리스크: endpoint별 Rate Limit은 기존 후속 보안 작업 범위
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `AuthController.java`, `WORK_LOG.md`

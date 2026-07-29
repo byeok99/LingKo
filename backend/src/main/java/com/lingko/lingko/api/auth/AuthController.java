@@ -4,17 +4,21 @@ import com.lingko.lingko.api.auth.dto.AuthTokenResponse;
 import com.lingko.lingko.api.auth.dto.OAuthLoginRequest;
 import com.lingko.lingko.api.auth.dto.RefreshTokenRequest;
 import com.lingko.lingko.core.domain.auth.service.AuthService;
+import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
+import com.lingko.lingko.core.domain.user.service.AccountDeletionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 로그인, 토큰 회전, 현재 기기 로그아웃 HTTP 연산을 제공한다.
+ * 로그인, 토큰 회전, 현재 기기 로그아웃과 회원 탈퇴 HTTP 연산을 제공한다.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -22,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final ActiveSessionAuthenticator activeSessionAuthenticator;
+    private final AccountDeletionService accountDeletionService;
 
     /**
      * 검증된 외부 provider 신원 토큰을 LingKo 세션으로 교환한다.
@@ -46,5 +52,18 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@Valid @RequestBody RefreshTokenRequest request) {
         authService.logout(request);
+    }
+
+    /**
+     * 현재 Access·Refresh Token을 모두 확인한 뒤 사용자 소유 개인정보와 음성을 삭제한다.
+     */
+    @DeleteMapping("/account")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAccount(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @Valid @RequestBody RefreshTokenRequest request
+    ) {
+        Long userId = activeSessionAuthenticator.authenticateBearer(authorization);
+        accountDeletionService.deleteAccount(userId, request);
     }
 }

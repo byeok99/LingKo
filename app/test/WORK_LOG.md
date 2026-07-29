@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 회원 탈퇴 앱 회귀 테스트
+
+- 변경 파일: `auth_api_test.dart`, `app_auth_service_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: 두 token 전송, 성공 시 세션 삭제, 실패 시 세션 보존과 확인 dialog 흐름을 검증했다.
+- 검증: `flutter test` 전체 통과
+- 리스크: 실제 S3·Backend·앱 통합 E2E는 미실행
+
 ## 2026-07-28 - UI 최종 검토 회귀 테스트
 
 - 변경 파일: `widget_test.dart`, `WORK_LOG.md`

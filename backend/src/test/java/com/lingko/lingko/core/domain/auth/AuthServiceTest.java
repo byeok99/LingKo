@@ -211,6 +211,34 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("회원 탈퇴 재확인은 Access Token 사용자와 현재 Refresh Token 소유자가 같아야 한다")
+    void validatesCurrentRefreshTokenForAccountDeletion() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+
+        authService.validateCurrentRefreshToken(
+                login.getUser().getUserId(),
+                new RefreshTokenRequest(login.getRefreshToken())
+        );
+
+        assertThatThrownBy(() -> authService.validateCurrentRefreshToken(
+                login.getUser().getUserId() + 1,
+                new RefreshTokenRequest(login.getRefreshToken())
+        )).isInstanceOf(AuthException.class);
+    }
+
+    @Test
+    @DisplayName("회전 전 Refresh Token으로는 회원 탈퇴를 승인하지 않는다")
+    void rejectsStaleRefreshTokenForAccountDeletion() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+        authService.refresh(new RefreshTokenRequest(login.getRefreshToken()));
+
+        assertThatThrownBy(() -> authService.validateCurrentRefreshToken(
+                login.getUser().getUserId(),
+                new RefreshTokenRequest(login.getRefreshToken())
+        )).isInstanceOf(AuthException.class);
+    }
+
+    @Test
     @DisplayName("DB 세션 절대 만료가 지나면 유효한 JWT도 갱신할 수 없다")
     void expiredDatabaseSessionIsRejected() {
         AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));

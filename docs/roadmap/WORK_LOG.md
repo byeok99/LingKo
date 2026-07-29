@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Issue #43 구현 완료 반영
+
+- 변경 파일: `issue-backlog.md`, `release-roadmap.md`, `WORK_LOG.md`
+- 내용: 음성 보존·삭제·회원 탈퇴 구현을 완료로 표시하고 AWS 적용 검증만 배포 체크로 분리했다.
+- 검증: 코드·테스트·정책 문서와 상태 대조
+- 리스크: 실제 AWS 운영 검증은 후속 #71, #43 상태는 push·PR 병합 시 동기화 필요
+
 ## 2026-07-29 - SQS 보류와 단일 DB Worker 로드맵 반영
 
 - 변경 파일: `issue-backlog.md`, `release-roadmap.md`, `WORK_LOG.md`

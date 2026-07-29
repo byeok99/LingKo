@@ -45,6 +45,22 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 
 성공하면 본문 없이 `204 No Content`를 반환합니다.
 
+### `DELETE /api/auth/account`
+
+현재 Access Token의 사용자와 현재 Refresh Token의 세션 소유자가 같은지 재확인한 뒤 계정과 사용자 소유 데이터를 삭제합니다.
+
+```http
+Authorization: Bearer <access-token>
+```
+
+```json
+{
+  "refreshToken": "..."
+}
+```
+
+성공하면 본문 없이 `204 No Content`를 반환하고 앱은 로컬 토큰을 제거합니다. 서버는 `evaluation-audio/{userId}/`의 현재 object, 과거 version과 delete marker를 먼저 삭제한 뒤 Refresh 세션, 평가 작업·기록, 쿼터와 사용자 프로필을 삭제합니다. S3 정리가 실패하면 DB 계정과 로컬 세션을 보존하고 `503 ACCOUNT_DELETION_UNAVAILABLE`을 반환하므로 사용자는 동일 세션으로 재시도할 수 있습니다.
+
 ## 문장
 
 ### `GET /api/sentences/recommended`
