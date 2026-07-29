@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-28 - iOS 앱 이름·아이콘 적용
+
+- 변경 파일: `Info.plist`, `Assets.xcassets/AppIcon.appiconset/*.png`, `WORK_LOG.md`
+- 내용: 홈 화면 표시명과 bundle name을 `LingKo`로 통일하고 기존 로고 기반 AppIcon 전체 크기를 교체했다.
+- 검증: `plutil -lint`, AppIcon 20~1024px 규격과 RGB·비투명 형식 확인
+- 리스크: 실기기 홈 화면은 기존 설치 아이콘 캐시 때문에 앱 재설치가 필요할 수 있음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `AppDelegate.swift`, `WORK_LOG.md`

@@ -1,64 +1,66 @@
-// 파일 의도: progress panel 표시 단위를 재사용 가능한 Widget으로 제공한다.
-// 선택 이유: 화면의 상태 조율과 순수 표시를 분리하기 위해 작은 Widget 경계를 선택했다.
+// 파일 의도: 실제 일일 연습 할당량을 시각적으로 요약한다.
 
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import 'shared_widgets.dart';
 
-/// Progress Panel 표시를 재사용 가능한 Widget으로 제공한다.
-/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class ProgressPanel extends StatelessWidget {
-  const ProgressPanel({super.key});
+  const ProgressPanel({
+    super.key,
+    required this.remaining,
+    required this.limit,
+    this.resetLabel,
+  });
+
+  final int remaining;
+  final int limit;
+  final String? resetLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
+    final safeLimit = limit <= 0 ? 1 : limit;
+    final used = (safeLimit - remaining).clamp(0, safeLimit);
+    return AppCard(
+      color: AppColors.softBlue,
       child: Row(
         children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: const BoxDecoration(
-              color: AppColors.brand,
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Text(
-                '82',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
+          SizedBox.square(
+            dimension: 58,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: used / safeLimit,
+                  strokeWidth: 6,
+                  backgroundColor: AppColors.card,
+                  color: AppColors.primary,
                 ),
-              ),
+                Text(
+                  '$remaining',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-          const Expanded(
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Best recent score',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  remaining == 1
+                      ? '1 practice left today'
+                      : '$remaining practices left today',
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Tense consonants need one more pass',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                  ),
+                  remaining == 0
+                      ? (resetLabel ??
+                          'Your daily practice limit resets later.')
+                      : '$used of $safeLimit daily practices used',
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
             ),

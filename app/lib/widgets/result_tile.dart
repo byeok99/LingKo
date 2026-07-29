@@ -1,5 +1,4 @@
-// 파일 의도: result tile 표시 단위를 재사용 가능한 Widget으로 제공한다.
-// 선택 이유: 화면의 상태 조율과 순수 표시를 분리하기 위해 작은 Widget 경계를 선택했다.
+// 파일 의도: 모든 음절의 점수, 등급, 가이드 진입점을 같은 셀에서 제공한다.
 
 import 'package:flutter/material.dart';
 
@@ -8,8 +7,6 @@ import '../models/practice_sentence.dart';
 import 'guide_sheet.dart';
 import 'shared_widgets.dart';
 
-/// Result Tile 표시를 재사용 가능한 Widget으로 제공한다.
-/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class ResultTile extends StatelessWidget {
   const ResultTile({super.key, required this.result});
 
@@ -17,60 +14,113 @@ class ResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.background,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        // 글자별 결과를 누르면 입/혀 가이드 바텀시트를 엽니다.
-        onTap:
-            () => showModalBottomSheet<void>(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: AppColors.background,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+    final available = result.scoreStatus == 'AVAILABLE';
+    final tone = _toneFor(result);
+    final label = _labelFor(result);
+    final color = switch (tone) {
+      StatusTone.success => AppColors.success,
+      StatusTone.warning => AppColors.warning,
+      StatusTone.error => AppColors.error,
+      StatusTone.info => AppColors.primary,
+      StatusTone.neutral => AppColors.textSecondary,
+    };
+    return Semantics(
+      button: true,
+      label:
+          available
+              ? '${result.character}, score ${result.score}, $label. Open pronunciation guide.'
+              : '${result.character}, score unavailable. Open pronunciation guide.',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap:
+              () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: AppColors.card,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(AppSizes.radiusLarge),
+                  ),
+                ),
+                builder: (_) => GuideSheet(result: result),
               ),
-              builder: (_) => GuideSheet(result: result),
+          borderRadius: BorderRadius.circular(AppSizes.radius),
+          child: Container(
+            width: 112,
+            constraints: const BoxConstraints(minHeight: 138),
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(AppSizes.radius),
+              border: Border.all(color: color.withValues(alpha: 0.40)),
             ),
-        child: Ink(
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              CharacterBadge(text: result.character),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      result.note,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${result.kind} guide',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  result.character.isEmpty ? '—' : result.character,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-              Text(
-                result.scoreStatus == 'AVAILABLE' ? '${result.score}' : '—',
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  available ? '${result.score}' : '—',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+StatusTone _toneFor(CharacterResult result) {
+  if (result.scoreStatus != 'AVAILABLE') {
+    return StatusTone.neutral;
+  }
+  if (result.score >= 90) {
+    return StatusTone.success;
+  }
+  if (result.score >= 75) {
+    return StatusTone.info;
+  }
+  if (result.score >= 60) {
+    return StatusTone.warning;
+  }
+  return StatusTone.error;
+}
+
+String _labelFor(CharacterResult result) {
+  if (result.scoreStatus != 'AVAILABLE') {
+    return 'No score';
+  }
+  if (result.score >= 90) {
+    return 'Excellent';
+  }
+  if (result.score >= 75) {
+    return 'Good';
+  }
+  if (result.score >= 60) {
+    return 'Keep practicing';
+  }
+  return 'Needs improvement';
 }

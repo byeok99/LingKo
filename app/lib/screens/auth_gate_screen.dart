@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../widgets/shared_widgets.dart';
 
 /// Splash Screen 사용자 화면과 interaction 경계를 제공한다.
 /// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
@@ -42,40 +43,43 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _AuthFrame(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Center(child: _LogoImage(size: 148)),
-          const SizedBox(height: 28),
-          Text(
-            'LingKo',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Sign in to continue pronunciation practice.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          if (errorText != null) ...[
-            const SizedBox(height: 18),
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Center(child: _LogoImage(size: 132)),
+            const SizedBox(height: AppSpacing.xl),
             Text(
-              errorText!,
+              'LingKo',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-                fontWeight: FontWeight.w700,
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Build clear Korean pronunciation, one sentence at a time.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            if (errorText != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                errorText!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
+            ],
+            const SizedBox(height: AppSpacing.xxl),
+            _GoogleSignInButton(
+              isLoading: isLoading,
+              onPressed: isLoading ? null : onSignIn,
             ),
           ],
-          const SizedBox(height: 28),
-          _GoogleSignInButton(
-            isLoading: isLoading,
-            onPressed: isLoading ? null : onSignIn,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -91,7 +95,7 @@ class _AuthFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.softBlue,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -120,15 +124,16 @@ class _GoogleSignInButton extends StatelessWidget {
     return FilledButton(
       onPressed: onPressed,
       style: FilledButton.styleFrom(
+        // Google 로그인 버튼의 중립 색상은 제공자 브랜드 가이드를 따르는 예외다.
         backgroundColor: Colors.white,
         disabledBackgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1F1F1F),
-        disabledForegroundColor: const Color(0xFF5F6368),
+        foregroundColor: AppColors.providerButtonForeground,
+        disabledForegroundColor: AppColors.providerButtonDisabled,
         minimumSize: const Size.fromHeight(54),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: Color(0xFFDADCE0)),
+          borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+          side: const BorderSide(color: AppColors.providerButtonBorder),
         ),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
       ),

@@ -1,18 +1,16 @@
-// 파일 의도: score breakdown 표시 단위를 재사용 가능한 Widget으로 제공한다.
-// 선택 이유: 화면의 상태 조율과 순수 표시를 분리하기 위해 작은 Widget 경계를 선택했다.
+// 파일 의도: 평가 API가 제공하는 점수 항목만 진행 막대로 표시한다.
 
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import 'shared_widgets.dart';
 
-/// Score Breakdown 표시를 재사용 가능한 Widget으로 제공한다.
-/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class ScoreBreakdown extends StatelessWidget {
   const ScoreBreakdown({
     super.key,
-    this.accuracy = 84,
-    this.fluency = 80,
-    this.completeness = 91,
+    required this.accuracy,
+    required this.fluency,
+    required this.completeness,
   });
 
   final int accuracy;
@@ -22,45 +20,69 @@ class ScoreBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      ('Accuracy', accuracy),
-      ('Fluency', fluency),
-      ('Completeness', completeness),
+      ('Accuracy', accuracy, Icons.gps_fixed),
+      ('Fluency', fluency, Icons.waves),
+      ('Completeness', completeness, Icons.checklist),
     ];
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
+    return AppCard(
       child: Column(
-        children:
-            items
-                .map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 7),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.$1,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ),
-                        Text(
-                          '${item.$2}',
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-                .toList(),
+        children: [
+          for (var index = 0; index < items.length; index++) ...[
+            _ScoreProgressRow(
+              label: items[index].$1,
+              score: items[index].$2,
+              icon: items[index].$3,
+            ),
+            if (index != items.length - 1)
+              const SizedBox(height: AppSpacing.lg),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ScoreProgressRow extends StatelessWidget {
+  const _ScoreProgressRow({
+    required this.label,
+    required this.score,
+    required this.icon,
+  });
+
+  final String label;
+  final int score;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalizedScore = score.clamp(0, 100);
+    return Semantics(
+      label: '$label $normalizedScore out of 100',
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.primary, size: 20),
+          const SizedBox(width: AppSpacing.sm),
+          SizedBox(
+            width: 92,
+            child: Text(label, style: Theme.of(context).textTheme.titleMedium),
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+              child: LinearProgressIndicator(
+                value: normalizedScore / 100,
+                minHeight: 8,
+                backgroundColor: AppColors.border,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Text(
+            '$normalizedScore',
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+        ],
       ),
     );
   }

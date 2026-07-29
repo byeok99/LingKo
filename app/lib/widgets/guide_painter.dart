@@ -18,17 +18,17 @@ class GuidePainter extends CustomPainter {
     // 나중에는 S3 이미지/영상 URL을 받아 Image 또는 Video 위젯으로 교체합니다.
     final outline =
         Paint()
-          ..color = AppColors.brandStrong
+          ..color = AppColors.primaryDark
           ..style = PaintingStyle.stroke
           ..strokeWidth = 5
           ..strokeCap = StrokeCap.round;
     final fill =
         Paint()
-          ..color = AppColors.brandSoft
+          ..color = AppColors.softBlue
           ..style = PaintingStyle.fill;
     final accent =
         Paint()
-          ..color = AppColors.info
+          ..color = AppColors.primary
           ..style = PaintingStyle.stroke
           ..strokeWidth = 4
           ..strokeCap = StrokeCap.round;
