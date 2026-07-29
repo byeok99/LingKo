@@ -20,6 +20,7 @@ import 'package:lingko_app/models/practice_quota.dart';
 import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
 import 'package:lingko_app/models/user_preferences.dart';
+import 'package:lingko_app/screens/result_screen.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
 import 'package:lingko_app/widgets/guide_sheet.dart';
@@ -68,6 +69,7 @@ class FakeEvaluationApi implements EvaluationApi {
   int? lastSentenceId;
   String? lastText;
   Object? error;
+  Completer<EvaluationJob>? createJobCompleter;
   PracticeHistory history = const PracticeHistory(
     items: [
       PracticeHistoryItem(
@@ -135,6 +137,9 @@ class FakeEvaluationApi implements EvaluationApi {
 
     if (error != null) {
       throw error!;
+    }
+    if (createJobCompleter != null) {
+      return createJobCompleter!.future;
     }
 
     return const EvaluationJob(
@@ -432,6 +437,13 @@ const _twoSentences = [
   ),
 ];
 
+Finder _navigationLabel(String label) {
+  return find.descendant(
+    of: find.byType(NavigationBar),
+    matching: find.text(label),
+  );
+}
+
 // 앱 workflow의 인증 gate와 갱신 토큰 만료 동작을 검증한다.
 void main() {
   testWidgets('App shows logo splash while restoring session', (
@@ -479,13 +491,15 @@ void main() {
 
     expect(find.text('Sign in with Google'), findsOneWidget);
     expect(find.byKey(const Key('google-sign-in-logo')), findsOneWidget);
-    expect(find.text('Recommended'), findsNothing);
+    expect(find.text('Recommended for you'), findsNothing);
 
     await tester.tap(find.text('Sign in with Google'));
     await tester.pumpAndSettle();
 
     expect(authService.signInCalled, isTrue);
-    expect(find.text('Recommended'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('Recommended for you'), findsOneWidget);
     expect(find.text('LingKo User'), findsNothing);
   });
 
@@ -509,7 +523,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Sign in with Google'), findsOneWidget);
-    expect(find.text('Recommended'), findsNothing);
+    expect(find.text('Recommended for you'), findsNothing);
   });
 
   testWidgets('Login hides authentication error details', (
@@ -558,15 +572,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('LingKo'), findsOneWidget);
-    expect(find.text('Recommended'), findsOneWidget);
+    expect(find.text('Recommended for you'), findsOneWidget);
     expect(find.text('맛있겠다.'), findsOneWidget);
 
     await tester.tap(find.text('맛있겠다.').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Practice'), findsWidgets);
-    final recommendedInput = tester.widget<TextField>(find.byType(TextField));
-    expect(recommendedInput.controller?.text, '맛있겠다.');
+    expect(find.text('마싯게따.'), findsOneWidget);
 
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
@@ -574,23 +587,21 @@ void main() {
 
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
-    expect(find.text('Stop recording'), findsOneWidget);
+    expect(find.text('Stop and analyze'), findsOneWidget);
 
-    await tester.tap(find.text('Stop recording'));
-    await tester.pumpAndSettle();
-    expect(find.text('Upload and score'), findsOneWidget);
-
-    await tester.tap(find.text('Upload and score'));
+    await tester.tap(find.text('Stop and analyze'));
     await tester.pumpAndSettle();
 
     expect(find.text('Result'), findsOneWidget);
     expect(find.text('Excellent'), findsOneWidget);
     expect(find.text('91'), findsOneWidget);
-    expect(find.text('Recognized speech: 마싯게따.'), findsOneWidget);
-    expect(
-      find.text('Character-level scores are unavailable for this evaluation.'),
-      findsOneWidget,
+    expect(find.text('Recognized speech'), findsOneWidget);
+    expect(find.text('마싯게따.'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Character-level scores are unavailable'),
+      300,
     );
+    expect(find.text('Character-level scores are unavailable'), findsOneWidget);
     expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
   });
 
@@ -613,6 +624,127 @@ void main() {
 
     expect(quotaApi.lastAccessToken, 'access.jwt');
     expect(find.text('3 practices left today'), findsOneWidget);
+  });
+
+  testWidgets('recording success shows evaluation progress before Result', (
+    WidgetTester tester,
+  ) async {
+    final createCompleter = Completer<EvaluationJob>();
+    final evaluationApi =
+        FakeEvaluationApi()..createJobCompleter = createCompleter;
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: evaluationApi,
+        userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Start recording'), 300);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start recording'));
+    await tester.pump();
+    await tester.tap(find.text('Stop and analyze'));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('evaluation-progress')), findsOneWidget);
+    expect(find.text('Evaluation job'), findsOneWidget);
+    expect(find.text('Result'), findsNothing);
+
+    createCompleter.complete(
+      const EvaluationJob(
+        jobId: 'delayed-job',
+        status: EvaluationJobStatus.succeeded,
+        result: PracticeResult(
+          overallScore: 91,
+          gradeLabel: 'Excellent',
+          summary: 'Clear pronunciation.',
+          scoreBreakdown: PracticeScoreBreakdown(
+            accuracy: 92,
+            fluency: 90,
+            completeness: 93,
+          ),
+          weakCharacters: [],
+          characters: [],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Result'), findsOneWidget);
+    expect(find.text('Excellent'), findsOneWidget);
+  });
+
+  testWidgets('evaluation job survives tab changes until Result is ready', (
+    WidgetTester tester,
+  ) async {
+    final createCompleter = Completer<EvaluationJob>();
+    final evaluationApi =
+        FakeEvaluationApi()..createJobCompleter = createCompleter;
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: evaluationApi,
+        userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Start recording'), 300);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start recording'));
+    await tester.pump();
+    await tester.tap(find.text('Stop and analyze'));
+    await tester.pump();
+
+    await tester.tap(_navigationLabel('Home'));
+    await tester.pump();
+    expect(find.text('Evaluation in progress'), findsOneWidget);
+
+    await tester.tap(_navigationLabel('Practice'));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('evaluation-progress')), findsOneWidget);
+
+    await tester.tap(_navigationLabel('Home'));
+    createCompleter.complete(
+      const EvaluationJob(
+        jobId: 'persistent-job',
+        status: EvaluationJobStatus.succeeded,
+        result: PracticeResult(
+          overallScore: 88,
+          gradeLabel: 'Great',
+          summary: 'Stable pronunciation.',
+          scoreBreakdown: PracticeScoreBreakdown(
+            accuracy: 89,
+            fluency: 86,
+            completeness: 90,
+          ),
+          weakCharacters: [],
+          characters: [],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(_navigationLabel('Practice'));
+    await tester.pumpAndSettle();
+    expect(find.text('Result'), findsOneWidget);
+    expect(find.text('88'), findsOneWidget);
   });
 
   testWidgets('Home hides quota error details', (WidgetTester tester) async {
@@ -673,7 +805,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(recorder.permissionChecks, 0);
-    expect(find.text('Stop recording'), findsNothing);
+    expect(find.text('Stop and analyze'), findsNothing);
   });
 
   testWidgets('Practice tab accepts a custom sentence', (
@@ -692,7 +824,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Practice'));
+    await tester.tap(_navigationLabel('Practice'));
     await tester.pumpAndSettle();
 
     expect(find.text('Practice your own sentence'), findsOneWidget);
@@ -724,7 +856,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Practice'));
+    await tester.tap(_navigationLabel('Practice'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), '너무 긴 문장');
@@ -732,7 +864,12 @@ void main() {
     await tester.tap(find.text('Use this sentence'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Validation failed'), findsOneWidget);
+    expect(
+      find.text(
+        'We could not prepare this sentence. Check the text and connection, then try again.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Practice tab shows input length validation errors', (
@@ -753,7 +890,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Practice'));
+    await tester.tap(_navigationLabel('Practice'));
     await tester.pumpAndSettle();
 
     final longText = '가' * 101;
@@ -763,7 +900,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(api.lastText, longText);
-    expect(find.text('text must be 100 characters or fewer'), findsOneWidget);
+    expect(
+      find.text(
+        'We could not prepare this sentence. Check the text and connection, then try again.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Start recording'), findsNothing);
   });
 
@@ -783,7 +925,7 @@ void main() {
 
     expect(find.byKey(const Key('splash-logo')), findsOneWidget);
     await tester.pumpAndSettle();
-    expect(find.text('No recommended sentences yet.'), findsOneWidget);
+    expect(find.text('No recommended sentences yet'), findsOneWidget);
 
     await tester.pumpWidget(
       LingKoApp(
@@ -797,8 +939,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Cannot load sentences'), findsOneWidget);
-    expect(find.text('Recommended'), findsOneWidget);
+    expect(find.text('Recommendations are unavailable'), findsOneWidget);
+    expect(find.text('Recommended for you'), findsOneWidget);
   });
 
   testWidgets('Practice tab retries microphone permission after denial', (
@@ -825,14 +967,22 @@ void main() {
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Microphone permission is required.'), findsOneWidget);
+    expect(
+      find.text(
+        'Microphone access is required. Allow access in device settings, then retry.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Retry microphone permission'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Retry microphone permission'));
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Retry microphone permission'));
     await tester.pumpAndSettle();
 
     expect(recorder.permissionChecks, 2);
-    expect(find.text('Stop recording'), findsOneWidget);
+    expect(find.text('Stop and analyze'), findsOneWidget);
   });
 
   testWidgets('Practice tab keeps upload retry available after quota failure', (
@@ -857,14 +1007,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop recording'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Upload and score'));
+    await tester.tap(find.text('Stop and analyze'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Daily practice quota exceeded'), findsOneWidget);
-    expect(find.text('Upload and score'), findsOneWidget);
-    expect(find.text('Re-record'), findsOneWidget);
+    expect(
+      find.text(
+        'The evaluation did not finish. Retry with the saved recording when available.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry with this recording'), findsOneWidget);
     expect(find.text('Result'), findsNothing);
   });
 
@@ -890,13 +1042,13 @@ void main() {
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Profile'));
+    await tester.tap(_navigationLabel('Profile'));
     await tester.pumpAndSettle();
 
     expect(recorder.cancelCount, 1);
   });
 
-  testWidgets('Profile shows recent practice history and opens retry', (
+  testWidgets('Review shows recent practice history and opens retry', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -911,21 +1063,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Profile'));
+    await tester.tap(_navigationLabel('Review'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Practice history'), findsOneWidget);
+    expect(find.text('Recent practice'), findsOneWidget);
     expect(find.text('Best score'), findsOneWidget);
     expect(find.text('91'), findsWidgets);
     expect(find.text('맛있겠다.'), findsOneWidget);
-    expect(find.text('Recognized: 마싯게따.'), findsOneWidget);
 
     await tester.tap(find.text('Practice again'));
     await tester.pumpAndSettle();
 
     expect(find.text('Practice'), findsWidgets);
-    final retryInput = tester.widget<TextField>(find.byType(TextField));
-    expect(retryInput.controller?.text, '맛있겠다.');
+    expect(find.text('마싯게따.'), findsOneWidget);
   });
 
   testWidgets('Profile shows account and sign out returns to login', (
@@ -944,18 +1094,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Profile'));
+    await tester.tap(_navigationLabel('Profile'));
     await tester.pumpAndSettle();
 
     expect(find.text('LingKo User'), findsOneWidget);
     expect(find.text('user@example.com'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Sign out'), 300);
     expect(find.text('Sign out'), findsOneWidget);
 
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sign in with Google'), findsOneWidget);
-    expect(find.text('Recommended'), findsNothing);
+    expect(find.text('Recommended for you'), findsNothing);
   });
 
   testWidgets('Profile loads and updates learning preferences', (
@@ -974,7 +1125,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Profile'));
+    await tester.tap(_navigationLabel('Profile'));
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
     await tester.pumpAndSettle();
@@ -1020,10 +1171,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop recording'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Profile'));
+    await tester.tap(find.text('Stop and analyze'));
     await tester.pumpAndSettle();
 
     expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
@@ -1037,7 +1185,8 @@ void main() {
       LingKoApp(
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(sentences: _twoSentences),
-        evaluationApi: FakeEvaluationApi(),
+        evaluationApi:
+            FakeEvaluationApi()..error = 'Temporary evaluation failure',
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: recorder,
       ),
@@ -1050,14 +1199,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop recording'));
+    await tester.tap(find.text('Stop and analyze'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), '새 문장입니다.');
-    await tester.pump();
-    await tester.ensureVisible(find.text('Use this sentence'));
+    await tester.tap(_navigationLabel('Home'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Use this sentence'));
+    await tester.scrollUntilVisible(find.text('사진 찍어도 돼요?'), 300);
+    await tester.tap(find.text('사진 찍어도 돼요?'));
     await tester.pumpAndSettle();
 
     expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
@@ -1085,9 +1233,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop recording'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Upload and score'));
+    await tester.tap(find.text('Stop and analyze'));
     await tester.pumpAndSettle();
 
     expect(find.text('Result'), findsOneWidget);
@@ -1115,8 +1261,12 @@ void main() {
 
     expect(find.text('TONGUE guide'), findsWidgets);
     expect(find.text('Focus on tongue placement'), findsWidgets);
-    expect(find.text('Play'), findsOneWidget);
-    expect(find.text('Repeat'), findsOneWidget);
+    expect(
+      find.text(
+        'Guide media is shown when the evaluation provides it. Audio and video playback are not available yet.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('guide sheet renders available static guide assets first', (
@@ -1143,5 +1293,257 @@ void main() {
     expect((images[1].image as NetworkImage).url, character.tongueGuideUrl);
     expect(find.text('Mouth guide'), findsOneWidget);
     expect(find.text('Tongue guide'), findsOneWidget);
+  });
+
+  testWidgets('authenticated shell exposes Home Practice Review Profile tabs', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_navigationLabel('Home'), findsOneWidget);
+    expect(_navigationLabel('Practice'), findsOneWidget);
+    expect(_navigationLabel('Review'), findsOneWidget);
+    expect(_navigationLabel('Profile'), findsOneWidget);
+  });
+
+  testWidgets('Result shows every scored syllable and retries whole sentence', (
+    WidgetTester tester,
+  ) async {
+    const sentence = PracticeSentence(
+      sentenceId: 1,
+      source: 'RECOMMENDED',
+      text: '저는 커피를 좋아해요.',
+      pronunciation: '저는 커피를 조아해요.',
+      translation: 'I like coffee.',
+      level: 'RECOMMENDED',
+      category: 'Daily',
+      point: 'Connected speech',
+      score: 0,
+      characters: [],
+    );
+    const result = PracticeResult(
+      overallScore: 87,
+      gradeLabel: 'Great',
+      summary: 'Clear and natural pronunciation.',
+      characterScoreStatus: 'AVAILABLE',
+      scoreBreakdown: PracticeScoreBreakdown(
+        accuracy: 90,
+        fluency: 85,
+        completeness: 88,
+      ),
+      weakCharacters: [
+        CharacterResult(
+          character: '피',
+          score: 62,
+          note: 'Release more air.',
+          kind: 'MOUTH',
+        ),
+      ],
+      characters: [
+        CharacterResult(
+          character: '저',
+          score: 94,
+          note: 'Clear.',
+          kind: 'MOUTH',
+        ),
+        CharacterResult(
+          character: '피',
+          score: 62,
+          note: 'Release more air.',
+          kind: 'MOUTH',
+        ),
+        CharacterResult(
+          character: '는',
+          score: 82,
+          note: 'Stable.',
+          kind: 'TONGUE',
+        ),
+        CharacterResult(
+          character: '커',
+          score: 66,
+          note: 'Keep practicing.',
+          kind: 'MOUTH',
+        ),
+        CharacterResult(
+          character: '를',
+          score: 42,
+          note: 'Needs improvement.',
+          kind: 'TONGUE',
+        ),
+        CharacterResult(
+          character: '요',
+          score: 0,
+          note: 'Score unavailable.',
+          kind: 'NONE',
+          scoreStatus: 'UNAVAILABLE',
+        ),
+      ],
+    );
+    var retried = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ResultScreen(
+            sentence: sentence,
+            result: result,
+            onTryAgain: () => retried = true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('result-character-grid')),
+      300,
+    );
+
+    expect(find.text('저'), findsOneWidget);
+    expect(find.text('94'), findsOneWidget);
+    expect(find.text('피'), findsOneWidget);
+    expect(find.text('62'), findsOneWidget);
+    expect(find.text('Excellent'), findsWidgets);
+    expect(find.text('Good'), findsOneWidget);
+    expect(find.text('Keep practicing'), findsWidgets);
+    expect(find.text('Needs improvement'), findsOneWidget);
+    expect(find.text('No score'), findsOneWidget);
+    expect(find.text('Practice 저 Again'), findsNothing);
+    expect(find.text('Practice Weak Sound'), findsNothing);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('retry-whole-sentence')),
+      300,
+    );
+    await tester.tap(find.text('Try This Sentence Again'));
+    await tester.pump();
+
+    expect(retried, isTrue);
+  });
+
+  testWidgets('Result remains usable on a small screen with large text', (
+    WidgetTester tester,
+  ) async {
+    const result = PracticeResult(
+      overallScore: 76,
+      gradeLabel: 'Good',
+      summary:
+          'The sentence is complete, and a few connected sounds need another clear attempt.',
+      recognizedText: '저는 커피를 좋아해요.',
+      characterScoreStatus: 'AVAILABLE',
+      scoreBreakdown: PracticeScoreBreakdown(
+        accuracy: 78,
+        fluency: 72,
+        completeness: 84,
+      ),
+      weakCharacters: [],
+      characters: [
+        CharacterResult(
+          character: '저',
+          score: 92,
+          note: 'Clear.',
+          kind: 'MOUTH',
+        ),
+        CharacterResult(
+          character: '는',
+          score: 78,
+          note: 'Good.',
+          kind: 'TONGUE',
+        ),
+        CharacterResult(
+          character: '커',
+          score: 61,
+          note: 'Practice.',
+          kind: 'MOUTH',
+        ),
+      ],
+    );
+    const sentence = PracticeSentence(
+      text: '저는 커피를 좋아하고 매일 아침 따뜻하게 마셔요.',
+      pronunciation: '저는 커피를 조아하고 매일 아침 따뜨타게 마셔요.',
+      translation: 'I like coffee and drink it warm every morning.',
+      level: 'RECOMMENDED',
+      category: 'Daily',
+      point: 'Connected speech',
+      score: 0,
+      characters: [],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(320, 640),
+            textScaler: TextScaler.linear(2),
+          ),
+          child: Scaffold(
+            body: ResultScreen(
+              sentence: sentence,
+              result: result,
+              onTryAgain: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('retry-whole-sentence')),
+      240,
+      maxScrolls: 20,
+    );
+
+    expect(find.text('Try This Sentence Again'), findsOneWidget);
+  });
+
+  testWidgets('main tabs remain usable on a small screen with large text', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.8;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+    });
+
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_navigationLabel('Home'), findsOneWidget);
+    expect(find.textContaining('Welcome back'), findsOneWidget);
+
+    await tester.tap(_navigationLabel('Practice'));
+    await tester.pumpAndSettle();
+    expect(find.text('Practice'), findsWidgets);
+
+    await tester.tap(_navigationLabel('Review'));
+    await tester.pumpAndSettle();
+    expect(find.text('Review'), findsWidgets);
+
+    await tester.tap(_navigationLabel('Profile'));
+    await tester.pumpAndSettle();
+    expect(find.text('Profile'), findsWidgets);
   });
 }

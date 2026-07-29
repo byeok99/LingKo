@@ -49,7 +49,7 @@ class SettingsRow extends StatelessWidget {
               color:
                   onTap == null
                       ? AppColors.textSecondary
-                      : AppColors.brandStrong,
+                      : AppColors.primaryDark,
             ),
           ],
         ),

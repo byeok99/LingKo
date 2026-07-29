@@ -13,6 +13,7 @@ import '../api/sentence_api.dart';
 import '../api/user_preferences_api.dart';
 import '../models/auth_session.dart';
 import '../models/evaluation_job.dart';
+import '../models/evaluation_progress.dart';
 import '../models/practice_quota.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
@@ -20,6 +21,7 @@ import '../screens/auth_gate_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/practice_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/review_screen.dart';
 import '../screens/result_screen.dart';
 import '../services/audio_recorder_service.dart';
 import '../services/app_auth_service.dart';
@@ -99,7 +101,7 @@ class LingKoShell extends StatefulWidget {
 /// Ling Ko Shell State Widget의 변경 가능한 화면 상태와 비동기 생명주기를 관리한다.
 /// 불변 Widget 설정과 실행 시점 상태를 분리하기 위해 전용 State 객체를 사용한다.
 class _LingKoShellState extends State<LingKoShell> {
-  // 하단 탭 index입니다. 0: Home, 1: Practice, 2: Profile.
+  // 하단 탭 index입니다. 0: Home, 1: Practice, 2: Review, 3: Profile.
   int selectedTab = 0;
 
   // 사용자가 홈에서 고르거나 직접 입력한 현재 연습 문장입니다.
@@ -116,6 +118,7 @@ class _LingKoShellState extends State<LingKoShell> {
   PracticeQuota? practiceQuota;
   bool isLoadingPracticeQuota = false;
   String? practiceQuotaError;
+  EvaluationProgress evaluationProgress = const EvaluationProgress();
 
   // Practice 탭 안에서 연습 화면을 보여줄지, 결과 화면을 보여줄지 결정합니다.
   bool hasResult = false;
@@ -253,6 +256,7 @@ class _LingKoShellState extends State<LingKoShell> {
         authErrorText = null;
         practiceQuota = null;
         practiceQuotaError = null;
+        evaluationProgress = const EvaluationProgress();
         recommendedSentences = const [];
         recommendedSentenceError = null;
         isLoadingRecommendedSentences = false;
@@ -331,6 +335,8 @@ class _LingKoShellState extends State<LingKoShell> {
       selectedSentence = sentence;
       selectedTab = 1;
       hasResult = false;
+      latestResult = null;
+      evaluationProgress = const EvaluationProgress();
     });
   }
 
@@ -338,55 +344,114 @@ class _LingKoShellState extends State<LingKoShell> {
     PracticeSentence sentence,
     String audioPath,
   ) async {
-    final upload = await widget.authService.runAuthenticated(
-      (accessToken) => widget.evaluationApi.prepareUpload(
-        accessToken: accessToken,
-        audioPath: audioPath,
-      ),
-    );
-    await widget.evaluationApi.uploadAudio(
-      upload: upload,
-      audioPath: audioPath,
-    );
-    final idempotencyKey = _newEvaluationIdempotencyKey();
-    EvaluationJob job = await widget.authService.runAuthenticated(
-      (accessToken) => widget.evaluationApi.createJob(
-        accessToken: accessToken,
-        idempotencyKey: idempotencyKey,
-        objectKey: upload.objectKey,
-        sentenceId:
-            sentence.source == 'RECOMMENDED' ? sentence.sentenceId : null,
-        text: sentence.source == 'RECOMMENDED' ? null : sentence.text,
-      ),
-    );
+    setState(() {
+      selectedSentence = sentence;
+      latestResult = null;
+      hasResult = false;
+      evaluationProgress = const EvaluationProgress(
+        stage: EvaluationProgressStage.uploading,
+        message: 'Uploading your recording.',
+      );
+    });
 
-    for (var attempt = 0; attempt < 120; attempt++) {
-      if (job.status == EvaluationJobStatus.succeeded && job.result != null) {
+    try {
+      final upload = await widget.authService.runAuthenticated(
+        (accessToken) => widget.evaluationApi.prepareUpload(
+          accessToken: accessToken,
+          audioPath: audioPath,
+        ),
+      );
+      await widget.evaluationApi.uploadAudio(
+        upload: upload,
+        audioPath: audioPath,
+      );
+      if (mounted) {
         setState(() {
-          latestResult = job.result;
-          hasResult = true;
+          evaluationProgress = const EvaluationProgress(
+            stage: EvaluationProgressStage.creatingJob,
+            message: 'Creating your evaluation job.',
+          );
         });
-        await loadPracticeQuota();
-        return;
       }
-      if (job.status == EvaluationJobStatus.failed) {
-        throw ApiException(
-          job.errorCode == null
-              ? 'Pronunciation evaluation failed'
-              : 'Pronunciation evaluation failed: ${job.errorCode}',
+
+      final idempotencyKey = _newEvaluationIdempotencyKey();
+      EvaluationJob job = await widget.authService.runAuthenticated(
+        (accessToken) => widget.evaluationApi.createJob(
+          accessToken: accessToken,
+          idempotencyKey: idempotencyKey,
+          objectKey: upload.objectKey,
+          sentenceId:
+              sentence.source == 'RECOMMENDED' ? sentence.sentenceId : null,
+          text: sentence.source == 'RECOMMENDED' ? null : sentence.text,
+        ),
+      );
+
+      if (mounted) {
+        setState(() {
+          evaluationProgress = EvaluationProgress(
+            stage: EvaluationProgressStage.analyzing,
+            jobId: job.jobId,
+            message:
+                'Pronunciation analysis is running. You can use another tab.',
+          );
+        });
+      }
+
+      for (var attempt = 0; attempt < 120; attempt++) {
+        if (job.status == EvaluationJobStatus.succeeded && job.result != null) {
+          if (mounted) {
+            setState(() {
+              evaluationProgress = EvaluationProgress(
+                stage: EvaluationProgressStage.preparingFeedback,
+                jobId: job.jobId,
+                message: 'Preparing your feedback.',
+              );
+              latestResult = job.result;
+              hasResult = true;
+              evaluationProgress = EvaluationProgress(
+                stage: EvaluationProgressStage.completed,
+                jobId: job.jobId,
+                message: 'Your pronunciation result is ready.',
+              );
+            });
+          }
+          await loadPracticeQuota();
+          return;
+        }
+        if (job.status == EvaluationJobStatus.failed) {
+          throw const ApiException('Pronunciation evaluation failed');
+        }
+
+        await Future<void>.delayed(const Duration(seconds: 1));
+        job = await widget.authService.runAuthenticated(
+          (accessToken) => widget.evaluationApi.fetchJob(
+            accessToken: accessToken,
+            jobId: job.jobId,
+          ),
         );
       }
 
-      await Future<void>.delayed(const Duration(seconds: 1));
-      job = await widget.authService.runAuthenticated(
-        (accessToken) => widget.evaluationApi.fetchJob(
-          accessToken: accessToken,
-          jobId: job.jobId,
-        ),
-      );
+      throw const ApiException('Pronunciation evaluation timed out');
+    } on AuthSessionExpiredException {
+      if (mounted) {
+        await handleSessionChanged(null);
+      }
+      rethrow;
+    } catch (_) {
+      if (mounted) {
+        final failedAt = evaluationProgress.stage;
+        setState(() {
+          evaluationProgress = EvaluationProgress(
+            stage: EvaluationProgressStage.failed,
+            jobId: evaluationProgress.jobId,
+            failedAt: failedAt,
+            message:
+                'The evaluation did not finish. Retry with the saved recording when available.',
+          );
+        });
+      }
+      rethrow;
     }
-
-    throw const ApiException('Pronunciation evaluation timed out');
   }
 
   String _newEvaluationIdempotencyKey() {
@@ -399,6 +464,8 @@ class _LingKoShellState extends State<LingKoShell> {
     setState(() {
       selectedSentence = sentence;
       hasResult = false;
+      latestResult = null;
+      evaluationProgress = const EvaluationProgress();
     });
   }
 
@@ -426,9 +493,13 @@ class _LingKoShellState extends State<LingKoShell> {
         quota: practiceQuota,
         isLoadingQuota: isLoadingPracticeQuota,
         quotaErrorText: practiceQuotaError,
+        evaluationProgress: evaluationProgress,
         onRetry: loadRecommendedSentences,
         onRetryQuota: loadPracticeQuota,
         onSelect: openPractice,
+        onOpenPractice: () => setState(() => selectedTab = 1),
+        onOpenReview: () => setState(() => selectedTab = 2),
+        displayName: session?.user.name,
       ),
       hasResult && selectedSentence != null
           ? ResultScreen(
@@ -437,8 +508,12 @@ class _LingKoShellState extends State<LingKoShell> {
             onTryAgain: () {
               setState(() {
                 hasResult = false;
+                latestResult = null;
+                evaluationProgress = const EvaluationProgress();
+                selectedTab = 1;
               });
             },
+            onOpenReview: () => setState(() => selectedTab = 2),
           )
           : PracticeScreen(
             sentence: selectedSentence,
@@ -448,13 +523,21 @@ class _LingKoShellState extends State<LingKoShell> {
             onPrepareCustomSentence:
                 widget.pronunciationApi.prepareCustomSentence,
             remainingPractices: practiceQuota?.remainingPractices,
+            evaluationProgress: evaluationProgress,
           ),
-      ProfileScreen(
+      ReviewScreen(
         evaluationApi: widget.evaluationApi,
+        authService: widget.authService,
+        session: session!,
+        onRetryPractice: openPractice,
+        onSessionExpired: () => handleSessionChanged(null),
+      ),
+      ProfileScreen(
         userPreferencesApi: widget.userPreferencesApi,
         authService: widget.authService,
-        onRetryPractice: openPractice,
+        session: session!,
         onSessionChanged: handleSessionChanged,
+        onOpenReview: () => setState(() => selectedTab = 2),
       ),
     ];
 
@@ -464,16 +547,9 @@ class _LingKoShellState extends State<LingKoShell> {
       body: SafeArea(child: pages[selectedTab]),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedTab,
-        backgroundColor: AppColors.background,
-        indicatorColor: AppColors.brandSoft,
         onDestinationSelected: (index) {
           setState(() {
             selectedTab = index;
-            // 결과 화면은 Practice 탭 안에서만 유지합니다.
-            // Home/Profile로 이동했다가 돌아오면 다시 연습 화면부터 시작합니다.
-            if (index != 1) {
-              hasResult = false;
-            }
           });
         },
         destinations: const [
@@ -486,6 +562,11 @@ class _LingKoShellState extends State<LingKoShell> {
             icon: Icon(Icons.mic_none),
             selectedIcon: Icon(Icons.mic),
             label: 'Practice',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.rate_review_outlined),
+            selectedIcon: Icon(Icons.rate_review),
+            label: 'Review',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

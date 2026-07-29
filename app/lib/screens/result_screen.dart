@@ -1,5 +1,4 @@
-// 파일 의도: result screen 사용자 workflow와 화면 상태를 구성한다.
-// 선택 이유: 화면은 상호작용과 표시 상태를 소유하고 네트워크·플랫폼 작업은 주입된 서비스에 위임한다.
+// 파일 의도: 종합 점수와 모든 평가 음절을 숨김없이 보여주고 문장 전체 재연습을 연결한다.
 
 import 'package:flutter/material.dart';
 
@@ -10,119 +9,150 @@ import '../widgets/result_tile.dart';
 import '../widgets/score_breakdown.dart';
 import '../widgets/shared_widgets.dart';
 
-/// Result Screen 사용자 화면과 interaction 경계를 제공한다.
-/// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class ResultScreen extends StatelessWidget {
   const ResultScreen({
     super.key,
     required this.sentence,
     required this.result,
     required this.onTryAgain,
+    this.onOpenReview,
   });
 
   final PracticeSentence sentence;
   final PracticeResult? result;
   final VoidCallback onTryAgain;
+  final VoidCallback? onOpenReview;
 
   @override
   Widget build(BuildContext context) {
-    final score = result?.overallScore ?? sentence.score;
-    final gradeLabel = result?.gradeLabel ?? 'Good';
-    final summary =
-        result?.summary ??
-        'Tense consonants and sibilant tongue position need attention.';
-    final breakdown = result?.scoreBreakdown;
-    final weak =
-        result?.weakCharacters ??
-        sentence.characters.where((item) => item.score < 80).toList();
-    final recognizedText = result?.recognizedText ?? '';
-    final showRecognizedText =
-        recognizedText.isNotEmpty && !summary.contains(recognizedText);
-    final characterScoresUnavailable =
-        result?.characterScoreStatus == 'UNAVAILABLE';
-
+    final currentResult = result;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.lg,
+        AppSpacing.xl,
+        AppSpacing.section,
+      ),
       children: [
-        const TopBar(title: 'Result'),
-        const SizedBox(height: 22),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '$score',
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 64,
-                fontWeight: FontWeight.w900,
-                height: 0.95,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Padding(
-              padding: EdgeInsets.only(bottom: 8),
-              child: Text(
-                gradeLabel,
-                style: const TextStyle(
-                  color: AppColors.success,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+        const TopBar(
+          title: 'Result',
+          subtitle: 'Review the whole sentence before your next attempt.',
+        ),
+        const SizedBox(height: AppSpacing.xxl),
+        if (currentResult == null)
+          StatePanel(
+            icon: Icons.info_outline,
+            title: 'Result data is unavailable',
+            message: 'Return to Practice and evaluate the sentence again.',
+            actionLabel: 'Try This Sentence Again',
+            onAction: onTryAgain,
+          )
+        else ...[
+          AppCard(
+            child: Row(
+              children: [
+                ScoreRing(score: currentResult.overallScore),
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      StatusBadge(
+                        label: currentResult.gradeLabel,
+                        tone: _gradeTone(currentResult.overallScore),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        currentResult.summary,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
                 ),
+              ],
+            ),
+          ),
+          if (currentResult.recognizedText.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            AppCard(
+              color: AppColors.softBlue,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Recognized speech',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(currentResult.recognizedText),
+                ],
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          summary,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 16,
-            height: 1.35,
+          const SizedBox(height: AppSpacing.xxl),
+          const SectionHeader(title: 'Score breakdown'),
+          const SizedBox(height: AppSpacing.md),
+          ScoreBreakdown(
+            accuracy: currentResult.scoreBreakdown.accuracy,
+            fluency: currentResult.scoreBreakdown.fluency,
+            completeness: currentResult.scoreBreakdown.completeness,
           ),
-        ),
-        if (showRecognizedText) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.xxl),
+          const SectionHeader(title: 'All syllable scores'),
+          const SizedBox(height: AppSpacing.sm),
           Text(
-            'Recognized speech: $recognizedText',
+            'Tap any syllable to open its available mouth and tongue guide.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-        ],
-        const SizedBox(height: 22),
-        ScoreBreakdown(
-          accuracy: breakdown?.accuracy ?? 84,
-          fluency: breakdown?.fluency ?? 80,
-          completeness: breakdown?.completeness ?? 91,
-        ),
-        const SizedBox(height: 28),
-        const SectionHeader(title: 'Weak sounds'),
-        const SizedBox(height: 12),
-        if (characterScoresUnavailable)
-          Text(
-            'Character-level scores are unavailable for this evaluation.',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ...weak.map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: ResultTile(result: item),
-          ),
-        ),
-        const SizedBox(height: 18),
-        FilledButton.icon(
-          onPressed: onTryAgain,
-          icon: const Icon(Icons.refresh),
-          label: const Text('Try again'),
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.brand,
-            foregroundColor: AppColors.textPrimary,
-            minimumSize: const Size.fromHeight(54),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+          const SizedBox(height: AppSpacing.md),
+          if (currentResult.characterScoreStatus == 'UNAVAILABLE' ||
+              currentResult.characters.isEmpty)
+            const StatePanel(
+              icon: Icons.grid_off_outlined,
+              title: 'Character-level scores are unavailable',
+              message:
+                  'No syllable score was returned for this evaluation. The overall result is still valid.',
+            )
+          else
+            Wrap(
+              key: const ValueKey('result-character-grid'),
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final character in currentResult.characters)
+                  ResultTile(result: character),
+              ],
             ),
+          const SizedBox(height: AppSpacing.section),
+          PrimaryButton(
+            key: const ValueKey('retry-whole-sentence'),
+            label: 'Try This Sentence Again',
+            icon: Icons.refresh,
+            onPressed: onTryAgain,
           ),
-        ),
+          if (onOpenReview != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            SecondaryButton(
+              label: 'Open Review',
+              icon: Icons.history,
+              onPressed: onOpenReview,
+            ),
+          ],
+        ],
       ],
     );
   }
+}
+
+StatusTone _gradeTone(int score) {
+  if (score >= 90) {
+    return StatusTone.success;
+  }
+  if (score >= 75) {
+    return StatusTone.info;
+  }
+  if (score >= 60) {
+    return StatusTone.warning;
+  }
+  return StatusTone.error;
 }

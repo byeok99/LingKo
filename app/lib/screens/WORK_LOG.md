@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-07-28 - UI 최종 접근성 검토
+
+- 변경 파일: `auth_gate_screen.dart`, `practice_screen.dart`, `WORK_LOG.md`
+- 내용: 로그인 버튼 radius와 녹음 파형 pill radius를 공통 토큰으로 통일하고 작은 화면·확대 글자 흐름을 재검토했다.
+- 검증: 320px 화면, 1.8배 글자 확대 widget 테스트 및 전체 Flutter 검증
+- 리스크: 실제 기기별 Safe Area와 키보드 노출은 수동 확인 필요
+
+## 2026-07-28 - 전체 앱 화면 구조와 상태 UX 재구성
+
+- 변경 파일: `auth_gate_screen.dart`, `home_screen.dart`, `practice_screen.dart`, `profile_screen.dart`, `result_screen.dart`, `review_screen.dart`, `WORK_LOG.md`
+- 내용: 블루 시안에 맞춰 로그인·홈·연습·녹음·평가·결과·기록·설정을 재구성하고 녹음 종료 후 자동 평가, 전체 음절 결과, 전체 문장 재연습을 연결했다.
+- 검증: `flutter analyze`, `flutter test`
+- 리스크: 문장 듣기와 가이드 동영상 재생은 실제 재생 계층이 없어 비활성 안내로 유지
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `auth_gate_screen.dart`, `home_screen.dart`, `practice_screen.dart`, `profile_screen.dart`, `result_screen.dart`, `WORK_LOG.md`

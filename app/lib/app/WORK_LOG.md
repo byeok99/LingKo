@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-07-28 - UI 최종 검토 토큰 정리
+
+- 변경 파일: `app_theme.dart`, `WORK_LOG.md`
+- 내용: shadow와 pill radius를 공통 토큰으로 올리고 사용이 끝난 구형 색상 별칭을 제거했다.
+- 검증: `flutter analyze`, `flutter test`
+- 리스크: Google 로그인 버튼 색상은 제공자 브랜드 가이드에 따른 의도적 예외
+
+## 2026-07-28 - 4탭 UI shell과 평가 상태 보존
+
+- 변경 파일: `app_theme.dart`, `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 블루 Material 3 토큰을 정리하고 Home·Practice·Review·Profile 4탭과 shell 수준 평가 `jobId`·진행 상태를 연결했다.
+- 검증: `flutter analyze`, `flutter test`
+- 리스크: 앱 재시작 이후 진행 중 작업 복구는 아직 지원하지 않음
+
 ## 2026-07-27 - 비동기 음성 평가 흐름 적용
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

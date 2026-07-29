@@ -1,5 +1,4 @@
-// 파일 의도: sentence card 표시 단위를 재사용 가능한 Widget으로 제공한다.
-// 선택 이유: 화면의 상태 조율과 순수 표시를 분리하기 위해 작은 Widget 경계를 선택했다.
+// 파일 의도: 추천 문장과 기록 문장을 동일한 정보 계층으로 표시한다.
 
 import 'package:flutter/material.dart';
 
@@ -7,60 +6,67 @@ import '../app/app_theme.dart';
 import '../models/practice_sentence.dart';
 import 'shared_widgets.dart';
 
-/// Sentence Card 표시를 재사용 가능한 Widget으로 제공한다.
-/// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class SentenceCard extends StatelessWidget {
-  const SentenceCard({super.key, required this.sentence, required this.onTap});
+  const SentenceCard({
+    super.key,
+    required this.sentence,
+    required this.onTap,
+    this.actionLabel = 'Practice',
+  });
 
   final PracticeSentence sentence;
   final VoidCallback onTap;
+  final String actionLabel;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.background,
-      borderRadius: BorderRadius.circular(8),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Ink(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
+        borderRadius: BorderRadius.circular(AppSizes.radius),
+        child: AppCard(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      sentence.text,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right, color: AppColors.brandStrong),
-                ],
+              Container(
+                width: AppSizes.minimumTouchTarget,
+                height: AppSizes.minimumTouchTarget,
+                decoration: const BoxDecoration(
+                  color: AppColors.softBlue,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.play_arrow, color: AppColors.primary),
               ),
-              const SizedBox(height: 6),
-              Text(
-                sentence.pronunciation,
-                style: const TextStyle(
-                  color: AppColors.info,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sentence.text,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (sentence.translation.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        sentence.translation,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      actionLabel,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  MetaPill(label: sentence.level),
-                  MetaPill(label: sentence.category),
-                ],
-              ),
+              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),

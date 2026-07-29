@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-28 - 평가 진행 UI 상태 모델 추가
+
+- 변경 파일: `evaluation_progress.dart`, `WORK_LOG.md`
+- 내용: 업로드, 작업 생성, 분석, 피드백, 완료·실패 단계를 탭 간 공유하는 불변 상태를 추가했다.
+- 검증: `flutter analyze`, `flutter test`
+- 리스크: 프로세스 종료 후 상태 영속화는 후속 작업 필요
+
 ## 2026-07-27 - 평가 작업 상태 모델 추가
 
 - 변경 파일: `evaluation_job.dart`, `WORK_LOG.md`

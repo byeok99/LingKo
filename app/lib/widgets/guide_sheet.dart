@@ -38,7 +38,7 @@ class GuideSheet extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.border,
-                  borderRadius: BorderRadius.circular(99),
+                  borderRadius: BorderRadius.circular(AppSizes.pillRadius),
                 ),
               ),
             ),
@@ -60,8 +60,8 @@ class GuideSheet extends StatelessWidget {
               aspectRatio: 1.5,
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.scaffold,
+                  borderRadius: BorderRadius.circular(AppSizes.radius),
                   border: Border.all(color: AppColors.border),
                 ),
                 child:
@@ -73,24 +73,19 @@ class GuideSheet extends StatelessWidget {
             const SizedBox(height: 16),
             Text(result.note, style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: 18),
-            Row(
-              children: [
-                Expanded(
-                  child: ActionButton(
-                    icon: Icons.play_arrow,
-                    label: 'Play',
-                    onPressed: () {},
+            const AppCard(
+              color: AppColors.softBlue,
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppColors.primary),
+                  SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      'Guide media is shown when the evaluation provides it. Audio and video playback are not available yet.',
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ActionButton(
-                    icon: Icons.mic,
-                    label: 'Repeat',
-                    onPressed: () {},
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -165,7 +160,7 @@ class _StaticGuideAsset extends StatelessWidget {
         const SizedBox(height: 8),
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
             child: Image.network(
               asset.url,
               fit: BoxFit.contain,
@@ -190,7 +185,7 @@ class _UnavailableGuideAsset extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.center,
-      color: AppColors.background,
+      color: AppColors.card,
       child: Text(
         'Guide unavailable',
         style: Theme.of(context).textTheme.bodyMedium,
