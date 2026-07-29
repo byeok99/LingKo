@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Queue 발행 대상과 전송 시각 갱신 쿼리
+
+- 변경 파일: `EvaluationJobRepository.java`, `WORK_LOG.md`
+- 내용: 실행 가능한 오래된 PENDING 작업 조회와 상태 변경 경쟁을 방어하는 조건부 `enqueued_at` 갱신을 추가했다.
+- 검증: dispatcher 단위 테스트와 4 Worker 통합 테스트 통과
+- 리스크: 실제 MySQL dispatch 인덱스 실행 계획은 미측정
+
 ## 2026-07-29 - 만료 완료 작업 batch 조회 추가
 
 - 변경 파일: `EvaluationJobRepository.java`, `WORK_LOG.md`

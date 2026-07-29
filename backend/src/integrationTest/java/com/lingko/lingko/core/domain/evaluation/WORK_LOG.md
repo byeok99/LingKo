@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 독립 Queue Worker 확장·중복 전달 검증
+
+- 변경 파일: `EvaluationQueueScalingIntegrationTest.java`, `WORK_LOG.md`
+- 내용: 4개 논리 Worker가 40개 작업을 중복 없이 완료하고 동일 jobId 재전달도 결과·쿼터를 한 번만 확정하는지 검증했다.
+- 검증: H2 MySQL mode 대상 통합 테스트 통과
+- 리스크: 실제 MySQL·SQS·Azure 처리량과 지연시간은 미측정
+
 ## 2026-07-29 - 평가 Idempotency 동시성·정리 통합 테스트
 
 - 변경 파일: `EvaluationJobIdempotencyIntegrationTest.java`, `WORK_LOG.md`

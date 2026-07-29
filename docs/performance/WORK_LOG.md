@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - SQS Worker 독립 확장 상태 반영
+
+- 변경 파일: `scalability-plan.md`, `WORK_LOG.md`
+- 내용: SQS·독립 Worker 구현과 4 Worker/40 작업 정합성 검증을 완료로 반영하고 실제 처리량 측정은 #52로 구분했다.
+- 검증: 확장 통합 테스트 결과와 문서 수치 대조
+- 리스크: 실제 RPS·p95·CPU·DB Pool·SQS 지연 미측정
+
 ## 2026-07-29 - 평가 Idempotency 저장소 수명 정책 반영
 
 - 변경 파일: `scalability-plan.md`, `WORK_LOG.md`

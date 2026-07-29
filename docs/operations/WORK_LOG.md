@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - SQS Worker 배포·장애 대응 절차
+
+- 변경 파일: `operations-runbook.md`, `WORK_LOG.md`
+- 내용: API dispatcher와 web 없는 Worker 독립 실행, replica 확장, Queue 장애·중복 전달·DLQ 점검 절차를 추가했다.
+- 검증: 설정 예시·Compose와 Queue 상태 전이 대조
+- 리스크: 운영 metric 임계값과 redrive 횟수 미확정
+
 ## 2026-07-29 - 평가 작업 보존·정리 운영 절차 추가
 
 - 변경 파일: `operations-runbook.md`, `WORK_LOG.md`

@@ -31,7 +31,8 @@ sequenceDiagram
     participant B as Backend
     participant S as Private S3
     participant D as MySQL
-    participant W as Evaluation Worker
+    participant Q as SQS
+    participant W as Independent Worker
     participant Z as Azure Speech
 
     U->>A: 녹음 시작/종료
@@ -42,7 +43,10 @@ sequenceDiagram
     A->>B: POST /api/evaluations/jobs
     B->>D: 쿼터 예약 + PENDING 작업 저장
     B-->>A: 202 + jobId
-    W->>D: 작업 claim + lease
+    B->>D: 실행 가능한 PENDING 조회
+    B->>Q: jobId 발행
+    W->>Q: jobId long polling
+    W->>D: 작업 lock + lease claim
     W->>S: WAV 다운로드
     W->>Z: 기준 문장과 WAV 평가
     Z-->>W: 발음 점수·인식 결과
@@ -88,7 +92,8 @@ sequenceDiagram
   → 추천·자유 문장 기준 정보 확정
   → Idempotency 확인과 일일 쿼터 예약
   → PENDING 작업 저장 후 202 응답
-  → Worker가 S3 다운로드·WAV 헤더 검증·외부 평가
+  → API dispatcher가 jobId만 SQS에 발행
+  → 독립 Worker가 DB lease를 획득한 뒤 S3 다운로드·WAV 헤더 검증·외부 평가
   → 결과·음절 저장, 쿼터 확정과 SUCCEEDED를 단일 DB 트랜잭션으로 처리
   → 앱 Polling 응답
   → 완료 후 기본 7일 동안 Idempotency 응답 보존
@@ -98,6 +103,8 @@ sequenceDiagram
 쿼터 예약은 무료 횟수를 우선하고, 무료 횟수가 없으면 보상 횟수를 사용합니다. 재시도 중에는 예약을 유지하고 최종 실패에서 원래 날짜와 종류의 횟수를 복구합니다. 원본 음성은 작업 처리 동안만 비공개 S3에 보관하고 성공·최종 실패 후 삭제하며 Lifecycle을 삭제 실패의 안전망으로 둡니다.
 
 같은 사용자의 동시 작업 생성은 사용자 행의 짧은 비관적 lock으로 직렬화합니다. 기존 작업 확인과 쿼터 예약·작업 생성을 한 transaction에서 처리하므로 같은 Key 요청은 작업과 예약 각각 한 건으로 수렴합니다. 완료 작업 정리는 `completed_at`을 기준으로 하며 진행 중 작업을 삭제하지 않아 Worker 재처리와 예약 쿼터를 보호합니다.
+
+SQS Standard Queue의 중복 전달은 정상 동작으로 간주합니다. Worker는 메시지의 `jobId`로 DB 작업을 잠그고 terminal 상태는 ACK, 유효한 lease나 미래 재시도 시각은 visibility 연장, claim 가능한 작업만 실행합니다. API transaction 뒤 Queue 발행이 실패하거나 메시지가 유실되면 `enqueued_at`이 오래된 `PENDING` 작업을 dispatcher가 다시 발행합니다. 작은 개발 환경에서는 `evaluation.worker.mode=database`로 기존 DB polling Worker를 사용할 수 있습니다.
 
 ## 실패 처리
 
@@ -119,4 +126,4 @@ sequenceDiagram
 - 평가 지연시간과 실패율 메트릭
 - S3 Lifecycle과 삭제 실패 재처리
 - 실제 기기의 Presigned PUT·Polling E2E
-- 다중 Worker 필요 시 SQS 전환
+- 실제 AWS SQS·MySQL에서 DLQ·redrive와 Worker 강제 종료 복구 검증

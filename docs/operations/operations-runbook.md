@@ -11,6 +11,7 @@
 - 환경변수와 비밀값 존재 확인
 - 외부 서비스 쿼터와 권한 확인
 - S3 버킷 비공개 차단, Presigned PUT·삭제 권한과 Lifecycle 확인
+- SQS Standard Queue URL, DLQ와 redrive 정책 확인
 - `.env`, 토큰, 키가 Git diff에 포함되지 않았는지 확인
 - DB 백업 또는 복구 지점 확인
 
@@ -22,6 +23,23 @@ docker build -t lingko-backend:<version> .
 ```
 
 이미지는 Java 21 JRE와 FFmpeg를 포함합니다. 운영에서는 MySQL을 같은 Compose 안에 두기보다 관리형 DB 또는 별도 백업 정책이 있는 DB를 권장합니다.
+
+### SQS 기반 독립 평가 Worker
+
+API와 Worker에 같은 `EVALUATION_QUEUE_URL`·AWS region·credential을 주입합니다. API는 dispatcher만 실행하고 Worker는 HTTP server와 dispatcher를 끕니다.
+
+```bash
+cd backend
+EVALUATION_WORKER_MODE=sqs \
+EVALUATION_API_WORKER_ENABLED=false \
+docker compose --profile queue up --build --scale evaluation-worker=4
+```
+
+- API: `EVALUATION_WORKER_MODE=sqs`, `EVALUATION_API_WORKER_ENABLED=false`, `EVALUATION_QUEUE_DISPATCHER_ENABLED=true`
+- Worker: `SPRING_MAIN_WEB_APPLICATION_TYPE=none`, `EVALUATION_WORKER_MODE=sqs`, `EVALUATION_WORKER_ENABLED=true`, dispatcher·cleanup 비활성
+- 작은 개발 환경 또는 Queue 장애 fallback: `EVALUATION_WORKER_MODE=database`, API 내부 Worker 활성
+- Queue에는 `jobId`만 저장하고 작업 상태·결과·Idempotency는 MySQL에서 확인
+- Queue visibility timeout은 정상 평가 처리시간보다 길게 설정하고 DLQ redrive 횟수는 애플리케이션 최대 재시도와 혼동하지 않도록 별도로 기록
 
 ## 헬스 점검
 
@@ -75,10 +93,21 @@ docker build -t lingko-backend:<version> .
 ### 평가 작업 정체
 
 - Worker 활성화 여부와 `EVALUATION_WORKER_*` 설정 확인
+- SQS mode에서는 Queue URL, depth, oldest message age, DLQ와 Worker replica 수 확인
+- `PENDING`의 `enqueued_at`이 재발행 기준보다 오래됐는데 Queue depth가 늘지 않으면 API dispatcher와 AWS 권한 확인
 - `lease_expires_at`이 지난 `PROCESSING` 작업이 다시 claim되는지 확인
 - Azure 호출이 종료되지 않는 경우 Worker 프로세스를 재시작하고 #44 timeout 적용 상태 확인
 - 실패 작업의 `attempt_count`, `error_code`와 쿼터 복구 여부 확인
 - DB 상태를 수동 수정하기 전에 S3 object와 예약 쿼터를 함께 확인
+
+### Queue 장애 또는 중복 전달
+
+- SQS Standard Queue의 중복 메시지는 정상 가능성이 있으므로 수동으로 작업을 복제하지 않음
+- 완료 작업 메시지는 Worker가 DB 상태 확인 후 ACK하며 결과·쿼터를 다시 확정하지 않음
+- Queue 발행 실패 후 `PENDING` 작업은 `EVALUATION_QUEUE_REDISPATCH_SECONDS`가 지나면 재발행
+- Worker 종료 시 visibility timeout과 DB lease가 모두 만료된 뒤 다른 Worker가 재처리
+- DLQ 이동 작업은 DB 상태, `attempt_count`, S3 object와 예약 쿼터를 함께 확인한 후 redrive
+- Queue 장애 중에는 API가 작업을 DB에 보존하므로 신규 작업 중복 생성 대신 dispatcher 복구를 우선
 
 ### 평가 작업 Idempotency 보존·정리
 
@@ -142,6 +171,8 @@ docker build -t lingko-backend:<version> .
 - JVM heap·GC·CPU
 - 가이드 작업 상태별 수와 처리시간
 - 평가 작업 상태별 수, oldest pending age, 시도 횟수와 lease 만료 재claim 수
+- SQS queue depth, oldest message age, receive/delete 오류, DLQ message 수
+- dispatcher 발행·실패·재발행 수와 Worker 완료·재시도 처리량
 - 음성 업로드 크기 분포
 
 ## 사고 기록 템플릿

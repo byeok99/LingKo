@@ -21,7 +21,11 @@ public class EvaluationJobSettings {
 
     private int uploadUrlExpireMinutes = 10;
 
+    @Valid
     private Worker worker = new Worker();
+
+    @Valid
+    private Queue queue = new Queue();
 
     @Valid
     private Cleanup cleanup = new Cleanup();
@@ -31,13 +35,53 @@ public class EvaluationJobSettings {
     public static class Worker {
         private boolean enabled = true;
 
+        private WorkerMode mode = WorkerMode.DATABASE;
+
+        @Min(100)
         private long pollDelayMs = 1000;
 
+        @Min(1)
+        @Max(43_200)
         private int leaseSeconds = 60;
 
+        @Min(0)
+        @Max(43_200)
         private int retryDelaySeconds = 5;
 
+        @Min(1)
+        @Max(100)
         private int maxAttempts = 3;
+    }
+
+    /**
+     * SQS 전달과 DB 기반 재발행 복구의 polling·visibility 경계를 관리한다.
+     */
+    @Getter
+    @Setter
+    public static class Queue {
+        private boolean dispatcherEnabled = true;
+
+        private String url;
+
+        private String endpoint;
+
+        @Min(100)
+        private long dispatchDelayMs = 500;
+
+        @Min(1)
+        @Max(10_000)
+        private int dispatchBatchSize = 100;
+
+        @Min(1)
+        private int redispatchSeconds = 120;
+
+        @Min(0)
+        @Max(20)
+        private int receiveWaitSeconds = 10;
+
+        @Min(1)
+        @Max(43_200)
+        private int visibilityTimeoutSeconds = 120;
     }
 
     /**
@@ -57,5 +101,10 @@ public class EvaluationJobSettings {
         @Min(1)
         @Max(10_000)
         private int batchSize = 1_000;
+    }
+
+    public enum WorkerMode {
+        DATABASE,
+        SQS
     }
 }

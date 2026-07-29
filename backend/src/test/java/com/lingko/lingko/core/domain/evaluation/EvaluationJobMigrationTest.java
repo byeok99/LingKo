@@ -26,10 +26,12 @@ class EvaluationJobMigrationTest {
             runMigration(connection, "V1__baseline_schema.sql");
             runMigration(connection, "V8__add_evaluation_jobs.sql");
             runMigration(connection, "V9__add_evaluation_job_cleanup_index.sql");
+            runMigration(connection, "V10__add_evaluation_job_queue_dispatch.sql");
 
             assertColumn(connection, "evaluation_jobs", "status");
             assertColumn(connection, "evaluation_jobs", "lease_expires_at");
             assertColumn(connection, "evaluation_jobs", "result_payload");
+            assertColumn(connection, "evaluation_jobs", "enqueued_at");
             assertUniqueConstraint(
                     connection,
                     "evaluation_jobs",
@@ -42,6 +44,7 @@ class EvaluationJobMigrationTest {
             );
             assertIndex(connection, "evaluation_jobs", "idx_evaluation_jobs_claim");
             assertIndex(connection, "evaluation_jobs", "idx_evaluation_jobs_cleanup");
+            assertIndex(connection, "evaluation_jobs", "idx_evaluation_jobs_dispatch");
         }
     }
 

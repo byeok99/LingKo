@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 Worker 독립 확장 요구 구현 반영
+
+- 변경 파일: `non-functional-requirements.md`, `WORK_LOG.md`
+- 내용: NFR-PERF-009와 NFR-SCALE-005에 SQS jobId 전달, DB 원본과 API/Worker 독립 replica 구현·검증 상태를 반영했다.
+- 검증: Docker 구성과 4 Worker 통합 테스트 대조
+- 리스크: 운영 안전 처리량은 #52에서 확정 필요
+
 ## 2026-07-29 - Idempotency 중복 요청 검증 완료
 
 - 변경 파일: `non-functional-requirements.md`, `WORK_LOG.md`

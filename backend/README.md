@@ -9,7 +9,7 @@ LingKo의 Spring Boot REST API입니다. 추천 문장, 표준 발음, 음성 �
 - Spring MVC / Validation / Data JPA / WebFlux
 - MySQL 8 / Flyway
 - Azure Speech SDK
-- AWS SDK for S3
+- AWS SDK for S3 / SQS
 - Gradle / JUnit 5 / JaCoCo
 - Docker / FFmpeg
 
@@ -28,6 +28,16 @@ src/main/java/com/lingko/lingko/
 cp .env.example .env
 docker compose up --build
 ```
+
+SQS 기반 독립 평가 Worker를 사용할 때는 Queue URL을 설정하고 API 내부 Worker를 끈 뒤 Worker 수를 별도로 지정합니다.
+
+```bash
+EVALUATION_WORKER_MODE=sqs \
+EVALUATION_API_WORKER_ENABLED=false \
+docker compose --profile queue up --build --scale evaluation-worker=4
+```
+
+API는 DB의 `PENDING` 작업을 SQS에 전달하고 `evaluation-worker`만 메시지를 소비합니다. SQS 메시지는 `jobId`만 포함하며 작업 상태·결과·Idempotency는 MySQL을 원본으로 유지합니다.
 
 또는 MySQL과 환경변수를 별도로 준비한 후:
 
@@ -62,7 +72,7 @@ docker compose up --build
 
 ## 현재 주의사항
 
-- 평가 업로드 API와 사용자 인증·쿼터·영속화 연결은 아직 완전하지 않습니다.
+- 실제 AWS SQS Queue에는 visibility timeout보다 긴 redrive 정책과 DLQ를 설정해야 합니다.
 - 가이드 작업 상태는 서버 메모리에 저장됩니다.
 - Refresh Token 갱신·폐기 API는 구현됐으며 운영 전 실제 동시 갱신 부하를 확인해야 합니다.
 - 운영 전 Actuator, 관측성, 외부 호출 복원력, 백업 정책이 필요합니다.

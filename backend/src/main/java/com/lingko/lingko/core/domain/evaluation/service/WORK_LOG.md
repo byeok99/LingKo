@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - SQS 독립 평가 Worker와 공통 실행 경계
+
+- 변경 파일: `EvaluationJobExecutor.java`, `EvaluationJobProcessingService.java`, `EvaluationJobQueue.java`, `EvaluationJobQueueDispatcher.java`, `EvaluationJobQueueWorker.java`, `EvaluationJobWorker.java`, `WORK_LOG.md`
+- 내용: SQS jobId 전달·DB lease·ACK/visibility·재발행 복구를 추가하고 DB fallback과 Queue Worker가 같은 평가·보상 절차를 사용하게 했다. 쿼터 native UPDATE 전 작업 상태를 변경해 detached 상태 유실도 수정했다.
+- 검증: Queue 단위 테스트, 4 Worker/40 작업과 중복 전달 통합 테스트 통과
+- 리스크: 실제 SQS 장애·Worker 강제 종료와 Azure 장시간 호출은 운영 검증 필요
+
 ## 2026-07-29 - 평가 Idempotency 만료 정리 구현
 
 - 변경 파일: `EvaluationJobCleanupService.java`, `EvaluationJobCleanupWorker.java`, `WORK_LOG.md`

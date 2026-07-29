@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Queue Worker·dispatcher 계약 테스트
+
+- 변경 파일: `EvaluationJobExecutorTest.java`, `EvaluationJobMigrationTest.java`, `EvaluationJobQueueDispatcherTest.java`, `EvaluationJobQueueWorkerTest.java`, `EvaluationJobTest.java`, `EvaluationJobWorkerTest.java`, `EvaluationWorkerModeConditionTest.java`, `WORK_LOG.md`
+- 내용: jobId 발행·발행 실패 복구, DB claim별 ACK/visibility, API/Worker bean 분리, 공통 실행 성공·재시도·최종 실패와 V10 스키마를 검증했다.
+- 검증: 대상 단위 테스트 통과
+- 리스크: 실제 AWS SQS 통신은 포함하지 않음
+
 ## 2026-07-29 - 평가 작업 정리 인덱스 회귀 검증
 
 - 변경 파일: `EvaluationJobMigrationTest.java`, `WORK_LOG.md`

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -50,6 +51,33 @@ public class EvaluationJobProcessingService {
                 });
     }
 
+    /**
+     * SQS 중복 전달에서도 DB lease를 획득한 Worker만 평가를 실행하도록 판정한다.
+     */
+    @Transactional
+    public QueueClaim claimQueued(String jobId) {
+        Instant now = clock.instant();
+        EvaluationJob job = jobRepository.findByIdForUpdate(jobId).orElse(null);
+        if (job == null || isTerminal(job)) {
+            return QueueClaim.discard();
+        }
+        if (job.getStatus() == EvaluationJob.Status.PENDING
+                && job.getNextAttemptAt().isAfter(now)) {
+            return QueueClaim.retryLater(secondsUntil(now, job.getNextAttemptAt()));
+        }
+        if (job.getStatus() == EvaluationJob.Status.PROCESSING
+                && job.getLeaseExpiresAt() != null
+                && job.getLeaseExpiresAt().isAfter(now)) {
+            return QueueClaim.retryLater(secondsUntil(now, job.getLeaseExpiresAt()));
+        }
+
+        job.claim(
+                now,
+                now.plusSeconds(settings.getWorker().getLeaseSeconds())
+        );
+        return QueueClaim.claimed(job);
+    }
+
     @Transactional
     public void complete(EvaluationJob claimedJob, PracticeResultResponse result) {
         EvaluationJob job = requireProcessingJob(claimedJob.getJobId());
@@ -61,8 +89,9 @@ public class EvaluationJobProcessingService {
                 .standardPronunciation(job.getStandardPronunciation())
                 .result(result)
                 .build());
-        quotaService.confirmPractice(job.reservation());
         job.succeed(writeResult(result), clock.instant());
+        // quota native UPDATE가 EntityManager를 clear하므로 작업 상태를 먼저 변경해 flush 대상에 포함한다.
+        quotaService.confirmPractice(job.reservation());
     }
 
     /**
@@ -73,8 +102,9 @@ public class EvaluationJobProcessingService {
         EvaluationJob job = requireProcessingJob(claimedJob.getJobId());
         String errorCode = "EVALUATION_FAILED";
         if (job.getAttemptCount() >= settings.getWorker().getMaxAttempts()) {
-            quotaService.releasePractice(job.reservation());
             job.fail(errorCode, clock.instant());
+            // 예약 복구 native UPDATE 전에 FAILED를 기록해 clear 이후 상태 변경 유실을 막는다.
+            quotaService.releasePractice(job.reservation());
             return true;
         }
 
@@ -94,11 +124,49 @@ public class EvaluationJobProcessingService {
         return job;
     }
 
+    private boolean isTerminal(EvaluationJob job) {
+        return job.getStatus() == EvaluationJob.Status.SUCCEEDED
+                || job.getStatus() == EvaluationJob.Status.FAILED;
+    }
+
+    private int secondsUntil(Instant now, Instant target) {
+        long milliseconds = Math.max(1, Duration.between(now, target).toMillis());
+        return (int) Math.min(43_200, (milliseconds + 999) / 1_000);
+    }
+
     private String writeResult(PracticeResultResponse result) {
         try {
             return objectMapper.writeValueAsString(result);
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Evaluation result serialization failed", exception);
         }
+    }
+
+    public record QueueClaim(
+            QueueClaimDisposition disposition,
+            EvaluationJob job,
+            int retryAfterSeconds
+    ) {
+        public static QueueClaim claimed(EvaluationJob job) {
+            return new QueueClaim(QueueClaimDisposition.CLAIMED, job, 0);
+        }
+
+        public static QueueClaim retryLater(int retryAfterSeconds) {
+            return new QueueClaim(
+                    QueueClaimDisposition.RETRY_LATER,
+                    null,
+                    retryAfterSeconds
+            );
+        }
+
+        public static QueueClaim discard() {
+            return new QueueClaim(QueueClaimDisposition.DISCARD, null, 0);
+        }
+    }
+
+    public enum QueueClaimDisposition {
+        CLAIMED,
+        RETRY_LATER,
+        DISCARD
     }
 }

@@ -36,13 +36,26 @@ class EvaluationJobTest {
         Instant now = Instant.parse("2026-07-27T01:00:00Z");
         EvaluationJob job = pendingJob(now);
         job.claim(now, now.plusSeconds(60));
+        job.markEnqueued(now);
 
         job.scheduleRetry(now.plusSeconds(5), "EVALUATION_FAILED");
 
         assertThat(job.getStatus()).isEqualTo(EvaluationJob.Status.PENDING);
         assertThat(job.getNextAttemptAt()).isEqualTo(now.plusSeconds(5));
+        assertThat(job.getEnqueuedAt()).isEqualTo(now.plusSeconds(5));
         assertThat(job.getErrorCode()).isEqualTo("EVALUATION_FAILED");
         assertThat(job.getLeaseExpiresAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("Queue 발행 시각을 기록해 전송 성공 작업의 즉시 중복 발행을 억제한다")
+    void marksQueueDispatch() {
+        Instant now = Instant.parse("2026-07-27T01:00:00Z");
+        EvaluationJob job = pendingJob(now);
+
+        job.markEnqueued(now.plusSeconds(1));
+
+        assertThat(job.getEnqueuedAt()).isEqualTo(now.plusSeconds(1));
     }
 
     @Test
