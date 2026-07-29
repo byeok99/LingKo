@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 요청 Idempotency 해결 기록
+
+- 변경 파일: `2026-07-29-evaluation-request-idempotency.md`, `README.md`, `WORK_LOG.md`
+- 내용: 동시 중복 생성 위험, 사용자 lock 기반 단일화와 완료 작업 7일 보존·batch 정리 결정을 기록했다.
+- 검증: Spring/JPA 통합 테스트, 구현·API·운영 문서와 사실 관계 대조
+- 리스크: 실제 MySQL 부하 미검증, PR 생성 후 링크 갱신 필요
+
 ## 2026-07-26 - 일일 쿼터 경쟁 조건 해결 기록
 
 - 변경 파일: `2026-07-26-practice-quota-race-condition.md`, `README.md`, `WORK_LOG.md`

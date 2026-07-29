@@ -25,6 +25,7 @@ class EvaluationJobMigrationTest {
         )) {
             runMigration(connection, "V1__baseline_schema.sql");
             runMigration(connection, "V8__add_evaluation_jobs.sql");
+            runMigration(connection, "V9__add_evaluation_job_cleanup_index.sql");
 
             assertColumn(connection, "evaluation_jobs", "status");
             assertColumn(connection, "evaluation_jobs", "lease_expires_at");
@@ -40,6 +41,7 @@ class EvaluationJobMigrationTest {
                     "uk_evaluation_jobs_audio_object"
             );
             assertIndex(connection, "evaluation_jobs", "idx_evaluation_jobs_claim");
+            assertIndex(connection, "evaluation_jobs", "idx_evaluation_jobs_cleanup");
         }
     }
 

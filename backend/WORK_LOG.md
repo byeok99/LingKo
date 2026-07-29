@@ -1,3 +1,10 @@
+## 2026-07-29 - 평가 Idempotency 정리 설정 예시 추가
+
+- 변경 파일: `application.example.yaml`, `WORK_LOG.md`
+- 내용: 완료 작업의 7일 보존, 정리 주기와 batch 크기 환경변수 예시를 추가했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 운영 완료 작업 증가량에 맞춰 batch와 주기를 조정해야 함
+
 ## 2026-07-27 - 평가 Worker 운영 설정 예시 추가
 
 - 변경 파일: `application.example.yaml`, `WORK_LOG.md`

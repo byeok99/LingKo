@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 Idempotency 만료 정리 구현
+
+- 변경 파일: `EvaluationJobCleanupService.java`, `EvaluationJobCleanupWorker.java`, `WORK_LOG.md`
+- 내용: 완료 후 기본 7일이 지난 성공·실패 작업만 매시간 제한된 batch로 삭제하고 진행 중 작업은 보존한다.
+- 검증: 정리 대상·보존 대상 통합 테스트 및 `./gradlew test integrationTest` 통과
+- 리스크: 정리 속도가 완료 작업 증가량보다 느린지 운영 모니터링 필요
+
 ## 2026-07-27 - DB 기반 음성 평가 Worker 구현
 
 - 변경 파일: `EvaluationAudioStorage.java`, `EvaluationJobCreationService.java`, `EvaluationJobProcessingService.java`, `EvaluationJobService.java`, `EvaluationJobWorker.java`, `EvaluationService.java`, `WORK_LOG.md`

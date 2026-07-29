@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 만료 완료 작업 batch 조회 추가
+
+- 변경 파일: `EvaluationJobRepository.java`, `WORK_LOG.md`
+- 내용: 성공·최종 실패 작업 중 완료 시점이 보존 기준보다 오래된 ID만 제한 조회하도록 추가했다.
+- 검증: Idempotency 정리 통합 테스트 및 전체 Backend 테스트 통과
+- 리스크: 운영 DB 정리 query 시간은 미측정
+
 ## 2026-07-27 - 평가 작업 claim 조회 추가
 
 - 변경 파일: `EvaluationJobRepository.java`, `WORK_LOG.md`

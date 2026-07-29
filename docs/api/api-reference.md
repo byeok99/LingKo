@@ -135,7 +135,7 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 }
 ```
 
-동일 사용자·동일 Key·동일 payload 재호출은 기존 작업을 반환하며 다른 payload는 `409 IDEMPOTENCY_CONFLICT`입니다.
+동일 사용자·동일 Key·동일 payload 재호출은 기존 작업을 반환하며 다른 payload는 `409 IDEMPOTENCY_CONFLICT`입니다. 성공·최종 실패 작업은 완료 시점부터 기본 7일 동안 이 응답 재사용을 위해 보존합니다. 보존 기간이 지난 작업은 설정된 batch 단위로 삭제되며, `PENDING`·`PROCESSING` 작업은 자동 정리 대상이 아닙니다.
 
 ### `GET /api/evaluations/jobs/{jobId}`
 

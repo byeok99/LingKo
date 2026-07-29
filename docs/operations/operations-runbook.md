@@ -80,6 +80,14 @@ docker build -t lingko-backend:<version> .
 - 실패 작업의 `attempt_count`, `error_code`와 쿼터 복구 여부 확인
 - DB 상태를 수동 수정하기 전에 S3 object와 예약 쿼터를 함께 확인
 
+### 평가 작업 Idempotency 보존·정리
+
+- 기본값은 완료 후 7일 보존, 1시간 간격, 실행당 최대 1,000건 삭제
+- `EVALUATION_CLEANUP_ENABLED`, `EVALUATION_CLEANUP_RETENTION_DAYS`, `EVALUATION_CLEANUP_INTERVAL_MS`, `EVALUATION_CLEANUP_BATCH_SIZE`로 조정
+- 정리 대상은 `SUCCEEDED`·`FAILED`이면서 `completed_at`이 보존 기준보다 오래된 작업으로 제한
+- `PENDING`·`PROCESSING` 증가는 정리 설정이 아니라 Worker 정체 원인을 먼저 확인
+- 삭제량이 batch 상한에 계속 도달하면 실행 간격 또는 batch 크기를 점진적으로 조정하고 DB 부하를 확인
+
 ### 평가 음성 S3 설정
 
 - 버킷 Public Access Block을 활성화하고 object ACL을 공개하지 않음

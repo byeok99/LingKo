@@ -244,12 +244,12 @@ WHERE user_idx = :userId
 저장할 값:
 
 - 요청 payload hash
-- 상태: PROCESSING / COMPLETED / FAILED
+- 상태: PENDING / PROCESSING / SUCCEEDED / FAILED
 - 평가 작업 ID 또는 결과 ID
-- 생성·만료 시각
+- 생성·완료 시각
 - 재시도 가능한 실패 여부
 
-동일 키에 다른 payload가 들어오면 409로 거부합니다.
+동일 키에 다른 payload가 들어오면 409로 거부합니다. 현재 구현은 동일 사용자의 작업 생성 transaction을 사용자 행 lock으로 직렬화해 동시 요청을 작업 1건과 쿼터 예약 1건으로 수렴시킵니다. 성공·최종 실패 작업은 완료 후 기본 7일 보존하고 `(status, completed_at)` 인덱스로 조회한 최대 1,000건을 기본 1시간마다 삭제합니다. 진행 중 작업은 Worker 복구와 쿼터 예약을 보호하기 위해 만료시키지 않습니다.
 
 관련 Issue: [#38](https://github.com/byeok99/LingKo/issues/38), [#39](https://github.com/byeok99/LingKo/issues/39)
 

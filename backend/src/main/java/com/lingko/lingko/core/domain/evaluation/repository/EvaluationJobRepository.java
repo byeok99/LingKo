@@ -21,6 +21,19 @@ public interface EvaluationJobRepository extends JpaRepository<EvaluationJob, St
 
     Optional<EvaluationJob> findByJobIdAndUserUserIdx(String jobId, Long userId);
 
+    @Query("""
+            select job.jobId
+            from EvaluationJob job
+            where job.status in :terminalStatuses
+              and job.completedAt < :cutoff
+            order by job.completedAt asc
+            """)
+    List<String> findExpiredTerminalJobIds(
+            @Param("terminalStatuses") List<EvaluationJob.Status> terminalStatuses,
+            @Param("cutoff") Instant cutoff,
+            Pageable pageable
+    );
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select job from EvaluationJob job where job.jobId = :jobId")
     Optional<EvaluationJob> findByIdForUpdate(@Param("jobId") String jobId);

@@ -58,6 +58,7 @@ SEV-1·SEV-2, 보안·개인정보 또는 데이터 유실 위험은 답변 수�
 
 | 날짜 | 심각도 | 영역 | 제목 | 상태 | 관련 Issue |
 |---|---|---|---|---|---|
+| 2026-07-29 | SEV-3 | Backend / DB / Concurrency | [평가 재시도에서 작업과 쿼터가 중복 생성될 위험](2026-07-29-evaluation-request-idempotency.md) | 해결 | [#39](https://github.com/byeok99/LingKo/issues/39) |
 | 2026-07-26 | SEV-3 | Backend / DB / Concurrency | [동시 연습 요청에서 일일 쿼터가 초과 예약되는 경쟁 조건](2026-07-26-practice-quota-race-condition.md) | 해결 | [#38](https://github.com/byeok99/LingKo/issues/38) |
 
 ## 문서 템플릿
