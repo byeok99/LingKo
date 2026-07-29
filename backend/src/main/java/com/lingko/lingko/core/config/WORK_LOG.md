@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 완료 작업 정리 설정 추가
+
+- 변경 파일: `EvaluationJobSettings.java`, `WORK_LOG.md`
+- 내용: 기본 7일 보존, 1시간 주기, 1,000건 batch와 설정값 경계 검증을 추가했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 운영 데이터 증가량 기준의 최적 값은 미측정
+
 ## 2026-07-27 - 평가 Worker와 S3 signer 설정
 
 - 변경 파일: `S3Config.java`, `EvaluationJobSettings.java`, `EvaluationWorkerConfig.java`, `WORK_LOG.md`

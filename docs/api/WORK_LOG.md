@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 Idempotency 보존 계약 추가
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: 완료 작업 기본 7일 재사용, batch 정리와 진행 중 작업 보존 정책을 API 계약에 반영했다.
+- 검증: Cleanup 구현·설정 및 통합 테스트와 대조
+- 리스크: 보존 기간 변경 시 앱의 최대 재시도 기간과 함께 검토 필요
+
 ## 2026-07-27 - 비동기 평가 API와 오류 계약 문서화
 
 - 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`

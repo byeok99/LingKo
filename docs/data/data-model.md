@@ -113,6 +113,7 @@
 - `evaluation_syllable`: `(evaluation_log_idx, position_no)` 유일
 - `evaluation_jobs`: `(user_idx, idempotency_key)`, `audio_object_key` 유일
 - `evaluation_jobs`: `(status, next_attempt_at, lease_expires_at, created_at)` Worker claim 인덱스
+- `evaluation_jobs`: `(status, completed_at)` 완료 작업 정리 인덱스
 - `evaluation_jobs.status`: `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`
 - `daily_practice_quota`: `(user_idx, quota_date)` 유일
 - `daily_practice_quota.quota_date` 인덱스
@@ -127,7 +128,7 @@
 | 사용자 프로필 | 사용자 | 회원 탈퇴 정책 필요 |
 | 학습 설정 | 사용자 | 사용자와 함께 삭제 |
 | 평가 기록 | 사용자 | 사용자 삭제·보존 정책 필요 |
-| 평가 작업 | 사용자 | 사용자 삭제 시 cascade, 운영 보존 기간 결정 필요 |
+| 평가 작업 | 사용자 | 사용자 삭제 시 cascade, 성공·최종 실패 후 기본 7일 보존 |
 | 평가 원본 음성 | 사용자 평가 작업 | 성공·최종 실패 후 삭제, S3 Lifecycle로 유실 정리 보완 |
 | 음절 가이드 | 서비스 공용 | 콘텐츠 관리 정책 적용 |
 | 일일 쿼터 | 사용자·날짜 | 운영상 보존 기간 결정 필요 |
@@ -141,5 +142,6 @@
 - Refresh Token 원문은 저장하지 않고 현재 토큰의 SHA-256 해시만 저장합니다.
 - 평가 작업은 MySQL을 상태의 원본으로 사용하며 Worker 재시작 후에도 재시도할 수 있습니다.
 - 평가 성공 시 결과는 `evaluation_log`와 `evaluation_jobs.result_payload`에 저장되고 원본 S3 객체는 삭제합니다.
+- 완료된 평가 작업은 Idempotency 응답 재사용을 위해 기본 7일 보존한 뒤 batch 삭제하며 진행 중 작업은 자동 삭제하지 않습니다.
 - 작업 생성 전 업로드됐지만 제출되지 않은 객체나 삭제 실패 객체는 S3 Lifecycle 정책이 필요합니다.
 - 사용자 삭제 시 `evaluation_jobs`는 cascade되지만 남은 S3 객체 삭제는 별도 검증이 필요합니다.

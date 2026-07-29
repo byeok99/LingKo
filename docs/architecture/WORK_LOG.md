@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 Idempotency 동시성·만료 흐름 반영
+
+- 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`
+- 내용: 사용자 lock 기반 단일 생성과 완료 후 7일 보존·batch 삭제 흐름을 반영했다.
+- 검증: CreationService, CleanupService와 통합 테스트 대조
+- 리스크: 실제 MySQL lock wait 미측정
+
 ## 2026-07-27 - S3·DB Worker 평가 구조 반영
 
 - 변경 파일: `evaluation-flow.md`, `system-architecture.md`, `WORK_LOG.md`

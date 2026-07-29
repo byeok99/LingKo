@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - Idempotency 중복 요청 검증 완료
+
+- 변경 파일: `non-functional-requirements.md`, `WORK_LOG.md`
+- 내용: 동일 평가 요청 10개의 작업·쿼터 단일화 통합 테스트 통과를 MVP 체크리스트에 반영했다.
+- 검증: H2 MySQL mode 통합 테스트와 전체 Backend 테스트 통과
+- 리스크: 실제 MySQL 동시 부하는 미검증
+
 ## 2026-07-27 - 음성 저장·Worker 비기능 요구 반영
 
 - 변경 파일: `non-functional-requirements.md`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 작업 보존·정리 모델 반영
+
+- 변경 파일: `data-model.md`, `WORK_LOG.md`
+- 내용: 완료 작업 정리 인덱스와 기본 7일 보존 정책을 데이터 소유권에 반영했다.
+- 검증: V9 migration과 Cleanup query 대조
+- 리스크: 실제 MySQL migration 미실행
+
 ## 2026-07-27 - 평가 작업 데이터 모델 추가
 
 - 변경 파일: `data-model.md`, `WORK_LOG.md`

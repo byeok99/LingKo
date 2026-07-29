@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 작업 보존·정리 운영 절차 추가
+
+- 변경 파일: `operations-runbook.md`, `WORK_LOG.md`
+- 내용: 정리 환경변수, 기본값, 대상 상태와 backlog 대응 절차를 추가했다.
+- 검증: 설정 예시와 Cleanup 구현 대조
+- 리스크: 운영 DB 부하에 따른 설정 조정 필요
+
 ## 2026-07-27 - 평가 Worker 운영 절차 추가
 
 - 변경 파일: `operations-runbook.md`, `WORK_LOG.md`

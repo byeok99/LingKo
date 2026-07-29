@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 작업 정리 인덱스 회귀 검증
+
+- 변경 파일: `EvaluationJobMigrationTest.java`, `WORK_LOG.md`
+- 내용: V9 적용 후 완료 작업 정리 인덱스가 생성되는 계약을 추가했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 실제 MySQL migration 검증 필요
+
 ## 2026-07-27 - 평가 작업 생명주기 회귀 테스트
 
 - 변경 파일: `EvaluationJobMigrationTest.java`, `EvaluationJobServiceTest.java`, `EvaluationJobTest.java`, `EvaluationJobWorkerTest.java`, `EvaluationApplicationServiceTest.java`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-29 - 평가 완료 작업 정리 인덱스
+
+- 변경 파일: `V9__add_evaluation_job_cleanup_index.sql`, `WORK_LOG.md`
+- 내용: 상태와 완료 시점 기준 만료 작업 조회를 위한 복합 인덱스를 추가했다.
+- 검증: H2 MySQL mode 마이그레이션 테스트와 Backend 전체 테스트 통과
+- 리스크: 실제 MySQL V1~V9 연속 migration은 미실행
+
 ## 2026-07-27 - 평가 작업 테이블 마이그레이션
 
 - 변경 파일: `V8__add_evaluation_jobs.sql`, `WORK_LOG.md`
