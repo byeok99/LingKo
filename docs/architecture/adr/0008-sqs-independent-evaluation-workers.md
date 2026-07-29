@@ -3,7 +3,7 @@
 - 상태: 승인
 - 날짜: 2026-07-29
 - 관련 Issue: [#47](https://github.com/byeok99/LingKo/issues/47)
-- 관련 PR: [#64](https://github.com/byeok99/LingKo/pull/64) 후속 구현
+- 관련 PR: [#68](https://github.com/byeok99/LingKo/pull/68)
 
 ## 배경
 

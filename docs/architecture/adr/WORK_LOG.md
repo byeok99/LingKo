@@ -3,7 +3,7 @@
 ## 2026-07-29 - SQS 독립 Worker ADR 추가
 
 - 변경 파일: `0007-s3-direct-upload-and-db-evaluation-worker.md`, `0008-sqs-independent-evaluation-workers.md`, `README.md`, `WORK_LOG.md`
-- 내용: DB를 작업 원본으로 유지하고 SQS에는 jobId만 전달하며 API·Worker를 독립 확장하는 결정을 기록했다.
+- 내용: DB를 작업 원본으로 유지하고 SQS에는 jobId만 전달하며 API·Worker를 독립 확장하는 결정과 PR #68을 기록했다.
 - 검증: 구현·테스트·운영 문서와 결정 대조
 - 리스크: 실제 AWS SQS 처리량과 DLQ 운영은 미검증
 

@@ -3,7 +3,7 @@
 ## 2026-07-29 - 평가 작업 완료 상태 유실 해결 기록
 
 - 변경 파일: `2026-07-29-evaluation-job-status-lost-after-quota-update.md`, `README.md`, `WORK_LOG.md`
-- 내용: 쿼터 native UPDATE의 persistence context clear 뒤 작업 상태 변경이 유실된 원인과 호출 순서 수정, 40건 회귀 검증을 기록했다.
+- 내용: 쿼터 native UPDATE의 persistence context clear 뒤 작업 상태 변경이 유실된 원인과 호출 순서 수정, 40건 회귀 검증과 PR #68을 기록했다.
 - 검증: Queue 확장 통합 테스트와 구현 대조
 - 리스크: 실제 MySQL flush 순서와 운영 부하 미검증
 

@@ -6,7 +6,7 @@
 - 심각도: SEV-3
 - 영역: Backend / DB / Transaction
 - 관련 Issue: [#47](https://github.com/byeok99/LingKo/issues/47)
-- 관련 PR: [#64](https://github.com/byeok99/LingKo/pull/64) 후속 검증
+- 관련 PR: [#68](https://github.com/byeok99/LingKo/pull/68)
 
 ## 문제 현상
 
