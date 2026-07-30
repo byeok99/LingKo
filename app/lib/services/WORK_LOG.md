@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 한국어 문장 TTS 서비스 추가
+
+- 변경 파일: `sentence_speech_service.dart`, `WORK_LOG.md`
+- 내용: `ko-KR` 기기 TTS 초기화, Normal·Slow 속도, 중복 발화 방지와 재시도 가능한 오류 처리를 UI에서 분리했다.
+- 검증: `flutter analyze`, `flutter test` 전체 63개 통과, iOS·Android Debug build
+- 리스크: 제조사·설치 음성별 실제 발화 속도와 품질 차이는 실기기 확인 필요
+
 ## 2026-07-29 - 계정 삭제 성공 후 로컬 세션 정리
 
 - 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`

@@ -1,5 +1,54 @@
 # 작업 이력
 
+## 2026-07-30 - Practice 표준 발음 상시 노출과 안내 축소
+
+- 변경 파일: `practice_screen.dart`, `WORK_LOG.md`
+- 내용: 표준 발음 확인·숨김 토글을 제거하고 준비 완료 즉시 항상 표시했다. 하드코딩 진행률, 자동 준비 설명, 완료 배지, 번역과 학습 팁을 제거해 문장 입력·표준 발음·듣기·녹음에 집중하도록 정리했다.
+- 검증: `flutter analyze`, `flutter test` 전체 65개 통과
+- 리스크: 긴 표준 발음 줄바꿈은 실제 iPhone에서 수동 확인 필요
+
+## 2026-07-30 - Practice 문장 준비 흐름 통합
+
+- 변경 파일: `practice_screen.dart`, `WORK_LOG.md`
+- 내용: 추천·직접 입력 내부 탭과 수동 확정 버튼을 제거하고 하나의 편집 가능한 문장 입력으로 통합했다. 입력 중 700ms debounce 후 표준 발음을 자동 준비하며, 현재 입력과 일치하는 최신 응답에만 듣기·녹음을 허용한다.
+- 검증: `flutter analyze`, `flutter test` 전체 65개 통과
+- 리스크: 실제 한국어 IME 조합 중 debounce 체감과 키보드 노출 화면은 iPhone에서 수동 확인 필요
+
+## 2026-07-30 - Practice 표준 발음 확인 토글 복원
+
+- 변경 파일: `practice_screen.dart`, `WORK_LOG.md`
+- 내용: 상세 음절 가이드는 평가 후에 유지하면서 녹음 전에도 `Check standard pronunciation`으로 표준 발음을 선택해 확인할 수 있게 했다. 문장·모드 변경과 녹음 시작 때는 다시 접힌다.
+- 검증: `flutter analyze`, `flutter test` 전체 63개 통과, 펼친 Practice 402px phone 렌더링 확인
+- 리스크: 실제 iPhone에서 긴 표준 발음 줄바꿈은 수동 확인 필요
+
+## 2026-07-30 - 평가 후 표준 발음 가이드 재배치
+
+- 변경 파일: `practice_screen.dart`, `result_screen.dart`, `WORK_LOG.md`
+- 내용: 녹음 전 Practice에서 표준 발음과 음절 가이드를 숨기고, Result에 원문·표준 발음만 비교하는 카드와 Normal·Slow 듣기를 추가했다. 사용자 인식 문장 표시는 제거했다.
+- 검증: `flutter analyze`, `flutter test` 전체 63개 통과, Result 프로토타입 402px phone 렌더링 확인
+- 리스크: 긴 표준 발음 문장의 실제 iPhone 줄바꿈과 기기 TTS 음질은 수동 확인 필요
+
+## 2026-07-30 - Practice 문장 듣기 활성화
+
+- 변경 파일: `practice_screen.dart`, `WORK_LOG.md`
+- 내용: 비활성 Normal·Slow 버튼을 현재 한국어 원문 TTS에 연결하고 문장 변경·녹음 시작·화면 종료 시 기존 발화를 중지하며 재생 실패 안내를 추가했다.
+- 검증: 자유 문장 속도 선택·안전한 오류 안내 widget test, `flutter analyze`, 전체 63개 테스트
+- 리스크: 실제 iPhone 스피커·무음 모드·한국어 음성 설정 조합은 수동 확인 필요
+
+## 2026-07-30 - Review 최근 점수 추이 시간축 수정
+
+- 변경 파일: `review_screen.dart`, `WORK_LOG.md`
+- 내용: 최신순 API 응답에서 최근 7개 점수만 선택하고 그래프를 오래된 점수에서 최신 점수 방향으로 그리며 각 점수 값을 표시하도록 수정했다.
+- 검증: 최근 점수 정렬 단위 테스트, `flutter analyze`
+- 리스크: 기록 API 첫 page를 기준으로 하므로 7개보다 오래된 추이는 표시하지 않음
+
+## 2026-07-30 - preview v2 화면 정보 계층 적용
+
+- 변경 파일: `home_screen.dart`, `practice_screen.dart`, `profile_screen.dart`, `result_screen.dart`, `review_screen.dart`, `WORK_LOG.md`
+- 내용: Home의 실제 quota 진행률·추천 목록, Practice 단계·녹음 타이머, Result 5열 음절·약점 피드백, Review 추세, Profile 설정을 새 프로토타입 밀도에 맞췄다. 평가 중에는 명시적 백그라운드 이동을 제공한다.
+- 검증: iPhone 15 비율 Home·Result PNG 렌더링 확인, `flutter analyze`, `flutter test` 61개 통과
+- 리스크: 키보드가 열린 자유 문장 입력과 실제 녹음 권한 sheet는 시뮬레이터 수동 확인 필요
+
 ## 2026-07-29 - 자유 문장 특수 기호 자동 제거
 
 - 변경 파일: `practice_screen.dart`, `WORK_LOG.md`

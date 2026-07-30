@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - Android TTS service 탐색 허용
+
+- 변경 파일: `src/main/AndroidManifest.xml`, `WORK_LOG.md`
+- 내용: Android 11 이상에서 기기 TTS engine을 조회할 수 있도록 package visibility `TTS_SERVICE` query를 추가했다.
+- 검증: `flutter build apk --debug`로 APK 생성 확인
+- 리스크: 기기에 한국어 TTS engine이 없으면 앱의 안전한 재생 실패 안내가 표시됨
+
 ## 2026-07-27 - Android 정식 패키지명 적용
 
 - 변경 파일: `build.gradle.kts`, `WORK_LOG.md`

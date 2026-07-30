@@ -13,36 +13,65 @@ class TopBar extends StatelessWidget {
     this.leading,
     this.trailing,
     this.subtitle,
+    this.centered = false,
   });
 
   final String title;
   final Widget? leading;
   final Widget? trailing;
   final String? subtitle;
+  final bool centered;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final titleBlock = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment:
+          centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
-        if (leading != null) ...[
-          leading!,
-          const SizedBox(width: AppSpacing.sm),
-        ],
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: Theme.of(context).textTheme.headlineMedium),
-              if (subtitle != null) ...[
-                const SizedBox(height: AppSpacing.xs),
-                Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ],
-          ),
+        Text(
+          title,
+          textAlign: centered ? TextAlign.center : TextAlign.start,
+          style: Theme.of(context).textTheme.headlineMedium,
         ),
-        if (trailing != null) trailing!,
+        if (subtitle != null) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            subtitle!,
+            textAlign: centered ? TextAlign.center : TextAlign.start,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
       ],
+    );
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 47),
+      child:
+          centered
+              ? Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 48),
+                    child: titleBlock,
+                  ),
+                  if (leading != null)
+                    Positioned(left: 0, top: 0, child: leading!),
+                  if (trailing != null)
+                    Positioned(right: 0, top: 0, child: trailing!),
+                ],
+              )
+              : Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (leading != null) ...[
+                    leading!,
+                    const SizedBox(width: AppSpacing.sm),
+                  ],
+                  Expanded(child: titleBlock),
+                  if (trailing != null) trailing!,
+                ],
+              ),
     );
   }
 }
@@ -90,8 +119,8 @@ class AppCard extends StatelessWidget {
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadow,
-            blurRadius: 16,
-            offset: Offset(0, 4),
+            blurRadius: 20,
+            offset: Offset(0, 6),
           ),
         ],
       ),
@@ -136,11 +165,41 @@ class PrimaryButton extends StatelessWidget {
                 Flexible(child: Text(label, textAlign: TextAlign.center)),
               ],
             );
-    return FilledButton(
-      onPressed: isLoading ? null : onPressed,
-      child: Semantics(
-        label: isLoading ? '$label in progress' : label,
-        child: child,
+    final enabled = onPressed != null && !isLoading;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: enabled ? null : AppColors.border,
+        gradient:
+            enabled
+                ? const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF4387CA), Color(0xFF286EAE)],
+                )
+                : null,
+        borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+        boxShadow:
+            enabled
+                ? const [
+                  BoxShadow(
+                    color: Color(0x3B2F73B9),
+                    blurRadius: 18,
+                    offset: Offset(0, 8),
+                  ),
+                ]
+                : null,
+      ),
+      child: FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          disabledBackgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+        ),
+        onPressed: isLoading ? null : onPressed,
+        child: Semantics(
+          label: isLoading ? '$label in progress' : label,
+          child: child,
+        ),
       ),
     );
   }
@@ -160,10 +219,13 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon ?? Icons.arrow_forward),
-      label: Text(label),
+    return SizedBox(
+      height: AppSizes.buttonHeight,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon ?? Icons.arrow_forward, size: 19),
+        label: Text(label),
+      ),
     );
   }
 }
@@ -210,8 +272,8 @@ class StatusBadge extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+        horizontal: AppSpacing.sm,
+        vertical: 5,
       ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
@@ -221,8 +283,8 @@ class StatusBadge extends StatelessWidget {
         label,
         style: TextStyle(
           color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
@@ -230,7 +292,7 @@ class StatusBadge extends StatelessWidget {
 }
 
 class ScoreRing extends StatelessWidget {
-  const ScoreRing({super.key, required this.score, this.size = 104});
+  const ScoreRing({super.key, required this.score, this.size = 118});
 
   final int score;
   final double size;
@@ -247,7 +309,7 @@ class ScoreRing extends StatelessWidget {
           children: [
             CircularProgressIndicator(
               value: normalized,
-              strokeWidth: 8,
+              strokeWidth: 10,
               backgroundColor: AppColors.border,
               color: AppColors.primary,
             ),
@@ -262,7 +324,13 @@ class ScoreRing extends StatelessWidget {
                       '$score',
                       style: Theme.of(context).textTheme.headlineLarge,
                     ),
-                    const Text('/ 100', style: TextStyle(fontSize: 11)),
+                    const Text(
+                      '/100',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -333,28 +401,29 @@ class CharacterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 64, minHeight: 48),
+      constraints: const BoxConstraints(minHeight: 38),
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
+        horizontal: 11,
         vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: AppColors.softBlue,
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+        color: AppColors.card,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             result.character,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
           ),
           if (result.kind.isNotEmpty && result.kind != 'NONE')
             Text(
               result.kind,
               style: const TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 11,
+                fontSize: 10,
               ),
             ),
         ],

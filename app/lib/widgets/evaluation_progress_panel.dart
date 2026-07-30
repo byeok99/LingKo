@@ -11,10 +11,12 @@ class EvaluationProgressPanel extends StatelessWidget {
     super.key,
     required this.progress,
     this.onRetry,
+    this.onContinueInBackground,
   });
 
   final EvaluationProgress progress;
   final VoidCallback? onRetry;
+  final VoidCallback? onContinueInBackground;
 
   @override
   Widget build(BuildContext context) {
@@ -23,23 +25,26 @@ class EvaluationProgressPanel extends StatelessWidget {
         EvaluationProgressStage.uploading,
         'Audio upload',
         'Sending your recording securely.',
+        Icons.file_upload_outlined,
       ),
       (
         EvaluationProgressStage.creatingJob,
         'Evaluation job',
         'Creating one evaluation request.',
+        Icons.article_outlined,
       ),
       (
         EvaluationProgressStage.analyzing,
         'Pronunciation analysis',
         'Analyzing your pronunciation.',
+        Icons.graphic_eq,
       ),
       (
         EvaluationProgressStage.preparingFeedback,
         'Feedback preparation',
         'Preparing your results.',
+        Icons.view_module_outlined,
       ),
-      (EvaluationProgressStage.completed, 'Complete', 'Your result is ready.'),
     ];
     final activeIndex = _stageIndex(
       progress.stage == EvaluationProgressStage.failed
@@ -50,30 +55,47 @@ class EvaluationProgressPanel extends StatelessWidget {
       key: const ValueKey('evaluation-progress'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(Icons.graphic_eq, size: 48, color: AppColors.primary),
-        const SizedBox(height: AppSpacing.md),
+        Center(
+          child: Container(
+            width: 86,
+            height: 86,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.softBlue,
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: const Icon(
+              Icons.graphic_eq,
+              size: 34,
+              color: AppColors.primaryDark,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
         Text(
           progress.stage == EvaluationProgressStage.failed
               ? 'We could not complete the evaluation'
-              : 'Evaluating your pronunciation',
+              : "We're analyzing your pronunciation",
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineMedium,
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: 8),
         Text(
           progress.message ??
-              'This can take a little while. You can visit another tab and come back.',
+              'You can leave this screen and return anytime. Your evaluation job will be kept.',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
-        const SizedBox(height: AppSpacing.xxl),
+        const SizedBox(height: 18),
         AppCard(
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
               for (var index = 0; index < steps.length; index++) ...[
                 _EvaluationStepRow(
                   title: steps[index].$2,
                   subtitle: steps[index].$3,
+                  leadingIcon: steps[index].$4,
                   state:
                       progress.stage == EvaluationProgressStage.failed &&
                               index == activeIndex
@@ -84,8 +106,7 @@ class EvaluationProgressPanel extends StatelessWidget {
                           ? _StepState.active
                           : _StepState.pending,
                 ),
-                if (index != steps.length - 1)
-                  const Divider(height: AppSpacing.xxl),
+                if (index != steps.length - 1) const Divider(),
               ],
             ],
           ),
@@ -99,21 +120,30 @@ class EvaluationProgressPanel extends StatelessWidget {
             onPressed: onRetry,
           ),
         ],
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: 14),
         const AppCard(
-          color: AppColors.softBlue,
+          padding: EdgeInsets.all(13),
+          color: AppColors.blue50,
           child: Row(
             children: [
-              Icon(Icons.info_outline, color: AppColors.primary),
-              SizedBox(width: AppSpacing.md),
+              Icon(Icons.schedule_outlined, color: AppColors.primary, size: 20),
+              SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Submitting the same recording again while this job is active can create duplicate work.',
+                  'Leaving this screen does not create another evaluation job.',
                 ),
               ),
             ],
           ),
         ),
+        if (onContinueInBackground != null) ...[
+          const SizedBox(height: 14),
+          SecondaryButton(
+            label: 'Continue in background',
+            icon: Icons.arrow_back_rounded,
+            onPressed: onContinueInBackground,
+          ),
+        ],
       ],
     );
   }
@@ -136,41 +166,87 @@ class _EvaluationStepRow extends StatelessWidget {
   const _EvaluationStepRow({
     required this.title,
     required this.subtitle,
+    required this.leadingIcon,
     required this.state,
   });
 
   final String title;
   final String subtitle;
+  final IconData leadingIcon;
   final _StepState state;
 
   @override
   Widget build(BuildContext context) {
-    final icon = switch (state) {
-      _StepState.complete => Icons.check_circle,
-      _StepState.active => Icons.radio_button_checked,
-      _StepState.failed => Icons.error,
-      _StepState.pending => Icons.radio_button_unchecked,
-    };
     final color = switch (state) {
       _StepState.complete => AppColors.success,
       _StepState.active => AppColors.primary,
       _StepState.failed => AppColors.error,
       _StepState.pending => AppColors.disabled,
     };
-    return Row(
-      children: [
-        Icon(icon, color: color),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: Theme.of(context).textTheme.titleMedium),
-              Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
-            ],
+    return Container(
+      constraints: const BoxConstraints(minHeight: 66),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.softBlue,
+              borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+            ),
+            child: Icon(leadingIcon, color: AppColors.primaryDark, size: 20),
           ),
-        ),
-      ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 2),
+                Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          if (state == _StepState.active)
+            const SizedBox.square(
+              dimension: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                backgroundColor: AppColors.blue200,
+                color: AppColors.primary,
+              ),
+            )
+          else
+            Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color:
+                    state == _StepState.complete || state == _StepState.failed
+                        ? color
+                        : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                switch (state) {
+                  _StepState.complete => Icons.check,
+                  _StepState.failed => Icons.close,
+                  _StepState.pending => Icons.more_horiz,
+                  _StepState.active => Icons.circle,
+                },
+                color:
+                    state == _StepState.complete || state == _StepState.failed
+                        ? AppColors.card
+                        : color,
+                size: 15,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -50,34 +50,29 @@ class HomeScreen extends StatelessWidget {
         onRetryQuota();
       },
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xl,
-          AppSpacing.lg,
-          AppSpacing.xl,
-          AppSpacing.section,
-        ),
+        padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
         children: [
           const Text(
             'LingKo',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 28,
+              fontSize: 25,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -1.1,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            displayName == null || displayName!.trim().isEmpty
+                ? 'Ready to practice Korean? 👋'
+                : 'Welcome back, ${displayName!.trim()} 👋',
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 17,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            displayName == null || displayName!.trim().isEmpty
-                ? 'Ready to practice Korean?'
-                : 'Welcome back, ${displayName!.trim()}',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Choose a sentence and focus on one clear attempt.',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: 15),
           _QuotaSection(
             quota: quota,
             isLoading: isLoadingQuota,
@@ -85,14 +80,9 @@ class HomeScreen extends StatelessWidget {
             onRetry: onRetryQuota,
             onOpenReview: onOpenReview,
           ),
-          if (evaluationProgress.isActive ||
-              evaluationProgress.stage == EvaluationProgressStage.failed) ...[
-            const SizedBox(height: AppSpacing.lg),
-            _ActiveEvaluationCard(progress: evaluationProgress),
-          ],
-          const SizedBox(height: AppSpacing.section),
+          const SizedBox(height: 17),
           const SectionHeader(title: 'Recommended for you'),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 8),
           if (isLoading)
             const StatePanel(
               icon: Icons.menu_book_outlined,
@@ -117,14 +107,33 @@ class HomeScreen extends StatelessWidget {
               onAction: onOpenPractice,
             )
           else ...[
-            for (final sentence in sentences) ...[
-              SentenceCard(sentence: sentence, onTap: () => onSelect(sentence)),
-              const SizedBox(height: AppSpacing.md),
-            ],
+            AppCard(
+              key: const ValueKey('home-sentence-list'),
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var index = 0; index < sentences.length; index++)
+                    SentenceCard(
+                      sentence: sentences[index],
+                      onTap: () => onSelect(sentences[index]),
+                      showDivider: index != sentences.length - 1,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 13),
             PrimaryButton(
               label: 'Start Practice',
               icon: Icons.mic_none,
               onPressed: () => onSelect(sentences.first),
+            ),
+          ],
+          if (evaluationProgress.isActive ||
+              evaluationProgress.stage == EvaluationProgressStage.failed) ...[
+            const SizedBox(height: 11),
+            _ActiveEvaluationCard(
+              progress: evaluationProgress,
+              onTap: onOpenPractice,
             ),
           ],
         ],
@@ -195,43 +204,71 @@ class _QuotaSection extends StatelessWidget {
 }
 
 class _ActiveEvaluationCard extends StatelessWidget {
-  const _ActiveEvaluationCard({required this.progress});
+  const _ActiveEvaluationCard({required this.progress, required this.onTap});
 
   final EvaluationProgress progress;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final failed = progress.stage == EvaluationProgressStage.failed;
-    return AppCard(
-      color:
-          failed ? AppColors.error.withValues(alpha: 0.05) : AppColors.softBlue,
-      child: Row(
-        children: [
-          Icon(
-            failed ? Icons.error_outline : Icons.graphic_eq,
-            color: failed ? AppColors.error : AppColors.primary,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  failed
-                      ? 'Evaluation needs attention'
-                      : 'Evaluation in progress',
-                  style: Theme.of(context).textTheme.titleMedium,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSizes.radius),
+        child: AppCard(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          color: failed ? AppColors.errorSoft : AppColors.blue50,
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color:
+                      failed
+                          ? AppColors.error.withValues(alpha: 0.10)
+                          : AppColors.softBlue,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusControl),
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  progress.message ??
-                      'You can use other tabs while pronunciation is analyzed.',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                child: Icon(
+                  failed ? Icons.error_outline : Icons.graphic_eq,
+                  color: failed ? AppColors.error : AppColors.primary,
+                  size: 21,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      failed
+                          ? 'Evaluation needs attention'
+                          : 'Evaluation in progress',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      progress.message ??
+                          'Your pronunciation is being analyzed.',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textPrimary,
+                size: 20,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

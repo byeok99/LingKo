@@ -1,3 +1,10 @@
+## 2026-07-30 - 기기 TTS 의존성 추가
+
+- 변경 파일: `pubspec.yaml`, `pubspec.lock`, `WORK_LOG.md`
+- 내용: 추천·자유 문장을 별도 음원 저장 없이 재생하도록 `flutter_tts` 4.2.5를 앱 의존성에 추가했다.
+- 검증: `flutter pub get`, `flutter analyze`, `flutter test`, iOS simulator build, Android Debug APK build
+- 리스크: 실제 iPhone의 한국어 음성 설치 상태와 볼륨에 따른 재생은 실기기 확인 필요
+
 ## 2026-07-27 - Android OAuth 패키지 안내 갱신
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

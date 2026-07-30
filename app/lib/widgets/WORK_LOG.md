@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - preview v2 공통 컴포넌트 재정렬
+
+- 변경 파일: `evaluation_progress_panel.dart`, `progress_panel.dart`, `result_tile.dart`, `score_breakdown.dart`, `sentence_card.dart`, `settings_row.dart`, `shared_widgets.dart`, `WORK_LOG.md`
+- 내용: 카드 shadow, gradient CTA, compact 추천 행, 실제 quota 카드, 평가 단계 목록, 5열 음절 셀과 설정 행을 프로토타입 규격으로 변경했다.
+- 검증: `flutter analyze`, `flutter test` 61개 통과
+- 리스크: golden 픽셀 기준선은 추가하지 않아 플랫폼별 미세 렌더링 차이는 수동 확인 필요
+
 ## 2026-07-28 - 점수 상태·큰 글자·중복 토큰 보완
 
 - 변경 파일: `guide_painter.dart`, `guide_sheet.dart`, `result_tile.dart`, `score_breakdown.dart`, `settings_row.dart`, `shared_widgets.dart`, `WORK_LOG.md`

@@ -1,5 +1,33 @@
 # 작업 이력
 
+## 2026-07-30 - Practice 자동 준비 문장 반영 책임 명시
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: Practice의 통합 입력에서 자동 준비가 끝난 최신 문장을 shell의 현재 연습 대상으로 반영하는 콜백 책임을 주석에 맞췄다.
+- 검증: `flutter analyze`, `flutter test` 전체 65개 통과
+- 리스크: 동작 변경 없음
+
+## 2026-07-30 - Result 표준 발음 TTS 주입
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 평가 결과의 표준 발음 카드도 기존 문장 TTS 서비스를 재사용하도록 Result 화면에 동일한 서비스 경계를 주입했다.
+- 검증: `flutter analyze`, `flutter test` 전체 63개 통과
+- 리스크: 없음
+
+## 2026-07-30 - 문장 TTS 서비스 앱 주입
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 기본 기기 TTS 구현을 shell에서 생성·종료하고 Practice 화면에 인터페이스로 주입해 플랫폼 기능을 테스트 대역으로 교체할 수 있게 했다.
+- 검증: `flutter analyze`, `flutter test` 전체 63개 통과
+- 리스크: 없음
+
+## 2026-07-30 - preview v2 디자인 토큰과 몰입형 shell 적용
+
+- 변경 파일: `app_theme.dart`, `lingko_app.dart`, `WORK_LOG.md`
+- 내용: `docs/design/preview.html`의 블루·잉크 색상, 18px 카드, 52px CTA, 76px 하단 내비게이션을 전역 토큰으로 옮기고 녹음·평가 중 탭을 숨기는 shell 상태를 연결했다.
+- 검증: `flutter analyze`, `flutter test` 61개 통과
+- 리스크: 실제 iPhone Safe Area와 시스템 글꼴 렌더링은 수동 확인 필요
+
 ## 2026-07-28 - UI 최종 검토 토큰 정리
 
 - 변경 파일: `app_theme.dart`, `WORK_LOG.md`
