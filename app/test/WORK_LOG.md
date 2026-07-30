@@ -1,5 +1,54 @@
 # 작업 이력
 
+## 2026-07-30 - Practice 표준 발음 상시 노출 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 추천·직접 입력·stale 응답·Review 재연습에서 표준 발음이 토글 없이 즉시 보이고, 진행률·설명·완료 배지·번역·학습 팁이 Practice에 노출되지 않는 계약을 검증했다.
+- 검증: 구현 전 실패 확인, `flutter test` 전체 65개 통과
+- 리스크: 실제 기기 픽셀·줄바꿈은 테스트 범위 밖임
+
+## 2026-07-30 - Practice 자동 문장 준비 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 내부 추천·직접 입력 탭과 수동 제출 버튼이 사라지고, 특수기호 제거 후 700ms에 표준 발음을 자동 준비하며 늦은 이전 API 응답은 무시하는 계약을 검증했다. 같은 추천 재선택 시 미완성 draft를 교체하는 흐름도 고정했다.
+- 검증: 구현 전 실패 확인, `flutter test` 전체 65개 통과
+- 리스크: 실제 네트워크 취소는 지원하지 않으며 UI 상태에서 오래된 응답 적용만 차단함
+
+## 2026-07-30 - 표준 발음 확인 토글 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 추천·자유 문장에서 표준 발음은 기본 숨김이고 사용자가 직접 펼칠 수 있으며 녹음 시작 시 다시 숨겨지는 계약을 검증했다.
+- 검증: 구현 전 widget test 실패 확인, `flutter test` 전체 63개 통과
+- 리스크: 없음
+
+## 2026-07-30 - 평가 후 발음 가이드 노출 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: Practice에서는 표준 발음·가이드가 숨겨지고 Result에서 원문·표준 발음만 표시되며, 인식 문장은 숨긴 채 Normal·Slow가 표준 발음을 재생하는 계약을 검증했다.
+- 검증: 구현 전 compile 실패 확인, `flutter test` 전체 63개 통과
+- 리스크: 실제 기기 TTS와 픽셀 golden 비교는 테스트 범위 밖임
+
+## 2026-07-30 - 자유 문장 TTS 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 특수 기호가 제거된 자유 문장 원문과 Normal·Slow 속도가 TTS 서비스에 전달되고 플랫폼 오류 상세는 사용자에게 노출되지 않는 계약을 검증했다.
+- 검증: 구현 전 compile 실패 확인, `flutter test` 전체 63개 통과
+- 리스크: 실제 음질·볼륨은 플랫폼 채널을 대체한 widget test 범위 밖임
+
+## 2026-07-30 - Review 최근 점수 순서 회귀 테스트
+
+- 변경 파일: `review_trend_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: 최신순 기록 8개에서 최근 7개만 선택하고 오래된 점수부터 최신 점수로 반환하는 계약과 Latest score 표시를 검증했다.
+- 검증: `flutter test test/review_trend_test.dart`, `flutter analyze`
+- 리스크: 실제 Canvas 픽셀 golden 비교는 미구축
+
+## 2026-07-30 - preview 디자인과 몰입형 녹음 회귀 테스트
+
+- 변경 파일: `design_system_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: 프로토타입 색상·radius·CTA·내비게이션 토큰을 고정하고 녹음·평가 중 탭 숨김, 백그라운드 이동, 작은 화면·큰 글자 흐름을 검증했다.
+- 검증: `flutter test` 전체 61개 통과
+- 리스크: 실제 기기 golden 비교는 미구축
+
 ## 2026-07-29 - 자유 문장 특수 기호 정규화 테스트
 
 - 변경 파일: `widget_test.dart`, `WORK_LOG.md`

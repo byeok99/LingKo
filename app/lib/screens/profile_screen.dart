@@ -206,28 +206,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final current = preferences ?? UserPreferences.defaults;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.xl,
-        AppSpacing.lg,
-        AppSpacing.xl,
-        AppSpacing.section,
-      ),
+      padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
       children: [
-        const TopBar(
+        TopBar(
           title: 'Profile',
-          subtitle: 'Account and learning preferences.',
+          trailing: IconButton(
+            tooltip: 'Open review',
+            onPressed: widget.onOpenReview,
+            icon: const Icon(Icons.history_rounded, size: 21),
+          ),
         ),
-        const SizedBox(height: AppSpacing.xxl),
-        _AccountCard(session: widget.session),
-        const SizedBox(height: AppSpacing.lg),
-        SecondaryButton(
-          label: 'Open practice review',
-          icon: Icons.history,
-          onPressed: widget.onOpenReview,
+        const SizedBox(height: 10),
+        _AccountCard(
+          session: widget.session,
+          levelLabel: current.targetLevel.label,
         ),
-        const SizedBox(height: AppSpacing.section),
+        const SizedBox(height: 24),
         const SectionHeader(title: 'Learning preferences'),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: 10),
         if (isLoading)
           const StatePanel(
             icon: Icons.settings_outlined,
@@ -252,6 +248,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: AppSpacing.md),
           ],
           AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Column(
               children: [
                 SettingsRow(
@@ -287,13 +284,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ],
-        const SizedBox(height: AppSpacing.section),
-        OutlinedButton.icon(
-          onPressed: isDeletingAccount ? null : signOut,
-          icon: const Icon(Icons.logout, color: AppColors.error),
-          label: const Text(
-            'Sign out',
-            style: TextStyle(color: AppColors.error),
+        const SizedBox(height: 24),
+        SizedBox(
+          height: AppSizes.buttonHeight,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.error,
+              backgroundColor: AppColors.errorSoft,
+              side: const BorderSide(color: Color(0xFFEFCACA)),
+            ),
+            onPressed: isDeletingAccount ? null : signOut,
+            icon: const Icon(Icons.logout, color: AppColors.error),
+            label: const Text(
+              'Sign out',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -311,9 +316,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _AccountCard extends StatelessWidget {
-  const _AccountCard({required this.session});
+  const _AccountCard({required this.session, required this.levelLabel});
 
   final AuthSession session;
+  final String levelLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -321,24 +327,36 @@ class _AccountCard extends StatelessWidget {
     final initial =
         user.name.trim().isEmpty ? '?' : user.name.trim().characters.first;
     return AppCard(
+      padding: const EdgeInsets.all(15),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: AppColors.softBlue,
+          Container(
+            width: 58,
+            height: 58,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.softBlue,
+              borderRadius: BorderRadius.circular(19),
+            ),
             child: Text(
               initial,
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: const TextStyle(
+                color: AppColors.primaryDark,
+                fontSize: 25,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
-          const SizedBox(width: AppSpacing.lg),
+          const SizedBox(width: 13),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(user.name, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: 2),
                 Text(user.email, style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: 4),
+                StatusBadge(label: '$levelLabel learner'),
               ],
             ),
           ),

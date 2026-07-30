@@ -25,6 +25,7 @@ import '../screens/review_screen.dart';
 import '../screens/result_screen.dart';
 import '../services/audio_recorder_service.dart';
 import '../services/app_auth_service.dart';
+import '../services/sentence_speech_service.dart';
 import 'app_theme.dart';
 
 // 앱 전체 설정을 담당하는 최상위 위젯입니다.
@@ -41,6 +42,7 @@ class LingKoApp extends StatelessWidget {
     this.practiceQuotaApi,
     this.authService,
     this.audioRecorderService,
+    this.sentenceSpeechService,
   });
 
   final PronunciationApi? pronunciationApi;
@@ -50,6 +52,7 @@ class LingKoApp extends StatelessWidget {
   final PracticeQuotaApi? practiceQuotaApi;
   final AppAuthService? authService;
   final AudioRecorderService? audioRecorderService;
+  final SentenceSpeechService? sentenceSpeechService;
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +70,8 @@ class LingKoApp extends StatelessWidget {
         authService: authService ?? DefaultAppAuthService(),
         audioRecorderService:
             audioRecorderService ?? RecordAudioRecorderService(),
+        sentenceSpeechService:
+            sentenceSpeechService ?? FlutterTtsSentenceSpeechService(),
       ),
     );
   }
@@ -84,6 +89,7 @@ class LingKoShell extends StatefulWidget {
     required this.practiceQuotaApi,
     required this.authService,
     required this.audioRecorderService,
+    required this.sentenceSpeechService,
   });
 
   final PronunciationApi pronunciationApi;
@@ -93,6 +99,7 @@ class LingKoShell extends StatefulWidget {
   final PracticeQuotaApi practiceQuotaApi;
   final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
+  final SentenceSpeechService sentenceSpeechService;
 
   @override
   State<LingKoShell> createState() => _LingKoShellState();
@@ -122,6 +129,7 @@ class _LingKoShellState extends State<LingKoShell> {
 
   // Practice 탭 안에서 연습 화면을 보여줄지, 결과 화면을 보여줄지 결정합니다.
   bool hasResult = false;
+  bool isPracticeImmersive = false;
 
   @override
   void initState() {
@@ -132,6 +140,7 @@ class _LingKoShellState extends State<LingKoShell> {
   @override
   void dispose() {
     widget.audioRecorderService.dispose();
+    widget.sentenceSpeechService.dispose();
     super.dispose();
   }
 
@@ -253,6 +262,7 @@ class _LingKoShellState extends State<LingKoShell> {
         selectedSentence = null;
         latestResult = null;
         hasResult = false;
+        isPracticeImmersive = false;
         authErrorText = null;
         practiceQuota = null;
         practiceQuotaError = null;
@@ -337,6 +347,7 @@ class _LingKoShellState extends State<LingKoShell> {
       hasResult = false;
       latestResult = null;
       evaluationProgress = const EvaluationProgress();
+      isPracticeImmersive = false;
     });
   }
 
@@ -408,6 +419,7 @@ class _LingKoShellState extends State<LingKoShell> {
               );
               latestResult = job.result;
               hasResult = true;
+              isPracticeImmersive = false;
               evaluationProgress = EvaluationProgress(
                 stage: EvaluationProgressStage.completed,
                 jobId: job.jobId,
@@ -459,7 +471,7 @@ class _LingKoShellState extends State<LingKoShell> {
     return 'evaluation-${DateTime.now().microsecondsSinceEpoch}-$random';
   }
 
-  // Practice 탭에서 사용자가 직접 입력한 문장으로 현재 연습 대상을 교체합니다.
+  // Practice의 통합 입력에서 표준 발음 준비가 끝난 최신 문장으로 연습 대상을 교체합니다.
   void useCustomSentence(PracticeSentence sentence) {
     setState(() {
       selectedSentence = sentence;
@@ -505,6 +517,7 @@ class _LingKoShellState extends State<LingKoShell> {
           ? ResultScreen(
             sentence: selectedSentence!,
             result: latestResult,
+            sentenceSpeechService: widget.sentenceSpeechService,
             onTryAgain: () {
               setState(() {
                 hasResult = false;
@@ -518,12 +531,20 @@ class _LingKoShellState extends State<LingKoShell> {
           : PracticeScreen(
             sentence: selectedSentence,
             audioRecorderService: widget.audioRecorderService,
+            sentenceSpeechService: widget.sentenceSpeechService,
             onEvaluateRecording: evaluateRecording,
             onCustomSentence: useCustomSentence,
             onPrepareCustomSentence:
                 widget.pronunciationApi.prepareCustomSentence,
             remainingPractices: practiceQuota?.remainingPractices,
             evaluationProgress: evaluationProgress,
+            onImmersiveModeChanged:
+                (next) => setState(() => isPracticeImmersive = next),
+            onContinueInBackground:
+                () => setState(() {
+                  isPracticeImmersive = false;
+                  selectedTab = 0;
+                }),
           ),
       ReviewScreen(
         evaluationApi: widget.evaluationApi,
@@ -545,36 +566,56 @@ class _LingKoShellState extends State<LingKoShell> {
     // body에는 현재 화면, bottomNavigationBar에는 하단 탭을 둡니다.
     return Scaffold(
       body: SafeArea(child: pages[selectedTab]),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedTab,
-        onDestinationSelected: (index) {
-          setState(() {
-            selectedTab = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.mic_none),
-            selectedIcon: Icon(Icons.mic),
-            label: 'Practice',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.rate_review_outlined),
-            selectedIcon: Icon(Icons.rate_review),
-            label: 'Review',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
+      bottomNavigationBar:
+          selectedTab == 1 && isPracticeImmersive
+              ? null
+              : Container(
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: AppColors.border)),
+                ),
+                child: NavigationBar(
+                  selectedIndex: selectedTab,
+                  onDestinationSelected: (index) {
+                    setState(() {
+                      selectedTab = index;
+                    });
+                  },
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(
+                        Icons.home_rounded,
+                        color: AppColors.primaryDark,
+                      ),
+                      label: 'Home',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.mic_none_rounded),
+                      selectedIcon: Icon(
+                        Icons.mic_rounded,
+                        color: AppColors.primaryDark,
+                      ),
+                      label: 'Practice',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.rate_review_outlined),
+                      selectedIcon: Icon(
+                        Icons.rate_review_rounded,
+                        color: AppColors.primaryDark,
+                      ),
+                      label: 'Review',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.person_outline_rounded),
+                      selectedIcon: Icon(
+                        Icons.person_rounded,
+                        color: AppColors.primaryDark,
+                      ),
+                      label: 'Profile',
+                    ),
+                  ],
+                ),
+              ),
     );
   }
 }

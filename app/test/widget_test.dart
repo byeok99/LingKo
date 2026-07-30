@@ -23,23 +23,31 @@ import 'package:lingko_app/models/user_preferences.dart';
 import 'package:lingko_app/screens/result_screen.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
+import 'package:lingko_app/services/sentence_speech_service.dart';
 import 'package:lingko_app/widgets/guide_sheet.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
+import 'package:lingko_app/widgets/shared_widgets.dart';
 
 /// 테스트에서 Fake Pronunciation Api 의존성을 결정적으로 대체한다.
 /// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakePronunciationApi implements PronunciationApi {
-  FakePronunciationApi({this.error});
+  FakePronunciationApi({this.error, this.prepareHandler});
 
   final Object? error;
+  final Future<PracticeSentence> Function(String text)? prepareHandler;
   String? lastText;
+  final List<String> requestedTexts = [];
 
   @override
   Future<PracticeSentence> prepareCustomSentence(String text) async {
     lastText = text;
+    requestedTexts.add(text);
 
     if (error != null) {
       throw error!;
+    }
+    if (prepareHandler != null) {
+      return prepareHandler!(text);
     }
 
     return PracticeSentence(
@@ -149,7 +157,7 @@ class FakeEvaluationApi implements EvaluationApi {
         overallScore: 91,
         gradeLabel: 'Excellent',
         summary: 'Clear pronunciation.',
-        recognizedText: '마싯게따.',
+        recognizedText: '사용자 발음',
         characterScoreStatus: 'UNAVAILABLE',
         scoreBreakdown: PracticeScoreBreakdown(
           accuracy: 92,
@@ -309,6 +317,31 @@ class FakeAudioRecorderService implements AudioRecorderService {
     }
     deletedPaths.add(path);
   }
+}
+
+/// 문장 듣기 테스트가 기기 TTS 없이 발화 문장과 속도 계약을 검증하도록 대체한다.
+class FakeSentenceSpeechService implements SentenceSpeechService {
+  String? lastText;
+  SentenceSpeechRate? lastRate;
+  int stopCount = 0;
+  Object? error;
+
+  @override
+  Future<void> speak(String text, {required SentenceSpeechRate rate}) async {
+    if (error != null) {
+      throw error!;
+    }
+    lastText = text;
+    lastRate = rate;
+  }
+
+  @override
+  Future<void> stop() async {
+    stopCount++;
+  }
+
+  @override
+  Future<void> dispose() async {}
 }
 
 /// 테스트에서 Fake App Auth 서비스 의존성을 결정적으로 대체한다.
@@ -569,6 +602,7 @@ void main() {
     WidgetTester tester,
   ) async {
     final recorder = FakeAudioRecorderService();
+    final speechService = FakeSentenceSpeechService();
     await tester.pumpWidget(
       LingKoApp(
         pronunciationApi: FakePronunciationApi(),
@@ -578,6 +612,7 @@ void main() {
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: recorder,
+        sentenceSpeechService: speechService,
       ),
     );
     await tester.pumpAndSettle();
@@ -590,7 +625,25 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Practice'), findsWidgets);
+    expect(find.text('Recommended'), findsNothing);
+    expect(find.text('My sentence'), findsNothing);
+    expect(find.text('Use this sentence'), findsNothing);
+    final recommendedSentenceField = tester.widget<TextField>(
+      find.byKey(const ValueKey('practice-sentence-field')),
+    );
+    expect(recommendedSentenceField.controller?.text, '맛있겠다.');
+    expect(find.text('Standard pronunciation ready'), findsNothing);
+    expect(
+      find.textContaining('Standard pronunciation updates automatically'),
+      findsNothing,
+    );
+    expect(find.text('Pronunciation guide'), findsNothing);
     expect(find.text('마싯게따.'), findsOneWidget);
+    expect(find.text('Check standard pronunciation'), findsNothing);
+    expect(find.text('Hide standard pronunciation'), findsNothing);
+    expect(find.text('It looks delicious.'), findsNothing);
+    expect(find.text('Final consonant linking and tense sound'), findsNothing);
+    expect(find.text('1 / 10'), findsNothing);
 
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
@@ -599,6 +652,7 @@ void main() {
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
     expect(find.text('Stop and analyze'), findsOneWidget);
+    expect(find.text('마싯게따.'), findsNothing);
 
     await tester.tap(find.text('Stop and analyze'));
     await tester.pumpAndSettle();
@@ -606,8 +660,26 @@ void main() {
     expect(find.text('Result'), findsOneWidget);
     expect(find.text('Excellent'), findsOneWidget);
     expect(find.text('91'), findsOneWidget);
-    expect(find.text('Recognized speech'), findsOneWidget);
+    expect(find.text('Pronunciation guide'), findsOneWidget);
+    expect(find.text('Sentence'), findsOneWidget);
+    expect(find.text('Standard pronunciation'), findsOneWidget);
+    expect(find.text('Recognized speech'), findsNothing);
+    expect(find.text('사용자 발음'), findsNothing);
     expect(find.text('마싯게따.'), findsOneWidget);
+    final resultNormalButton = find.byKey(
+      const ValueKey('result-play-pronunciation-normal'),
+    );
+    final resultSlowButton = find.byKey(
+      const ValueKey('result-play-pronunciation-slow'),
+    );
+    tester.widget<ActionButton>(resultNormalButton).onPressed?.call();
+    await tester.pump();
+    expect(speechService.lastText, '마싯게따.');
+    expect(speechService.lastRate, SentenceSpeechRate.normal);
+
+    tester.widget<ActionButton>(resultSlowButton).onPressed?.call();
+    await tester.pump();
+    expect(speechService.lastRate, SentenceSpeechRate.slow);
     await tester.scrollUntilVisible(
       find.text('Character-level scores are unavailable'),
       300,
@@ -658,7 +730,11 @@ void main() {
 
     await tester.tap(find.text('맛있겠다.').first);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Start recording'), 300);
+    await tester.scrollUntilVisible(
+      find.text('Start recording'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start recording'));
@@ -715,7 +791,11 @@ void main() {
 
     await tester.tap(find.text('맛있겠다.').first);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Start recording'), 300);
+    await tester.scrollUntilVisible(
+      find.text('Start recording'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start recording'));
@@ -723,7 +803,10 @@ void main() {
     await tester.tap(find.text('Stop and analyze'));
     await tester.pump();
 
-    await tester.tap(_navigationLabel('Home'));
+    expect(find.byType(NavigationBar), findsNothing);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
+    await tester.pump();
+    await tester.tap(find.text('Continue in background'));
     await tester.pump();
     expect(find.text('Evaluation in progress'), findsOneWidget);
 
@@ -823,6 +906,7 @@ void main() {
     WidgetTester tester,
   ) async {
     final api = FakePronunciationApi();
+    final speechService = FakeSentenceSpeechService();
     await tester.pumpWidget(
       LingKoApp(
         pronunciationApi: api,
@@ -831,6 +915,7 @@ void main() {
         userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
+        sentenceSpeechService: speechService,
       ),
     );
     await tester.pumpAndSettle();
@@ -838,27 +923,49 @@ void main() {
     await tester.tap(_navigationLabel('Practice'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Practice your own sentence'), findsOneWidget);
+    expect(find.text('Practice sentence'), findsOneWidget);
+    expect(find.text('Recommended'), findsNothing);
+    expect(find.text('My sentence'), findsNothing);
+    expect(find.text('Use this sentence'), findsNothing);
     expect(find.text('맛있겠다.'), findsNothing);
     expect(find.text('Start recording'), findsNothing);
 
     await tester.enterText(
-      find.byType(TextField),
+      find.byKey(const ValueKey('practice-sentence-field')),
       '안녕하세요! @LingKo #1 (연습)_테스트-좋아요.😊₩',
     );
     await tester.pump();
 
     final customSentenceField = tester.widget<TextField>(
-      find.byType(TextField),
+      find.byKey(const ValueKey('practice-sentence-field')),
     );
     expect(customSentenceField.controller?.text, '안녕하세요 LingKo 1 연습테스트좋아요');
+    expect(api.lastText, isNull);
+    expect(find.text('Start recording'), findsNothing);
 
-    await tester.tap(find.text('Use this sentence'));
+    await tester.pump(const Duration(milliseconds: 699));
+    expect(api.lastText, isNull);
+    await tester.pump(const Duration(milliseconds: 1));
     await tester.pumpAndSettle();
 
     expect(api.lastText, '안녕하세요 LingKo 1 연습테스트좋아요');
-    expect(find.text('안녕하세요 LingKo 1 연습테스트좋아요'), findsWidgets);
+    expect(find.text('Standard pronunciation ready'), findsNothing);
+    expect(find.text('Start recording'), findsOneWidget);
     expect(find.text('서버 표준 발음'), findsOneWidget);
+    expect(find.text('Practice with your own sentence.'), findsNothing);
+
+    final normalButton = find.byKey(const ValueKey('play-sentence-normal'));
+    final slowButton = find.byKey(const ValueKey('play-sentence-slow'));
+    tester.widget<ActionButton>(normalButton).onPressed?.call();
+    await tester.pump();
+
+    expect(speechService.lastText, '안녕하세요 LingKo 1 연습테스트좋아요');
+    expect(speechService.lastRate, SentenceSpeechRate.normal);
+
+    tester.widget<ActionButton>(slowButton).onPressed?.call();
+    await tester.pump();
+
+    expect(speechService.lastRate, SentenceSpeechRate.slow);
   });
 
   testWidgets('Practice tab shows API errors for custom sentences', (
@@ -879,9 +986,11 @@ void main() {
     await tester.tap(_navigationLabel('Practice'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), '너무 긴 문장');
-    await tester.pump();
-    await tester.tap(find.text('Use this sentence'));
+    await tester.enterText(
+      find.byKey(const ValueKey('practice-sentence-field')),
+      '너무 긴 문장',
+    );
+    await tester.pump(const Duration(milliseconds: 700));
     await tester.pumpAndSettle();
 
     expect(
@@ -890,6 +999,34 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('Practice shows a safe message when device speech fails', (
+    WidgetTester tester,
+  ) async {
+    final speechService =
+        FakeSentenceSpeechService()..error = StateError('voice unavailable');
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+        sentenceSpeechService: speechService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    final normalButton = find.byKey(const ValueKey('play-sentence-normal'));
+    tester.widget<ActionButton>(normalButton).onPressed?.call();
+    await tester.pump();
+
+    expect(find.text('Audio playback needs attention'), findsOneWidget);
+    expect(find.textContaining('voice unavailable'), findsNothing);
   });
 
   testWidgets('Practice tab shows input length validation errors', (
@@ -914,9 +1051,11 @@ void main() {
     await tester.pumpAndSettle();
 
     final longText = '가' * 101;
-    await tester.enterText(find.byType(TextField), longText);
-    await tester.pump();
-    await tester.tap(find.text('Use this sentence'));
+    await tester.enterText(
+      find.byKey(const ValueKey('practice-sentence-field')),
+      longText,
+    );
+    await tester.pump(const Duration(milliseconds: 700));
     await tester.pumpAndSettle();
 
     expect(api.lastText, longText);
@@ -928,6 +1067,109 @@ void main() {
     );
     expect(find.text('Start recording'), findsNothing);
   });
+
+  testWidgets('Practice ignores stale automatic pronunciation responses', (
+    WidgetTester tester,
+  ) async {
+    final firstResponse = Completer<PracticeSentence>();
+    final secondResponse = Completer<PracticeSentence>();
+    final api = FakePronunciationApi(
+      prepareHandler:
+          (text) =>
+              text == '첫 문장' ? firstResponse.future : secondResponse.future,
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: api,
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(_navigationLabel('Practice'));
+    await tester.pumpAndSettle();
+    final sentenceField = find.byKey(const ValueKey('practice-sentence-field'));
+
+    await tester.enterText(sentenceField, '첫 문장');
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(api.requestedTexts, ['첫 문장']);
+
+    await tester.enterText(sentenceField, '둘째 문장');
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(api.requestedTexts, ['첫 문장', '둘째 문장']);
+
+    secondResponse.complete(
+      const PracticeSentence(
+        text: '둘째 문장',
+        pronunciation: '둘째 표준 발음',
+        translation: '',
+        level: 'CUSTOM',
+        category: 'Free practice',
+        point: '',
+        score: 0,
+        characters: [],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('둘째 표준 발음'), findsOneWidget);
+
+    firstResponse.complete(
+      const PracticeSentence(
+        text: '첫 문장',
+        pronunciation: '첫 표준 발음',
+        translation: '',
+        level: 'CUSTOM',
+        category: 'Free practice',
+        point: '',
+        score: 0,
+        characters: [],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final fieldAfterResponses = tester.widget<TextField>(sentenceField);
+    expect(fieldAfterResponses.controller?.text, '둘째 문장');
+    expect(find.text('둘째 표준 발음'), findsOneWidget);
+    expect(find.text('첫 표준 발음'), findsNothing);
+  });
+
+  testWidgets(
+    'Selecting the same recommendation replaces an unfinished draft',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        LingKoApp(
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: FakeEvaluationApi(),
+          userPreferencesApi: FakeUserPreferencesApi(),
+          authService: FakeAppAuthService(restoreExistingSession: true),
+          audioRecorderService: FakeAudioRecorderService(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('맛있겠다.').first);
+      await tester.pumpAndSettle();
+      final sentenceField = find.byKey(
+        const ValueKey('practice-sentence-field'),
+      );
+      await tester.enterText(sentenceField, '아직 작성 중');
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.tap(_navigationLabel('Home'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('맛있겠다.').first);
+      await tester.pumpAndSettle();
+
+      final selectedSentenceField = tester.widget<TextField>(sentenceField);
+      expect(selectedSentenceField.controller?.text, '맛있겠다.');
+      expect(find.text('마싯게따.'), findsOneWidget);
+    },
+  );
 
   testWidgets('Home shows loading, empty, and retryable error states', (
     WidgetTester tester,
@@ -1040,7 +1282,7 @@ void main() {
     expect(find.text('Result'), findsNothing);
   });
 
-  testWidgets('leaving Practice tab cancels active recording', (
+  testWidgets('immersive recording hides tabs and cancel stops recording', (
     WidgetTester tester,
   ) async {
     final recorder = FakeAudioRecorderService();
@@ -1062,7 +1304,8 @@ void main() {
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
 
-    await tester.tap(_navigationLabel('Profile'));
+    expect(find.byType(NavigationBar), findsNothing);
+    await tester.tap(find.text('Cancel recording'));
     await tester.pumpAndSettle();
 
     expect(recorder.cancelCount, 1);
@@ -1087,7 +1330,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Recent practice'), findsOneWidget);
-    expect(find.text('Best score'), findsOneWidget);
+    expect(find.text('Latest score'), findsOneWidget);
     expect(find.text('91'), findsWidgets);
     expect(find.text('맛있겠다.'), findsOneWidget);
 
@@ -1095,6 +1338,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Practice'), findsWidgets);
+    expect(find.text('Check standard pronunciation'), findsNothing);
     expect(find.text('마싯게따.'), findsOneWidget);
   });
 
@@ -1260,7 +1504,9 @@ void main() {
     await tester.tap(find.text('Stop and analyze'));
     await tester.pumpAndSettle();
 
-    await tester.tap(_navigationLabel('Home'));
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue in background'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('사진 찍어도 돼요?'), 300);
     await tester.tap(find.text('사진 찍어도 돼요?'));
@@ -1456,6 +1702,7 @@ void main() {
           body: ResultScreen(
             sentence: sentence,
             result: result,
+            sentenceSpeechService: FakeSentenceSpeechService(),
             onTryAgain: () => retried = true,
           ),
         ),
@@ -1548,6 +1795,7 @@ void main() {
             body: ResultScreen(
               sentence: sentence,
               result: result,
+              sentenceSpeechService: FakeSentenceSpeechService(),
               onTryAgain: () {},
             ),
           ),

@@ -20,21 +20,16 @@ class ScoreBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      ('Accuracy', accuracy, Icons.gps_fixed),
-      ('Fluency', fluency, Icons.waves),
-      ('Completeness', completeness, Icons.checklist),
+      ('Accuracy', accuracy),
+      ('Fluency', fluency),
+      ('Completeness', completeness),
     ];
     return AppCard(
       child: Column(
         children: [
           for (var index = 0; index < items.length; index++) ...[
-            _ScoreProgressRow(
-              label: items[index].$1,
-              score: items[index].$2,
-              icon: items[index].$3,
-            ),
-            if (index != items.length - 1)
-              const SizedBox(height: AppSpacing.lg),
+            _ScoreProgressRow(label: items[index].$1, score: items[index].$2),
+            if (index != items.length - 1) const SizedBox(height: 8),
           ],
         ],
       ),
@@ -43,15 +38,10 @@ class ScoreBreakdown extends StatelessWidget {
 }
 
 class _ScoreProgressRow extends StatelessWidget {
-  const _ScoreProgressRow({
-    required this.label,
-    required this.score,
-    required this.icon,
-  });
+  const _ScoreProgressRow({required this.label, required this.score});
 
   final String label;
   final int score;
-  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +50,15 @@ class _ScoreProgressRow extends StatelessWidget {
       label: '$label $normalizedScore out of 100',
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 20),
-          const SizedBox(width: AppSpacing.sm),
           SizedBox(
-            width: 92,
-            child: Text(label, style: Theme.of(context).textTheme.titleMedium),
+            width: 88,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12,
+              ),
+            ),
           ),
           Expanded(
             child: ClipRRect(
@@ -77,10 +71,14 @@ class _ScoreProgressRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: 9),
           Text(
             '$normalizedScore',
-            style: const TextStyle(fontWeight: FontWeight.w900),
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ],
       ),

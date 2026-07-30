@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - flutter_tts iOS Pod 연결
+
+- 변경 파일: `Podfile.lock`, `WORK_LOG.md`
+- 내용: iPhone에서 기기 한국어 음성을 사용할 수 있도록 `flutter_tts` iOS plugin을 CocoaPods 잠금 파일에 반영했다.
+- 검증: UTF-8 환경에서 `flutter build ios --simulator --no-codesign`, `Runner.app` 생성 확인
+- 리스크: CocoaPods 실행 터미널이 UTF-8이 아니면 `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` 지정 필요
+
 ## 2026-07-28 - iOS 실기기 Development Team 설정
 
 - 변경 파일: `Runner.xcodeproj/project.pbxproj`, `WORK_LOG.md`

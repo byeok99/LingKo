@@ -24,7 +24,8 @@ class SettingsRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        constraints: const BoxConstraints(minHeight: 55),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
@@ -49,7 +50,8 @@ class SettingsRow extends StatelessWidget {
               color:
                   onTap == null
                       ? AppColors.textSecondary
-                      : AppColors.primaryDark,
+                      : AppColors.textPrimary,
+              size: 20,
             ),
           ],
         ),

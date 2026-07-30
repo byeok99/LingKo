@@ -8,9 +8,10 @@ import 'guide_sheet.dart';
 import 'shared_widgets.dart';
 
 class ResultTile extends StatelessWidget {
-  const ResultTile({super.key, required this.result});
+  const ResultTile({super.key, required this.result, this.width = 64});
 
   final CharacterResult result;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +48,12 @@ class ResultTile extends StatelessWidget {
               ),
           borderRadius: BorderRadius.circular(AppSizes.radius),
           child: Container(
-            width: 112,
-            constraints: const BoxConstraints(minHeight: 138),
-            padding: const EdgeInsets.all(AppSpacing.md),
+            width: width,
+            constraints: const BoxConstraints(minHeight: 61),
+            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(AppSizes.radius),
+              color: _softColorFor(tone),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: color.withValues(alpha: 0.40)),
             ),
             child: Column(
@@ -61,27 +62,17 @@ class ResultTile extends StatelessWidget {
                 Text(
                   result.character.isEmpty ? '—' : result.character,
                   style: const TextStyle(
-                    fontSize: 28,
+                    fontSize: 16,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: 4),
                 Text(
                   available ? '${result.score}' : '—',
                   style: TextStyle(
                     color: color,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: color,
                     fontSize: 11,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
@@ -91,6 +82,15 @@ class ResultTile extends StatelessWidget {
       ),
     );
   }
+}
+
+Color _softColorFor(StatusTone tone) {
+  return switch (tone) {
+    StatusTone.success => AppColors.successSoft,
+    StatusTone.warning || StatusTone.info => AppColors.warningSoft,
+    StatusTone.error => AppColors.errorSoft,
+    StatusTone.neutral => AppColors.surface,
+  };
 }
 
 StatusTone _toneFor(CharacterResult result) {
