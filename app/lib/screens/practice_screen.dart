@@ -3,27 +3,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../app/app_theme.dart';
 import '../models/evaluation_progress.dart';
 import '../models/practice_sentence.dart';
 import '../services/audio_recorder_service.dart';
 import '../services/sentence_speech_service.dart';
+import '../utils/practice_sentence_normalizer.dart';
 import '../widgets/evaluation_progress_panel.dart';
 import '../widgets/shared_widgets.dart';
 
-final RegExp _customSentenceSpecialCharacterPattern = RegExp(
-  r'[\p{P}\p{S}]',
-  unicode: true,
-);
-final TextInputFormatter _customSentenceSpecialCharacterFormatter =
-    FilteringTextInputFormatter.deny(_customSentenceSpecialCharacterPattern);
 const Duration _sentencePreparationDelay = Duration(milliseconds: 700);
-
-String _normalizeCustomSentence(String value) {
-  return value.replaceAll(_customSentenceSpecialCharacterPattern, '').trim();
-}
+const PracticeSentenceInputFormatter _customSentenceInputFormatter =
+    PracticeSentenceInputFormatter();
 
 class PracticeScreen extends StatefulWidget {
   const PracticeScreen({
@@ -78,7 +70,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
   bool get isPreparedSentenceCurrent {
     final sentence = widget.sentence;
     return sentence != null &&
-        customSentenceController.text.trim() == sentence.text.trim();
+        normalizePracticeSentenceText(customSentenceController.text) ==
+            normalizePracticeSentenceText(sentence.text);
   }
 
   @override
@@ -120,10 +113,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
     sentencePreparationTimer?.cancel();
     final revision = ++sentencePreparationRevision;
-    final text = _normalizeCustomSentence(customSentenceController.text);
+    final text = normalizePracticeSentenceText(customSentenceController.text);
     final alreadyPrepared =
         widget.sentence != null &&
-        customSentenceController.text.trim() == widget.sentence!.text.trim();
+        text == normalizePracticeSentenceText(widget.sentence!.text);
 
     unawaited(_stopSpeechBestEffort());
     setState(() {
@@ -144,7 +137,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   void _syncControllerWithSentence() {
-    final text = widget.sentence?.text ?? '';
+    final text = normalizePracticeSentenceText(widget.sentence?.text ?? '');
     isSyncingSentenceController = true;
     if (customSentenceController.text != text) {
       customSentenceController.text = text;
@@ -191,11 +184,11 @@ class _PracticeScreenState extends State<PracticeScreen> {
   bool _isCurrentPreparation(String text, int revision) {
     return mounted &&
         revision == sentencePreparationRevision &&
-        _normalizeCustomSentence(customSentenceController.text) == text;
+        normalizePracticeSentenceText(customSentenceController.text) == text;
   }
 
   void _retrySentencePreparation() {
-    final text = _normalizeCustomSentence(customSentenceController.text);
+    final text = normalizePracticeSentenceText(customSentenceController.text);
     if (text.isEmpty) {
       return;
     }
@@ -796,7 +789,7 @@ class _SentenceComposerCard extends StatelessWidget {
             controller: controller,
             focusNode: focusNode,
             // 문장부호·기호가 평가 글자로 전달되지 않도록 입력과 붙여넣기 단계에서 즉시 제거한다.
-            inputFormatters: [_customSentenceSpecialCharacterFormatter],
+            inputFormatters: [_customSentenceInputFormatter],
             minLines: 1,
             maxLines: 4,
             textInputAction: TextInputAction.done,

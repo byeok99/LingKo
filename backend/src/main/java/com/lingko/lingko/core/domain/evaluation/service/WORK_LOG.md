@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-07-30 - 점수 없는 영상 가이드·고착 실패 종결
+
+- 변경 파일: `EvaluationService.java`, `EvaluationJobProcessingService.java`, `WORK_LOG.md`
+- 내용: Result의 모든 음절을 전환 영상 resolver로 처리하고, 최종 실패 시 쿼터 예약이 이미 없어도 오류를 기록한 뒤 작업을 `FAILED`로 commit한다.
+- 검증: Backend 단위 201개·통합 11개 통과, 배포 후 고착 작업 4건 모두 `FAILED` 수렴
+- 리스크: 누락된 예약의 발생 원인은 운영 로그·metric으로 별도 감시 필요
+
+## 2026-07-30 - 취약 음절 영상 가이드 해석
+
+- 변경 파일: `EvaluationService.java`, `GuideMediaResolver.java`, `WORK_LOG.md`
+- 내용: 평가 완료 시 신뢰 가능한 글자 점수가 80점 미만인 음절만 프레임 전환 영상을 요청하고 단일 프레임·생성 실패는 첫 PNG로 fallback한다.
+- 검증: 대상 회귀 테스트와 Backend 단위 199개·통합 11개 통과
+- 리스크: 점수 신뢰도가 없거나 80점 이상인 글자는 정적 가이드 유지
+
+## 2026-07-30 - 모든 평가 대상의 현재 발음 규칙 적용
+
+- 변경 파일: `EvaluationService.java`, `EvaluationApplicationService.java`, `EvaluationJobService.java`, `WORK_LOG.md`
+- 내용: 추천·자유 문장의 원문을 정규화하고 추천 조회·legacy 평가·비동기 작업 모두 DB 발음값 없이 `KoreanPhonemeUtil` 결과를 사용하게 했다.
+- 검증: Backend 단위 190개·통합 11개 통과
+- 리스크: 기존 완료 평가의 발음 snapshot은 역사 재현을 위해 유지됨
+
 ## 2026-07-29 - 사용자별 원격 음성 삭제 계약
 
 - 변경 파일: `EvaluationAudioStorage.java`, `WORK_LOG.md`

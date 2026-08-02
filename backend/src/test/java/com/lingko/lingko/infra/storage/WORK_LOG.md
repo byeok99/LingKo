@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - S3 영상 cache 조회 회귀 테스트
+
+- 변경 파일: `S3UploaderTest.java`, `WORK_LOG.md`
+- 내용: 기존 object URL 반환, 404 cache miss, 503 장애 전파를 검증했다.
+- 검증: 대상 테스트와 Backend 단위 199개·통합 11개 통과
+- 리스크: 실제 S3 통신은 포함하지 않음
+
 ## 2026-07-29 - S3 탈퇴 삭제 회귀 테스트
 
 - 변경 파일: `S3EvaluationAudioStorageTest.java`, `WORK_LOG.md`

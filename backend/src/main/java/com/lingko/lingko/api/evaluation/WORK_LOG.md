@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 변환 API 원문 정규화
+
+- 변경 파일: `EvaluationController.java`, `WORK_LOG.md`
+- 내용: 발음 변환 응답의 원문도 서비스와 같은 Unicode 문장부호·기호 제거 결과를 반환하도록 맞췄다.
+- 검증: Backend 단위 190개·통합 11개 통과
+- 리스크: 없음
+
 ## 2026-07-27 - 비동기 평가 작업 API 추가
 
 - 변경 파일: `EvaluationJobController.java`, `EvaluationResultController.java`, `WORK_LOG.md`

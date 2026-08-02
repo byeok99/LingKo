@@ -8,6 +8,7 @@ import com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationJobRepository;
 import com.lingko.lingko.core.domain.quota.service.PracticeQuotaService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import java.util.Optional;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EvaluationJobProcessingService {
 
     private final EvaluationJobRepository jobRepository;
@@ -76,7 +78,15 @@ public class EvaluationJobProcessingService {
         if (job.getAttemptCount() >= settings.getWorker().getMaxAttempts()) {
             job.fail(errorCode, clock.instant());
             // 예약 복구 native UPDATE 전에 FAILED를 기록해 clear 이후 상태 변경 유실을 막는다.
-            quotaService.releasePractice(job.reservation());
+            boolean quotaReleased = quotaService.releasePracticeIfReserved(job.reservation());
+            if (!quotaReleased) {
+                // 이미 사라진 예약 때문에 terminal 상태 transaction을 롤백하면 같은 실패가 영구 재실행된다.
+                log.error(
+                        "Evaluation job reached terminal failure without quota reservation: jobId={}, quotaDate={}",
+                        job.getJobId(),
+                        job.getQuotaDate()
+                );
+            }
             return true;
         }
 

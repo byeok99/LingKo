@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-07-30 - 평가·결과 화면 과도한 간소화 롤백
+
+- 변경 파일: `home_screen.dart`, `result_screen.dart`, `WORK_LOG.md`
+- 내용: 아이콘 위주 구성으로 축소했던 Home 평가 카드와 Result를 직전 정보형 카드·summary·범례·상세 feedback 구성으로 복원했다. 점수 없는 가이드 진입과 표준 발음 기능은 유지했다.
+- 검증: `flutter analyze`, `flutter test` 전체 70개 통과
+- 리스크: 설명 밀도와 긴 문장 줄바꿈은 실제 iPhone에서 수동 확인 필요
+
+## 2026-07-30 - Practice 정규화와 Result 가이드 유지
+
+- 변경 파일: `practice_screen.dart`, `result_screen.dart`, `WORK_LOG.md`
+- 내용: 추천 선택·직접 입력·준비 응답의 기호 제거를 동일 경계에 적용하고, 점수 없는 음절도 URL이 있으면 Result 가이드 진입을 유지했다.
+- 검증: `flutter analyze`, `flutter test` 전체 70개 통과
+- 리스크: 실제 IME 조합과 작은 iPhone 화면은 실기기 확인 필요
+
+## 2026-07-30 - 점수 없는 Result 가이드 진입 복구
+
+- 변경 파일: `result_screen.dart`, `WORK_LOG.md`
+- 내용: 문자 점수 `UNAVAILABLE`과 가이드 존재 여부를 분리해, `characters`가 있으면 점수 대신 `—`를 표시하면서도 음절 타일과 입·혀 가이드 진입을 유지하도록 수정했다.
+- 검증: `flutter analyze`, `flutter test` 전체 66개 통과
+- 리스크: 실제 평가 응답의 가이드 URL과 긴 이미지 비율은 실기기 확인 필요
+
 ## 2026-07-30 - Practice 표준 발음 상시 노출과 안내 축소
 
 - 변경 파일: `practice_screen.dart`, `WORK_LOG.md`

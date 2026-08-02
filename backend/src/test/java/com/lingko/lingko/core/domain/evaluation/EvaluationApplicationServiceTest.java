@@ -70,7 +70,6 @@ class EvaluationApplicationServiceTest {
         RecommendedSentence sentence = RecommendedSentence.builder()
                 .sentenceId(12L)
                 .originalText("맛있겠다.")
-                .standardPronunciation("마싣껟따.")
                 .active(true)
                 .build();
         PracticeResultResponse result = result(91);
@@ -79,8 +78,9 @@ class EvaluationApplicationServiceTest {
         );
         when(userRepository.findById(7L)).thenReturn(Optional.of(user));
         when(sentenceRepository.findBySentenceIdAndActiveTrue(12L)).thenReturn(Optional.of(sentence));
+        when(evaluationService.convertToStandardPronunciation("맛있겠다")).thenReturn("마싣껟따");
         when(quotaService.reservePractice(7L)).thenReturn(reservation);
-        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("마싣껟따.")))
+        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("마싣껟따")))
                 .thenReturn(result);
 
         PracticeResultResponse response = applicationService.evaluate(7L, audio(), 12L, null);
@@ -93,8 +93,8 @@ class EvaluationApplicationServiceTest {
         assertThat(command.user()).isSameAs(user);
         assertThat(command.source()).isEqualTo(EvaluationLog.PracticeSource.RECOMMENDED);
         assertThat(command.sentenceId()).isEqualTo(12L);
-        assertThat(command.originalText()).isEqualTo("맛있겠다.");
-        assertThat(command.standardPronunciation()).isEqualTo("마싣껟따.");
+        assertThat(command.originalText()).isEqualTo("맛있겠다");
+        assertThat(command.standardPronunciation()).isEqualTo("마싣껟따");
         assertThat(command.result()).isSameAs(result);
         verify(quotaService, never()).releasePractice(any());
     }
@@ -108,9 +108,9 @@ class EvaluationApplicationServiceTest {
                 PracticeQuotaService.QuotaSource.FREE
         );
         when(userRepository.findById(7L)).thenReturn(Optional.of(user));
-        when(evaluationService.convertToStandardPronunciation("안녕하세요.")).thenReturn("안녕하세여.");
+        when(evaluationService.convertToStandardPronunciation("안녕하세요")).thenReturn("안녕하세여");
         when(quotaService.reservePractice(7L)).thenReturn(reservation);
-        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("안녕하세여.")))
+        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("안녕하세여")))
                 .thenReturn(result);
 
         applicationService.evaluate(7L, audio(), null, "  안녕하세요.  ");
@@ -121,8 +121,8 @@ class EvaluationApplicationServiceTest {
         EvaluationPersistenceService.SaveEvaluationResultCommand command = commandCaptor.getValue();
         assertThat(command.source()).isEqualTo(EvaluationLog.PracticeSource.CUSTOM);
         assertThat(command.sentenceId()).isNull();
-        assertThat(command.originalText()).isEqualTo("안녕하세요.");
-        assertThat(command.standardPronunciation()).isEqualTo("안녕하세여.");
+        assertThat(command.originalText()).isEqualTo("안녕하세요");
+        assertThat(command.standardPronunciation()).isEqualTo("안녕하세여");
     }
 
     @Test
@@ -133,9 +133,9 @@ class EvaluationApplicationServiceTest {
                 PracticeQuotaService.QuotaSource.FREE
         );
         when(userRepository.findById(7L)).thenReturn(Optional.of(user));
-        when(evaluationService.convertToStandardPronunciation("안녕하세요.")).thenReturn("안녕하세여.");
+        when(evaluationService.convertToStandardPronunciation("안녕하세요")).thenReturn("안녕하세여");
         when(quotaService.reservePractice(7L)).thenReturn(reservation);
-        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("안녕하세여.")))
+        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("안녕하세여")))
                 .thenThrow(new IllegalStateException("provider failed"));
 
         assertThatThrownBy(() -> applicationService.evaluate(7L, audio(), null, "안녕하세요."))
@@ -154,9 +154,9 @@ class EvaluationApplicationServiceTest {
                 PracticeQuotaService.QuotaSource.REWARDED
         );
         when(userRepository.findById(7L)).thenReturn(Optional.of(user));
-        when(evaluationService.convertToStandardPronunciation("안녕하세요.")).thenReturn("안녕하세여.");
+        when(evaluationService.convertToStandardPronunciation("안녕하세요")).thenReturn("안녕하세여");
         when(quotaService.reservePractice(7L)).thenReturn(reservation);
-        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("안녕하세여.")))
+        when(evaluationService.evaluatePronunciation(any(MultipartFile.class), eq("안녕하세여")))
                 .thenReturn(result(82));
         org.mockito.Mockito.doThrow(new IllegalStateException("database failed"))
                 .when(completionService)

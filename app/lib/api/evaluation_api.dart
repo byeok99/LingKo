@@ -5,6 +5,7 @@ import 'dart:io';
 
 import '../models/evaluation_job.dart';
 import '../models/practice_history.dart';
+import '../utils/practice_sentence_normalizer.dart';
 import 'api_client.dart';
 
 /// Evaluation Api 백엔드 통신 계약을 정의한다.
@@ -85,12 +86,15 @@ class DartIoEvaluationApi implements EvaluationApi {
     int? sentenceId,
     String? text,
   }) async {
+    final normalizedText =
+        text == null ? null : normalizePracticeSentenceText(text);
     final json = await _client.postJsonWithHeaders(
       '/api/evaluations/jobs',
       {
         'objectKey': objectKey,
         if (sentenceId != null) 'sentenceId': sentenceId,
-        if (text != null && text.trim().isNotEmpty) 'text': text.trim(),
+        if (normalizedText != null && normalizedText.isNotEmpty)
+          'text': normalizedText,
       },
       {
         'Authorization': 'Bearer ${accessToken.trim()}',

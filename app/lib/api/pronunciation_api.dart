@@ -2,6 +2,7 @@
 // 선택 이유: HTTP 전송과 JSON 매핑을 UI에서 분리해 API 변경 영향을 한곳에서 관리한다.
 
 import '../models/practice_sentence.dart';
+import '../utils/practice_sentence_normalizer.dart';
 import 'api_client.dart';
 
 /// Pronunciation Api 백엔드 통신 계약을 정의한다.
@@ -19,9 +20,10 @@ class DartIoPronunciationApi implements PronunciationApi {
 
   @override
   Future<PracticeSentence> prepareCustomSentence(String text) async {
+    final normalizedText = normalizePracticeSentenceText(text);
     final json = await _client.postJson('/api/pronunciation/prepare', {
       'source': 'CUSTOM',
-      'text': text,
+      'text': normalizedText,
     });
 
     return PracticeSentence.fromPrepareResponse(json);

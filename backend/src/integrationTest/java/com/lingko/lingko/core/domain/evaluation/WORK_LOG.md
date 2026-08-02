@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 평가 입력 정규화 통합 검증
+
+- 변경 파일: `EvaluationApplicationFlowIntegrationTest.java`, `WORK_LOG.md`
+- 내용: 자유 문장 평가가 기호를 제거한 원문과 현재 규칙의 표준 발음을 저장하는 흐름을 검증했다.
+- 검증: Backend 통합 테스트 전체 11개 통과
+- 리스크: 실제 Azure 평가 호출은 외부 통합 테스트 범위임
+
 ## 2026-07-29 - 단일 독립 DB Worker 처리 검증
 
 - 변경 파일: `IndependentEvaluationWorkerIntegrationTest.java`, `EvaluationQueueScalingIntegrationTest.java`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 영상 생성용 Worker lease 연장
+
+- 변경 파일: `EvaluationJobSettings.java`, `WORK_LOG.md`
+- 내용: 최초 Replicate 보간과 FFmpeg 병합 중 다른 Worker가 작업을 재선점하지 않도록 기본 lease를 600초로 늘렸다.
+- 검증: Backend 단위 199개·통합 11개 통과
+- 리스크: 실제 최초 생성 시간과 운영 lease 여유는 측정 필요
+
 ## 2026-07-29 - SQS 설정 제거
 
 - 변경 파일: `EvaluationJobSettings.java`, `SqsConfig.java`, `WORK_LOG.md`

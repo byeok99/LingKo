@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 결정적 영상 cache 재사용
+
+- 변경 파일: `FrameInterpolationVideoGenerator.java`, `WORK_LOG.md`
+- 내용: 음절·가이드 종류·프레임 조합의 hash 기반 S3 key를 조회해 기존 MP4를 재사용하고 고정 stripe lock으로 같은 프로세스의 동시 최초 생성을 직렬화했다.
+- 검증: cache hit 회귀 테스트와 Backend 단위 199개·통합 11개 통과
+- 리스크: 서로 다른 Worker 프로세스 간 최초 cache miss 중복 생성 가능
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `AzureSpeechEvaluator.java`, `ReplicateApiClient.java`, `VideoMerger.java`, `WORK_LOG.md`

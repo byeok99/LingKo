@@ -15,6 +15,7 @@ import com.lingko.lingko.core.domain.evaluation.repository.EvaluationJobReposito
 import com.lingko.lingko.core.domain.sentence.entity.RecommendedSentence;
 import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
 import com.lingko.lingko.core.domain.sentence.repository.RecommendedSentenceRepository;
+import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -96,15 +97,16 @@ public class EvaluationJobService {
             RecommendedSentence sentence = sentenceRepository
                     .findBySentenceIdAndActiveTrue(request.sentenceId())
                     .orElseThrow(() -> new SentenceNotFoundException(request.sentenceId()));
+            String originalText = PracticeSentenceNormalizer.normalize(sentence.getOriginalText());
             return new EvaluationTarget(
                     EvaluationLog.PracticeSource.RECOMMENDED,
                     sentence.getSentenceId(),
-                    sentence.getOriginalText(),
-                    sentence.getStandardPronunciation()
+                    originalText,
+                    evaluationService.convertToStandardPronunciation(originalText)
             );
         }
 
-        String originalText = request.text().trim();
+        String originalText = PracticeSentenceNormalizer.normalize(request.text());
         return new EvaluationTarget(
                 EvaluationLog.PracticeSource.CUSTOM,
                 null,
@@ -115,7 +117,7 @@ public class EvaluationJobService {
 
     private void validateTarget(EvaluationJobRequest request) {
         boolean hasSentence = request.sentenceId() != null;
-        boolean hasText = request.text() != null && !request.text().isBlank();
+        boolean hasText = !PracticeSentenceNormalizer.normalize(request.text()).isEmpty();
         if (hasSentence == hasText) {
             throw new IllegalArgumentException("Exactly one of sentenceId or text is required");
         }

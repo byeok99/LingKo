@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-07-30 - 최초 영상 생성 평가 polling 연장
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: Replicate 보간과 FFmpeg 병합이 필요한 최초 cache miss에도 완료 결과를 받을 수 있도록 평가 polling 상한을 120초에서 600초로 늘렸다.
+- 검증: `flutter analyze`, `flutter test` 전체 70개 통과
+- 리스크: 장시간 처리 중 별도 진행률은 제공하지 않음
+
+## 2026-07-30 - 현재 발음 규칙 기반 재연습
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: Review 재연습에서 기록의 과거 표준 발음 snapshot을 재사용하지 않고 추천 단건 또는 자유 문장 준비 API를 다시 호출한다.
+- 검증: `flutter analyze`, `flutter test` 전체 70개 통과
+- 리스크: 재준비 네트워크 실패 시 Review에 머물며 SnackBar로 재시도를 안내함
+
 ## 2026-07-30 - Practice 자동 준비 문장 반영 책임 명시
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

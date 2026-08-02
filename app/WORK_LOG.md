@@ -1,3 +1,24 @@
+## 2026-07-30 - 모든 평가 음절 영상 계약 반영
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 점수 제공 여부와 관계없이 Result의 모든 다중 프레임 음절은 영상 URL을 재생하고 실패·단일 프레임만 PNG로 표시한다고 명시했다.
+- 검증: Backend 단위 201개·통합 11개와 기존 Flutter 영상 재생 테스트 대조
+- 리스크: 앱 코드 동작 변경 없음
+
+## 2026-07-30 - 평가 영상 생성 대기 계약 문서화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 취약 음절 MP4와 PNG fallback 계약, 최초 cache miss를 위한 최대 600초 polling을 현재 앱 동작에 맞게 안내했다.
+- 검증: `flutter analyze`, `flutter test` 전체 70개 통과
+- 리스크: 실제 외부 영상 생성 시간은 실기기·운영 연동에서 확인 필요
+
+## 2026-07-30 - 입력 정규화·영상 가이드 의존성 문서화
+
+- 변경 파일: `README.md`, `pubspec.yaml`, `pubspec.lock`, `WORK_LOG.md`
+- 내용: Unicode 문장부호·기호 제거와 서버 음운 규칙 사용을 안내하고, URL 기반 영상 가이드 재생을 위해 `video_player` 의존성을 추가했다.
+- 검증: `flutter analyze`, `flutter test` 전체 70개 통과
+- 리스크: 현재 백엔드 기본 가이드 mapping은 PNG이며 실제 영상 URL 제공은 별도 필요
+
 ## 2026-07-30 - 기기 TTS 의존성 추가
 
 - 변경 파일: `pubspec.yaml`, `pubspec.lock`, `WORK_LOG.md`

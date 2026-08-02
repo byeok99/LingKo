@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - S3 가이드 영상 cache 조회
+
+- 변경 파일: `S3Uploader.java`, `WORK_LOG.md`
+- 내용: 결정적 key의 object 존재 여부를 HEAD로 확인하고 404만 cache miss로 처리하며 다른 S3 장애는 생성 오류로 전파한다.
+- 검증: cache hit·404·503 단위 테스트와 Backend 단위 199개·통합 11개 통과
+- 리스크: 실제 IAM HeadObject 권한은 운영 환경 검증 필요
+
 ## 2026-07-29 - 탈퇴 사용자 S3 prefix 완전 삭제
 
 - 변경 파일: `S3EvaluationAudioStorage.java`, `WORK_LOG.md`

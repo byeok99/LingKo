@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-07-30 - 평가·Result 정보형 시안 복원
+
+- 변경 파일: `preview.html`, `README.md`, `WORK_LOG.md`
+- 내용: 아이콘 중심으로 축소했던 Evaluating과 Result를 설명형 단계, summary, 점수 범례와 상세 feedback이 있는 직전 시안으로 복원했다.
+- 검증: inline JavaScript 구문 검사, Flutter 전체 70개 테스트와 대조
+- 리스크: 모바일 브라우저와 실제 iPhone의 설명 밀도는 수동 확인 필요
+
+## 2026-07-30 - 가이드 URL 매체 표시 기준
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 점수와 독립된 입·혀 가이드가 영상 URL이면 반복 재생하고 PNG 등 정적 URL이면 이미지로 표시하는 기준을 추가했다.
+- 검증: Flutter widget test와 대조
+- 리스크: 현재 서버 mapping은 PNG
+
+## 2026-07-30 - Result 점수·가이드 독립 노출 기준
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 음절 점수가 없어도 가이드 URL이 있으면 `—` 타일과 입·혀 가이드 진입을 제공하는 Result 정보 계층을 명시했다.
+- 검증: `flutter analyze`, `flutter test` 전체 66개 통과 및 활성 문서 문구 대조
+- 리스크: 프로토타입은 모든 음절에 예시 점수를 사용하므로 점수 없음 시각 상태는 Flutter에서 확인 필요
+
 ## 2026-07-30 - Practice 안내 밀도 축소 시안
 
 - 변경 파일: `preview.html`, `README.md`, `WORK_LOG.md`

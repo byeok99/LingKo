@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-07-30 - 점수 없는 `김` 영상·terminal 실패 회귀
+
+- 변경 파일: `EvaluationServiceResultTest.java`, `EvaluationJobProcessingServiceTest.java`, `WORK_LOG.md`
+- 내용: 글자 점수가 없어도 `김`은 MP4를 사용하고, 쿼터 예약이 이미 없어도 최종 실패 작업은 `FAILED`로 수렴하는 계약을 검증했다.
+- 검증: RED compile 실패 확인 후 Backend 단위 201개·통합 11개 통과
+- 리스크: 실제 외부 영상 content는 운영 검증 필요
+
+## 2026-07-30 - `김` 평가 결과 MP4 회귀 검증
+
+- 변경 파일: `EvaluationServiceResultTest.java`, `WORK_LOG.md`
+- 내용: 취약 점수의 `김`이 입·혀 전환 가이드를 MP4 URL로 반환하는 평가 결과 계약을 검증했다.
+- 검증: 대상 테스트와 Backend 단위 199개·통합 11개 통과
+- 리스크: 실제 외부 영상 content 검증은 포함하지 않음
+
+## 2026-07-30 - 평가 경로 동적 발음 회귀 검증
+
+- 변경 파일: `EvaluationApplicationServiceTest.java`, `EvaluationJobServiceTest.java`, `EvaluationServicePrepareTest.java`, `EvaluationServiceResultTest.java`, `EvaluationServiceTest.java`, `WORK_LOG.md`
+- 내용: 추천·자유·legacy·비동기 작업이 저장된 추천 발음 없이 현재 변환 규칙과 정규화 원문을 사용하는 계약을 검증했다.
+- 검증: Backend 단위 테스트 전체 190개 통과
+- 리스크: 없음
+
 ## 2026-07-29 - 독립 DB Worker 계약으로 테스트 정리
 
 - 변경 파일: `EvaluationJobMigrationTest.java`, `EvaluationJobQueueDispatcherTest.java`, `EvaluationJobQueueWorkerTest.java`, `EvaluationJobTest.java`, `EvaluationJobWorkerTest.java`, `EvaluationWorkerDeploymentConditionTest.java`, `WORK_LOG.md`

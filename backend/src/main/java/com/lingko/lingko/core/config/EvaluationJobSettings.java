@@ -37,7 +37,7 @@ public class EvaluationJobSettings {
 
         @Min(1)
         @Max(43_200)
-        private int leaseSeconds = 60;
+        private int leaseSeconds = 600;
 
         @Min(0)
         @Max(43_200)

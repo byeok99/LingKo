@@ -27,7 +27,7 @@ public class EvaluationServiceTest {
         String result = service.convertToStandardPronunciation(text);
 
         // 검증
-        assertThat(result).isEqualTo("바블 머거써요.");
+        assertThat(result).isEqualTo("바블 머거써요");
 
         System.out.println(result);
     }

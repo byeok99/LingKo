@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 누락 예약으로 인한 최종 실패 고착 사례 추가
+
+- 변경 파일: `2026-07-29-evaluation-job-status-lost-after-quota-update.md`, `README.md`, `WORK_LOG.md`
+- 내용: 삭제된 S3 원본과 이미 사라진 쿼터 예약 때문에 4개 작업이 1,500회 이상 재실행된 증거와 비예외 복구 해결을 기존 #47/#68 노트에 추가했다.
+- 검증: Docker Worker 로그·MySQL 상태, Backend 단위 201개·통합 11개와 배포 후 기존 4개 작업의 `FAILED` 수렴 확인
+- 리스크: 같은 예약 불일치의 신규 발생은 오류 로그·metric으로 감시 필요
+
 ## 2026-07-29 - 작업 상태 유실 노트를 DB Worker 기준으로 갱신
 
 - 변경 파일: `2026-07-29-evaluation-job-status-lost-after-quota-update.md`, `WORK_LOG.md`

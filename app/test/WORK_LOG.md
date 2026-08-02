@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-07-30 - 평가 정보형 UI 회귀 테스트 복원
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 아이콘 전용 UI 기대값을 제거하고 평가 단계 문구, Result 발음 레이블·범례·상세 feedback, GuideSheet note·매체 안내가 유지되는 직전 계약으로 복원했다.
+- 검증: `flutter test` 전체 70개 통과
+- 리스크: 실제 기기 픽셀과 영상 decode는 Widget test 범위 밖임
+
+## 2026-07-30 - 정규화·동적 발음·영상 회귀 테스트
+
+- 변경 파일: `practice_sentence_normalizer_test.dart`, `evaluation_api_test.dart`, `pronunciation_api_test.dart`, `sentence_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: 기호 제거, 준비 응답 재정규화, `마싣껟따` 추천 응답, 현재 규칙 기반 Review 재연습과 MP4 가이드 재생 계약을 고정했다.
+- 검증: 구현 전 실패 확인, `flutter test` 전체 70개 통과
+- 리스크: 실제 네트워크 영상 decode는 widget test 범위 밖임
+
+## 2026-07-30 - 점수와 입·혀 가이드 독립 노출 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 문자 점수가 `UNAVAILABLE`이어도 URL이 있는 음절 타일이 표시되고, 선택 시 입·혀 가이드가 모두 열리는 회귀 조건을 추가했다.
+- 검증: 구현 전 Result grid 부재 실패 확인, `flutter test` 전체 66개 통과
+- 리스크: 실제 S3 네트워크 이미지는 widget test에서 다운로드하지 않음
+
 ## 2026-07-30 - Practice 표준 발음 상시 노출 회귀 테스트
 
 - 변경 파일: `widget_test.dart`, `WORK_LOG.md`

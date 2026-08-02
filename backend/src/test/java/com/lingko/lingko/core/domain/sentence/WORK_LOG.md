@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 추천 발음 비영속 계약 테스트
+
+- 변경 파일: `RecommendedSentenceMigrationTest.java`, `SentenceServiceTest.java`, `WORK_LOG.md`
+- 내용: V12 후 추천 발음 컬럼이 없고 추천 응답은 원문을 현재 규칙으로 변환해 `마싣껟따`를 반환하는지 검증했다.
+- 검증: Backend 단위 테스트 전체 190개 통과
+- 리스크: 실제 MySQL migration은 미검증
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `RecommendedSentenceMigrationTest.java`, `SentenceServiceTest.java`, `WORK_LOG.md`

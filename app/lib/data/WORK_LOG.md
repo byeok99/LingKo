@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 레거시 발음 mock 제거
+
+- 변경 파일: `mock_sentences.dart`, `WORK_LOG.md`
+- 내용: 런타임에서 사용하지 않던 추천 문장·표준 발음 하드코딩을 삭제해 백엔드 음운 규칙만 발음 원천으로 남겼다.
+- 검증: `flutter analyze`, `flutter test` 전체 70개 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `mock_sentences.dart`, `WORK_LOG.md`

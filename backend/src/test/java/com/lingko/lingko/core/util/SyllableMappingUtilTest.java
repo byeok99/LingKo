@@ -5,6 +5,8 @@ import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -48,6 +50,19 @@ public class SyllableMappingUtilTest {
         assertThat(imageUrl)
                 .startsWith("https://custom-bucket.s3.us-west-2.amazonaws.com/guides/mouth/")
                 .endsWith(".png");
+    }
+
+    @Test
+    void kimCreatesMouthAndTongueTransitionPairs() {
+        List<String> phonemes = KoreanPhonemeUtil.toPhonemeList("김");
+
+        assertThat(phonemes).containsExactly("ㄱ", "ㅣ", "ㅁ");
+        assertThat(util.createFramePairs(phonemes, VideoType.MOUTH))
+                .hasSize(1)
+                .allSatisfy(pair -> assertThat(pair).hasSize(2));
+        assertThat(util.createFramePairs(phonemes, VideoType.TONGUE))
+                .hasSize(2)
+                .allSatisfy(pair -> assertThat(pair).hasSize(2));
     }
 
     private AwsSettings awsSettings(String bucket, String region) {
