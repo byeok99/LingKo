@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-02 - tmux 기본 Codex 모델 variant 명시
+
+- 변경 파일: `tmux_setup.sh`, `WORK_LOG.md`
+- 내용: 별도 `CODEX_MODEL` 지정이 없을 때 메인 pane이 `gpt-5.6-sol`을 명시적으로 사용하도록 기본값을 갱신했다.
+- 검증: `bash -n .codex/scripts/tmux_setup.sh`, `bash .codex/scripts/tests/tmux_setup_test.sh` 통과
+- 리스크: 설치된 Codex 환경에서 해당 모델 식별자를 지원해야 함
+
 ## 2026-07-24 - tmux 기본 Codex 모델 갱신
 
 - 변경 파일: `tmux_setup.sh`, `WORK_LOG.md`
