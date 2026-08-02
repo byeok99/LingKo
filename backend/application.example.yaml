@@ -76,7 +76,8 @@ evaluation:
   worker:
     enabled: ${EVALUATION_WORKER_ENABLED:true}
     poll-delay-ms: ${EVALUATION_WORKER_POLL_DELAY_MS:1000}
-    lease-seconds: ${EVALUATION_WORKER_LEASE_SECONDS:60}
+    # 최초 취약 음절 영상 생성이 Replicate polling을 포함할 수 있어 평가 작업 lease를 충분히 확보한다.
+    lease-seconds: ${EVALUATION_WORKER_LEASE_SECONDS:600}
     retry-delay-seconds: ${EVALUATION_WORKER_RETRY_DELAY_SECONDS:5}
     max-attempts: ${EVALUATION_WORKER_MAX_ATTEMPTS:3}
   # 성공·최종 실패 작업은 재호출 응답을 위해 보존한 뒤 작은 batch로 정리한다.

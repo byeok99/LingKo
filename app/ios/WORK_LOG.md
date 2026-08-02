@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-02 - iPhone 15 영상 plugin Pod 연결
+
+- 변경 파일: `Podfile.lock`, `WORK_LOG.md`
+- 내용: `video_player`의 iOS 구현인 `video_player_avfoundation`을 CocoaPods 잠금 파일에 반영해 시뮬레이터에서 영상 가이드 renderer를 빌드할 수 있게 했다.
+- 검증: UTF-8 locale로 iPhone 15 LingKo Debug 빌드·설치·실행, 화면 캡처와 Hot Reload 연결 확인
+- 리스크: 실행 시 `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`가 없으면 CocoaPods가 `ASCII-8BIT` 오류로 실패할 수 있음
+
 ## 2026-07-30 - flutter_tts iOS Pod 연결
 
 - 변경 파일: `Podfile.lock`, `WORK_LOG.md`

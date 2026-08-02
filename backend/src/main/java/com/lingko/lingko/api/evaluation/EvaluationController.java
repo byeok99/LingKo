@@ -5,6 +5,7 @@ import com.lingko.lingko.api.evaluation.dto.StandardPronunciationResponse;
 import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareRequest;
 import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareResponse;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
+import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -33,10 +34,11 @@ public class EvaluationController {
     ) {
         log.info("표준발음 변환 요청: {}", request.getText());
 
-        String standardPronunciation = service.convertToStandardPronunciation(request.getText());
+        String originalText = PracticeSentenceNormalizer.normalize(request.getText());
+        String standardPronunciation = service.convertToStandardPronunciation(originalText);
 
         StandardPronunciationResponse response = StandardPronunciationResponse.builder()
-                .originalText(request.getText())
+                .originalText(originalText)
                 .standardPronunciation(standardPronunciation)
                 .build();
 

@@ -2,7 +2,9 @@ package com.lingko.lingko.core.domain.evaluation;
 
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.domain.evaluation.dto.AssessmentResult;
+import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
+import com.lingko.lingko.core.domain.evaluation.service.GuideMediaResolver;
 import com.lingko.lingko.core.domain.evaluation.service.SpeechEvaluator;
 import com.lingko.lingko.core.domain.sentence.entity.RecommendedSentence;
 import com.lingko.lingko.core.domain.sentence.repository.RecommendedSentenceRepository;
@@ -39,7 +41,7 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("text 입력은 표준 발음으로 변환한 뒤 SpeechEvaluator 기준 문장으로 사용한다")
     void evaluateWithTextReference() {
-        when(speechEvaluator.evaluate(anyString(), eq("바블 머거써요."))).thenReturn(assessmentResult());
+        when(speechEvaluator.evaluate(anyString(), eq("바블 머거써요"))).thenReturn(assessmentResult());
         MockMultipartFile audio = wavAudio();
 
         PracticeResultResponse response = service.evaluatePronunciation(audio, null, "밥을 먹었어요.");
@@ -56,10 +58,10 @@ class EvaluationServiceResultTest {
     void evaluateWithSentenceReference() {
         RecommendedSentence sentence = RecommendedSentence.builder()
                 .sentenceId(1L)
-                .standardPronunciation("마싯게따.")
+                .originalText("맛있겠다.")
                 .build();
         when(sentenceRepository.findBySentenceIdAndActiveTrue(1L)).thenReturn(Optional.of(sentence));
-        when(speechEvaluator.evaluate(anyString(), eq("마싯게따."))).thenReturn(assessmentResult());
+        when(speechEvaluator.evaluate(anyString(), eq("마싣껟따"))).thenReturn(assessmentResult());
         MockMultipartFile audio = wavAudio();
 
         PracticeResultResponse response = service.evaluatePronunciation(audio, 1L, null);
@@ -127,6 +129,51 @@ class EvaluationServiceResultTest {
         assertThat(response.getCharacters()).extracting("score").containsOnlyNulls();
         assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly("UNAVAILABLE");
         assertThat(response.getWeakCharacters()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("글자 점수가 없어도 평가 결과의 김 가이드는 초중종성 이동 영상 URL을 사용한다")
+    void usesTransitionVideosForKimResultWithoutCharacterScores() {
+        GuideMediaResolver guideMediaResolver = mock(GuideMediaResolver.class);
+        EvaluationService videoGuideService = new EvaluationService(
+                mappingUtil,
+                speechEvaluator,
+                sentenceRepository,
+                guideMediaResolver
+        );
+        AssessmentResult result = AssessmentResult.builder()
+                .accuracyScore(70.0)
+                .fluencyScore(75.0)
+                .completenessScore(80.0)
+                .pronunciationScore(74.0)
+                .recognizedText("김")
+                .characterScoresAvailable(false)
+                .characterScores(List.of())
+                .build();
+        when(speechEvaluator.evaluate(anyString(), eq("김"))).thenReturn(result);
+        when(guideMediaResolver.resolveForEvaluation(
+                "김",
+                List.of("ㄱ", "ㅣ", "ㅁ"),
+                VideoType.MOUTH
+        )).thenReturn("https://guides/videos/mouth-kim.mp4");
+        when(guideMediaResolver.resolveForEvaluation(
+                "김",
+                List.of("ㄱ", "ㅣ", "ㅁ"),
+                VideoType.TONGUE
+        )).thenReturn("https://guides/videos/tongue-kim.mp4");
+
+        PracticeResultResponse response = videoGuideService.evaluatePronunciation(
+                wavAudio(),
+                null,
+                "김"
+        );
+
+        assertThat(response.getCharacters()).singleElement().satisfies(character -> {
+            assertThat(character.getScoreStatus()).isEqualTo("UNAVAILABLE");
+            assertThat(character.getPhonemes()).containsExactly("ㄱ", "ㅣ", "ㅁ");
+            assertThat(character.getMouthGuideUrl()).endsWith("mouth-kim.mp4");
+            assertThat(character.getTongueGuideUrl()).endsWith("tongue-kim.mp4");
+        });
     }
 
     @Test

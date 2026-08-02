@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 추천 표준 발음 컬럼 제거
+
+- 변경 파일: `V12__remove_recommended_pronunciation.sql`, `WORK_LOG.md`
+- 내용: 적용된 V2를 수정하지 않고 후속 migration으로 `recommended_sentences.standard_pronunciation`을 제거했다.
+- 검증: H2 MySQL mode V2→V12 적용과 컬럼 부재 테스트, Backend 전체 테스트 통과
+- 리스크: 실제 MySQL V1~V12 연속 migration은 미실행
+
 ## 2026-07-29 - Queue 발행 스키마 제거 migration
 
 - 변경 파일: `V11__remove_evaluation_job_queue_dispatch.sql`, `WORK_LOG.md`

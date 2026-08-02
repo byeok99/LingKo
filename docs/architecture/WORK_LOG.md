@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-07-30 - 점수 독립 영상·terminal 실패 수렴
+
+- 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`
+- 내용: 모든 평가 음절의 전환 영상 생성과 누락된 쿼터 예약에서도 최종 실패를 commit하는 Worker 흐름을 반영했다.
+- 검증: Backend 단위 201개·통합 11개 테스트 대조
+- 리스크: 모든 음절 최초 cache miss의 처리시간·비용은 운영 측정 필요
+
+## 2026-07-30 - 평가 Worker 영상 가이드 생성 연결
+
+- 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`
+- 내용: Azure 평가 후 취약 음절의 MP4 cache 조회·Replicate 보간·S3 업로드와 PNG fallback, 600초 lease·polling 경계를 흐름에 반영했다.
+- 검증: Backend 단위 199개·통합 11개와 Flutter 70개 테스트 대조
+- 리스크: 다중 Worker의 최초 cache miss 분산 lock은 미구현
+
+## 2026-07-30 - 표준 발음 단일 계산 경로
+
+- 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`
+- 내용: 추천 DB 발음 정답을 제거하고 추천·자유·평가·재연습이 같은 정규화·음운 규칙을 사용하며 평가 저장값은 snapshot임을 반영했다.
+- 검증: Backend·Flutter 구현과 전체 테스트 대조
+- 리스크: 규칙 변경이 추천 응답에 즉시 반영됨
+
 ## 2026-07-29 - Queue 없는 독립 DB Worker 흐름 반영
 
 - 변경 파일: `evaluation-flow.md`, `system-architecture.md`, `WORK_LOG.md`

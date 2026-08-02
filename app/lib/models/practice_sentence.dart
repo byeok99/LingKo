@@ -1,6 +1,8 @@
 // 파일 의도: practice sentence의 앱 내부 데이터 의미와 API 매핑을 정의한다.
 // 선택 이유: 동적 JSON을 형식이 지정된 model로 변환해 잘못된 응답을 UI 경계 전에 차단한다.
 
+import '../utils/practice_sentence_normalizer.dart';
+
 // 화면에 표시할 학습 문장 하나를 표현하는 임시 데이터 모델입니다.
 // 나중에 백엔드 API가 붙으면 이 값들은 서버 응답 DTO와 매핑됩니다.
 /// Practice Sentence 값의 의미와 불변 데이터 구조를 나타낸다.
@@ -37,8 +39,12 @@ class PracticeSentence {
     return PracticeSentence(
       sentenceId: _intOrNullValue(sentence['sentenceId']),
       source: _stringValue(sentence['source'], fallback: 'CUSTOM'),
-      text: _stringValue(sentence['originalText']),
-      pronunciation: _stringValue(sentence['standardPronunciation']),
+      text: normalizePracticeSentenceText(
+        _stringValue(sentence['originalText']),
+      ),
+      pronunciation: normalizePracticeSentenceText(
+        _stringValue(sentence['standardPronunciation']),
+      ),
       translation: _stringValue(sentence['translation']),
       level: _stringValue(sentence['source'], fallback: 'Custom'),
       category: _stringValue(sentence['categoryLabel']),
@@ -61,8 +67,10 @@ class PracticeSentence {
     return PracticeSentence(
       sentenceId: _intOrNullValue(json['sentenceId']),
       source: _stringValue(json['source'], fallback: 'RECOMMENDED'),
-      text: _stringValue(json['originalText']),
-      pronunciation: _stringValue(json['standardPronunciation']),
+      text: normalizePracticeSentenceText(_stringValue(json['originalText'])),
+      pronunciation: normalizePracticeSentenceText(
+        _stringValue(json['standardPronunciation']),
+      ),
       translation: _stringValue(json['translation']),
       level: _stringValue(json['source'], fallback: 'RECOMMENDED'),
       category: _stringValue(json['categoryLabel']),
@@ -75,18 +83,46 @@ class PracticeSentence {
   // 사용자가 직접 입력한 문장을 임시 연습 데이터로 바꿉니다.
   // 실제 구현에서는 백엔드가 표준 발음, 번역, 글자별 가이드를 계산해 내려줍니다.
   factory PracticeSentence.custom(String text) {
-    final trimmed = text.trim();
+    final normalized = normalizePracticeSentenceText(text);
 
     return PracticeSentence(
       source: 'CUSTOM',
-      text: trimmed,
+      text: normalized,
       pronunciation: 'Custom sentence',
       translation: 'Practice with your own sentence.',
       level: 'Custom',
       category: 'Free practice',
       point: 'Record your voice to receive pronunciation feedback.',
       score: 0,
-      characters: _buildCustomCharacters(trimmed),
+      characters: _buildCustomCharacters(normalized),
+    );
+  }
+
+  /// 추천·서버·기록 등 어떤 출처의 문장도 Practice 상태에 들어오기 전에 같은 규칙으로 정규화한다.
+  PracticeSentence normalizedForPractice() {
+    final normalizedText = normalizePracticeSentenceText(text);
+    final normalizedPronunciation = normalizePracticeSentenceText(
+      pronunciation,
+    );
+
+    return PracticeSentence(
+      sentenceId: sentenceId,
+      source: source,
+      text: normalizedText,
+      pronunciation: normalizedPronunciation,
+      translation: translation,
+      level: level,
+      category: category,
+      point: point,
+      score: score,
+      characters:
+          characters
+              .where(
+                (character) =>
+                    normalizePracticeSentenceText(character.character)
+                        .isNotEmpty,
+              )
+              .toList(growable: false),
     );
   }
 

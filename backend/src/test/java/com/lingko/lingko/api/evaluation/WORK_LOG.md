@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 변환·준비 API 정규화 테스트
+
+- 변경 파일: `EvaluationControllerPrepareTest.java`, `WORK_LOG.md`
+- 내용: 문장부호·기호가 포함된 요청도 정규화한 원문과 표준 발음으로 응답하는 계약을 검증했다.
+- 검증: Backend 단위 테스트 전체 190개 통과
+- 리스크: 없음
+
 ## 2026-07-27 - 평가 작업 API 계약 테스트
 
 - 변경 파일: `EvaluationJobControllerTest.java`, `EvaluationResultControllerTest.java`, `WORK_LOG.md`

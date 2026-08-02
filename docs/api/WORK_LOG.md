@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-07-30 - 점수 독립 영상 가이드 계약
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: 평가 완료 모든 다중 프레임 음절은 글자 점수 제공 여부와 관계없이 MP4를 반환하는 계약으로 보완했다.
+- 검증: Backend 단위 201개·통합 11개 테스트 대조
+- 리스크: 실제 Replicate·S3 E2E 필요
+
+## 2026-07-30 - 취약 음절 영상 가이드 계약
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: 준비 응답의 PNG, 평가 결과의 취약 음절 MP4, 단일 프레임·생성 실패 PNG fallback과 결정적 S3 cache 재사용을 명시했다.
+- 검증: Backend 단위 199개·통합 11개와 Flutter 70개 테스트 대조
+- 리스크: 실제 외부 서비스 E2E는 미실행
+
+## 2026-07-30 - 동적 표준 발음·가이드 매체 계약
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: 추천 발음은 DB 정답이 아닌 현재 규칙 계산값이며 입력 정규화와 이미지·영상 URL 해석 계약을 명시했다.
+- 검증: Controller·service·Flutter API 테스트와 대조
+- 리스크: 현재 기본 가이드 mapping은 PNG
+
 ## 2026-07-29 - 회원 탈퇴 API·오류 계약 문서화
 
 - 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`

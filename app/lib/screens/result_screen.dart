@@ -107,15 +107,24 @@ class ResultScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
           ],
-          if (currentResult.characterScoreStatus == 'UNAVAILABLE' ||
-              currentResult.characters.isEmpty)
+          if (currentResult.characters.isEmpty)
             const StatePanel(
               icon: Icons.grid_off_outlined,
               title: 'Character-level scores are unavailable',
               message:
                   'No syllable score was returned for this evaluation. The overall result is still valid.',
             )
-          else
+          else ...[
+            if (currentResult.characterScoreStatus == 'UNAVAILABLE') ...[
+              const StatePanel(
+                icon: Icons.touch_app_outlined,
+                title:
+                    'Syllable scores are unavailable, but pronunciation guides can still be opened.',
+                message:
+                    'Tap a syllable to view its available mouth and tongue guide.',
+              ),
+              const SizedBox(height: 10),
+            ],
             LayoutBuilder(
               key: const ValueKey('result-character-grid'),
               builder: (context, constraints) {
@@ -131,6 +140,7 @@ class ResultScreen extends StatelessWidget {
                 );
               },
             ),
+          ],
           if (currentResult.weakCharacters.isNotEmpty) ...[
             const SizedBox(height: 24),
             const SectionHeader(title: 'Detailed feedback'),

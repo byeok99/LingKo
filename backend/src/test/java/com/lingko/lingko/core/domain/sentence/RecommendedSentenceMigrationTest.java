@@ -32,6 +32,13 @@ class RecommendedSentenceMigrationTest {
                             StandardCharsets.UTF_8
                     )
             );
+            RunScript.execute(
+                    connection,
+                    new FileReader(
+                            "src/main/resources/db/migration/V12__remove_recommended_pronunciation.sql",
+                            StandardCharsets.UTF_8
+                    )
+            );
 
             try (ResultSet resultSet = connection.createStatement()
                     .executeQuery("SELECT COUNT(*) FROM recommended_sentences WHERE active = TRUE")) {
@@ -40,11 +47,18 @@ class RecommendedSentenceMigrationTest {
             }
 
             try (ResultSet resultSet = connection.createStatement()
-                    .executeQuery("SELECT category_code, standard_pronunciation FROM recommended_sentences WHERE sentence_id = 1")) {
+                    .executeQuery("SELECT category_code, original_text FROM recommended_sentences WHERE sentence_id = 1")) {
                 resultSet.next();
                 assertThat(resultSet.getString("category_code")).isEqualTo("FOOD");
-                assertThat(resultSet.getString("standard_pronunciation")).isNotBlank();
+                assertThat(resultSet.getString("original_text")).isEqualTo("맛있겠다.");
             }
+
+            assertThat(connection.getMetaData().getColumns(
+                    null,
+                    null,
+                    "recommended_sentences",
+                    "standard_pronunciation"
+            ).next()).isFalse();
         }
     }
 }

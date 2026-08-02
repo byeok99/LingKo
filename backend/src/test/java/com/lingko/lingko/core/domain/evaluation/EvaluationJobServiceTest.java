@@ -12,8 +12,10 @@ import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobCreationSer
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobService;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
 import com.lingko.lingko.core.domain.quota.service.PracticeQuotaService;
+import com.lingko.lingko.core.domain.sentence.entity.RecommendedSentence;
 import com.lingko.lingko.core.domain.sentence.repository.RecommendedSentenceRepository;
 import com.lingko.lingko.core.domain.user.entity.User;
+import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -60,6 +65,45 @@ class EvaluationJobServiceTest {
                 evaluationService,
                 new ObjectMapper().findAndRegisterModules()
         );
+    }
+
+    @Test
+    @DisplayName("추천 문장 작업도 저장 발음 없이 현재 변환 규칙으로 대상을 생성한다")
+    void createsRecommendedJobWithCurrentPronunciationRule() {
+        EvaluationJobRequest request = new EvaluationJobRequest(
+                "evaluation-audio/7/audio.wav",
+                12L,
+                null
+        );
+        RecommendedSentence sentence = RecommendedSentence.builder()
+                .sentenceId(12L)
+                .originalText("맛있겠다.")
+                .active(true)
+                .build();
+        EvaluationJob created = mock(EvaluationJob.class);
+        when(created.getJobId()).thenReturn("job-id");
+        when(jobRepository.findByUserUserIdxAndIdempotencyKey(7L, "evaluation-key"))
+                .thenReturn(Optional.empty());
+        when(sentenceRepository.findBySentenceIdAndActiveTrue(12L))
+                .thenReturn(Optional.of(sentence));
+        when(evaluationService.convertToStandardPronunciation("맛있겠다"))
+                .thenReturn("마싣껟따");
+        when(creationService.create(
+                eq(7L),
+                eq("evaluation-key"),
+                anyString(),
+                eq(request.objectKey()),
+                eq(new EvaluationJobService.EvaluationTarget(
+                        EvaluationLog.PracticeSource.RECOMMENDED,
+                        12L,
+                        "맛있겠다",
+                        "마싣껟따"
+                ))
+        )).thenReturn(created);
+
+        assertThat(jobService.createJob(7L, "evaluation-key", request).jobId())
+                .isEqualTo("job-id");
+        verify(audioStorage).validateUploaded(7L, request.objectKey());
     }
 
     @Test
@@ -158,8 +202,8 @@ class EvaluationJobServiceTest {
                 request.objectKey(),
                 EvaluationLog.PracticeSource.CUSTOM,
                 null,
-                request.text(),
-                "안녕하세여.",
+                PracticeSentenceNormalizer.normalize(request.text()),
+                "안녕하세여",
                 LocalDate.of(2026, 7, 27),
                 PracticeQuotaService.QuotaSource.FREE,
                 Instant.parse("2026-07-27T01:00:00Z")

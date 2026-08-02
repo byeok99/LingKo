@@ -58,7 +58,7 @@ SEV-1·SEV-2, 보안·개인정보 또는 데이터 유실 위험은 답변 수�
 
 | 날짜 | 심각도 | 영역 | 제목 | 상태 | 관련 Issue |
 |---|---|---|---|---|---|
-| 2026-07-29 | SEV-3 | Backend / DB / Transaction | [평가 결과는 저장됐지만 작업 상태가 PROCESSING에 남는 문제](2026-07-29-evaluation-job-status-lost-after-quota-update.md) | 해결 | [#47](https://github.com/byeok99/LingKo/issues/47) |
+| 2026-07-30 | SEV-3 | Backend / DB / Transaction | [평가 작업 terminal 상태가 PROCESSING에 남는 문제](2026-07-29-evaluation-job-status-lost-after-quota-update.md) | 해결 | [#47](https://github.com/byeok99/LingKo/issues/47) |
 | 2026-07-29 | SEV-3 | Backend / DB / Concurrency | [평가 재시도에서 작업과 쿼터가 중복 생성될 위험](2026-07-29-evaluation-request-idempotency.md) | 해결 | [#39](https://github.com/byeok99/LingKo/issues/39) |
 | 2026-07-26 | SEV-3 | Backend / DB / Concurrency | [동시 연습 요청에서 일일 쿼터가 초과 예약되는 경쟁 조건](2026-07-26-practice-quota-race-condition.md) | 해결 | [#38](https://github.com/byeok99/LingKo/issues/38) |
 

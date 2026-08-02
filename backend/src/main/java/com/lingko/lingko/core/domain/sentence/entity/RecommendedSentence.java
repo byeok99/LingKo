@@ -37,9 +37,6 @@ public class RecommendedSentence {
     @Column(name = "original_text", nullable = false, length = 120)
     private String originalText;
 
-    @Column(name = "standard_pronunciation", nullable = false, length = 120)
-    private String standardPronunciation;
-
     @Column(name = "translation", nullable = false, length = 255)
     private String translation;
 

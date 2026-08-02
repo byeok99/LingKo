@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 추천 동적 발음 API 계약
+
+- 변경 파일: `SentenceControllerTest.java`, `WORK_LOG.md`
+- 내용: 추천 응답이 정규화된 원문과 현재 규칙의 `마싣껟따`를 반환하는 HTTP 계약을 검증했다.
+- 검증: Backend 단위 테스트 전체 190개 통과
+- 리스크: 없음
+
 ## 2026-07-24 - MockBean 제거 예정 API 교체
 
 - 변경 파일: `SentenceControllerTest.java`, `WORK_LOG.md`

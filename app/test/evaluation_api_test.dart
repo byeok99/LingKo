@@ -167,7 +167,7 @@ void main() {
 
     expect(requestedBody, {
       'objectKey': 'evaluation-audio/7/audio-id.wav',
-      'text': '안녕하세요.',
+      'text': '안녕하세요',
     });
   });
 

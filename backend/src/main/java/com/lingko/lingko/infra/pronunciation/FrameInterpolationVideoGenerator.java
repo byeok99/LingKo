@@ -13,11 +13,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 /**
  * Frame Interpolation 영상 생성기
@@ -33,10 +38,16 @@ import java.util.UUID;
 @Slf4j
 public class FrameInterpolationVideoGenerator implements VideoGenerator {
 
+    private static final int GENERATION_LOCK_STRIPES = 64;
+
     private final ReplicateApiClient replicateApiClient;
     private final VideoMerger videoMerger;
     private final S3Uploader s3Uploader;
     private final ExternalMediaUrlValidator externalMediaUrlValidator;
+    private final List<Object> generationLocks = IntStream
+            .range(0, GENERATION_LOCK_STRIPES)
+            .mapToObj(ignored -> new Object())
+            .toList();
 
     @Override
     public String generate(List<List<String>> urlPairs, String syllable, VideoType type) {
@@ -95,6 +106,29 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
     private String handleVideoGeneration(List<List<String>> urlPairs, String syllable, VideoType type) {
         log.info("영상 생성 처리: {}개 세그먼트", urlPairs.size());
 
+        String fileName = generateVideoFileName(syllable, type, urlPairs);
+        String s3Key = "videos/" + type.getPrefix() + "/" + fileName;
+        Object generationLock = generationLocks.get(
+                Math.floorMod(s3Key.hashCode(), GENERATION_LOCK_STRIPES)
+        );
+        // 제거되는 key별 lock의 대기자 경쟁을 피하고 메모리를 제한하기 위해 고정 stripe를 사용한다.
+        synchronized (generationLock) {
+            return generateOrReuseVideo(urlPairs, syllable, type, s3Key);
+        }
+    }
+
+    private String generateOrReuseVideo(
+            List<List<String>> urlPairs,
+            String syllable,
+            VideoType type,
+            String s3Key
+    ) {
+        String cachedUrl = s3Uploader.findPublicUrl(s3Key).orElse(null);
+        if (cachedUrl != null) {
+            log.info("기존 가이드 영상 재사용: {} {}", syllable, type);
+            return cachedUrl;
+        }
+
         List<Path> tempFiles = new ArrayList<>();
 
         try {
@@ -114,8 +148,6 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
             }
 
             // 3. 최종 영상을 S3에 업로드
-            String fileName = generateVideoFileName(syllable, type);
-            String s3Key = "videos/" + type.getPrefix() + "/" + fileName;
             String s3Url = s3Uploader.upload(finalVideoPath.toString(), s3Key);
 
             log.info("영상 생성 완료: {} -> {}", syllable, s3Url);
@@ -245,11 +277,30 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
     /**
      * 영상 파일명 생성
      *
-     * 형식: {type}_{syllable}_{uuid}.mp4
+     * 동일 음절·타입·프레임은 재시작 후에도 같은 S3 object를 조회하도록 내용 기반 파일명을 사용한다.
      */
-    private String generateVideoFileName(String syllable, VideoType type) {
-        String uuid = UUID.randomUUID().toString().substring(0, 8);
-        return String.format("%s_%s_%s.mp4", type.getPrefix(), syllable, uuid);
+    private String generateVideoFileName(
+            String syllable,
+            VideoType type,
+            List<List<String>> urlPairs
+    ) {
+        StringBuilder source = new StringBuilder()
+                .append(type.name())
+                .append('|')
+                .append(syllable);
+        urlPairs.forEach(pair -> source.append('|').append(String.join(",", pair)));
+
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(source.toString().getBytes(StandardCharsets.UTF_8));
+            return String.format(
+                    "%s_%s.mp4",
+                    type.getPrefix(),
+                    HexFormat.of().formatHex(digest, 0, 12)
+            );
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
     }
 
     /**

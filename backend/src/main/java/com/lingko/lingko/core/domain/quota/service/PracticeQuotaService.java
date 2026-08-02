@@ -83,11 +83,22 @@ public class PracticeQuotaService {
 
     @Transactional
     public void releasePractice(PracticeQuotaReservation reservation) {
+        requireReservationUpdate(releaseReservedPractice(reservation));
+    }
+
+    /**
+     * 최종 실패 복구에서 예약이 이미 사라진 비정상 상태를 terminal 작업 롤백 없이 판별한다.
+     */
+    @Transactional
+    public boolean releasePracticeIfReserved(PracticeQuotaReservation reservation) {
+        return releaseReservedPractice(reservation) == 1;
+    }
+
+    private int releaseReservedPractice(PracticeQuotaReservation reservation) {
         validateReservation(reservation);
-        int updated = reservation.source() == QuotaSource.FREE
+        return reservation.source() == QuotaSource.FREE
                 ? quotaRepository.releaseFreePractice(reservation.userId(), reservation.quotaDate())
                 : quotaRepository.releaseRewardedPractice(reservation.userId(), reservation.quotaDate());
-        requireReservationUpdate(updated);
     }
 
     private DailyPracticeQuota findOrCreateQuota(Long userId, LocalDate quotaDate) {

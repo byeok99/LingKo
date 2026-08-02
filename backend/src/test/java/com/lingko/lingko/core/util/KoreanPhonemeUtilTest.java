@@ -100,6 +100,12 @@ class KoreanPhonemeUtilTest {
     }
 
     @Test
+    void testToPronunciation_맛있겠다는대표음과경음화를적용한다() {
+        assertThat(KoreanPhonemeUtil.toPronunciation("맛있겠다"))
+                .isEqualTo("마싣껟따");
+    }
+
+    @Test
     void testToPronunciation_비한글과공백은유지한다() {
         assertThat(KoreanPhonemeUtil.toPronunciation("밥이 good!"))
                 .isEqualTo("바비 good!");

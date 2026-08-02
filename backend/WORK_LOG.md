@@ -1,3 +1,24 @@
+## 2026-07-30 - 평가 영상·terminal 실패 운영 계약 보완
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 평가 완료 모든 음절의 영상 생성과 누락된 쿼터 예약이 최종 실패 상태 commit을 막지 않는 운영 조건을 안내했다.
+- 검증: Backend 단위 201개·통합 11개, Docker 재빌드, API 200과 고착 작업 4건의 `FAILED` 수렴 확인
+- 리스크: 실제 Replicate 영상 생성 content는 앱 재평가로 확인 필요
+
+## 2026-07-30 - 평가 결과 영상 가이드 운영 설정
+
+- 변경 파일: `.env.example`, `application.example.yaml`, `README.md`, `WORK_LOG.md`
+- 내용: 최초 영상 cache miss의 외부 보간 시간을 수용하도록 Worker lease 기본값을 600초로 늘리고 Replicate·S3·FFmpeg 운영 조건을 안내했다.
+- 검증: Backend 단위 199개·통합 11개 통과
+- 리스크: 실제 Replicate·S3·FFmpeg E2E와 최초 생성 시간은 운영 환경에서 확인 필요
+
+## 2026-07-30 - 표준 발음 단일 규칙 원칙 문서화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 추천 콘텐츠에는 정답 발음을 저장하지 않고 모든 입력을 현재 음운 규칙으로 변환하며 평가 데이터만 snapshot으로 보존한다고 명시했다.
+- 검증: Backend 단위 190개·통합 11개 통과
+- 리스크: 실제 MySQL V12 migration은 배포 전 별도 확인 필요
+
 ## 2026-07-29 - 회원 탈퇴·음성 보존 정책 안내
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

@@ -2,6 +2,8 @@
 
 LingKo의 Spring Boot REST API입니다. 추천 문장, 표준 발음, 음성 평가, 사용자 인증, 학습 기록, 설정, 일일 쿼터, 가이드 생성 작업을 담당합니다.
 
+추천 문장에는 표준 발음 정답을 저장하지 않습니다. 추천·자유 문장 모두 정규화한 원문을 현재 `KoreanPhonemeUtil` 규칙으로 변환하며, 평가 기록과 비동기 작업에는 당시 평가 재현을 위한 snapshot만 저장합니다.
+
 ## 기술 스택
 
 - Java 21
@@ -35,7 +37,7 @@ docker compose up --build
 docker compose up --build
 ```
 
-API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB lock과 lease로 한 건씩 claim합니다. 초기 운영에서는 Worker 1개를 유지하며 실제 대기시간과 DB lock을 측정한 뒤에만 replica 확장을 검토합니다.
+API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB lock과 lease로 한 건씩 claim합니다. Worker는 Azure 평가 후 결과 화면에서 열 수 있는 모든 음절의 다중 프레임 입·혀 가이드를 Replicate와 FFmpeg로 MP4화하며, 동일 조합은 S3 cache를 재사용합니다. 단일 프레임이나 외부 생성 실패는 PNG로 fallback합니다. 최초 cache miss 시간을 고려해 기본 lease는 600초이며, 초기 운영에서는 Worker 1개를 유지하고 실제 대기시간과 DB lock을 측정한 뒤에만 replica 확장을 검토합니다.
 
 또는 MySQL과 환경변수를 별도로 준비한 후:
 
@@ -51,7 +53,7 @@ API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB loc
 ./gradlew externalIntegrationTest
 ```
 
-`externalIntegrationTest`는 Azure, Replicate, S3, FFmpeg 관련 환경변수가 필요합니다.
+`externalIntegrationTest`는 Azure, Replicate, S3, FFmpeg 관련 환경변수가 필요합니다. 실제 영상 생성 E2E 전에는 `REPLICATE_*`, AWS credential·bucket, FFmpeg 실행 가능 여부를 확인해야 합니다.
 
 ## API 그룹
 

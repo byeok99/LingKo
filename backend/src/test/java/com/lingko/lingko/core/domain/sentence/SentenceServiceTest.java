@@ -37,7 +37,8 @@ class SentenceServiceTest {
                 "FOOD",
                 PageRequest.of(0, 10)
         )).thenReturn(List.of(sentence));
-        when(evaluationService.buildGuideCharacters("마싯게따.")).thenReturn(List.of(
+        when(evaluationService.convertToStandardPronunciation("맛있겠다")).thenReturn("마싣껟따");
+        when(evaluationService.buildGuideCharacters("마싣껟따")).thenReturn(List.of(
                 GuideCharacterResponse.builder().position(0).text("마").pronunciationText("마").build()
         ));
 
@@ -46,6 +47,8 @@ class SentenceServiceTest {
         assertThat(response.items()).hasSize(1);
         assertThat(response.items().get(0).getSentenceId()).isEqualTo(1L);
         assertThat(response.items().get(0).getSource()).isEqualTo("RECOMMENDED");
+        assertThat(response.items().get(0).getOriginalText()).isEqualTo("맛있겠다");
+        assertThat(response.items().get(0).getStandardPronunciation()).isEqualTo("마싣껟따");
         assertThat(response.items().get(0).getCategoryLabel()).isEqualTo("Food");
         assertThat(response.items().get(0).getCharacters()).hasSize(1);
     }
@@ -66,16 +69,16 @@ class SentenceServiceTest {
     void getSentence() {
         RecommendedSentence sentence = recommendedSentence("FOOD");
         when(repository.findBySentenceIdAndActiveTrue(1L)).thenReturn(Optional.of(sentence));
-        when(evaluationService.buildGuideCharacters("마싯게따.")).thenReturn(List.of());
+        when(evaluationService.convertToStandardPronunciation("맛있겠다")).thenReturn("마싣껟따");
+        when(evaluationService.buildGuideCharacters("마싣껟따")).thenReturn(List.of());
 
-        assertThat(service.getSentence(1L).getOriginalText()).isEqualTo("맛있겠다.");
+        assertThat(service.getSentence(1L).getOriginalText()).isEqualTo("맛있겠다");
     }
 
     private RecommendedSentence recommendedSentence(String categoryCode) {
         return RecommendedSentence.builder()
                 .sentenceId(1L)
                 .originalText("맛있겠다.")
-                .standardPronunciation("마싯게따.")
                 .translation("It looks delicious.")
                 .levelLabel("Beginner 2")
                 .categoryCode(categoryCode)

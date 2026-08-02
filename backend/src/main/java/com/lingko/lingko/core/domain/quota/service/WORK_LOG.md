@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 최종 실패용 비예외 예약 복구
+
+- 변경 파일: `PracticeQuotaService.java`, `WORK_LOG.md`
+- 내용: 이미 사라진 예약을 boolean으로 판별하는 복구 경계를 추가해 terminal 작업 transaction이 반복 롤백되지 않게 했다.
+- 검증: 대상 TDD와 Backend 단위 201개·통합 11개 통과
+- 리스크: 일반 평가 경로의 `releasePractice`는 기존 엄격한 예외 계약 유지
+
 ## 2026-07-26 - 쿼터 동시 요청 원자성 보장
 
 - 변경 파일: `PracticeQuotaService.java`, `WORK_LOG.md`

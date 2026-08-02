@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-07-30 - 평가 단계·가이드 설명 롤백
+
+- 변경 파일: `evaluation_progress_panel.dart`, `guide_sheet.dart`, `WORK_LOG.md`
+- 내용: 아이콘 레일로 바꿨던 평가 4단계를 제목·설명·상태 행으로 되돌리고 GuideSheet의 note와 매체 안내를 복원했다. URL별 이미지·영상 렌더링은 유지했다.
+- 검증: `flutter analyze`, `flutter test` 전체 70개 통과
+- 리스크: 실제 네트워크 영상 재생과 긴 안내 문구는 실기기 확인 필요
+
+## 2026-07-30 - GuideSheet URL 매체 분기
+
+- 변경 파일: `guide_sheet.dart`, `WORK_LOG.md`
+- 내용: 지원 영상 확장자는 음소거 반복 영상으로 재생하고 PNG 등 정적 URL은 이미지로 유지해 서버가 제공한 매체 형식을 보존했다.
+- 검증: `flutter analyze`, MP4·이미지 widget 회귀 포함 `flutter test` 전체 70개 통과
+- 리스크: 현재 서버 mapping이 PNG라 운영에서 영상 URL을 공급하기 전까지 이미지만 표시됨
+
+## 2026-07-30 - GuideSheet 실제 자산 제목 보정
+
+- 변경 파일: `guide_sheet.dart`, `WORK_LOG.md`
+- 내용: DTO의 우선 `guideType`만 제목으로 쓰지 않고 실제 mouth·tongue URL 조합에 따라 `Mouth`, `Tongue`, `Mouth & tongue` 가이드 제목을 표시하도록 수정했다.
+- 검증: `flutter analyze`, `flutter test` 전체 66개 통과
+- 리스크: 이미지 URL 자체가 실패하면 기존 `Guide unavailable` 대체 UI를 표시함
+
 ## 2026-07-30 - preview v2 공통 컴포넌트 재정렬
 
 - 변경 파일: `evaluation_progress_panel.dart`, `progress_panel.dart`, `result_tile.dart`, `score_breakdown.dart`, `sentence_card.dart`, `settings_row.dart`, `shared_widgets.dart`, `WORK_LOG.md`

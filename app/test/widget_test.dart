@@ -455,7 +455,7 @@ const _defaultSentences = [
     sentenceId: 1,
     source: 'RECOMMENDED',
     text: '맛있겠다.',
-    pronunciation: '마싯게따.',
+    pronunciation: '마싣껟따.',
     translation: 'It looks delicious.',
     level: 'RECOMMENDED',
     category: 'Food',
@@ -631,14 +631,14 @@ void main() {
     final recommendedSentenceField = tester.widget<TextField>(
       find.byKey(const ValueKey('practice-sentence-field')),
     );
-    expect(recommendedSentenceField.controller?.text, '맛있겠다.');
+    expect(recommendedSentenceField.controller?.text, '맛있겠다');
     expect(find.text('Standard pronunciation ready'), findsNothing);
     expect(
       find.textContaining('Standard pronunciation updates automatically'),
       findsNothing,
     );
     expect(find.text('Pronunciation guide'), findsNothing);
-    expect(find.text('마싯게따.'), findsOneWidget);
+    expect(find.text('마싣껟따'), findsOneWidget);
     expect(find.text('Check standard pronunciation'), findsNothing);
     expect(find.text('Hide standard pronunciation'), findsNothing);
     expect(find.text('It looks delicious.'), findsNothing);
@@ -652,7 +652,7 @@ void main() {
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
     expect(find.text('Stop and analyze'), findsOneWidget);
-    expect(find.text('마싯게따.'), findsNothing);
+    expect(find.text('마싣껟따.'), findsNothing);
 
     await tester.tap(find.text('Stop and analyze'));
     await tester.pumpAndSettle();
@@ -665,7 +665,7 @@ void main() {
     expect(find.text('Standard pronunciation'), findsOneWidget);
     expect(find.text('Recognized speech'), findsNothing);
     expect(find.text('사용자 발음'), findsNothing);
-    expect(find.text('마싯게따.'), findsOneWidget);
+    expect(find.text('마싣껟따'), findsOneWidget);
     final resultNormalButton = find.byKey(
       const ValueKey('result-play-pronunciation-normal'),
     );
@@ -674,7 +674,7 @@ void main() {
     );
     tester.widget<ActionButton>(resultNormalButton).onPressed?.call();
     await tester.pump();
-    expect(speechService.lastText, '마싯게따.');
+    expect(speechService.lastText, '마싣껟따');
     expect(speechService.lastRate, SentenceSpeechRate.normal);
 
     tester.widget<ActionButton>(resultSlowButton).onPressed?.call();
@@ -1166,10 +1166,51 @@ void main() {
       await tester.pumpAndSettle();
 
       final selectedSentenceField = tester.widget<TextField>(sentenceField);
-      expect(selectedSentenceField.controller?.text, '맛있겠다.');
-      expect(find.text('마싯게따.'), findsOneWidget);
+      expect(selectedSentenceField.controller?.text, '맛있겠다');
+      expect(find.text('마싣껟따'), findsOneWidget);
     },
   );
+
+  testWidgets('Practice removes symbols restored by the prepare response', (
+    WidgetTester tester,
+  ) async {
+    final api = FakePronunciationApi(
+      prepareHandler:
+          (text) async => const PracticeSentence(
+            text: '안녕하세요.!?',
+            pronunciation: '안녕하세요.!?',
+            translation: '',
+            level: 'CUSTOM',
+            category: 'Free practice',
+            point: '',
+            score: 0,
+            characters: [],
+          ),
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: api,
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(_navigationLabel('Practice'));
+    await tester.pumpAndSettle();
+    final sentenceField = find.byKey(const ValueKey('practice-sentence-field'));
+
+    await tester.enterText(sentenceField, '안녕하세요.!?');
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pumpAndSettle();
+
+    expect(api.lastText, '안녕하세요');
+    expect(tester.widget<TextField>(sentenceField).controller?.text, '안녕하세요');
+    expect(find.text('안녕하세요.!?'), findsNothing);
+  });
 
   testWidgets('Home shows loading, empty, and retryable error states', (
     WidgetTester tester,
@@ -1339,7 +1380,7 @@ void main() {
 
     expect(find.text('Practice'), findsWidgets);
     expect(find.text('Check standard pronunciation'), findsNothing);
-    expect(find.text('마싯게따.'), findsOneWidget);
+    expect(find.text('마싣껟따'), findsOneWidget);
   });
 
   testWidgets('Profile shows account and sign out returns to login', (
@@ -1567,7 +1608,7 @@ void main() {
     expect(find.text('Focus on tongue placement'), findsWidgets);
     expect(
       find.text(
-        'Guide media is shown when the evaluation provides it. Audio and video playback are not available yet.',
+        'A built-in static guide is shown because this evaluation did not provide guide media.',
       ),
       findsOneWidget,
     );
@@ -1595,8 +1636,101 @@ void main() {
     expect(images, hasLength(2));
     expect((images[0].image as NetworkImage).url, character.mouthGuideUrl);
     expect((images[1].image as NetworkImage).url, character.tongueGuideUrl);
+    expect(find.text('Mouth & tongue guide'), findsOneWidget);
     expect(find.text('Mouth guide'), findsOneWidget);
     expect(find.text('Tongue guide'), findsOneWidget);
+  });
+
+  testWidgets('guide sheet renders MP4 URLs as video media', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '마',
+      score: 82,
+      note: 'Watch the complete articulation movement.',
+      kind: 'MOUTH',
+      guideStatus: 'AVAILABLE',
+      mouthGuideUrl: 'https://guides/mouth/ma.mp4',
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
+    );
+
+    expect(
+      find.byKey(const ValueKey('guide-video-mouth-guide')),
+      findsOneWidget,
+    );
+    expect(find.byType(Image), findsNothing);
+  });
+
+  testWidgets('guides remain available when syllable scores are unavailable', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '마',
+      score: 0,
+      scoreStatus: 'UNAVAILABLE',
+      note: 'Stable vowel shape',
+      kind: 'TONGUE',
+      guideStatus: 'AVAILABLE',
+      mouthGuideUrl: 'https://guides/mouth/vowel-a.png',
+      tongueGuideUrl: 'https://guides/tongue/m.png',
+    );
+    const sentence = PracticeSentence(
+      text: '마',
+      pronunciation: '마',
+      translation: '',
+      level: 'CUSTOM',
+      category: 'Free practice',
+      point: '',
+      score: 0,
+      characters: [],
+    );
+    const result = PracticeResult(
+      overallScore: 82,
+      gradeLabel: 'Good',
+      summary: 'Keep practicing.',
+      characterScoreStatus: 'UNAVAILABLE',
+      scoreBreakdown: PracticeScoreBreakdown(
+        accuracy: 82,
+        fluency: 80,
+        completeness: 84,
+      ),
+      weakCharacters: [],
+      characters: [character],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ResultScreen(
+            sentence: sentence,
+            result: result,
+            sentenceSpeechService: FakeSentenceSpeechService(),
+            onTryAgain: () {},
+          ),
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('result-character-grid')),
+      300,
+    );
+    expect(
+      find.text(
+        'Syllable scores are unavailable, but pronunciation guides can still be opened.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(ResultTile), findsOneWidget);
+    expect(find.text('—'), findsWidgets);
+
+    await tester.tap(find.byType(ResultTile));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mouth & tongue guide'), findsOneWidget);
   });
 
   testWidgets('authenticated shell exposes Home Practice Review Profile tabs', (

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 이미 복구된 예약 판별 테스트
+
+- 변경 파일: `PracticeQuotaServiceTest.java`, `WORK_LOG.md`
+- 내용: 같은 예약의 후속 복구 시 예외 대신 false를 반환하고 잔여 쿼터를 변경하지 않는 최종 실패 전용 계약을 검증했다.
+- 검증: RED compile 실패 확인 후 Backend 단위 201개·통합 11개 통과
+- 리스크: 없음
+
 ## 2026-07-26 - 쿼터 동시성 회귀 테스트 추가
 
 - 변경 파일: `PracticeQuotaConcurrencyTest.java`, `WORK_LOG.md`

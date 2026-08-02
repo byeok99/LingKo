@@ -28,11 +28,11 @@ class EvaluationServicePrepareTest {
         when(mappingUtil.getImageUrl("ㅏ", VideoType.MOUTH)).thenReturn("https://guides/mouth/a.png");
         EvaluationService service = new EvaluationService(mappingUtil);
 
-        PronunciationPrepareResponse response = service.prepareCustomSentence("맛있겠다.");
+        PronunciationPrepareResponse response = service.prepareCustomSentence("  맛있겠다.!?  ");
 
         assertThat(response.getSentence().getSource()).isEqualTo("CUSTOM");
-        assertThat(response.getSentence().getOriginalText()).isEqualTo("맛있겠다.");
-        assertThat(response.getSentence().getStandardPronunciation()).isEqualTo("마싰겠다.");
+        assertThat(response.getSentence().getOriginalText()).isEqualTo("맛있겠다");
+        assertThat(response.getSentence().getStandardPronunciation()).isEqualTo("마싣껟따");
         assertThat(response.getSentence().getCharacters()).isNotEmpty();
 
         GuideCharacterResponse first = response.getSentence().getCharacters().get(0);

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - 추천 발음 비영속 모델 반영
+
+- 변경 파일: `data-model.md`, `WORK_LOG.md`
+- 내용: 추천 문장에는 원문·콘텐츠 metadata만 저장하고 평가 log·job의 표준 발음은 당시 기준 snapshot임을 명시했다.
+- 검증: Entity와 V12 migration에 대조
+- 리스크: 실제 MySQL migration 미검증
+
 ## 2026-07-29 - 회원 탈퇴 데이터 소유권 반영
 
 - 변경 파일: `data-model.md`, `WORK_LOG.md`

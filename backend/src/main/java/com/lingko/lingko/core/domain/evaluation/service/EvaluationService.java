@@ -10,6 +10,7 @@ import com.lingko.lingko.core.domain.sentence.entity.RecommendedSentence;
 import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
 import com.lingko.lingko.core.domain.sentence.repository.RecommendedSentenceRepository;
 import com.lingko.lingko.core.util.KoreanPhonemeUtil;
+import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
 import com.lingko.lingko.core.util.SyllableMappingUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,8 +35,9 @@ public class EvaluationService {
 
     public static final long MAX_AUDIO_BYTES = 10L * 1024 * 1024;
     private static final int MIN_WAV_HEADER_BYTES = 44;
+    private static final int WEAK_SCORE_THRESHOLD = 80;
 
-    private final SyllableMappingUtil syllableMappingUtil;
+    private final GuideMediaResolver guideMediaResolver;
     private final SpeechEvaluator speechEvaluator;
     private final RecommendedSentenceRepository sentenceRepository;
 
@@ -46,33 +48,60 @@ public class EvaluationService {
     }
 
     public EvaluationService(SyllableMappingUtil syllableMappingUtil) {
-        this(syllableMappingUtil, null, null);
+        this(
+                syllableMappingUtil,
+                null,
+                null,
+                new GuideMediaResolver(syllableMappingUtil, null)
+        );
+    }
+
+    public EvaluationService(
+            SyllableMappingUtil syllableMappingUtil,
+            SpeechEvaluator speechEvaluator,
+            RecommendedSentenceRepository sentenceRepository
+    ) {
+        this(
+                syllableMappingUtil,
+                speechEvaluator,
+                sentenceRepository,
+                new GuideMediaResolver(syllableMappingUtil, null)
+        );
     }
 
     @Autowired
     public EvaluationService(
             SyllableMappingUtil syllableMappingUtil,
             SpeechEvaluator speechEvaluator,
-            RecommendedSentenceRepository sentenceRepository
+            RecommendedSentenceRepository sentenceRepository,
+            GuideMediaResolver guideMediaResolver
     ) {
-        this.syllableMappingUtil = syllableMappingUtil;
+        this.guideMediaResolver = guideMediaResolver;
         this.speechEvaluator = speechEvaluator;
         this.sentenceRepository = sentenceRepository;
     }
 
     public String convertToStandardPronunciation(String text) {
-        return KoreanPhonemeUtil.toPronunciation(text);
+        String normalized = normalizeSentenceText(text);
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException("text must contain supported characters");
+        }
+        return KoreanPhonemeUtil.toPronunciation(normalized);
+    }
+
+    private String normalizeSentenceText(String text) {
+        return PracticeSentenceNormalizer.normalize(text);
     }
 
     public PronunciationPrepareResponse prepareCustomSentence(String text) {
-        String trimmed = text.trim();
-        String standardPronunciation = convertToStandardPronunciation(trimmed);
+        String normalized = normalizeSentenceText(text);
+        String standardPronunciation = convertToStandardPronunciation(normalized);
 
         return PronunciationPrepareResponse.builder()
                 .sentence(PronunciationPrepareResponse.SentenceResponse.builder()
                         .sentenceId(null)
                         .source("CUSTOM")
-                        .originalText(trimmed)
+                        .originalText(normalized)
                         .standardPronunciation(standardPronunciation)
                         .translation("Practice with your own sentence.")
                         .categoryLabel("Free practice")
@@ -88,13 +117,19 @@ public class EvaluationService {
         List<GuideCharacterResponse> characters = new ArrayList<>();
         int position = 0;
 
-        for (String character : standardPronunciation.codePoints()
+        for (String character : normalizeSentenceText(standardPronunciation).codePoints()
                 .mapToObj(Character::toString)
                 .filter(value -> !value.isBlank())
                 .toList()) {
             List<String> phonemes = KoreanPhonemeUtil.toPhonemeList(character);
-            String mouthGuideUrl = firstGuideUrl(phonemes, VideoType.MOUTH);
-            String tongueGuideUrl = firstGuideUrl(phonemes, VideoType.TONGUE);
+            String mouthGuideUrl = resolveGuideUrl(
+                    phonemes,
+                    VideoType.MOUTH
+            );
+            String tongueGuideUrl = resolveGuideUrl(
+                    phonemes,
+                    VideoType.TONGUE
+            );
             String guideType = resolveGuideType(mouthGuideUrl, tongueGuideUrl);
 
             characters.add(GuideCharacterResponse.builder()
@@ -114,12 +149,37 @@ public class EvaluationService {
         return characters;
     }
 
-    private String firstGuideUrl(List<String> phonemes, VideoType videoType) {
-        return phonemes.stream()
-                .map(phoneme -> syllableMappingUtil.getImageUrl(phoneme, videoType))
-                .filter(url -> url != null && !url.isBlank())
-                .findFirst()
-                .orElse(null);
+    private String resolveGuideUrl(
+            List<String> phonemes,
+            VideoType videoType
+    ) {
+        return guideMediaResolver.resolveStatic(phonemes, videoType);
+    }
+
+    private GuideCharacterResponse withTransitionGuides(GuideCharacterResponse character) {
+        String mouthGuideUrl = guideMediaResolver.resolveForEvaluation(
+                character.getText(),
+                character.getPhonemes(),
+                VideoType.MOUTH
+        );
+        String tongueGuideUrl = guideMediaResolver.resolveForEvaluation(
+                character.getText(),
+                character.getPhonemes(),
+                VideoType.TONGUE
+        );
+        String guideType = resolveGuideType(mouthGuideUrl, tongueGuideUrl);
+
+        return GuideCharacterResponse.builder()
+                .position(character.getPosition())
+                .text(character.getText())
+                .pronunciationText(character.getPronunciationText())
+                .phonemes(character.getPhonemes())
+                .guideType(guideType)
+                .guideStatus("NONE".equals(guideType) ? "MISSING" : "AVAILABLE")
+                .mouthGuideUrl(mouthGuideUrl)
+                .tongueGuideUrl(tongueGuideUrl)
+                .note(character.getNote())
+                .build();
     }
 
     private String resolveGuideType(String mouthGuideUrl, String tongueGuideUrl) {
@@ -340,7 +400,7 @@ public class EvaluationService {
             RecommendedSentence sentence = requireSentenceRepository()
                     .findBySentenceIdAndActiveTrue(sentenceId)
                     .orElseThrow(() -> new SentenceNotFoundException(sentenceId));
-            return sentence.getStandardPronunciation();
+            return convertToStandardPronunciation(sentence.getOriginalText());
         }
 
         return convertToStandardPronunciation(text.trim());
@@ -356,24 +416,28 @@ public class EvaluationService {
                     Integer characterScore = characterScoresAvailable
                             ? toScore(result.getCharacterScores().get(character.getPosition()).accuracyScore())
                             : null;
+                    // Result에서는 점수 유무와 관계없이 모든 음절을 열 수 있으므로 프레임 전환 자체를 영상 기준으로 삼는다.
+                    GuideCharacterResponse resolvedCharacter = withTransitionGuides(character);
                     return GuideCharacterResponse.builder()
-                        .position(character.getPosition())
-                        .text(character.getText())
-                        .pronunciationText(character.getPronunciationText())
+                        .position(resolvedCharacter.getPosition())
+                        .text(resolvedCharacter.getText())
+                        .pronunciationText(resolvedCharacter.getPronunciationText())
                         .score(characterScore)
                         .scoreStatus(characterScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
-                        .phonemes(character.getPhonemes())
-                        .guideType(character.getGuideType())
-                        .guideStatus(character.getGuideStatus())
-                        .mouthGuideUrl(character.getMouthGuideUrl())
-                        .tongueGuideUrl(character.getTongueGuideUrl())
-                        .note(character.getNote())
+                        .phonemes(resolvedCharacter.getPhonemes())
+                        .guideType(resolvedCharacter.getGuideType())
+                        .guideStatus(resolvedCharacter.getGuideStatus())
+                        .mouthGuideUrl(resolvedCharacter.getMouthGuideUrl())
+                        .tongueGuideUrl(resolvedCharacter.getTongueGuideUrl())
+                        .note(resolvedCharacter.getNote())
                         .build();
                 })
                 .toList();
 
         List<GuideCharacterResponse> weakCharacters = characterScoresAvailable
-                ? characters.stream().filter(character -> character.getScore() < 80).toList()
+                ? characters.stream()
+                        .filter(character -> character.getScore() < WEAK_SCORE_THRESHOLD)
+                        .toList()
                 : List.of();
 
         return PracticeResultResponse.builder()

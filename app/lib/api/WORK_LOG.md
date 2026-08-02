@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - Practice API 입력 정규화
+
+- 변경 파일: `evaluation_api.dart`, `pronunciation_api.dart`, `WORK_LOG.md`
+- 내용: 자유 문장 준비·평가 작업 요청 전에 Unicode 문장부호·기호와 연속 공백을 동일 규칙으로 정규화했다.
+- 검증: `flutter analyze`, `flutter test` 전체 70개 통과
+- 리스크: 없음
+
 ## 2026-07-29 - 회원 탈퇴 DELETE API 연동
 
 - 변경 파일: `api_client.dart`, `auth_api.dart`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-07-30 - Practice 문장 모델 정규화
+
+- 변경 파일: `practice_sentence.dart`, `WORK_LOG.md`
+- 내용: 추천·준비 API 응답과 앱 내부 문장이 Practice 상태에 들어오기 전에 문장부호·기호 제거 규칙을 적용하고 불변 복사본을 생성한다.
+- 검증: `flutter analyze`, `flutter test` 전체 70개 통과
+- 리스크: 없음
+
 ## 2026-07-28 - 평가 진행 UI 상태 모델 추가
 
 - 변경 파일: `evaluation_progress.dart`, `WORK_LOG.md`

@@ -26,7 +26,7 @@ void main() {
                     'sentenceId': 1,
                     'source': 'RECOMMENDED',
                     'originalText': '맛있겠다.',
-                    'standardPronunciation': '마싯게따.',
+                    'standardPronunciation': '마싣껟따.',
                     'translation': 'It looks delicious.',
                     'categoryLabel': 'Food',
                     'learningPoint': 'Final consonant linking',
@@ -49,8 +49,8 @@ void main() {
         requestedUri.toString(),
         'http://localhost:8080/api/sentences/recommended?limit=20&category=FOOD',
       );
-      expect(sentences.single.text, '맛있겠다.');
-      expect(sentences.single.pronunciation, '마싯게따.');
+      expect(sentences.single.text, '맛있겠다');
+      expect(sentences.single.pronunciation, '마싣껟따');
       expect(sentences.single.category, 'Food');
     },
   );
@@ -81,7 +81,7 @@ void main() {
     final sentence = await api.fetchSentence(2);
 
     expect(sentence.sentenceId, 2);
-    expect(sentence.text, '물 한 잔 주세요.');
+    expect(sentence.text, '물 한 잔 주세요');
   });
 
   test(
@@ -99,7 +99,7 @@ void main() {
                     'sentenceId': 1,
                     'source': 'RECOMMENDED',
                     'originalText': '맛있겠다.',
-                    'standardPronunciation': '마싯게따.',
+                    'standardPronunciation': '마싣껟따.',
                     'translation': 'It looks delicious.',
                     'categoryLabel': 'Food',
                     'learningPoint': 'Final consonant linking',

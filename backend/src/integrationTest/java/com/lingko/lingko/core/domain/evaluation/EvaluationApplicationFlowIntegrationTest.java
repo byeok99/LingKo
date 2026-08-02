@@ -64,7 +64,7 @@ class EvaluationApplicationFlowIntegrationTest {
     @DisplayName("평가 성공 시 결과가 저장되고 예약 quota가 사용량으로 확정된다")
     void persistsResultAndConfirmsQuota() {
         User user = saveUser("success-user");
-        when(speechEvaluator.evaluate(anyString(), eq("안녕하세요.")))
+        when(speechEvaluator.evaluate(anyString(), eq("안녕하세요")))
                 .thenReturn(assessmentResult());
 
         PracticeResultResponse response = applicationService.evaluate(
@@ -89,7 +89,7 @@ class EvaluationApplicationFlowIntegrationTest {
     @DisplayName("외부 평가 실패 시 결과를 저장하지 않고 예약 quota를 복구한다")
     void releasesQuotaWhenProviderFails() {
         User user = saveUser("failure-user");
-        when(speechEvaluator.evaluate(anyString(), eq("안녕하세요.")))
+        when(speechEvaluator.evaluate(anyString(), eq("안녕하세요")))
                 .thenThrow(new IllegalStateException("provider unavailable"));
 
         assertThatThrownBy(() -> applicationService.evaluate(

@@ -108,6 +108,8 @@ class LingKoShell extends StatefulWidget {
 /// Ling Ko Shell State Widget의 변경 가능한 화면 상태와 비동기 생명주기를 관리한다.
 /// 불변 Widget 설정과 실행 시점 상태를 분리하기 위해 전용 State 객체를 사용한다.
 class _LingKoShellState extends State<LingKoShell> {
+  static const int evaluationPollingAttempts = 600;
+
   // 하단 탭 index입니다. 0: Home, 1: Practice, 2: Review, 3: Profile.
   int selectedTab = 0;
 
@@ -341,14 +343,39 @@ class _LingKoShellState extends State<LingKoShell> {
 
   // 홈에서 문장을 선택하면 Practice 탭으로 이동합니다.
   void openPractice(PracticeSentence sentence) {
+    final normalizedSentence = sentence.normalizedForPractice();
     setState(() {
-      selectedSentence = sentence;
+      selectedSentence = normalizedSentence;
       selectedTab = 1;
       hasResult = false;
       latestResult = null;
       evaluationProgress = const EvaluationProgress();
       isPracticeImmersive = false;
     });
+  }
+
+  /// 기록의 과거 발음 snapshot을 재사용하지 않고 현재 백엔드 변환 규칙으로 다시 준비한다.
+  Future<void> retryPractice(PracticeSentence sentence) async {
+    try {
+      final preparedSentence =
+          sentence.sentenceId == null
+              ? await widget.pronunciationApi.prepareCustomSentence(
+                sentence.text,
+              )
+              : await widget.sentenceApi.fetchSentence(sentence.sentenceId!);
+
+      if (mounted) {
+        openPractice(preparedSentence);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('현재 발음 규칙으로 문장을 준비하지 못했습니다. 다시 시도해 주세요.'),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> evaluateRecording(
@@ -408,7 +435,8 @@ class _LingKoShellState extends State<LingKoShell> {
         });
       }
 
-      for (var attempt = 0; attempt < 120; attempt++) {
+      // 최초 취약 음절 영상 생성이 포함된 작업도 background polling으로 완료까지 기다린다.
+      for (var attempt = 0; attempt < evaluationPollingAttempts; attempt++) {
         if (job.status == EvaluationJobStatus.succeeded && job.result != null) {
           if (mounted) {
             setState(() {
@@ -473,8 +501,9 @@ class _LingKoShellState extends State<LingKoShell> {
 
   // Practice의 통합 입력에서 표준 발음 준비가 끝난 최신 문장으로 연습 대상을 교체합니다.
   void useCustomSentence(PracticeSentence sentence) {
+    final normalizedSentence = sentence.normalizedForPractice();
     setState(() {
-      selectedSentence = sentence;
+      selectedSentence = normalizedSentence;
       hasResult = false;
       latestResult = null;
       evaluationProgress = const EvaluationProgress();
@@ -550,7 +579,7 @@ class _LingKoShellState extends State<LingKoShell> {
         evaluationApi: widget.evaluationApi,
         authService: widget.authService,
         session: session!,
-        onRetryPractice: openPractice,
+        onRetryPractice: retryPractice,
         onSessionExpired: () => handleSessionChanged(null),
       ),
       ProfileScreen(

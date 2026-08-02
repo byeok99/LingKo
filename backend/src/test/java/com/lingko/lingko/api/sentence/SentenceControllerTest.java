@@ -38,8 +38,8 @@ class SentenceControllerTest {
         PracticeSentenceResponse sentence = PracticeSentenceResponse.builder()
                 .sentenceId(1L)
                 .source("RECOMMENDED")
-                .originalText("맛있겠다.")
-                .standardPronunciation("마싯게따.")
+                .originalText("맛있겠다")
+                .standardPronunciation("마싣껟따")
                 .translation("It looks delicious.")
                 .categoryLabel("Food")
                 .learningPoint("Final consonant linking and tense sound")
@@ -55,7 +55,8 @@ class SentenceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].sentenceId").value(1L))
                 .andExpect(jsonPath("$.items[0].source").value("RECOMMENDED"))
-                .andExpect(jsonPath("$.items[0].originalText").value("맛있겠다."));
+                .andExpect(jsonPath("$.items[0].originalText").value("맛있겠다"))
+                .andExpect(jsonPath("$.items[0].standardPronunciation").value("마싣껟따"));
     }
 
     @Test
@@ -73,8 +74,8 @@ class SentenceControllerTest {
         PracticeSentenceResponse sentence = PracticeSentenceResponse.builder()
                 .sentenceId(1L)
                 .source("RECOMMENDED")
-                .originalText("맛있겠다.")
-                .standardPronunciation("마싯게따.")
+                .originalText("맛있겠다")
+                .standardPronunciation("마싣껟따")
                 .translation("It looks delicious.")
                 .categoryLabel("Food")
                 .learningPoint("Final consonant linking and tense sound")

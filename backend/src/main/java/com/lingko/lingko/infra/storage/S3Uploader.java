@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
@@ -18,6 +19,7 @@ import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 /**
  * S3 업로더
@@ -69,8 +71,7 @@ public class S3Uploader {
                     RequestBody.fromFile(path)
             );
 
-            String s3Url = String.format("https://%s.s3.%s.amazonaws.com/%s",
-                    bucketName, region, s3Key);
+            String s3Url = publicUrl(s3Key);
 
             log.info("S3 업로드 완료: {}", s3Url);
             return s3Url;
@@ -93,6 +94,24 @@ public class S3Uploader {
      */
     public String upload(File file, String s3Key) {
         return upload(file.getAbsolutePath(), s3Key);
+    }
+
+    /**
+     * 결정적 key의 생성 가이드가 이미 존재하면 외부 생성 없이 재사용할 공개 URL을 반환한다.
+     */
+    public Optional<String> findPublicUrl(String s3Key) {
+        try {
+            s3Client.headObject(HeadObjectRequest.builder()
+                    .bucket(awsSettings.getS3().getBucket())
+                    .key(s3Key)
+                    .build());
+            return Optional.of(publicUrl(s3Key));
+        } catch (S3Exception exception) {
+            if (exception.statusCode() == 404) {
+                return Optional.empty();
+            }
+            throw new VideoGenerationException("S3 guide cache lookup failed", exception);
+        }
     }
 
     /**
@@ -224,5 +243,14 @@ public class S3Uploader {
         }
 
         return "application/octet-stream";  // 기본값
+    }
+
+    private String publicUrl(String s3Key) {
+        return String.format(
+                "https://%s.s3.%s.amazonaws.com/%s",
+                awsSettings.getS3().getBucket(),
+                awsSettings.getS3().getRegion(),
+                s3Key
+        );
     }
 }

@@ -11,6 +11,20 @@
     EVALUATION_LOG ||--o{ EVALUATION_SYLLABLE : contains
     SYLLABLES ||--o{ EVALUATION_SYLLABLE : references
 
+    RECOMMENDED_SENTENCES {
+      bigint sentence_id PK
+      varchar original_text
+      varchar translation
+      varchar level_label
+      varchar category_code
+      varchar category_label
+      varchar learning_point
+      boolean active
+      int sort_order
+      datetime created_at
+      datetime updated_at
+    }
+
     USERS {
       bigint user_idx PK
       varchar social_id
@@ -109,6 +123,7 @@
 ## 주요 제약
 
 - `users`: `(social_id, social_type)` 유일
+- `recommended_sentences`: 표준 발음을 저장하지 않고 원문을 현재 음운 규칙으로 변환
 - `evaluation_log`: `(user_idx, created_at)` 조회 인덱스
 - `evaluation_syllable`: `(evaluation_log_idx, position_no)` 유일
 - `evaluation_jobs`: `(user_idx, idempotency_key)`, `audio_object_key` 유일
@@ -138,6 +153,7 @@
 
 - 엔티티와 실제 Flyway 스키마가 항상 일치하도록 테스트합니다.
 - `sentence_id`는 추천 문장 참조지만 현재 엔티티 연관관계가 아닌 값으로 저장됩니다.
+- `evaluation_log`와 `evaluation_jobs`의 `standard_pronunciation`은 평가 당시 기준을 재현하기 위한 snapshot이며 추천 콘텐츠의 정답 원천이 아닙니다.
 - 가이드 생성 작업은 DB 모델이 없으며 현재 메모리에만 저장됩니다.
 - Refresh Token 원문은 저장하지 않고 현재 토큰의 SHA-256 해시만 저장합니다.
 - 평가 작업은 MySQL을 상태의 원본으로 사용하며 Worker 재시작 후에도 재시도할 수 있습니다.

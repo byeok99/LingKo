@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-07-30 - 전체 평가 음절 영상 기준 확정
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: FR-GUIDE-004를 취약 점수가 아닌 점수 독립적인 다중 프레임 전환 기준으로 보완했다.
+- 검증: Backend 단위 201개·통합 11개 테스트 대조
+- 리스크: 외부 서비스 운영 E2E 필요
+
+## 2026-07-30 - 취약 음절 영상 가이드 구현 반영
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: FR-GUIDE-004를 취약 음절 다중 프레임 MP4 생성·cache 재사용과 PNG fallback 기준으로 완료 상태에 맞췄다.
+- 검증: Backend 단위 199개·통합 11개와 Flutter 70개 테스트 대조
+- 리스크: Replicate·S3·FFmpeg 운영 E2E 필요
+
+## 2026-07-30 - 동적 발음·정규화·영상 상태 반영
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: 추천 기준 발음을 현재 서버 규칙으로 계산하고 앱·서버 기호 정규화를 완료 처리했으며 영상 가이드는 앱 지원·서버 PNG 상태로 구분했다.
+- 검증: Backend·Flutter 구현과 전체 테스트 대조
+- 리스크: 실제 영상 URL 공급과 MySQL V12 적용은 운영 검증 필요
+
 ## 2026-07-29 - 자유 문장 특수 기호 정규화 반영
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`

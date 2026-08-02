@@ -120,6 +120,19 @@ class PracticeQuotaServiceTest {
     }
 
     @Test
+    @DisplayName("이미 복구된 quota 예약은 최종 실패 처리가 반복돼도 false를 반환한다")
+    void reportsAlreadyReleasedReservationWithoutThrowing() {
+        User user = saveUser();
+        PracticeQuotaService.PracticeQuotaReservation reservation =
+                quotaService.reservePractice(user.getUserIdx());
+        quotaService.releasePractice(reservation);
+
+        assertThat(quotaService.releasePracticeIfReserved(reservation)).isFalse();
+        assertThat(quotaService.getTodayQuota(user.getUserIdx()).remainingPractices())
+                .isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("무료 quota 예약을 확정하면 예약량이 사용량으로 전환된다")
     void confirmsReservedFreeQuota() {
         User user = saveUser();

@@ -9,6 +9,7 @@ import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundExceptio
 import com.lingko.lingko.core.domain.sentence.repository.RecommendedSentenceRepository;
 import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
+import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -71,15 +72,16 @@ public class EvaluationApplicationService {
         if (sentenceId != null) {
             RecommendedSentence sentence = sentenceRepository.findBySentenceIdAndActiveTrue(sentenceId)
                     .orElseThrow(() -> new SentenceNotFoundException(sentenceId));
+            String originalText = PracticeSentenceNormalizer.normalize(sentence.getOriginalText());
             return new EvaluationTarget(
                     EvaluationLog.PracticeSource.RECOMMENDED,
                     sentence.getSentenceId(),
-                    sentence.getOriginalText(),
-                    sentence.getStandardPronunciation()
+                    originalText,
+                    evaluationService.convertToStandardPronunciation(originalText)
             );
         }
 
-        String originalText = text.trim();
+        String originalText = PracticeSentenceNormalizer.normalize(text);
         return new EvaluationTarget(
                 EvaluationLog.PracticeSource.CUSTOM,
                 null,

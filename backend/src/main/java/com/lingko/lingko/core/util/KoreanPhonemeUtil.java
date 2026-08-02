@@ -194,6 +194,11 @@ public class KoreanPhonemeUtil {
                 }
             }
 
+            // 자음 앞 받침은 대표음으로 바꾼 뒤 비음화·경음화를 적용해야 한다.
+            if (next != null && !next.chosung.equals("ㅇ")) {
+                current.jongsung = toRepresentativeFinalSound(current.jongsung);
+            }
+
             // 비음화
             if (next != null && !current.jongsung.isEmpty()) {
                 if ((current.jongsung.equals("ㄱ") || current.jongsung.equals("ㄺ"))
@@ -293,5 +298,17 @@ public class KoreanPhonemeUtil {
         }
 
         return result.toString();
+    }
+
+    private static String toRepresentativeFinalSound(String finalSound) {
+        return switch (finalSound) {
+            case "ㄲ", "ㄳ", "ㄺ", "ㅋ" -> "ㄱ";
+            case "ㄵ" -> "ㄴ";
+            case "ㅅ", "ㅆ", "ㅈ", "ㅊ", "ㅌ" -> "ㄷ";
+            case "ㄼ", "ㄽ", "ㄾ" -> "ㄹ";
+            case "ㄻ" -> "ㅁ";
+            case "ㅄ", "ㄿ", "ㅍ" -> "ㅂ";
+            default -> finalSound;
+        };
     }
 }

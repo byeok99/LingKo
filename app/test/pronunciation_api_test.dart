@@ -69,15 +69,15 @@ void main() {
         ),
       );
 
-      final sentence = await api.prepareCustomSentence('한국어를 배우고 있어요.');
+      final sentence = await api.prepareCustomSentence('한국어를 배우고 있어요.!?');
 
       expect(
         requestedUri.toString(),
         'http://localhost:8080/api/pronunciation/prepare',
       );
-      expect(requestedBody, {'source': 'CUSTOM', 'text': '한국어를 배우고 있어요.'});
-      expect(sentence.text, '한국어를 배우고 있어요.');
-      expect(sentence.pronunciation, '한구거를 배우고 이써요.');
+      expect(requestedBody, {'source': 'CUSTOM', 'text': '한국어를 배우고 있어요'});
+      expect(sentence.text, '한국어를 배우고 있어요');
+      expect(sentence.pronunciation, '한구거를 배우고 이써요');
       expect(sentence.characters.single.kind, 'TONGUE');
       expect(
         sentence.characters.single.tongueGuideUrl,
