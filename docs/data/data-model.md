@@ -34,7 +34,6 @@
       varchar profile_image_url
       varchar display_language
       varchar native_language
-      varchar target_level
       datetime created_at
       datetime last_login_at
     }

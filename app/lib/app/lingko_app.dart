@@ -153,7 +153,9 @@ class _LingKoShellState extends State<LingKoShell> {
     });
 
     try {
-      final sentences = await widget.sentenceApi.fetchRecommendedSentences();
+      final sentences = await widget.sentenceApi.fetchRecommendedSentences(
+        limit: 50,
+      );
 
       if (!mounted) {
         return;
@@ -354,6 +356,18 @@ class _LingKoShellState extends State<LingKoShell> {
     });
   }
 
+  /// Home의 직접 입력 진입점은 이전 추천 문장을 재사용하지 않고 빈 draft로 시작한다.
+  void openCustomPractice() {
+    setState(() {
+      selectedSentence = null;
+      selectedTab = 1;
+      hasResult = false;
+      latestResult = null;
+      evaluationProgress = const EvaluationProgress();
+      isPracticeImmersive = false;
+    });
+  }
+
   /// 기록의 과거 발음 snapshot을 재사용하지 않고 현재 백엔드 변환 규칙으로 다시 준비한다.
   Future<void> retryPractice(PracticeSentence sentence) async {
     try {
@@ -539,6 +553,7 @@ class _LingKoShellState extends State<LingKoShell> {
         onRetryQuota: loadPracticeQuota,
         onSelect: openPractice,
         onOpenPractice: () => setState(() => selectedTab = 1),
+        onOpenCustomPractice: openCustomPractice,
         onOpenReview: () => setState(() => selectedTab = 2),
         displayName: session?.user.name,
       ),

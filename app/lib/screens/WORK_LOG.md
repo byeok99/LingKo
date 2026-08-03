@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-03 - Home 상황별 추천 탐색 구성
+
+- 변경 파일: `home_screen.dart`, `WORK_LOG.md`
+- 내용: 추천 문장을 Daily·Food·Travel·Study·Work·Health 칩으로 구분하고 카테고리별 3개 미리보기, 전체 보기, 빈 직접 입력 진입을 추가했다. 진행 중인 평가는 추천 영역보다 위에 유지했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 전체 71개 통과, line coverage 83.33%, 500×924 Chrome 렌더링 확인
+- 리스크: 실제 iPhone의 글꼴·가로 칩 스크롤 감각은 실기기 확인 필요
+
+## 2026-08-03 - Profile 목표 레벨 UI 제거
+
+- 변경 파일: `profile_screen.dart`, `WORK_LOG.md`
+- 내용: 실제 기능에 연결되지 않은 Target level 설정과 learner 배지를 제거하고 설정 영역을 Language preferences로 정리했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 전체 70개 통과, line coverage 83.20%
+- 리스크: 없음
+
 ## 2026-07-30 - 평가·결과 화면 과도한 간소화 롤백
 
 - 변경 파일: `home_screen.dart`, `result_screen.dart`, `WORK_LOG.md`

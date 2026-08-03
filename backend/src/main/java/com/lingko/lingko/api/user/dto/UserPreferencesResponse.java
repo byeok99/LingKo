@@ -1,7 +1,5 @@
 package com.lingko.lingko.api.user.dto;
 
-import com.lingko.lingko.core.domain.user.entity.User;
-
 /**
  * HTTP 경계에서 사용하는 User Preferences 요청·응답 구조를 정의한다.
  *
@@ -9,7 +7,6 @@ import com.lingko.lingko.core.domain.user.entity.User;
  */
 public record UserPreferencesResponse(
         String displayLanguage,
-        String nativeLanguage,
-        User.LearningLevel targetLevel
+        String nativeLanguage
 ) {
 }

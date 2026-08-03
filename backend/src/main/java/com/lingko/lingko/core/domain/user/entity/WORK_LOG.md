@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - User 목표 레벨 영속 상태 제거
+
+- 변경 파일: `User.java`, `WORK_LOG.md`
+- 내용: `targetLevel` field와 `LearningLevel` enum을 제거하고 언어 설정 상태 전이를 표시 언어·모국어 두 값으로 축소했다.
+- 검증: Backend 단위·통합 테스트 217개 통과
+- 리스크: Backend 전체 line coverage 72.48%로 프로젝트 목표 80% 미달
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `User.java`, `WORK_LOG.md`

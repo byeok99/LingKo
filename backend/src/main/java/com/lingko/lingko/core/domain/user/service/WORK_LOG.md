@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - 언어 Preferences 조율로 단순화
+
+- 변경 파일: `UserPreferencesService.java`, `WORK_LOG.md`
+- 내용: Target level 전달·응답 mapping을 제거하고 검증된 표시 언어와 모국어만 사용자에게 적용하도록 서비스 계약을 맞췄다.
+- 검증: Backend 단위·통합 테스트 217개 통과
+- 리스크: Backend 전체 line coverage 72.48%로 프로젝트 목표 80% 미달
+
 ## 2026-07-29 - S3 우선 회원 탈퇴 조율
 
 - 변경 파일: `AccountDeletionService.java`, `AccountDeletionPersistenceService.java`, `AccountDeletionUnavailableException.java`, `WORK_LOG.md`

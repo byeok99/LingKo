@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-03 - Home 상황별 추천 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 50개 추천 요청, Daily 기본 선택, Food 전환, 3개 미리보기와 전체 보기, 추천 문장 선택, 빈 직접 입력 진입 계약을 widget test로 고정했다.
+- 검증: 구현 전 기존 제목과 요청 상한 20으로 실패 확인, `flutter test --coverage` 전체 71개 통과, line coverage 83.33%
+- 리스크: 실제 API category 데이터 분포와 가로 스크롤 제스처는 통합·실기기 확인 필요
+
+## 2026-08-03 - 목표 레벨 제거 회귀 테스트
+
+- 변경 파일: `user_preferences_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: Preferences 요청·응답에 목표 레벨이 없고 Profile에도 설정 행과 learner 배지가 노출되지 않으면서 언어 설정 변경은 유지되는 계약으로 갱신했다.
+- 검증: 구현 전 model 생성자 compile 실패 확인, `flutter test --coverage` 전체 70개 통과, line coverage 83.20%
+- 리스크: 실제 기기의 Profile 픽셀 배치는 widget test 범위 밖임
+
 ## 2026-07-30 - 평가 정보형 UI 회귀 테스트 복원
 
 - 변경 파일: `widget_test.dart`, `WORK_LOG.md`

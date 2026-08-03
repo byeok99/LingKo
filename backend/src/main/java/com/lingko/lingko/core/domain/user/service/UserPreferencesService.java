@@ -30,10 +30,9 @@ public class UserPreferencesService {
     @Transactional
     public UserPreferencesResponse updatePreferences(Long userId, UserPreferencesUpdateRequest request) {
         User user = findAuthenticatedUser(userId);
-        user.updateLearningPreferences(
+        user.updateLanguagePreferences(
                 request.displayLanguage().trim(),
-                request.nativeLanguage().trim(),
-                request.targetLevel()
+                request.nativeLanguage().trim()
         );
 
         return toResponse(user);
@@ -47,8 +46,7 @@ public class UserPreferencesService {
     private UserPreferencesResponse toResponse(User user) {
         return new UserPreferencesResponse(
                 user.getDisplayLanguage(),
-                user.getNativeLanguage(),
-                user.getTargetLevel()
+                user.getNativeLanguage()
         );
     }
 }

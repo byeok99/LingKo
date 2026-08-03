@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - User 목표 레벨 데이터 모델 제거
+
+- 변경 파일: `data-model.md`, `WORK_LOG.md`
+- 내용: V13과 User entity에 맞춰 활성 데이터 모델의 `users.target_level` field를 제거했다.
+- 검증: V13 migration test와 Entity 구조 대조
+- 리스크: 실제 MySQL V1~V13 연속 migration은 미실행
+
 ## 2026-07-30 - 추천 발음 비영속 모델 반영
 
 - 변경 파일: `data-model.md`, `WORK_LOG.md`

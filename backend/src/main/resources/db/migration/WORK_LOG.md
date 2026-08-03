@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - 사용자 목표 레벨 컬럼 제거
+
+- 변경 파일: `V13__remove_user_target_level.sql`, `WORK_LOG.md`
+- 내용: 적용된 V4를 변경하지 않고 후속 migration으로 사용되지 않는 `users.target_level` 컬럼을 제거했다.
+- 검증: H2 MySQL mode에서 V1→V4→V13 적용과 언어 컬럼 보존·목표 레벨 컬럼 부재 확인, Backend 전체 217개 테스트 통과
+- 리스크: 실제 MySQL V1~V13 연속 migration은 미실행
+
 ## 2026-08-03 - 생성 가이드 repeatable seed 추가
 
 - 변경 파일: `R__seed_generated_syllable_guides.sql`, `WORK_LOG.md`

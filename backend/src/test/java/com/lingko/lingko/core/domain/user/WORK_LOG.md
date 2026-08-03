@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - 언어 설정·목표 레벨 제거 테스트
+
+- 변경 파일: `UserPreferencesServiceTest.java`, `UserPreferencesMigrationTest.java`, `WORK_LOG.md`
+- 내용: 서비스가 표시 언어와 모국어만 저장하는 계약으로 갱신하고 V13이 언어 컬럼을 보존하면서 `target_level`을 제거하는 migration test를 추가했다.
+- 검증: 구현 전 DTO 생성자 compile 실패 확인, Backend 단위·통합 테스트 217개 통과
+- 리스크: 실제 MySQL migration은 테스트 범위 밖임
+
 ## 2026-07-29 - 회원 탈퇴 서비스·DB 삭제 테스트
 
 - 변경 파일: `AccountDeletionServiceTest.java`, `AccountDeletionPersistenceServiceTest.java`, `WORK_LOG.md`

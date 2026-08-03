@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - User Preferences 목표 레벨 계약 제거
+
+- 변경 파일: `user_preferences.dart`, `WORK_LOG.md`
+- 내용: 사용되지 않는 `LearningLevel`과 `targetLevel` JSON·불변 model 필드를 제거해 표시 언어와 모국어만 관리하도록 단순화했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 전체 70개 통과, line coverage 83.20%
+- 리스크: 제거 전 API 응답의 추가 `targetLevel` field는 앱 parsing에서 사용되지 않음
+
 ## 2026-07-30 - Practice 문장 모델 정규화
 
 - 변경 파일: `practice_sentence.dart`, `WORK_LOG.md`

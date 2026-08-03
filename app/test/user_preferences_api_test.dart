@@ -21,11 +21,7 @@ void main() {
 
           return ApiResponse(
             statusCode: 200,
-            body: jsonEncode({
-              'displayLanguage': 'ko',
-              'nativeLanguage': 'en',
-              'targetLevel': 'INTERMEDIATE_1',
-            }),
+            body: jsonEncode({'displayLanguage': 'ko', 'nativeLanguage': 'en'}),
           );
         },
       ),
@@ -40,7 +36,6 @@ void main() {
     expect(requestedHeaders, {'Authorization': 'Bearer access.jwt'});
     expect(preferences.displayLanguage, 'ko');
     expect(preferences.nativeLanguage, 'en');
-    expect(preferences.targetLevel, LearningLevel.intermediate1);
   });
 
   test('updatePreferences sends bearer token and request body', () async {
@@ -57,11 +52,7 @@ void main() {
 
           return ApiResponse(
             statusCode: 200,
-            body: jsonEncode({
-              'displayLanguage': 'ko',
-              'nativeLanguage': 'ja',
-              'targetLevel': 'BEGINNER_2',
-            }),
+            body: jsonEncode({'displayLanguage': 'ko', 'nativeLanguage': 'ja'}),
           );
         },
       ),
@@ -72,7 +63,6 @@ void main() {
       preferences: const UserPreferences(
         displayLanguage: 'ko',
         nativeLanguage: 'ja',
-        targetLevel: LearningLevel.beginner2,
       ),
     );
 
@@ -81,11 +71,7 @@ void main() {
       'http://localhost:8080/api/users/me/preferences',
     );
     expect(requestedHeaders, {'Authorization': 'Bearer access.jwt'});
-    expect(requestedBody, {
-      'displayLanguage': 'ko',
-      'nativeLanguage': 'ja',
-      'targetLevel': 'BEGINNER_2',
-    });
+    expect(requestedBody, {'displayLanguage': 'ko', 'nativeLanguage': 'ja'});
     expect(preferences.nativeLanguage, 'ja');
   });
 }

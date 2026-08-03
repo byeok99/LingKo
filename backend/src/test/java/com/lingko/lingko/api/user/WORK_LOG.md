@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - Preferences 목표 레벨 부재 API 테스트
+
+- 변경 파일: `UserPreferencesControllerTest.java`, `WORK_LOG.md`
+- 내용: 인증·언어 validation은 유지하면서 조회·변경 JSON에 `targetLevel`이 존재하지 않는 계약으로 Controller test를 갱신했다.
+- 검증: 구현 전 DTO 생성자 compile 실패 확인, Backend 단위·통합 테스트 217개 통과
+- 리스크: 없음
+
 ## 2026-07-24 - MockBean 제거 예정 API 교체
 
 - 변경 파일: `UserPreferencesControllerTest.java`, `WORK_LOG.md`

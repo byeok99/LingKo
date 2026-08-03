@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - Preferences 목표 레벨 API 계약 제거
+
+- 변경 파일: `UserPreferencesResponse.java`, `UserPreferencesUpdateRequest.java`, `WORK_LOG.md`
+- 내용: 조회·변경 DTO에서 의미 없는 `targetLevel`을 제거하고 표시 언어와 모국어 validation만 유지했다.
+- 검증: Backend 단위·통합 테스트 217개 통과
+- 리스크: Backend 전체 line coverage 72.48%로 프로젝트 목표 80% 미달
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `UserPreferencesResponse.java`, `UserPreferencesUpdateRequest.java`, `WORK_LOG.md`

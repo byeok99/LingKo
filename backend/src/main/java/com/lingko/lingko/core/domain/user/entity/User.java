@@ -54,11 +54,6 @@ public class User {
     @Column(name = "native_language", nullable = false, length = 20)
     private String nativeLanguage = "en";
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_level", nullable = false, length = 30)
-    private LearningLevel targetLevel = LearningLevel.BEGINNER_2;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -74,22 +69,13 @@ public class User {
         this.profileImageUrl = profileImageUrl;
     }
 
-    public void updateLearningPreferences(String displayLanguage, String nativeLanguage, LearningLevel targetLevel) {
-        // 요청이 학습 profile 일부만 적용하지 않도록 설정 묶음을 함께 갱신한다.
+    public void updateLanguagePreferences(String displayLanguage, String nativeLanguage) {
+        // 요청이 언어 설정 일부만 적용하지 않도록 표시·모국어 설정을 함께 갱신한다.
         this.displayLanguage = displayLanguage;
         this.nativeLanguage = nativeLanguage;
-        this.targetLevel = targetLevel;
     }
 
     public enum SocialType {
         GOOGLE, APPLE, KAKAO
-    }
-
-    public enum LearningLevel {
-        BEGINNER_1,
-        BEGINNER_2,
-        INTERMEDIATE_1,
-        INTERMEDIATE_2,
-        ADVANCED
     }
 }

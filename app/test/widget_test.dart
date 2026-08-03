@@ -198,7 +198,6 @@ class FakeUserPreferencesApi implements UserPreferencesApi {
   UserPreferences preferences = const UserPreferences(
     displayLanguage: 'ko',
     nativeLanguage: 'en',
-    targetLevel: LearningLevel.beginner2,
   );
   UserPreferences? lastUpdatedPreferences;
   String? lastAccessToken;
@@ -429,12 +428,16 @@ class FakeSentenceApi implements SentenceApi {
 
   final Object? error;
   final List<PracticeSentence> sentences;
+  int? lastLimit;
+  String? lastCategory;
 
   @override
   Future<List<PracticeSentence>> fetchRecommendedSentences({
     int limit = 20,
     String? category,
   }) async {
+    lastLimit = limit;
+    lastCategory = category;
     if (error != null) {
       throw error!;
     }
@@ -481,10 +484,105 @@ const _twoSentences = [
   ),
 ];
 
+const _categorizedSentences = [
+  PracticeSentence(
+    sentenceId: 6,
+    source: 'RECOMMENDED',
+    text: '천천히 말씀해 주세요.',
+    pronunciation: '천처니 말쓰매 주세요.',
+    translation: 'Please speak slowly.',
+    level: 'RECOMMENDED',
+    category: 'Daily',
+    point: 'Aspirated consonants and linking',
+    score: 0,
+    characters: [],
+  ),
+  PracticeSentence(
+    sentenceId: 7,
+    source: 'RECOMMENDED',
+    text: '오늘 날씨가 좋아요.',
+    pronunciation: '오늘 날씨가 조아요.',
+    translation: 'The weather is nice today.',
+    level: 'RECOMMENDED',
+    category: 'Daily',
+    point: 'Natural sentence rhythm',
+    score: 0,
+    characters: [],
+  ),
+  PracticeSentence(
+    sentenceId: 15,
+    source: 'RECOMMENDED',
+    text: '친구를 만났어요.',
+    pronunciation: '친구를 만나써요.',
+    translation: 'I met a friend.',
+    level: 'RECOMMENDED',
+    category: 'Daily',
+    point: 'Past tense ending with tense sound',
+    score: 0,
+    characters: [],
+  ),
+  ..._defaultSentences,
+  PracticeSentence(
+    sentenceId: 2,
+    source: 'RECOMMENDED',
+    text: '김치찌개 하나 주세요.',
+    pronunciation: '김치찌개 하나 주세요.',
+    translation: 'Please give me one kimchi stew.',
+    level: 'RECOMMENDED',
+    category: 'Food',
+    point: 'Tense consonants in food ordering',
+    score: 0,
+    characters: [],
+  ),
+  PracticeSentence(
+    sentenceId: 3,
+    source: 'RECOMMENDED',
+    text: '물 한 잔 주세요.',
+    pronunciation: '물 한 잔 주세요.',
+    translation: 'Please give me a glass of water.',
+    level: 'RECOMMENDED',
+    category: 'Food',
+    point: 'Final consonant clarity in short requests',
+    score: 0,
+    characters: [],
+  ),
+  PracticeSentence(
+    sentenceId: 4,
+    source: 'RECOMMENDED',
+    text: '커피가 뜨거워요.',
+    pronunciation: '커피가 뜨거워요.',
+    translation: 'The coffee is hot.',
+    level: 'RECOMMENDED',
+    category: 'Food',
+    point: 'Aspirated consonant and rounded vowel practice',
+    score: 0,
+    characters: [],
+  ),
+  PracticeSentence(
+    sentenceId: 8,
+    source: 'RECOMMENDED',
+    text: '지하철역이 어디예요?',
+    pronunciation: '지하철려기 어디예요?',
+    translation: 'Where is the subway station?',
+    level: 'RECOMMENDED',
+    category: 'Travel',
+    point: 'Linking across compound words',
+    score: 0,
+    characters: [],
+  ),
+];
+
 Finder _navigationLabel(String label) {
   return find.descendant(
     of: find.byType(NavigationBar),
     matching: find.text(label),
+  );
+}
+
+Finder _verticalScrollable() {
+  return find.byWidgetPredicate(
+    (widget) =>
+        widget is Scrollable && widget.axisDirection == AxisDirection.down,
   );
 }
 
@@ -535,7 +633,7 @@ void main() {
 
     expect(find.text('Sign in with Google'), findsOneWidget);
     expect(find.byKey(const Key('google-sign-in-logo')), findsOneWidget);
-    expect(find.text('Recommended for you'), findsNothing);
+    expect(find.text('Practice by situation'), findsNothing);
 
     await tester.tap(find.text('Sign in with Google'));
     await tester.pumpAndSettle();
@@ -543,7 +641,7 @@ void main() {
     expect(authService.signInCalled, isTrue);
     await tester.drag(find.byType(ListView).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('Recommended for you'), findsOneWidget);
+    expect(find.text('Practice by situation'), findsOneWidget);
     expect(find.text('LingKo User'), findsNothing);
   });
 
@@ -567,7 +665,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Sign in with Google'), findsOneWidget);
-    expect(find.text('Recommended for you'), findsNothing);
+    expect(find.text('Practice by situation'), findsNothing);
   });
 
   testWidgets('Login hides authentication error details', (
@@ -618,7 +716,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('LingKo'), findsOneWidget);
-    expect(find.text('Recommended for you'), findsOneWidget);
+    expect(find.text('Practice by situation'), findsOneWidget);
     expect(find.text('맛있겠다.'), findsOneWidget);
 
     await tester.tap(find.text('맛있겠다.').first);
@@ -686,6 +784,60 @@ void main() {
     );
     expect(find.text('Character-level scores are unavailable'), findsOneWidget);
     expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
+  });
+
+  testWidgets('Home browses compact recommendations by situation', (
+    WidgetTester tester,
+  ) async {
+    final sentenceApi = FakeSentenceApi(sentences: _categorizedSentences);
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: sentenceApi,
+        evaluationApi: FakeEvaluationApi(),
+        userPreferencesApi: FakeUserPreferencesApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(sentenceApi.lastLimit, 50);
+    expect(sentenceApi.lastCategory, isNull);
+    expect(find.text('Practice by situation'), findsOneWidget);
+    expect(find.text('Daily Life'), findsOneWidget);
+    expect(find.text('3 sentences'), findsOneWidget);
+    expect(find.text('천천히 말씀해 주세요.'), findsOneWidget);
+    expect(find.text('Start Practice'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('home-category-food')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Food & Café'), findsOneWidget);
+    expect(find.text('4 sentences'), findsOneWidget);
+    expect(find.text('맛있겠다.'), findsOneWidget);
+    expect(find.text('물 한 잔 주세요.'), findsOneWidget);
+    expect(find.text('커피가 뜨거워요.'), findsNothing);
+    expect(find.text('View all 4 sentences'), findsOneWidget);
+
+    await tester.drag(_verticalScrollable().first, const Offset(0, -250));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('View all 4 sentences'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('커피가 뜨거워요.'), findsOneWidget);
+    expect(find.text('Show fewer'), findsOneWidget);
+
+    await tester.drag(_verticalScrollable().first, const Offset(0, -400));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Practice my own sentence'));
+    await tester.pumpAndSettle();
+
+    final customSentenceField = tester.widget<TextField>(
+      find.byKey(const ValueKey('practice-sentence-field')),
+    );
+    expect(customSentenceField.controller?.text, isEmpty);
   });
 
   testWidgets('Home shows remaining quota for restored session', (
@@ -1243,7 +1395,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Recommendations are unavailable'), findsOneWidget);
-    expect(find.text('Recommended for you'), findsOneWidget);
+    expect(find.text('Practice by situation'), findsOneWidget);
   });
 
   testWidgets('Practice tab retries microphone permission after denial', (
@@ -1411,7 +1563,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Sign in with Google'), findsOneWidget);
-    expect(find.text('Recommended for you'), findsNothing);
+    expect(find.text('Practice by situation'), findsNothing);
   });
 
   testWidgets('Profile requires confirmation before deleting the account', (
@@ -1452,7 +1604,7 @@ void main() {
     expect(find.text('Sign in with Google'), findsOneWidget);
   });
 
-  testWidgets('Profile loads and updates learning preferences', (
+  testWidgets('Profile loads language preferences without a target level', (
     WidgetTester tester,
   ) async {
     final preferencesApi = FakeUserPreferencesApi();
@@ -1478,19 +1630,16 @@ void main() {
     expect(find.text('Korean'), findsOneWidget);
     expect(find.text('Native language'), findsOneWidget);
     expect(find.text('English'), findsWidgets);
-    expect(find.text('Target level'), findsOneWidget);
-    expect(find.text('Beginner 2'), findsOneWidget);
+    expect(find.text('Target level'), findsNothing);
+    expect(find.text('Beginner 2 learner'), findsNothing);
 
-    await tester.tap(find.text('Target level'));
+    await tester.tap(find.text('Display language'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Intermediate 1').last);
+    await tester.tap(find.text('Japanese').last);
     await tester.pumpAndSettle();
 
-    expect(
-      preferencesApi.lastUpdatedPreferences?.targetLevel,
-      LearningLevel.intermediate1,
-    );
-    expect(find.text('Intermediate 1'), findsOneWidget);
+    expect(preferencesApi.lastUpdatedPreferences?.displayLanguage, 'ja');
+    expect(find.text('Japanese'), findsOneWidget);
   });
 
   testWidgets('leaving Practice tab deletes a stopped temporary recording', (
@@ -1549,7 +1698,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Continue in background'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('사진 찍어도 돼요?'), 300);
+    await tester.tap(find.byKey(const ValueKey('home-category-travel')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('사진 찍어도 돼요?'),
+      300,
+      scrollable: _verticalScrollable().first,
+    );
     await tester.tap(find.text('사진 찍어도 돼요?'));
     await tester.pumpAndSettle();
 

@@ -183,25 +183,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> selectTargetLevel() async {
-    final selected = await showModalBottomSheet<LearningLevel>(
-      context: context,
-      builder:
-          (context) => _OptionSheet<LearningLevel>(
-            title: 'Target level',
-            options: LearningLevel.values,
-            labelFor: (level) => level.label,
-          ),
-    );
-    if (selected != null) {
-      await updatePreferences(
-        (preferences ?? UserPreferences.defaults).copyWith(
-          targetLevel: selected,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final current = preferences ?? UserPreferences.defaults;
@@ -217,12 +198,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        _AccountCard(
-          session: widget.session,
-          levelLabel: current.targetLevel.label,
-        ),
+        _AccountCard(session: widget.session),
         const SizedBox(height: 24),
-        const SectionHeader(title: 'Learning preferences'),
+        const SectionHeader(title: 'Language preferences'),
         const SizedBox(height: 10),
         if (isLoading)
           const StatePanel(
@@ -260,11 +238,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Native language',
                   value: languageLabel(current.nativeLanguage),
                   onTap: isSaving ? null : () => selectLanguage(display: false),
-                ),
-                SettingsRow(
-                  label: 'Target level',
-                  value: current.targetLevel.label,
-                  onTap: isSaving ? null : selectTargetLevel,
                 ),
               ],
             ),
@@ -316,10 +289,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _AccountCard extends StatelessWidget {
-  const _AccountCard({required this.session, required this.levelLabel});
+  const _AccountCard({required this.session});
 
   final AuthSession session;
-  final String levelLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -355,8 +327,6 @@ class _AccountCard extends StatelessWidget {
                 Text(user.name, style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 2),
                 Text(user.email, style: Theme.of(context).textTheme.bodyMedium),
-                const SizedBox(height: 4),
-                StatusBadge(label: '$levelLabel learner'),
               ],
             ),
           ),

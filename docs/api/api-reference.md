@@ -212,7 +212,7 @@ Authorization: Bearer <access-token>
 
 ### `GET /api/users/me/preferences`
 
-인증 필요. 표시 언어, 모국어, 목표 레벨을 반환합니다.
+인증 필요. 표시 언어와 모국어를 반환합니다.
 
 ### `PATCH /api/users/me/preferences`
 
@@ -221,18 +221,9 @@ Authorization: Bearer <access-token>
 ```json
 {
   "displayLanguage": "en",
-  "nativeLanguage": "ko",
-  "targetLevel": "BEGINNER_2"
+  "nativeLanguage": "ko"
 }
 ```
-
-지원 레벨:
-
-- `BEGINNER_1`
-- `BEGINNER_2`
-- `INTERMEDIATE_1`
-- `INTERMEDIATE_2`
-- `ADVANCED`
 
 ## 가이드 생성 작업
 

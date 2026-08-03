@@ -54,7 +54,6 @@ class UserPreferencesServiceTest {
 
         assertThat(response.displayLanguage()).isEqualTo("en");
         assertThat(response.nativeLanguage()).isEqualTo("en");
-        assertThat(response.targetLevel()).isEqualTo(User.LearningLevel.BEGINNER_2);
     }
 
     @Test
@@ -69,7 +68,7 @@ class UserPreferencesServiceTest {
 
         UserPreferencesResponse response = preferencesService.updatePreferences(
                 user.getUserIdx(),
-                new UserPreferencesUpdateRequest("ko", "ja", User.LearningLevel.INTERMEDIATE_1)
+                new UserPreferencesUpdateRequest("ko", "ja")
         );
         entityManager.flush();
         entityManager.clear();
@@ -77,10 +76,8 @@ class UserPreferencesServiceTest {
         User updated = userRepository.findById(user.getUserIdx()).orElseThrow();
         assertThat(response.displayLanguage()).isEqualTo("ko");
         assertThat(response.nativeLanguage()).isEqualTo("ja");
-        assertThat(response.targetLevel()).isEqualTo(User.LearningLevel.INTERMEDIATE_1);
         assertThat(updated.getDisplayLanguage()).isEqualTo("ko");
         assertThat(updated.getNativeLanguage()).isEqualTo("ja");
-        assertThat(updated.getTargetLevel()).isEqualTo(User.LearningLevel.INTERMEDIATE_1);
     }
 
     @Test

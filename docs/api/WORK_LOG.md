@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - Preferences API 목표 레벨 제거
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: 사용자 설정 조회·변경 계약을 표시 언어와 모국어만 반환·수신하는 현재 DTO에 맞추고 목표 레벨 예시와 enum 목록을 제거했다.
+- 검증: Controller test와 API 문구 대조, Backend 단위·통합 테스트 217개 통과
+- 리스크: 없음
+
 ## 2026-07-30 - 점수 독립 영상 가이드 계약
 
 - 변경 파일: `api-reference.md`, `WORK_LOG.md`

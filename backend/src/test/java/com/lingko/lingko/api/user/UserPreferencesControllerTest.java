@@ -5,7 +5,6 @@ import com.lingko.lingko.api.user.dto.UserPreferencesResponse;
 import com.lingko.lingko.api.user.dto.UserPreferencesUpdateRequest;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
-import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.service.UserPreferencesService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,8 +47,7 @@ class UserPreferencesControllerTest {
         when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(preferencesService.findPreferences(7L)).thenReturn(new UserPreferencesResponse(
                 "ko",
-                "en",
-                User.LearningLevel.INTERMEDIATE_1
+                "en"
         ));
 
         mockMvc.perform(get("/api/users/me/preferences")
@@ -57,7 +55,7 @@ class UserPreferencesControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.displayLanguage").value("ko"))
                 .andExpect(jsonPath("$.nativeLanguage").value("en"))
-                .andExpect(jsonPath("$.targetLevel").value("INTERMEDIATE_1"));
+                .andExpect(jsonPath("$.targetLevel").doesNotExist());
     }
 
     @Test
@@ -66,12 +64,10 @@ class UserPreferencesControllerTest {
         when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(preferencesService.updatePreferences(eq(7L), eq(new UserPreferencesUpdateRequest(
                 "ko",
-                "ja",
-                User.LearningLevel.BEGINNER_2
+                "ja"
         )))).thenReturn(new UserPreferencesResponse(
                 "ko",
-                "ja",
-                User.LearningLevel.BEGINNER_2
+                "ja"
         ));
 
         mockMvc.perform(patch("/api/users/me/preferences")
@@ -79,13 +75,12 @@ class UserPreferencesControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "displayLanguage", "ko",
-                                "nativeLanguage", "ja",
-                                "targetLevel", "BEGINNER_2"
+                                "nativeLanguage", "ja"
                         ))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.displayLanguage").value("ko"))
                 .andExpect(jsonPath("$.nativeLanguage").value("ja"))
-                .andExpect(jsonPath("$.targetLevel").value("BEGINNER_2"));
+                .andExpect(jsonPath("$.targetLevel").doesNotExist());
     }
 
     @Test
@@ -109,8 +104,7 @@ class UserPreferencesControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "displayLanguage", "",
-                                "nativeLanguage", "en",
-                                "targetLevel", "BEGINNER_2"
+                                "nativeLanguage", "en"
                         ))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));

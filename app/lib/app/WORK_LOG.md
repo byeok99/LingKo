@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - Home 추천 전체 로드와 직접 입력 진입
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 여섯 상황 카테고리를 빠짐없이 구성할 수 있도록 추천 문장 요청 상한을 50개로 늘리고, Home의 직접 입력 버튼이 이전 추천 문장을 재사용하지 않는 빈 Practice로 이동하게 했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 전체 71개 통과, line coverage 83.33%
+- 리스크: 추천 데이터의 `category` 영문 label이 계약과 다르면 해당 카테고리가 빈 상태로 표시됨
+
 ## 2026-07-30 - 최초 영상 생성 평가 polling 연장
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

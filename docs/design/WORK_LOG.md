@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-03 - Home 상황별 추천 시안 반영
+
+- 변경 파일: `preview.html`, `README.md`, `WORK_LOG.md`
+- 내용: 여섯 상황 칩, 카테고리별 3개 미리보기·전체 보기, 직접 입력 진입과 진행 중 평가 우선 배치를 프로토타입과 디자인 기준에 반영했다.
+- 검증: inline JavaScript 구문 검사, 500×924 Chrome 렌더링 확인, Flutter 전체 71개 테스트와 대조
+- 리스크: 실제 iPhone의 시스템 글꼴과 가로 칩 스크롤 감각은 실기기 확인 필요
+
+## 2026-08-03 - Profile 목표 레벨 시안 제거
+
+- 변경 파일: `preview.html`, `WORK_LOG.md`
+- 내용: Profile 시안에서 learner 배지와 Target level 설정을 제거하고 설정 제목을 Language preferences로 변경했다.
+- 검증: inline JavaScript 구문 검사, Flutter 전체 70개 widget·unit test 통과
+- 리스크: 브라우저 픽셀 렌더링은 미확인
+
 ## 2026-07-30 - 평가·Result 정보형 시안 복원
 
 - 변경 파일: `preview.html`, `README.md`, `WORK_LOG.md`
