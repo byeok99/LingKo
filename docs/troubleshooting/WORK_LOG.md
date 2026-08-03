@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - Replicate timeout·429 연쇄 실패 사례 기록
+
+- 변경 파일: `2026-08-03-replicate-prediction-timeout-rate-limit.md`, `README.md`, `WORK_LOG.md`
+- 내용: 60초 cold start timeout, 미취소 작업과 후속 429의 증거·완화·검증·롤백을 Issue #44와 PR #77에 연결했다.
+- 검증: Backend 단위·내부 통합과 Replicate 직접 호출·S3 cache 외부 테스트 결과 대조
+- 리스크: `Retry-After`·Jitter, Azure·S3와 Circuit Breaker는 #44 후속 범위
+
 ## 2026-07-30 - 누락 예약으로 인한 최종 실패 고착 사례 추가
 
 - 변경 파일: `2026-07-29-evaluation-job-status-lost-after-quota-update.md`, `README.md`, `WORK_LOG.md`

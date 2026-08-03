@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - 외부 통합 실제 credential·Replicate 설정 연결
+
+- 변경 파일: `application-integration.yaml`, `WORK_LOG.md`
+- 내용: 외부 실행 시 `.env` AWS credential placeholder를 사용하고 Replicate retry 설정의 내부 통합 기본값을 추가했다.
+- 검증: 실제 S3 업로드와 Replicate 직접 호출 외부 테스트 통과
+- 리스크: `.env`는 shell에서 명시적으로 export해야 함
+
 ## 2026-07-27 - 통합 테스트 평가 실행 모드 고정
 
 - 변경 파일: `application-integration.yaml`, `WORK_LOG.md`

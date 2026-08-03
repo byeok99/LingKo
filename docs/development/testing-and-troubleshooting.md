@@ -34,8 +34,13 @@ AWS_SECRET_KEY
 ```
 
 ```bash
+set -a
+source .env
+set +a
 ./gradlew externalIntegrationTest
 ```
+
+Replicate 429는 생성 요청에 지수 backoff를 적용하며 polling timeout 시 원격 Prediction 취소를 시도합니다. 출시 전 외부 테스트로 새 MP4가 생성되면 검증된 S3 URL을 `backend/src/main/resources/db/migration/R__seed_generated_syllable_guides.sql`에 추가해 초기 배포 데이터로 누적합니다. 실행 중 생성된 URL은 `syllables` 테이블에 즉시 upsert되므로 서버 재시작만으로 사라지지 않습니다.
 
 JaCoCo HTML 결과는 일반적으로 `backend/build/reports/jacoco/test/html/index.html`에서 확인합니다.
 

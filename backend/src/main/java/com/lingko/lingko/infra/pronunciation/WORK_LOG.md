@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - Replicate timeout·429 자원 보호
+
+- 변경 파일: `ReplicateApiClient.java`, `WORK_LOG.md`
+- 내용: 429·5xx에 제한된 지수 backoff를 적용하고 Prediction 생성 시 `Cancel-After`, polling timeout·interrupt 시 원격 취소를 추가했다.
+- 검증: retry·cancel 단위 테스트와 실제 Replicate 직접 호출 성공
+- 리스크: `Retry-After`·Jitter와 공급자 장애 메트릭은 #44 후속 범위
+
 ## 2026-07-30 - 결정적 영상 cache 재사용
 
 - 변경 파일: `FrameInterpolationVideoGenerator.java`, `WORK_LOG.md`

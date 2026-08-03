@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - 외부 테스트와 가이드 seed 절차 보강
+
+- 변경 파일: `testing-and-troubleshooting.md`, `WORK_LOG.md`
+- 내용: `.env` export 실행법, Replicate 429·timeout 처리와 출시 전 repeatable guide seed 누적 절차를 추가했다.
+- 검증: Backend 설정·migration·외부 테스트 동작과 문서 대조
+- 리스크: 신규 S3 MP4를 seed에 반영하는 작업은 출시 전 수동 확인 필요
+
 ## 2026-07-27 - Android OAuth 패키지 문서 정합화
 
 - 변경 파일: `local-development.md`, `testing-and-troubleshooting.md`, `WORK_LOG.md`

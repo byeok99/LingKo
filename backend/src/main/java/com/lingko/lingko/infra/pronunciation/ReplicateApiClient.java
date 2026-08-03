@@ -10,8 +10,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Replicate prediction API를 호출하고 비동기 job 생명주기를 정규화한다.
@@ -49,6 +51,10 @@ public class ReplicateApiClient {
 
             return videoUrl;
 
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            log.error("Frame Interpolation interrupted: {} -> {}", frame1Url, frame2Url, exception);
+            throw new VideoGenerationException("Frame Interpolation interrupted", exception);
         } catch (Exception e) {
             log.error("Frame Interpolation 실패: {} -> {}", frame1Url, frame2Url, e);
             throw new VideoGenerationException("Frame Interpolation 실패", e);
@@ -72,14 +78,16 @@ public class ReplicateApiClient {
                 "input", input
         );
 
-        String response = webClient.post()
+        String response = executeWithRetry("create prediction", () -> webClient.post()
                 .uri(BASE_URL + "/predictions")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + settings.getApiKey())
+                // 공급자 작업도 로컬 polling 기한과 함께 종료해 timeout 이후 비용과 동시 실행 슬롯 누수를 막는다.
+                .header("Cancel-After", cancelAfterHeader())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(String.class)
-                .block();
+                .block());
 
         JsonNode json = objectMapper.readTree(response);
 
@@ -99,12 +107,12 @@ public class ReplicateApiClient {
         int pollInterval = settings.getPollIntervalMs();
 
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
-            String response = webClient.get()
+            String response = executeWithRetry("poll prediction", () -> webClient.get()
                     .uri(url)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + settings.getApiKey())  // ✅ Settings 사용
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + settings.getApiKey())
                     .retrieve()
                     .bodyToMono(String.class)
-                    .block();
+                    .block());
 
             JsonNode json = objectMapper.readTree(response);
             String status = json.get("status").asText();
@@ -120,19 +128,83 @@ public class ReplicateApiClient {
             }
 
             // 실패
-            if ("failed".equals(status) || "canceled".equals(status)) {
+            if ("failed".equals(status) || "canceled".equals(status) || "aborted".equals(status)) {
                 String error = json.has("error") ? json.get("error").asText() : "Unknown error";
                 throw new VideoGenerationException("Prediction 실패: " + error);
             }
 
             // 진행 중 - 대기
-            Thread.sleep(pollInterval);
+            try {
+                Thread.sleep(pollInterval);
+            } catch (InterruptedException exception) {
+                cancelPrediction(predictionId);
+                throw exception;
+            }
         }
 
+        cancelPrediction(predictionId);
         throw new VideoGenerationException(
                 String.format("타임아웃: Prediction이 %d초 내에 완료되지 않음",
                         maxAttempts * pollInterval / 1000)
         );
+    }
+
+    private String executeWithRetry(String operation, Supplier<String> request) throws InterruptedException {
+        int maxAttempts = settings.getCreateMaxAttempts();
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                return request.get();
+            } catch (WebClientResponseException exception) {
+                if (!isRetryable(exception) || attempt == maxAttempts) {
+                    throw exception;
+                }
+                long delayMs = retryDelayMs(attempt);
+                log.warn(
+                        "Replicate {} throttled or unavailable; retrying: status={}, attempt={}/{}, delayMs={}",
+                        operation,
+                        exception.getStatusCode().value(),
+                        attempt,
+                        maxAttempts,
+                        delayMs
+                );
+                Thread.sleep(delayMs);
+            }
+        }
+        throw new IllegalStateException("Replicate retry loop exhausted unexpectedly");
+    }
+
+    private boolean isRetryable(WebClientResponseException exception) {
+        return exception.getStatusCode().value() == 429 || exception.getStatusCode().is5xxServerError();
+    }
+
+    private long retryDelayMs(int completedAttempt) {
+        long multiplier = 1L << Math.min(completedAttempt - 1, 30);
+        long delay = Math.multiplyExact((long) settings.getRetryInitialDelayMs(), multiplier);
+        return Math.min(delay, settings.getRetryMaxDelayMs());
+    }
+
+    private String cancelAfterHeader() {
+        long timeoutMs = Math.multiplyExact(
+                (long) settings.getMaxPollAttempts(),
+                settings.getPollIntervalMs()
+        );
+        long timeoutSeconds = Math.max(5, (timeoutMs + 999) / 1_000);
+        return timeoutSeconds + "s";
+    }
+
+    private void cancelPrediction(String predictionId) {
+        try {
+            webClient.post()
+                    .uri(BASE_URL + "/predictions/" + predictionId + "/cancel")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + settings.getApiKey())
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+            log.info("Timed out Replicate prediction canceled: {}", predictionId);
+        } catch (RuntimeException exception) {
+            // 원래 timeout을 보존하되 공급자 작업이 남을 수 있음을 운영 로그로 드러낸다.
+            log.warn("Failed to cancel timed out Replicate prediction: {}", predictionId, exception);
+        }
     }
 
     /**
@@ -153,6 +225,14 @@ public class ReplicateApiClient {
         }
         if (settings.getVersion() == null || settings.getVersion().isBlank()) {
             throw new VideoGenerationException("Replicate model version is not configured");
+        }
+        if (settings.getMaxPollAttempts() < 1 || settings.getPollIntervalMs() < 1) {
+            throw new VideoGenerationException("Replicate polling settings must be positive");
+        }
+        if (settings.getCreateMaxAttempts() < 1
+                || settings.getRetryInitialDelayMs() < 1
+                || settings.getRetryMaxDelayMs() < settings.getRetryInitialDelayMs()) {
+            throw new VideoGenerationException("Replicate retry settings are invalid");
         }
     }
 }

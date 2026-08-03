@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - 생성 가이드 URL DB 재사용
+
+- 변경 파일: `GuideMediaResolver.java`, `WORK_LOG.md`
+- 내용: 기존 `syllables`의 MP4를 평가 영상 생성 전에 재사용하고 새 생성 URL은 입·혀 칼럼을 보존하며 upsert하도록 했다.
+- 검증: DB cache hit·신규 저장 단위 테스트와 Backend 전체 단위·내부 통합 테스트 통과
+- 리스크: 같은 프레임이어도 음절이 다르면 현재 S3 hash가 달라질 수 있음
+
 ## 2026-07-30 - 점수 없는 영상 가이드·고착 실패 종결
 
 - 변경 파일: `EvaluationService.java`, `EvaluationJobProcessingService.java`, `WORK_LOG.md`

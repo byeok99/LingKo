@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - Replicate 제한 재시도 설정 추가
+
+- 변경 파일: `ReplicateSettings.java`, `WORK_LOG.md`
+- 내용: Prediction 생성·polling의 제한 재시도 횟수와 지수 backoff 초기·최대 지연을 type-safe 설정으로 추가했다.
+- 검증: `ReplicateApiClientTest`와 Backend 전체 단위·내부 통합 테스트 통과
+- 리스크: 공급자 `Retry-After`와 Jitter 반영은 #44 후속 범위
+
 ## 2026-07-30 - 영상 생성용 Worker lease 연장
 
 - 변경 파일: `EvaluationJobSettings.java`, `WORK_LOG.md`

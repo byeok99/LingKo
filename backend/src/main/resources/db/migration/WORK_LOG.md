@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - 생성 가이드 repeatable seed 추가
+
+- 변경 파일: `R__seed_generated_syllable_guides.sql`, `WORK_LOG.md`
+- 내용: 출시 전 생성된 `바` 입 영상과 `각` 혀 영상을 기존 `syllables` 테이블에 보존형 upsert하는 반복 migration을 추가했다.
+- 검증: H2 MySQL mode migration 회귀 테스트 통과
+- 리스크: 출시 전 새로 검증된 MP4 URL은 같은 seed 파일에 계속 누적해야 함
+
 ## 2026-07-30 - 추천 표준 발음 컬럼 제거
 
 - 변경 파일: `V12__remove_recommended_pronunciation.sql`, `WORK_LOG.md`

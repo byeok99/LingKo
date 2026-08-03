@@ -18,5 +18,8 @@ public class ReplicateSettings {
     private String version;
     private int maxPollAttempts;
     private int pollIntervalMs;
+    private int createMaxAttempts;
+    private int retryInitialDelayMs;
+    private int retryMaxDelayMs;
     private int frameRate;
 }

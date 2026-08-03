@@ -1,3 +1,10 @@
+## 2026-08-03 - Replicate 안정화 기술부채 범위 갱신
+
+- 변경 파일: `technical-debt.md`, `WORK_LOG.md`
+- 내용: 완료된 Replicate 제한 재시도·timeout 취소를 반영하고 남은 `Retry-After`·Jitter와 Azure·S3·Circuit Breaker를 #44 후속 범위로 명확히 했다.
+- 검증: 구현·테스트·Issue #44 완료 조건과 대조
+- 리스크: #44 전체 범위는 미완료이므로 Issue 유지 필요
+
 ## 2026-07-29 - 음성 보존 기술부채 완료
 
 - 변경 파일: `technical-debt.md`, `WORK_LOG.md`
