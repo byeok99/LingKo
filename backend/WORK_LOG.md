@@ -1,3 +1,10 @@
+## 2026-08-03 - Replicate 안정화와 출시 전 가이드 seed 운영
+
+- 변경 파일: `.env.example`, `application.example.yaml`, `README.md`, `WORK_LOG.md`
+- 내용: Replicate polling을 5분으로 늘리고 제한 재시도 설정을 추가했으며, 생성 완료 MP4를 repeatable migration에 누적하는 출시 전 운영 절차를 문서화했다.
+- 검증: Backend 단위·내부 통합 테스트와 Replicate 직접 호출·S3 cache 외부 테스트 통과
+- 리스크: `Retry-After`·Jitter와 모든 외부 서비스 Circuit Breaker는 #44, Guide Job 자체 영속화는 #42에 남음
+
 ## 2026-07-30 - 평가 영상·terminal 실패 운영 계약 보완
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

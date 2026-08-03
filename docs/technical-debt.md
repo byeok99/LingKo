@@ -11,7 +11,7 @@
 
 ## P1: 안정성
 
-- Azure·Replicate·S3 호출별 타임아웃, 재시도, 지수 백오프
+- Azure·S3 호출별 타임아웃, 재시도, 지수 백오프와 Replicate `Retry-After`·Jitter 보강
 - 외부 서비스 회로 차단기
 - 평가 요청 멱등성 및 중복 업로드 처리
 - 가이드 작업 worker 동시성·메모리·디스크 제한

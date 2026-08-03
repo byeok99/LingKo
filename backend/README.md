@@ -37,7 +37,7 @@ docker compose up --build
 docker compose up --build
 ```
 
-API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB lock과 lease로 한 건씩 claim합니다. Worker는 Azure 평가 후 결과 화면에서 열 수 있는 모든 음절의 다중 프레임 입·혀 가이드를 Replicate와 FFmpeg로 MP4화하며, 동일 조합은 S3 cache를 재사용합니다. 단일 프레임이나 외부 생성 실패는 PNG로 fallback합니다. 최초 cache miss 시간을 고려해 기본 lease는 600초이며, 초기 운영에서는 Worker 1개를 유지하고 실제 대기시간과 DB lock을 측정한 뒤에만 replica 확장을 검토합니다.
+API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB lock과 lease로 한 건씩 claim합니다. Worker는 Azure 평가 후 결과 화면에서 열 수 있는 모든 음절의 다중 프레임 입·혀 가이드를 Replicate와 FFmpeg로 MP4화합니다. 생성 MP4 URL은 기존 `syllables` 테이블에 upsert하고 동일 음절·종류는 DB를 먼저, 동일 음절·종류·프레임 조합은 결정적 S3 cache를 다음으로 재사용합니다. 단일 프레임이나 외부 생성 실패는 PNG로 fallback합니다. 최초 cache miss 시간을 고려해 기본 lease는 600초이며, 초기 운영에서는 Worker 1개를 유지하고 실제 대기시간과 DB lock을 측정한 뒤에만 replica 확장을 검토합니다.
 
 또는 MySQL과 환경변수를 별도로 준비한 후:
 
@@ -53,7 +53,9 @@ API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB loc
 ./gradlew externalIntegrationTest
 ```
 
-`externalIntegrationTest`는 Azure, Replicate, S3, FFmpeg 관련 환경변수가 필요합니다. 실제 영상 생성 E2E 전에는 `REPLICATE_*`, AWS credential·bucket, FFmpeg 실행 가능 여부를 확인해야 합니다.
+`externalIntegrationTest`는 Azure, Replicate, S3, FFmpeg 관련 환경변수가 필요합니다. 실제 영상 생성 E2E 전에는 `REPLICATE_*`, AWS credential·bucket, FFmpeg 실행 가능 여부를 확인해야 합니다. Replicate 생성 요청은 429·5xx에 제한된 지수 backoff를 적용하고 polling 기한을 넘긴 원격 Prediction은 취소합니다.
+
+출시 전 생성 완료된 가이드 MP4는 `src/main/resources/db/migration/R__seed_generated_syllable_guides.sql`에 누적합니다. 이 repeatable migration은 내용이 바뀌면 다시 실행되며 기존 `syllables` 행의 비어 있지 않은 입·혀 URL을 보존하면서 새 초기값을 upsert합니다.
 
 ## API 그룹
 

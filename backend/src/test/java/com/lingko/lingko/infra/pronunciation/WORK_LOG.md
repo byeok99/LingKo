@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - Replicate retry·cancel 회귀 테스트
+
+- 변경 파일: `ReplicateApiClientTest.java`, `WORK_LOG.md`
+- 내용: 첫 429 이후 생성 재시도 성공과 polling timeout 시 원격 cancel endpoint 호출·`Cancel-After` header를 검증했다.
+- 검증: 대상 테스트와 Backend 전체 단위 테스트 통과
+- 리스크: 실제 429 응답의 대기 문구별 지연 최적화는 미검증
+
 ## 2026-07-30 - 영상 cache hit 회귀 테스트
 
 - 변경 파일: `FrameInterpolationVideoGeneratorCacheTest.java`, `WORK_LOG.md`

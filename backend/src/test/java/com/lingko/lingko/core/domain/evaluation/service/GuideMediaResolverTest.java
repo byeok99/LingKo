@@ -1,7 +1,9 @@
 package com.lingko.lingko.core.domain.evaluation.service;
 
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
+import com.lingko.lingko.core.domain.evaluation.entity.Syllable;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
+import com.lingko.lingko.core.domain.evaluation.repository.SyllableRepository;
 import com.lingko.lingko.core.util.SyllableMappingUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,10 +13,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -27,12 +32,32 @@ class GuideMediaResolverTest {
     private SyllableMappingUtil syllableMappingUtil;
     @Mock
     private VideoGenerator videoGenerator;
+    @Mock
+    private SyllableRepository syllableRepository;
 
     private GuideMediaResolver resolver;
 
     @BeforeEach
     void setUp() {
-        resolver = new GuideMediaResolver(syllableMappingUtil, videoGenerator);
+        resolver = new GuideMediaResolver(syllableMappingUtil, videoGenerator, syllableRepository);
+    }
+
+    @Test
+    @DisplayName("DB에 저장된 김 혀 영상은 서버 재시작 후 외부 생성을 건너뛴다")
+    void reusesPersistedGuideVideo() {
+        when(syllableRepository.findById("김")).thenReturn(Optional.of(Syllable.builder()
+                .syllableChar("김")
+                .tongueUrl("https://guides/videos/tongue-kim.mp4")
+                .build()));
+
+        String result = resolver.resolveForEvaluation(
+                "김",
+                List.of("ㄱ", "ㅣ", "ㅁ"),
+                VideoType.TONGUE
+        );
+
+        assertThat(result).endsWith("tongue-kim.mp4");
+        verifyNoInteractions(videoGenerator, syllableMappingUtil);
     }
 
     @Test
@@ -57,6 +82,10 @@ class GuideMediaResolverTest {
                 .endsWith("mouth-kim.mp4");
         assertThat(resolver.resolveForEvaluation("김", phonemes, VideoType.TONGUE))
                 .endsWith("tongue-kim.mp4");
+        verify(syllableRepository).save(argThat(syllable ->
+                "김".equals(syllable.getSyllableChar())
+                        && "https://guides/videos/tongue-kim.mp4".equals(syllable.getTongueUrl())
+        ));
     }
 
     @Test

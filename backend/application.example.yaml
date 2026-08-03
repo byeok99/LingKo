@@ -57,8 +57,11 @@ google:
 replicate:
   api-key: ${REPLICATE_API_KEY:}
   version: ${REPLICATE_VERSION:}
-  max-poll-attempts: ${REPLICATE_MAX_POLL_ATTEMPTS:60}
+  max-poll-attempts: ${REPLICATE_MAX_POLL_ATTEMPTS:300}
   poll-interval-ms: ${REPLICATE_POLL_INTERVAL_MS:1000}
+  create-max-attempts: ${REPLICATE_CREATE_MAX_ATTEMPTS:4}
+  retry-initial-delay-ms: ${REPLICATE_RETRY_INITIAL_DELAY_MS:1000}
+  retry-max-delay-ms: ${REPLICATE_RETRY_MAX_DELAY_MS:30000}
   frame-rate: ${REPLICATE_FRAME_RATE:24}
 
 aws:

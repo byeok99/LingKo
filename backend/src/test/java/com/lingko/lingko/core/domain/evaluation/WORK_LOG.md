@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-03 - 가이드 seed migration 회귀 테스트
+
+- 변경 파일: `SyllableGuideSeedMigrationTest.java`, `WORK_LOG.md`
+- 내용: repeatable seed가 새 테이블 없이 기존 `syllables`의 입·혀 URL을 MP4 초기값으로 채우는 계약을 검증했다.
+- 검증: 대상 migration 테스트와 Backend 전체 단위 테스트 통과
+- 리스크: seed 목록 누락은 출시 전 S3 산출물과 대조 필요
+
 ## 2026-07-30 - 점수 없는 `김` 영상·terminal 실패 회귀
 
 - 변경 파일: `EvaluationServiceResultTest.java`, `EvaluationJobProcessingServiceTest.java`, `WORK_LOG.md`
