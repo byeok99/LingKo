@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../api/evaluation_api.dart';
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/auth_session.dart';
 import '../models/practice_history.dart';
 import '../models/practice_result.dart';
@@ -161,8 +162,8 @@ class _ReviewSummary extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Recent scores · Last ${scores.length}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: context.palette.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
                   ),
@@ -171,18 +172,18 @@ class _ReviewSummary extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
+                  Text(
                     'Latest score',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: context.palette.textSecondary,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
                     '${latestScore ?? '—'}',
-                    style: const TextStyle(
-                      color: AppColors.primaryDark,
+                    style: TextStyle(
+                      color: context.palette.primaryDark,
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
                     ),
@@ -198,7 +199,7 @@ class _ReviewSummary extends StatelessWidget {
             child: SizedBox(
               height: 118,
               width: double.infinity,
-              child: CustomPaint(painter: _TrendPainter(scores)),
+              child: CustomPaint(painter: _TrendPainter(scores, context.palette)),
             ),
           ),
         ],
@@ -250,7 +251,7 @@ class _ReviewHistoryCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.softBlue,
+                    color: context.palette.softBlue,
                     borderRadius: BorderRadius.circular(AppSizes.radiusControl),
                   ),
                   child: Column(
@@ -259,18 +260,18 @@ class _ReviewHistoryCard extends StatelessWidget {
                     children: [
                       Text(
                         '${item.overallScore}',
-                        style: const TextStyle(
-                          color: AppColors.primaryDark,
+                        style: TextStyle(
+                          color: context.palette.primaryDark,
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                           height: 1,
                         ),
                       ),
                       const SizedBox(height: 3),
-                      const Text(
+                      Text(
                         'SCORE',
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: context.palette.textSecondary,
                           fontSize: 8,
                           fontWeight: FontWeight.w800,
                         ),
@@ -294,8 +295,8 @@ class _ReviewHistoryCard extends StatelessWidget {
                         item.standardPronunciation,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.primaryMedium,
+                        style: TextStyle(
+                          color: context.palette.primaryMedium,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -317,11 +318,11 @@ class _ReviewHistoryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: AppSpacing.md),
                   child: Icon(
                     Icons.chevron_right_rounded,
-                    color: AppColors.textMuted,
+                    color: context.palette.textMuted,
                     size: 20,
                   ),
                 ),
@@ -342,15 +343,15 @@ class _GradeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(AppSizes.pillRadius),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: AppColors.textSecondary,
+        style: TextStyle(
+          color: context.palette.textSecondary,
           fontSize: 10,
           fontWeight: FontWeight.w800,
         ),
@@ -360,7 +361,10 @@ class _GradeChip extends StatelessWidget {
 }
 
 class _TrendPainter extends CustomPainter {
-  const _TrendPainter(this.scores);
+  _TrendPainter(this.scores, this.palette);
+
+  /// Canvas에는 BuildContext가 없으므로 그릴 때 쓸 색을 미리 받아 둔다.
+  final AppPalette palette;
 
   final List<int> scores;
 
@@ -368,18 +372,18 @@ class _TrendPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final gridPaint =
         Paint()
-          ..color = AppColors.border
+          ..color = palette.border
           ..strokeWidth = 1;
     final linePaint =
         Paint()
-          ..color = AppColors.primary
+          ..color = palette.primary
           ..strokeWidth = 3
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round;
     final dotPaint =
         Paint()
-          ..color = AppColors.primary
+          ..color = palette.primary
           ..style = PaintingStyle.fill;
 
     const chartTop = 14.0;
@@ -418,8 +422,8 @@ class _TrendPainter extends CustomPainter {
       final label = TextPainter(
         text: TextSpan(
           text: '${scores[index]}',
-          style: const TextStyle(
-            color: AppColors.textSecondary,
+          style: TextStyle(
+            color: palette.textSecondary,
             fontSize: 10,
             fontWeight: FontWeight.w800,
           ),
@@ -446,7 +450,7 @@ void _showHistoryDetail(BuildContext context, PracticeHistoryItem item) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.card,
+    backgroundColor: context.palette.card,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(AppSizes.radiusLarge),
@@ -479,7 +483,7 @@ class _HistoryDetailSheet extends StatelessWidget {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: context.palette.border,
                   borderRadius: BorderRadius.circular(AppSizes.pillRadius),
                 ),
               ),
@@ -511,14 +515,14 @@ class _HistoryDetailSheet extends StatelessWidget {
                   width: 58,
                   height: 58,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: AppColors.softBlue,
+                  decoration: BoxDecoration(
+                    color: context.palette.softBlue,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     '${item.overallScore}',
-                    style: const TextStyle(
-                      color: AppColors.primaryDark,
+                    style: TextStyle(
+                      color: context.palette.primaryDark,
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                     ),
@@ -528,14 +532,14 @@ class _HistoryDetailSheet extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             AppCard(
-              color: AppColors.softBlue,
+              color: context.palette.softBlue,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Standard pronunciation',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: context.palette.textSecondary,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),
@@ -551,11 +555,11 @@ class _HistoryDetailSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(item.summary, style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: AppSpacing.xxl),
-            const SectionHeader(title: 'Score details'),
+            SectionHeader(title: 'Score details'),
             const SizedBox(height: AppSpacing.md),
             _HistoryScoreBreakdown(breakdown: item.scoreBreakdown),
             const SizedBox(height: AppSpacing.xxl),
-            const SectionHeader(title: 'Pronunciation by word'),
+            SectionHeader(title: 'Pronunciation by word'),
             const SizedBox(height: AppSpacing.md),
             WordSyllableExplorer(words: item.words),
           ],
@@ -613,16 +617,16 @@ class _HistoryScoreMetric extends StatelessWidget {
         vertical: AppSpacing.md,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusControl),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         children: [
           Text(
             '$score',
-            style: const TextStyle(
-              color: AppColors.primaryDark,
+            style: TextStyle(
+              color: context.palette.primaryDark,
               fontSize: 17,
               fontWeight: FontWeight.w900,
             ),

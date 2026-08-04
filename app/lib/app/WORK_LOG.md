@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-08-04 - 다크 모드 지원
+
+- 변경 파일: `app_palette.dart`, `app_theme.dart`, `lingko_app.dart`
+- 내용: 정적 상수로 고정돼 밝기에 따라 바뀔 수 없던 색을 ThemeExtension인 AppPalette로 옮기고 밝은·어두운 두 팔레트를 정의했다. AppTheme을 밝기별 빌더로 바꾸고 ThemeMode.system을 연결했다. 어두운 팔레트는 밝은 값을 반전하지 않고 강조색을 밝은 쪽으로, 본문은 순백 대신 회백색으로 잡아 눈부심을 줄였다.
+- 검증: `flutter analyze`, `flutter test` 83개 통과, 어두운 팔레트 8개 색 조합 WCAG AA 본문 기준 충족 확인
+- 리스크: 실제 기기의 다크 모드 렌더링과 이미지 가이드 대비는 수동 확인이 필요함
+
+## 2026-08-04 - 평가 완료·실패 촉각 알림
+
+- 변경 파일: `lingko_app.dart`
+- 내용: 평가가 수 분 걸릴 수 있어 사용자가 화면을 보지 않는 경우가 많으므로, 결과 도착과 실패를 세기가 다른 촉각 피드백으로 구분해 알린다.
+- 검증: `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 촉각 피드백과 실제 마이크 레벨은 시뮬레이터가 아닌 실기기 확인이 필요함
+
+## 2026-08-04 - 본문 색상 대비 WCAG AA 충족
+
+- 변경 파일: `app_theme.dart`
+- 내용: textSecondary(4.28:1)와 textMuted(2.89:1)가 본문 기준 4.5:1에 미달해 각각 #5C7386(4.94:1), #627585(4.77:1)로 낮췄다. success·warning도 연한 배경 위에서 기준을 넘도록 조정했다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-03 - Home 추천 전체 로드와 직접 입력 진입
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

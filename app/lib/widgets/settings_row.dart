@@ -3,7 +3,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 
 /// Settings Row 표시를 재사용 가능한 Widget으로 제공한다.
 /// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
@@ -26,8 +26,8 @@ class SettingsRow extends StatelessWidget {
       child: Container(
         constraints: const BoxConstraints(minHeight: 55),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.border)),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: context.palette.border)),
         ),
         child: Row(
           children: [
@@ -49,8 +49,8 @@ class SettingsRow extends StatelessWidget {
               Icons.chevron_right,
               color:
                   onTap == null
-                      ? AppColors.textSecondary
-                      : AppColors.textPrimary,
+                      ? context.palette.textSecondary
+                      : context.palette.textPrimary,
               size: 20,
             ),
           ],

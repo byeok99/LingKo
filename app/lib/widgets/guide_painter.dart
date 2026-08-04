@@ -3,14 +3,17 @@
 
 import 'package:flutter/material.dart';
 
-import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 
 /// Guide Painter 표시를 재사용 가능한 Widget으로 제공한다.
 /// 부모 화면의 업무 상태와 독립적으로 배치·표시 규칙을 검증하기 위해 분리했다.
 class GuidePainter extends CustomPainter {
-  const GuidePainter(this.kind);
+  GuidePainter(this.kind, this.palette);
 
   final String kind;
+
+  /// Canvas에는 BuildContext가 없으므로 그릴 때 쓸 색을 미리 받아 둔다.
+  final AppPalette palette;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -18,17 +21,17 @@ class GuidePainter extends CustomPainter {
     // 나중에는 S3 이미지/영상 URL을 받아 Image 또는 Video 위젯으로 교체합니다.
     final outline =
         Paint()
-          ..color = AppColors.primaryDark
+          ..color = palette.primaryDark
           ..style = PaintingStyle.stroke
           ..strokeWidth = 5
           ..strokeCap = StrokeCap.round;
     final fill =
         Paint()
-          ..color = AppColors.softBlue
+          ..color = palette.softBlue
           ..style = PaintingStyle.fill;
     final accent =
         Paint()
-          ..color = AppColors.primary
+          ..color = palette.primary
           ..style = PaintingStyle.stroke
           ..strokeWidth = 4
           ..strokeCap = StrokeCap.round;
@@ -74,6 +77,6 @@ class GuidePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant GuidePainter oldDelegate) {
-    return oldDelegate.kind != kind;
+    return oldDelegate.kind != kind || oldDelegate.palette != palette;
   }
 }

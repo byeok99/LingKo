@@ -1,5 +1,33 @@
 # 작업 이력
 
+## 2026-08-04 - 위젯 색 참조를 테마 기반으로 전환
+
+- 변경 파일: `shared_widgets.dart`, `guide_sheet.dart`, `guide_painter.dart`, `result_tile.dart`, `progress_panel.dart`, `evaluation_progress_panel.dart`, `score_breakdown.dart`, `sentence_card.dart`, `settings_row.dart`, `word_syllable_explorer.dart`
+- 내용: AppCard의 배경 기본값을 nullable로 바꿔 테마에서 해석하게 하고, GuidePainter는 팔레트를 인자로 받도록 했다. Google 로그인 버튼 색은 제공자 브랜드 규정이라 테마와 무관하게 유지했다.
+- 검증: `flutter analyze`, `flutter test` 83개 통과, 어두운 팔레트 8개 색 조합 WCAG AA 본문 기준 충족 확인
+- 리스크: 실제 기기의 다크 모드 렌더링과 이미지 가이드 대비는 수동 확인이 필요함
+
+## 2026-08-04 - 가이드 시트 확대와 설명 텍스트 정리
+
+- 변경 파일: `guide_sheet.dart`, `word_syllable_explorer.dart`, `result_tile.dart`, `evaluation_progress_panel.dart`
+- 내용: 입·혀 가이드를 나란히 놓아 각 가이드가 화면 폭 절반도 못 쓰던 구조를 탭 전환 단일 표시로 바꾸고, 시트 높이를 88%로 고정해 미디어 면적을 약 4배로 늘렸다. 이미지 핀치 줌과 영상 0.5x·0.25x 배속을 추가하고, 미디어 형식을 설명하던 카드와 중복 안내 문구를 제거했다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
+## 2026-08-04 - 상태 비교를 enum으로 교체
+
+- 변경 파일: `word_syllable_explorer.dart`, `result_tile.dart`
+- 내용: 문자열 비교를 ScoreStatus.isAvailable로 바꿔 오타로 점수가 노출되는 경로를 없앴다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과
+- 리스크: 동작 변경 없음
+
+## 2026-08-04 - 단어 선택 초기화 의도 주석
+
+- 변경 파일: `word_syllable_explorer.dart`
+- 내용: 결과 교체 시 이전 선택 위치가 다른 문장을 가리키지 않도록 첫 단어로 되돌리는 이유를 남겼다.
+- 검증: `./gradlew compileJava test`, `./gradlew integrationTest`, `flutter analyze`, `flutter test` 74개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-04 - 단어·음절 탐색 공용 위젯
 
 - 변경 파일: `word_syllable_explorer.dart`, `WORK_LOG.md`

@@ -142,7 +142,7 @@ Authorization: Bearer <access-token>
 }
 ```
 
-자유 문장은 `sentenceId` 대신 `text`를 사용합니다. 서버는 object 소유권과 metadata를 확인한 뒤 쿼터 예약과 `PENDING` 작업 생성을 하나의 transaction으로 처리합니다.
+자유 문장은 `sentenceId` 대신 `text`를 사용하며, 표준 발음 준비와 동일하게 100자 이하여야 합니다. 서버는 object 소유권과 metadata를 확인한 뒤 쿼터 예약과 `PENDING` 작업 생성을 하나의 transaction으로 처리합니다.
 
 응답 `202 Accepted`:
 
@@ -207,6 +207,19 @@ Authorization: Bearer <access-token>
 ```
 
 `words[].score`는 Azure detailed 결과의 단어 수·정규화 텍스트·위치가 기준 문장과 모두 일치할 때만 제공됩니다. `words[].syllables`는 입·혀 가이드 탐색 단위이며 단어 점수를 복제하지 않으므로 `score`가 `null`입니다. 단어 정렬을 신뢰할 수 없으면 `wordScoreStatus`와 각 단어의 `scoreStatus`는 `UNAVAILABLE`입니다.
+
+#### 상태값 계약
+
+`scoreStatus`, `characterScoreStatus`, `wordScoreStatus`는 다음 두 값만 사용합니다.
+
+| 값 | 의미 | 동반 `score` |
+|---|---|---|
+| `AVAILABLE` | 점수가 실제 측정값이며 노출해도 됩니다. | 숫자 |
+| `UNAVAILABLE` | 점수를 신뢰할 수 없습니다. **0점이 아니라 "모름"입니다.** | 항상 `null` |
+
+`guideStatus`는 의미 축이 다른 별도 상태값이며 `AVAILABLE`과 `MISSING`을 사용합니다. 점수를 신뢰할 수 없어도 가이드는 제공될 수 있으므로 두 값을 함께 판단하지 마십시오.
+
+클라이언트는 위 목록에 없는 값을 받으면 `UNAVAILABLE`로 처리해야 합니다. 서버가 상태값을 추가하더라도 배포되지 않은 구버전 앱이 신뢰할 수 없는 점수를 노출하지 않게 하기 위한 규칙입니다.
 
 기존 `POST /api/evaluations` multipart endpoint는 기본 비활성화되며 임시 호환이 필요할 때만 `EVALUATION_LEGACY_MULTIPART_ENABLED=true`로 활성화합니다.
 

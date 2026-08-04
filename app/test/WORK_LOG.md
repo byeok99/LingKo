@@ -1,5 +1,33 @@
 # 작업 이력
 
+## 2026-08-04 - 다크 테마 회귀 테스트
+
+- 변경 파일: `design_system_test.dart`
+- 내용: 두 밝기 테마가 모두 팔레트를 싣고 있는지, 어두운 팔레트가 밝은 값을 그대로 물려받지 않았는지 검증한다. 팔레트가 빠지면 밝기 전환이 조용히 무시되므로 계약으로 고정했다.
+- 검증: `flutter analyze`, `flutter test` 83개 통과, 어두운 팔레트 8개 색 조합 WCAG AA 본문 기준 충족 확인
+- 리스크: 실제 기기의 다크 모드 렌더링과 이미지 가이드 대비는 수동 확인이 필요함
+
+## 2026-08-04 - 녹음 피드백 회귀 테스트
+
+- 변경 파일: `widget_test.dart`
+- 내용: 진행 링이 시작 시 0이고 경과에 따라 커진다는 것, 무음과 입력 상태의 안내가 달라진다는 것, 표시한 상한에서 실제로 녹음이 멈춘다는 것을 고정했다.
+- 검증: `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 촉각 피드백과 실제 마이크 레벨은 시뮬레이터가 아닌 실기기 확인이 필요함
+
+## 2026-08-04 - 가이드 표시 계약 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `design_system_test.dart`
+- 내용: 가이드를 한 번에 하나만 그리고 탭으로 전환한다는 계약, 자동 생성 note를 감추고 실제 조음 힌트는 노출한다는 계약을 테스트로 고정했다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
+## 2026-08-04 - fail-closed 상태 해석 회귀 테스트
+
+- 변경 파일: `score_status_test.dart`, `widget_test.dart`, `evaluation_api_test.dart`
+- 내용: 미지의 상태 문자열과 상태값 누락이 모두 unavailable로 처리되는지 고정하고, 기존 테스트 단언을 enum으로 옮겼다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 단어 중심 평가 회귀 테스트
 
 - 변경 파일: `evaluation_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`

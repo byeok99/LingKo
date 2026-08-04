@@ -21,8 +21,8 @@ public class PracticeResultResponse {
     private String gradeLabel;
     private String summary;
     private String recognizedText;
-    private String characterScoreStatus;
-    private String wordScoreStatus;
+    private ScoreStatus characterScoreStatus;
+    private ScoreStatus wordScoreStatus;
     private ScoreBreakdownResponse scoreBreakdown;
     private List<GuideCharacterResponse> weakCharacters;
     private List<GuideCharacterResponse> characters;

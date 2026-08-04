@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import 'shared_widgets.dart';
 
 class ScoreBreakdown extends StatelessWidget {
@@ -54,8 +55,8 @@ class _ScoreProgressRow extends StatelessWidget {
             width: 88,
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: context.palette.textPrimary,
                 fontSize: 12,
               ),
             ),
@@ -66,16 +67,16 @@ class _ScoreProgressRow extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: normalizedScore / 100,
                 minHeight: 8,
-                backgroundColor: AppColors.border,
-                color: AppColors.primary,
+                backgroundColor: context.palette.border,
+                color: context.palette.primary,
               ),
             ),
           ),
           const SizedBox(width: 9),
           Text(
             '$normalizedScore',
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: context.palette.textPrimary,
               fontSize: 12,
               fontWeight: FontWeight.w900,
             ),

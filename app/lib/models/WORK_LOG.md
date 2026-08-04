@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - ScoreStatus enum과 fail-closed 파싱
+
+- 변경 파일: `score_status.dart`, `practice_result.dart`, `practice_sentence.dart`
+- 내용: 상태 문자열을 enum으로 승격하고, 모르는 서버 값은 모두 unavailable로 닫아 구버전 앱이 신뢰할 수 없는 점수를 노출하지 않게 했다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과
+- 리스크: 서버가 새 상태값을 추가하면 구버전 앱은 해당 점수를 감춘 채 동작함
+
+## 2026-08-04 - scoreStatus 기본값 fail-open 제거
+
+- 변경 파일: `practice_sentence.dart`, `practice_result.dart`
+- 내용: CharacterResult의 scoreStatus 기본값을 AVAILABLE에서 UNAVAILABLE로 바꿔 미지정 생성이 신뢰 불가 점수를 노출하지 않게 하고, PracticeWordResult의 상태값 계약을 문서화했다.
+- 검증: `./gradlew compileJava test`, `./gradlew integrationTest`, `flutter analyze`, `flutter test` 74개 통과
+- 리스크: 기존 세 factory는 모두 값을 명시하고 있어 현재 화면 동작은 동일함
+
 ## 2026-08-04 - 단어 중심 평가 모델
 
 - 변경 파일: `practice_result.dart`, `practice_history.dart`, `WORK_LOG.md`

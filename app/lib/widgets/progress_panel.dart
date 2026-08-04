@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 
 /// 현재·최대 평가 기회와 다음 자연 충전까지의 시간을 compact capsule로 제공한다.
 class ProgressPanel extends StatefulWidget {
@@ -109,9 +110,9 @@ class _ProgressPanelState extends State<ProgressPanel> {
           constraints: const BoxConstraints(minHeight: 40),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: context.palette.card,
             borderRadius: BorderRadius.circular(AppSizes.pillRadius),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: context.palette.border),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -119,13 +120,13 @@ class _ProgressPanelState extends State<ProgressPanel> {
               Container(
                 width: 28,
                 height: 28,
-                decoration: const BoxDecoration(
-                  color: AppColors.softBlue,
+                decoration: BoxDecoration(
+                  color: context.palette.softBlue,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.mic_rounded,
-                  color: AppColors.primaryDark,
+                  color: context.palette.primaryDark,
                   size: 17,
                 ),
               ),
@@ -137,8 +138,8 @@ class _ProgressPanelState extends State<ProgressPanel> {
                   Text(
                     '$safeRemaining/$safeLimit',
                     maxLines: 1,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: context.palette.textPrimary,
                       fontSize: 17,
                       height: 1,
                       fontWeight: FontWeight.w900,
@@ -147,8 +148,8 @@ class _ProgressPanelState extends State<ProgressPanel> {
                   const SizedBox(height: 2),
                   Text(
                     isMax ? 'MAX' : _countdownLabel(),
-                    style: const TextStyle(
-                      color: AppColors.primaryDark,
+                    style: TextStyle(
+                      color: context.palette.primaryDark,
                       fontSize: 13,
                       height: 1,
                       fontWeight: FontWeight.w900,
@@ -172,16 +173,16 @@ class _ProgressPanelState extends State<ProgressPanel> {
                           child: Container(
                             width: 28,
                             height: 28,
-                            decoration: const BoxDecoration(
-                              color: AppColors.softBlue,
+                            decoration: BoxDecoration(
+                              color: context.palette.softBlue,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.add_rounded,
                               color:
                                   widget.onRequestAdReward == null
-                                      ? AppColors.textSecondary
-                                      : AppColors.primaryDark,
+                                      ? context.palette.textSecondary
+                                      : context.palette.primaryDark,
                               size: 18,
                             ),
                           ),

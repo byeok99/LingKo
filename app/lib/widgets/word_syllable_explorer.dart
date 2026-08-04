@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import 'guide_sheet.dart';
@@ -24,7 +25,10 @@ class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
   @override
   void didUpdateWidget(covariant WordSyllableExplorer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (selectedIndex >= widget.words.length || oldWidget.words != widget.words) {
+    // 새 평가 결과가 들어오면 이전 선택 위치가 다른 문장의 단어를 가리키게 되므로
+    // 목록이 교체되거나 길이가 줄면 첫 단어로 되돌려 범위 밖 접근을 원천 차단한다.
+    if (selectedIndex >= widget.words.length ||
+        oldWidget.words != widget.words) {
       selectedIndex = 0;
     }
   }
@@ -58,7 +62,7 @@ class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
         ),
         const SizedBox(height: AppSpacing.md),
         AppCard(
-          color: AppColors.blue50,
+          color: context.palette.blue50,
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,11 +70,6 @@ class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
               Text(
                 selectedWord.text,
                 style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Tap a syllable for its mouth and tongue guide.',
-                style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: AppSpacing.md),
               if (selectedWord.syllables.isEmpty)
@@ -116,7 +115,7 @@ class _WordScoreButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scoreAvailable =
-        word.scoreStatus == 'AVAILABLE' && word.score != null;
+        word.scoreStatus.isAvailable && word.score != null;
     return Semantics(
       button: true,
       selected: selected,
@@ -125,11 +124,11 @@ class _WordScoreButton extends StatelessWidget {
               ? '${word.text}, score ${word.score}. Show syllables.'
               : '${word.text}, score unavailable. Show syllables.',
       child: Material(
-        color: selected ? AppColors.primary : AppColors.card,
+        color: selected ? context.palette.primary : context.palette.card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radius),
           side: BorderSide(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.border,
           ),
         ),
         child: InkWell(
@@ -146,7 +145,7 @@ class _WordScoreButton extends StatelessWidget {
                 Text(
                   word.text,
                   style: TextStyle(
-                    color: selected ? Colors.white : AppColors.textPrimary,
+                    color: selected ? Colors.white : context.palette.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -154,7 +153,7 @@ class _WordScoreButton extends StatelessWidget {
                 Text(
                   scoreAvailable ? '${word.score}' : '—',
                   style: TextStyle(
-                    color: selected ? Colors.white : AppColors.primaryDark,
+                    color: selected ? Colors.white : context.palette.primaryDark,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -178,23 +177,13 @@ class _SyllableGuideButton extends StatelessWidget {
       button: true,
       label: '${syllable.character}. Open pronunciation guide.',
       child: Material(
-        color: AppColors.card,
+        color: context.palette.card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radius),
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: context.palette.border),
         ),
         child: InkWell(
-          onTap: () => showModalBottomSheet<void>(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: AppColors.card,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(AppSizes.radiusLarge),
-              ),
-            ),
-            builder: (_) => GuideSheet(result: syllable),
-          ),
+          onTap: () => showGuideSheet(context, syllable),
           borderRadius: BorderRadius.circular(AppSizes.radius),
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -206,16 +195,17 @@ class _SyllableGuideButton extends StatelessWidget {
               children: [
                 Text(
                   syllable.character.isEmpty ? '—' : syllable.character,
+                  // 한글 음절은 획이 많아 라틴 문자와 같은 크기로는 자모를 구분하기 어렵다.
                   style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                const Icon(
+                Icon(
                   Icons.chevron_right,
                   size: 17,
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                 ),
               ],
             ),

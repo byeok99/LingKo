@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 마이크 입력 레벨 스트림 노출
+
+- 변경 파일: `audio_recorder_service.dart`
+- 내용: 화면이 실제 입력 레벨을 보여줄 수 있도록 amplitudeStream을 서비스 계약에 추가했다. dBFS 원값 대신 0~1 표시용 비율로 변환해 UI가 플러그인 단위에 결합되지 않게 했다.
+- 검증: `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 촉각 피드백과 실제 마이크 레벨은 시뮬레이터가 아닌 실기기 확인이 필요함
+
 ## 2026-07-30 - 한국어 문장 TTS 서비스 추가
 
 - 변경 파일: `sentence_speech_service.dart`, `WORK_LOG.md`

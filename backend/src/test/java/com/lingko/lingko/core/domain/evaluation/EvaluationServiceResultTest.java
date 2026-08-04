@@ -1,5 +1,6 @@
 package com.lingko.lingko.core.domain.evaluation;
 
+import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.domain.evaluation.dto.AssessmentResult;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
@@ -112,9 +113,9 @@ class EvaluationServiceResultTest {
 
         PracticeResultResponse response = service.evaluatePronunciation(wavAudio(), null, "가나");
 
-        assertThat(response.getCharacterScoreStatus()).isEqualTo("AVAILABLE");
+        assertThat(response.getCharacterScoreStatus()).isEqualTo(ScoreStatus.AVAILABLE);
         assertThat(response.getCharacters()).extracting("score").containsExactly(92, 55);
-        assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly("AVAILABLE");
+        assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly(ScoreStatus.AVAILABLE);
         assertThat(response.getWeakCharacters()).extracting("text").containsExactly("나");
         assertThat(response.getWords()).singleElement().satisfies(word ->
                 assertThat(word.getSyllables()).extracting("score").containsOnlyNulls()
@@ -128,9 +129,9 @@ class EvaluationServiceResultTest {
 
         PracticeResultResponse response = service.evaluatePronunciation(wavAudio(), null, "가나");
 
-        assertThat(response.getCharacterScoreStatus()).isEqualTo("UNAVAILABLE");
+        assertThat(response.getCharacterScoreStatus()).isEqualTo(ScoreStatus.UNAVAILABLE);
         assertThat(response.getCharacters()).extracting("score").containsOnlyNulls();
-        assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly("UNAVAILABLE");
+        assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly(ScoreStatus.UNAVAILABLE);
         assertThat(response.getWeakCharacters()).isEmpty();
     }
 
@@ -160,7 +161,7 @@ class EvaluationServiceResultTest {
                 "김치찌개 하나 주세요"
         );
 
-        assertThat(response.getWordScoreStatus()).isEqualTo("AVAILABLE");
+        assertThat(response.getWordScoreStatus()).isEqualTo(ScoreStatus.AVAILABLE);
         assertThat(response.getWords()).extracting("text").containsExactly("김치찌개", "하나", "주세요");
         assertThat(response.getWords()).extracting("score").containsExactly(82, 91, 77);
         assertThat(response.getWords()).extracting(word -> word.getSyllables().size())
@@ -211,7 +212,7 @@ class EvaluationServiceResultTest {
         );
 
         assertThat(response.getCharacters()).singleElement().satisfies(character -> {
-            assertThat(character.getScoreStatus()).isEqualTo("UNAVAILABLE");
+            assertThat(character.getScoreStatus()).isEqualTo(ScoreStatus.UNAVAILABLE);
             assertThat(character.getPhonemes()).containsExactly("ㄱ", "ㅣ", "ㅁ");
             assertThat(character.getMouthGuideUrl()).endsWith("mouth-kim.mp4");
             assertThat(character.getTongueGuideUrl()).endsWith("tongue-kim.mp4");

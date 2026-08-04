@@ -3,6 +3,8 @@
 
 import 'package:flutter/material.dart';
 
+import 'app_palette.dart';
+
 /// App Colors 앱 전역 구성 책임을 제공한다.
 /// 기능별 화면이 전역 테마·최상위 화면 전환 결정을 중복하지 않도록 중앙화했다.
 class AppColors {
@@ -20,12 +22,15 @@ class AppColors {
   static const card = Colors.white;
   static const textStrong = Color(0xFF102B40);
   static const textPrimary = Color(0xFF17324A);
-  static const textSecondary = Color(0xFF667D90);
-  static const textMuted = Color(0xFF8A9AA8);
+  // 본문 12px에도 쓰이므로 WCAG AA 본문 기준 4.5:1을 넘는 값만 사용한다. 흰 배경 대비 4.94:1.
+  static const textSecondary = Color(0xFF5C7386);
+  // 하단 탭의 비선택 라벨 색이라 가장 흐린 값이어도 읽을 수 있어야 한다.
+  // 흰 배경 4.77:1, 가장 밝은 카드 배경(blue50) 위에서도 4.59:1로 본문 기준을 넘긴다.
+  static const textMuted = Color(0xFF627585);
   static const border = Color(0xFFDCE7EF);
-  static const success = Color(0xFF2E866A);
+  static const success = Color(0xFF27735A);
   static const successSoft = Color(0xFFEAF7F2);
-  static const warning = Color(0xFF9D681A);
+  static const warning = Color(0xFF8A5B16);
   static const warningSoft = Color(0xFFFFF6DF);
   static const error = Color(0xFFB94A4A);
   static const errorSoft = Color(0xFFFFF0F0);
@@ -68,41 +73,49 @@ class AppSizes {
 class AppTheme {
   const AppTheme._();
 
-  static ThemeData light() {
+  static ThemeData light() => _build(AppPalette.light, Brightness.light);
+
+  /// 어두운 환경에서 조용히 연습하는 사용도 흔하므로 같은 구조를 어두운 팔레트로 제공한다.
+  static ThemeData dark() => _build(AppPalette.dark, Brightness.dark);
+
+  static ThemeData _build(AppPalette palette, Brightness brightness) {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.scaffold,
+      brightness: brightness,
+      extensions: [palette],
+      scaffoldBackgroundColor: palette.scaffold,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.light,
-        primary: AppColors.primary,
-        secondary: AppColors.primaryMedium,
-        surface: AppColors.card,
-        error: AppColors.error,
+        seedColor: palette.primary,
+        brightness: brightness,
+        primary: palette.primary,
+        onPrimary: palette.onPrimary,
+        secondary: palette.primaryMedium,
+        surface: palette.card,
+        error: palette.error,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.card,
-        foregroundColor: AppColors.textPrimary,
+      appBarTheme: AppBarTheme(
+        backgroundColor: palette.card,
+        foregroundColor: palette.textPrimary,
         centerTitle: true,
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
       cardTheme: CardTheme(
-        color: AppColors.card,
+        color: palette.card,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radius),
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: palette.border),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.border,
-          disabledForegroundColor: AppColors.textSecondary,
+          backgroundColor: palette.primary,
+          foregroundColor: palette.onPrimary,
+          disabledBackgroundColor: palette.border,
+          disabledForegroundColor: palette.textSecondary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusControl),
           ),
@@ -112,8 +125,8 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
-          foregroundColor: AppColors.primaryDark,
-          side: const BorderSide(color: AppColors.primaryLight),
+          foregroundColor: palette.primaryDark,
+          side: BorderSide(color: palette.primaryLight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusControl),
           ),
@@ -122,27 +135,27 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.card,
+        fillColor: palette.card,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusControl),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: palette.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusControl),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: palette.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusControl),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: palette.primary, width: 2),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.card,
-        indicatorColor: AppColors.softBlue,
+        backgroundColor: palette.card,
+        indicatorColor: palette.softBlue,
         height: AppSizes.navigationHeight,
         elevation: 0,
         shadowColor: Colors.transparent,
@@ -151,8 +164,8 @@ class AppTheme {
           (states) => IconThemeData(
             color:
                 states.contains(WidgetState.selected)
-                    ? AppColors.primaryDark
-                    : AppColors.textMuted,
+                    ? palette.primaryDark
+                    : palette.textMuted,
             size: 21,
           ),
         ),
@@ -160,51 +173,51 @@ class AppTheme {
           (states) => TextStyle(
             color:
                 states.contains(WidgetState.selected)
-                    ? AppColors.primaryDark
-                    : AppColors.textMuted,
+                    ? palette.primaryDark
+                    : palette.textMuted,
             fontSize: 10,
             fontWeight: FontWeight.w800,
           ),
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.border,
+      dividerTheme: DividerThemeData(
+        color: palette.border,
         space: 1,
         thickness: 1,
       ),
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         headlineLarge: TextStyle(
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
           fontSize: 25,
           fontWeight: FontWeight.w900,
           height: 1.12,
           letterSpacing: -0.6,
         ),
         headlineMedium: TextStyle(
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w900,
           height: 1.16,
           letterSpacing: -0.4,
         ),
         titleLarge: TextStyle(
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
           fontSize: 16,
           fontWeight: FontWeight.w900,
           letterSpacing: -0.2,
         ),
         titleMedium: TextStyle(
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w800,
         ),
         bodyLarge: TextStyle(
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
           fontSize: 14,
           height: 1.42,
         ),
         bodyMedium: TextStyle(
-          color: AppColors.textSecondary,
+          color: palette.textSecondary,
           fontSize: 12,
           height: 1.35,
         ),

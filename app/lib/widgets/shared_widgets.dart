@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/practice_sentence.dart';
 
 /// 장식용 액션을 만들지 않고 제목과 실제 동작만 노출하는 공통 상단 바다.
@@ -66,7 +67,7 @@ class TopBar extends StatelessWidget {
                 children: [
                   if (leading != null) ...[
                     leading!,
-                    const SizedBox(width: AppSpacing.sm),
+                    SizedBox(width: AppSpacing.sm),
                   ],
                   Expanded(child: titleBlock),
                   if (trailing != null) trailing!,
@@ -101,24 +102,25 @@ class AppCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(AppSpacing.lg),
-    this.color = AppColors.card,
+    this.color,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
-  final Color color;
+  /// 지정하지 않으면 현재 테마의 카드 배경을 쓴다.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: color,
+        color: color ?? context.palette.card,
         borderRadius: BorderRadius.circular(AppSizes.radius),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
+        border: Border.all(color: context.palette.border),
+        boxShadow: [
           BoxShadow(
-            color: AppColors.shadow,
+            color: context.palette.shadow,
             blurRadius: 20,
             offset: Offset(0, 6),
           ),
@@ -147,11 +149,11 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final child =
         isLoading
-            ? const SizedBox.square(
+            ? SizedBox.square(
               dimension: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.card,
+                color: context.palette.card,
               ),
             )
             : Row(
@@ -168,7 +170,7 @@ class PrimaryButton extends StatelessWidget {
     final enabled = onPressed != null && !isLoading;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: enabled ? null : AppColors.border,
+        color: enabled ? null : context.palette.border,
         gradient:
             enabled
                 ? const LinearGradient(
@@ -264,11 +266,11 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (tone) {
-      StatusTone.success => AppColors.success,
-      StatusTone.warning => AppColors.warning,
-      StatusTone.error => AppColors.error,
-      StatusTone.neutral => AppColors.textSecondary,
-      StatusTone.info => AppColors.primary,
+      StatusTone.success => context.palette.success,
+      StatusTone.warning => context.palette.warning,
+      StatusTone.error => context.palette.error,
+      StatusTone.neutral => context.palette.textSecondary,
+      StatusTone.info => context.palette.primary,
     };
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -310,8 +312,8 @@ class ScoreRing extends StatelessWidget {
             CircularProgressIndicator(
               value: normalized,
               strokeWidth: 10,
-              backgroundColor: AppColors.border,
-              color: AppColors.primary,
+              backgroundColor: context.palette.border,
+              color: context.palette.primary,
             ),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
@@ -324,10 +326,10 @@ class ScoreRing extends StatelessWidget {
                       '$score',
                       style: Theme.of(context).textTheme.headlineLarge,
                     ),
-                    const Text(
+                    Text(
                       '/100',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: context.palette.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -368,7 +370,7 @@ class StatePanel extends StatelessWidget {
           if (isLoading)
             const CircularProgressIndicator()
           else
-            Icon(icon, color: AppColors.primary, size: 30),
+            Icon(icon, color: context.palette.primary, size: 30),
           const SizedBox(height: AppSpacing.md),
           Text(
             title,
@@ -407,8 +409,8 @@ class CharacterChip extends StatelessWidget {
         vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        border: Border.all(color: AppColors.border),
+        color: context.palette.card,
+        border: Border.all(color: context.palette.border),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -421,8 +423,8 @@ class CharacterChip extends StatelessWidget {
           if (result.kind.isNotEmpty && result.kind != 'NONE')
             Text(
               result.kind,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: context.palette.textSecondary,
                 fontSize: 10,
               ),
             ),
@@ -446,7 +448,7 @@ class CharacterBadge extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.softBlue,
+        color: context.palette.softBlue,
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: Text(

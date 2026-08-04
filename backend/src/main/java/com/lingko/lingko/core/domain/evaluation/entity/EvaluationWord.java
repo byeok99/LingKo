@@ -38,6 +38,12 @@ public class EvaluationWord {
     @Column(name = "word_text", nullable = false, length = 100)
     private String wordText;
 
+    /**
+     * 공급자 token이 기준 단어와 정확히 일치했을 때만 채워지는 정확도 점수다.
+     *
+     * null은 "0점"이 아니라 "이 단어는 점수를 신뢰할 수 없음"을 뜻하므로 조회 계층에서
+     * scoreStatus=UNAVAILABLE로 변환해 사용자에게 잘못된 점수를 보여주지 않는다.
+     */
     @Column(name = "score")
     private Integer score;
 }

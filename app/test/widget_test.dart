@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:lingko_app/api/evaluation_api.dart';
+import 'package:lingko_app/models/score_status.dart';
 import 'package:lingko_app/api/practice_quota_api.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 import 'package:lingko_app/api/sentence_api.dart';
@@ -108,12 +109,12 @@ class FakeEvaluationApi implements EvaluationApi {
             position: 0,
             text: '마싯게따',
             score: 88,
-            scoreStatus: 'AVAILABLE',
+            scoreStatus: ScoreStatus.available,
             syllables: [
               CharacterResult(
                 character: '맛',
                 score: 0,
-                scoreStatus: 'UNAVAILABLE',
+                scoreStatus: ScoreStatus.unavailable,
                 note: 'Keep the final consonant clear.',
                 kind: 'NONE',
               ),
@@ -183,7 +184,7 @@ class FakeEvaluationApi implements EvaluationApi {
         gradeLabel: 'Excellent',
         summary: 'Clear pronunciation.',
         recognizedText: '사용자 발음',
-        characterScoreStatus: 'UNAVAILABLE',
+        characterScoreStatus: ScoreStatus.unavailable,
         scoreBreakdown: PracticeScoreBreakdown(
           accuracy: 92,
           fluency: 90,
@@ -320,6 +321,13 @@ class FakeAudioRecorderService implements AudioRecorderService {
     started = true;
     return '/tmp/lingko-test.wav';
   }
+
+  /// 테스트가 마이크 레벨을 직접 밀어넣어 파형 반응을 검증할 수 있게 한다.
+  final StreamController<double> amplitudeController =
+      StreamController<double>.broadcast();
+
+  @override
+  Stream<double> amplitudeStream() => amplitudeController.stream;
 
   @override
   Future<String?> stop() async {
@@ -1038,7 +1046,9 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const ValueKey('evaluation-progress')), findsOneWidget);
-    expect(find.text('Evaluation job'), findsOneWidget);
+    // 단계 이름은 내부 용어가 아니라 사용자가 읽을 수 있는 문장이어야 한다.
+    expect(find.text('Sending it for evaluation'), findsOneWidget);
+    expect(find.text('Evaluation job'), findsNothing);
     expect(find.text('Result'), findsNothing);
 
     createCompleter.complete(
@@ -1651,6 +1661,60 @@ void main() {
     expect(recorder.cancelCount, 1);
   });
 
+  testWidgets('recording ring and waveform follow real input', (
+    WidgetTester tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final recorder = FakeAudioRecorderService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: recorder,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start recording'));
+    await tester.pump();
+
+    CircularProgressIndicator ring() =>
+        tester.widget<CircularProgressIndicator>(
+          find.byType(CircularProgressIndicator).first,
+        );
+
+    // 시작 직후에는 진행이 0이어야 한다. 이전 구현은 0.38에 고정돼 있었다.
+    expect(ring().value, 0.0);
+    expect(find.text('0:00'), findsOneWidget);
+    expect(find.text('/ 10 sec'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 5));
+    expect(ring().value, closeTo(0.5, 0.05));
+    expect(find.text('0:05'), findsOneWidget);
+
+    // 무음일 때와 소리가 들어올 때 파형 안내가 달라져야 한다.
+    expect(
+      find.bySemanticsLabel('No sound is being picked up'),
+      findsOneWidget,
+    );
+    recorder.amplitudeController.add(0.8);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.bySemanticsLabel('Microphone level 80 percent'), findsOneWidget);
+
+    // 표시한 상한에 도달하면 실제로 녹음이 멈춰야 한다.
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pumpAndSettle();
+    expect(find.text('/ 10 sec'), findsNothing);
+
+    semantics.dispose();
+  });
+
   testWidgets('Review shows recent practice history and opens retry', (
     WidgetTester tester,
   ) async {
@@ -1951,7 +2015,7 @@ void main() {
     const character = CharacterResult(
       character: '나',
       score: 55,
-      scoreStatus: 'AVAILABLE',
+      scoreStatus: ScoreStatus.available,
       note: 'Focus on tongue placement',
       kind: 'TONGUE',
     );
@@ -1965,16 +2029,39 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('TONGUE guide'), findsWidgets);
-    expect(find.text('Focus on tongue placement'), findsWidgets);
+    // 가이드 종류만 되풀이하는 자동 생성 note와 미디어 형식 설명은 화면 공간만
+    // 차지하므로 표시하지 않는다. 사용자가 볼 것은 가이드 자체다.
+    expect(find.text('Focus on tongue placement'), findsNothing);
     expect(
-      find.text(
-        'A built-in static guide is shown because this evaluation did not provide guide media.',
-      ),
+      find.textContaining('did not provide guide media'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('guide sheet keeps a real articulation hint', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '싯',
+      score: 55,
+      note: 'Touch the ridge behind your teeth, then release slowly.',
+      kind: 'TONGUE',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: ResultTile(result: character))),
+    );
+    await tester.tap(find.byType(ResultTile));
+    await tester.pumpAndSettle();
+
+    // 자동 생성 문구가 아닌 실제 조음 힌트는 그대로 노출되어야 한다.
+    expect(
+      find.text('Touch the ridge behind your teeth, then release slowly.'),
       findsOneWidget,
     );
   });
 
-  testWidgets('guide sheet renders available static guide assets first', (
+  testWidgets('guide sheet shows one guide at a time and switches by tab', (
     WidgetTester tester,
   ) async {
     const character = CharacterResult(
@@ -1991,14 +2078,39 @@ void main() {
       const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
     );
 
-    final images = tester.widgetList<Image>(find.byType(Image)).toList();
-
-    expect(images, hasLength(2));
-    expect((images[0].image as NetworkImage).url, character.mouthGuideUrl);
-    expect((images[1].image as NetworkImage).url, character.tongueGuideUrl);
+    // 작은 화면에서 세부를 확인할 수 있도록 한 번에 하나만 전체 폭으로 그린다.
+    var images = tester.widgetList<Image>(find.byType(Image)).toList();
+    expect(images, hasLength(1));
+    expect((images.single.image as NetworkImage).url, character.mouthGuideUrl);
     expect(find.text('Mouth & tongue guide'), findsOneWidget);
-    expect(find.text('Mouth guide'), findsOneWidget);
-    expect(find.text('Tongue guide'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('guide-tab-tongue-guide')));
+    await tester.pumpAndSettle();
+
+    images = tester.widgetList<Image>(find.byType(Image)).toList();
+    expect(images, hasLength(1));
+    expect((images.single.image as NetworkImage).url, character.tongueGuideUrl);
+  });
+
+  testWidgets('guide sheet omits the tab bar when only one guide exists', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '마',
+      score: 0,
+      note: 'Stable vowel shape',
+      kind: 'MOUTH',
+      guideStatus: 'AVAILABLE',
+      mouthGuideUrl: 'https://guides/mouth/vowel-a.png',
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
+    );
+
+    // 선택지가 하나뿐이면 전환 UI는 공간만 차지한다.
+    expect(find.byKey(const ValueKey('guide-tab-mouth-guide')), findsNothing);
+    expect(tester.widgetList<Image>(find.byType(Image)), hasLength(1));
   });
 
   testWidgets('guide sheet renders MP4 URLs as video media', (
@@ -2030,7 +2142,7 @@ void main() {
     const character = CharacterResult(
       character: '마',
       score: 0,
-      scoreStatus: 'UNAVAILABLE',
+      scoreStatus: ScoreStatus.unavailable,
       note: 'Stable vowel shape',
       kind: 'TONGUE',
       guideStatus: 'AVAILABLE',
@@ -2051,7 +2163,7 @@ void main() {
       overallScore: 82,
       gradeLabel: 'Good',
       summary: 'Keep practicing.',
-      characterScoreStatus: 'UNAVAILABLE',
+      characterScoreStatus: ScoreStatus.unavailable,
       scoreBreakdown: PracticeScoreBreakdown(
         accuracy: 82,
         fluency: 80,
@@ -2063,7 +2175,7 @@ void main() {
         PracticeWordResult(
           position: 0,
           text: '마',
-          scoreStatus: 'UNAVAILABLE',
+          scoreStatus: ScoreStatus.unavailable,
           syllables: [character],
         ),
       ],
@@ -2106,14 +2218,14 @@ void main() {
     const kim = CharacterResult(
       character: '김',
       score: 0,
-      scoreStatus: 'UNAVAILABLE',
+      scoreStatus: ScoreStatus.unavailable,
       note: 'Keep the final consonant clear.',
       kind: 'TONGUE',
     );
     const ha = CharacterResult(
       character: '하',
       score: 0,
-      scoreStatus: 'UNAVAILABLE',
+      scoreStatus: ScoreStatus.unavailable,
       note: 'Open the mouth naturally.',
       kind: 'MOUTH',
       mouthGuideUrl: 'https://guides/mouth/ha.png',
@@ -2132,7 +2244,7 @@ void main() {
       overallScore: 84,
       gradeLabel: 'Good',
       summary: 'Keep practicing.',
-      wordScoreStatus: 'AVAILABLE',
+      wordScoreStatus: ScoreStatus.available,
       scoreBreakdown: PracticeScoreBreakdown(
         accuracy: 84,
         fluency: 82,
@@ -2145,14 +2257,14 @@ void main() {
           position: 0,
           text: '김치찌개',
           score: 82,
-          scoreStatus: 'AVAILABLE',
+          scoreStatus: ScoreStatus.available,
           syllables: [kim],
         ),
         PracticeWordResult(
           position: 1,
           text: '하나',
           score: 91,
-          scoreStatus: 'AVAILABLE',
+          scoreStatus: ScoreStatus.available,
           syllables: [ha],
         ),
       ],
@@ -2245,7 +2357,7 @@ void main() {
       overallScore: 87,
       gradeLabel: 'Great',
       summary: 'Clear and natural pronunciation.',
-      characterScoreStatus: 'AVAILABLE',
+      characterScoreStatus: ScoreStatus.available,
       scoreBreakdown: PracticeScoreBreakdown(
         accuracy: 90,
         fluency: 85,
@@ -2295,7 +2407,7 @@ void main() {
           score: 0,
           note: 'Score unavailable.',
           kind: 'NONE',
-          scoreStatus: 'UNAVAILABLE',
+          scoreStatus: ScoreStatus.unavailable,
         ),
       ],
       words: [
@@ -2303,12 +2415,12 @@ void main() {
           position: 0,
           text: '저는',
           score: 94,
-          scoreStatus: 'AVAILABLE',
+          scoreStatus: ScoreStatus.available,
           syllables: [
             CharacterResult(
               character: '저',
               score: 0,
-              scoreStatus: 'UNAVAILABLE',
+              scoreStatus: ScoreStatus.unavailable,
               note: 'Clear.',
               kind: 'MOUTH',
             ),
@@ -2318,12 +2430,12 @@ void main() {
           position: 1,
           text: '커피를',
           score: 62,
-          scoreStatus: 'AVAILABLE',
+          scoreStatus: ScoreStatus.available,
           syllables: [
             CharacterResult(
               character: '피',
               score: 0,
-              scoreStatus: 'UNAVAILABLE',
+              scoreStatus: ScoreStatus.unavailable,
               note: 'Release more air.',
               kind: 'MOUTH',
             ),
@@ -2391,7 +2503,7 @@ void main() {
       summary:
           'The sentence is complete, and a few connected sounds need another clear attempt.',
       recognizedText: '저는 커피를 좋아해요.',
-      characterScoreStatus: 'AVAILABLE',
+      characterScoreStatus: ScoreStatus.available,
       scoreBreakdown: PracticeScoreBreakdown(
         accuracy: 78,
         fluency: 72,

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 음절·단어 점수 nullable 의미 주석
+
+- 변경 파일: `EvaluationSyllable.java`, `EvaluationWord.java`
+- 내용: score의 null이 0점이 아니라 '신뢰 불가'를 뜻하며 음절은 V15 이후 guide-only 단위임을 주석으로 고정했다.
+- 검증: `./gradlew compileJava test`, `./gradlew integrationTest`, `flutter analyze`, `flutter test` 74개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-04 - 단어 점수 snapshot 영속 모델
 
 - 변경 파일: `EvaluationLog.java`, `EvaluationWord.java`, `EvaluationSyllable.java`, `WORK_LOG.md`

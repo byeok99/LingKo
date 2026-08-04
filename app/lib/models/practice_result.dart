@@ -2,6 +2,7 @@
 // 선택 이유: 동적 JSON을 형식이 지정된 model로 변환해 잘못된 응답을 UI 경계 전에 차단한다.
 
 import 'practice_sentence.dart';
+import 'score_status.dart';
 
 /// Practice Result 값의 의미와 불변 데이터 구조를 나타낸다.
 /// UI가 Map key나 nullable JSON 세부사항을 직접 다루지 않도록 형식이 지정된 model을 선택했다.
@@ -11,8 +12,8 @@ class PracticeResult {
     required this.gradeLabel,
     required this.summary,
     this.recognizedText = '',
-    this.characterScoreStatus = 'UNAVAILABLE',
-    this.wordScoreStatus = 'UNAVAILABLE',
+    this.characterScoreStatus = ScoreStatus.unavailable,
+    this.wordScoreStatus = ScoreStatus.unavailable,
     required this.scoreBreakdown,
     required this.weakCharacters,
     required this.characters,
@@ -30,14 +31,8 @@ class PracticeResult {
       gradeLabel: _stringValue(json['gradeLabel']),
       summary: _stringValue(json['summary']),
       recognizedText: _stringValue(json['recognizedText']),
-      characterScoreStatus: _stringValue(
-        json['characterScoreStatus'],
-        fallback: 'UNAVAILABLE',
-      ),
-      wordScoreStatus: _stringValue(
-        json['wordScoreStatus'],
-        fallback: 'UNAVAILABLE',
-      ),
+      characterScoreStatus: ScoreStatus.fromWire(json['characterScoreStatus']),
+      wordScoreStatus: ScoreStatus.fromWire(json['wordScoreStatus']),
       scoreBreakdown:
           scoreBreakdownJson is Map<String, Object?>
               ? PracticeScoreBreakdown.fromJson(scoreBreakdownJson)
@@ -56,8 +51,8 @@ class PracticeResult {
   final String gradeLabel;
   final String summary;
   final String recognizedText;
-  final String characterScoreStatus;
-  final String wordScoreStatus;
+  final ScoreStatus characterScoreStatus;
+  final ScoreStatus wordScoreStatus;
   final PracticeScoreBreakdown scoreBreakdown;
   final List<CharacterResult> weakCharacters;
   final List<CharacterResult> characters;
@@ -65,12 +60,16 @@ class PracticeResult {
 }
 
 /// 공급자가 신뢰할 수 있게 제공한 단어 점수와 guide-only 음절 목록을 묶는다.
+///
+/// [scoreStatus]는 서버 계약과 동일하게 `AVAILABLE` 또는 `UNAVAILABLE`만 가진다.
+/// `UNAVAILABLE`이면 [score]는 null이며 0점이 아니라 "점수를 신뢰할 수 없음"을 뜻하므로,
+/// 화면은 숫자 대신 대체 표기를 보여주고 음절 가이드는 그대로 제공해야 한다.
 class PracticeWordResult {
   const PracticeWordResult({
     required this.position,
     required this.text,
     this.score,
-    this.scoreStatus = 'UNAVAILABLE',
+    this.scoreStatus = ScoreStatus.unavailable,
     required this.syllables,
   });
 
@@ -91,10 +90,9 @@ class PracticeWordResult {
       position: _intValue(json['position']),
       text: _stringValue(json['text']),
       score: _nullableIntValue(json['score']),
-      scoreStatus: _stringValue(
-        json['scoreStatus'],
-        fallback: json['score'] == null ? 'UNAVAILABLE' : 'AVAILABLE',
-      ),
+      scoreStatus: json['scoreStatus'] == null
+          ? ScoreStatus.ofNullableScore(json['score'])
+          : ScoreStatus.fromWire(json['scoreStatus']),
       syllables:
           syllablesJson is List
               ? syllablesJson
@@ -112,7 +110,7 @@ class PracticeWordResult {
   final int position;
   final String text;
   final int? score;
-  final String scoreStatus;
+  final ScoreStatus scoreStatus;
   final List<CharacterResult> syllables;
 }
 

@@ -1,9 +1,13 @@
 // 파일 의도: lingko app 앱 구성과 전역 표시 정책을 정의한다.
 // 선택 이유: 기능 화면이 bootstrap·테마·navigation 세부사항에 의존하지 않도록 app 계층에 둔다.
 
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'app_palette.dart';
 
 import '../api/api_client.dart';
 import '../api/evaluation_api.dart';
@@ -62,6 +66,10 @@ class LingKoApp extends StatelessWidget {
       title: 'LingKo',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      // 기기 설정을 따른다. 앱 안에 별도 토글을 두면 시스템 다크 모드를 쓰는 사용자가
+      // 두 곳을 관리해야 하므로, 앱 내 선택지가 실제로 필요해질 때까지는 시스템에 맡긴다.
+      themeMode: ThemeMode.system,
       // LingKoShell은 하단 탭과 현재 선택된 화면 상태를 관리합니다.
       home: LingKoShell(
         pronunciationApi: pronunciationApi ?? DartIoPronunciationApi(),
@@ -501,6 +509,9 @@ class _LingKoShellState extends State<LingKoShell> {
                 message: 'Your pronunciation result is ready.',
               );
             });
+            // 평가는 수 분이 걸릴 수 있어 사용자가 다른 일을 하고 있을 가능성이 높다.
+            // 결과 도착과 실패를 소리 없이도 알 수 있게 촉각으로 구분해 알린다.
+            unawaited(HapticFeedback.lightImpact());
           }
           await loadPracticeQuota();
           return;
@@ -536,6 +547,7 @@ class _LingKoShellState extends State<LingKoShell> {
                 'The evaluation did not finish. Retry with the saved recording when available.',
           );
         });
+        unawaited(HapticFeedback.heavyImpact());
       }
       rethrow;
     }
@@ -650,8 +662,8 @@ class _LingKoShellState extends State<LingKoShell> {
           selectedTab == 1 && isPracticeImmersive
               ? null
               : Container(
-                decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: AppColors.border)),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: context.palette.border)),
                 ),
                 child: NavigationBar(
                   selectedIndex: selectedTab,
@@ -660,12 +672,12 @@ class _LingKoShellState extends State<LingKoShell> {
                       selectedTab = index;
                     });
                   },
-                  destinations: const [
+                  destinations: [
                     NavigationDestination(
                       icon: Icon(Icons.home_outlined),
                       selectedIcon: Icon(
                         Icons.home_rounded,
-                        color: AppColors.primaryDark,
+                        color: context.palette.primaryDark,
                       ),
                       label: 'Home',
                     ),
@@ -673,7 +685,7 @@ class _LingKoShellState extends State<LingKoShell> {
                       icon: Icon(Icons.mic_none_rounded),
                       selectedIcon: Icon(
                         Icons.mic_rounded,
-                        color: AppColors.primaryDark,
+                        color: context.palette.primaryDark,
                       ),
                       label: 'Practice',
                     ),
@@ -681,7 +693,7 @@ class _LingKoShellState extends State<LingKoShell> {
                       icon: Icon(Icons.rate_review_outlined),
                       selectedIcon: Icon(
                         Icons.rate_review_rounded,
-                        color: AppColors.primaryDark,
+                        color: context.palette.primaryDark,
                       ),
                       label: 'Review',
                     ),
@@ -689,7 +701,7 @@ class _LingKoShellState extends State<LingKoShell> {
                       icon: Icon(Icons.person_outline_rounded),
                       selectedIcon: Icon(
                         Icons.person_rounded,
-                        color: AppColors.primaryDark,
+                        color: context.palette.primaryDark,
                       ),
                       label: 'Profile',
                     ),

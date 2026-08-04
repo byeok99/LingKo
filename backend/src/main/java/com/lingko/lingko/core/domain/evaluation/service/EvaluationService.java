@@ -1,6 +1,8 @@
 package com.lingko.lingko.core.domain.evaluation.service;
 
 import com.lingko.lingko.api.evaluation.dto.GuideCharacterResponse;
+import com.lingko.lingko.api.evaluation.dto.GuideStatus;
+import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
 import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeWordResultResponse;
@@ -139,10 +141,10 @@ public class EvaluationService {
                     .pronunciationText(character)
                     .phonemes(phonemes)
                     .guideType(guideType)
-                    .guideStatus("NONE".equals(guideType) ? "MISSING" : "AVAILABLE")
+                    .guideStatus("NONE".equals(guideType) ? GuideStatus.MISSING : GuideStatus.AVAILABLE)
                     .mouthGuideUrl(mouthGuideUrl)
                     .tongueGuideUrl(tongueGuideUrl)
-                    .note("Focus on " + guideType.toLowerCase() + " placement")
+                    .note(resolveArticulationNote(guideType))
                     .build());
             position++;
         }
@@ -176,11 +178,26 @@ public class EvaluationService {
                 .pronunciationText(character.getPronunciationText())
                 .phonemes(character.getPhonemes())
                 .guideType(guideType)
-                .guideStatus("NONE".equals(guideType) ? "MISSING" : "AVAILABLE")
+                .guideStatus("NONE".equals(guideType) ? GuideStatus.MISSING : GuideStatus.AVAILABLE)
                 .mouthGuideUrl(mouthGuideUrl)
                 .tongueGuideUrl(tongueGuideUrl)
                 .note(character.getNote())
                 .build();
+    }
+
+    /**
+     * 가이드가 있을 때만 어떤 부위에 집중할지 알려주고, 없으면 빈 문자열을 반환한다.
+     *
+     * 이전에는 guideType을 그대로 문장에 끼워 넣어 가이드가 없는 글자에
+     * "Focus on none placement"라는 문장이 사용자에게 노출됐다. 표시할 가이드가 없으면
+     * 안내할 대상도 없으므로 문구를 만들지 않고, 클라이언트가 빈 값을 감추게 한다.
+     */
+    private String resolveArticulationNote(String guideType) {
+        return switch (guideType) {
+            case "TONGUE" -> "Focus on where your tongue touches.";
+            case "MOUTH" -> "Focus on your lip and jaw opening.";
+            default -> "";
+        };
     }
 
     private String resolveGuideType(String mouthGuideUrl, String tongueGuideUrl) {
@@ -424,7 +441,7 @@ public class EvaluationService {
                         .text(resolvedCharacter.getText())
                         .pronunciationText(resolvedCharacter.getPronunciationText())
                         .score(characterScore)
-                        .scoreStatus(characterScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
+                        .scoreStatus(characterScoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
                         .phonemes(resolvedCharacter.getPhonemes())
                         .guideType(resolvedCharacter.getGuideType())
                         .guideStatus(resolvedCharacter.getGuideStatus())
@@ -442,15 +459,15 @@ public class EvaluationService {
                 : List.of();
         List<PracticeWordResultResponse> words = buildWordResults(referenceText, characters, result);
         boolean wordScoresAvailable = words.stream()
-                .allMatch(word -> "AVAILABLE".equals(word.getScoreStatus()));
+                .allMatch(word -> word.getScoreStatus().isAvailable());
 
         return PracticeResultResponse.builder()
                 .overallScore(overallScore)
                 .gradeLabel(resolveGradeLabel(overallScore))
                 .summary(resolveSummary(overallScore, result.getRecognizedText()))
                 .recognizedText(result.getRecognizedText())
-                .characterScoreStatus(characterScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
-                .wordScoreStatus(wordScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
+                .characterScoreStatus(characterScoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
+                .wordScoreStatus(wordScoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
                 .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
                         .accuracy(toScore(result.getAccuracyScore()))
                         .fluency(toScore(result.getFluencyScore()))
@@ -497,7 +514,7 @@ public class EvaluationService {
                     .position(position)
                     .text(word)
                     .score(score)
-                    .scoreStatus(scoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
+                    .scoreStatus(scoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
                     .syllables(syllables)
                     .build());
             characterOffset += syllableCount;
@@ -516,7 +533,7 @@ public class EvaluationService {
                 .position(0)
                 .text(referenceText.trim())
                 .score(null)
-                .scoreStatus("UNAVAILABLE")
+                .scoreStatus(ScoreStatus.UNAVAILABLE)
                 .syllables(characters.stream().map(this::toGuideOnlySyllable).toList())
                 .build());
     }
@@ -528,7 +545,7 @@ public class EvaluationService {
                 .text(character.getText())
                 .pronunciationText(character.getPronunciationText())
                 .score(null)
-                .scoreStatus("UNAVAILABLE")
+                .scoreStatus(ScoreStatus.UNAVAILABLE)
                 .phonemes(character.getPhonemes())
                 .guideType(character.getGuideType())
                 .guideStatus(character.getGuideStatus())

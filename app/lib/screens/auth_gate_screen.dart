@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../widgets/shared_widgets.dart';
 
 /// Splash Screen 사용자 화면과 interaction 경계를 제공한다.
@@ -95,7 +96,7 @@ class _AuthFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.softBlue,
+      backgroundColor: context.palette.softBlue,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

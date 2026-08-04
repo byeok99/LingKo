@@ -5,6 +5,7 @@ import com.lingko.lingko.api.evaluation.dto.PracticeHistoryItemResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeHistoryResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeHistoryWordResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
+import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationLog;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationSyllable;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationWord;
@@ -104,7 +105,7 @@ public class EvaluationHistoryService {
                         .position(word.getPositionNo())
                         .text(word.getWordText())
                         .score(word.getScore())
-                        .scoreStatus(word.getScore() == null ? "UNAVAILABLE" : "AVAILABLE")
+                        .scoreStatus(ScoreStatus.ofNullableScore(word.getScore()))
                         .syllables(syllables.stream()
                                 .filter(syllable -> word.getPositionNo().equals(syllable.getWordPosition()))
                                 .map(this::toGuideCharacter)
@@ -133,7 +134,7 @@ public class EvaluationHistoryService {
                     .position(0)
                     .text(standardPronunciation.trim())
                     .score(null)
-                    .scoreStatus("UNAVAILABLE")
+                    .scoreStatus(ScoreStatus.UNAVAILABLE)
                     .syllables(syllables.stream().map(this::toGuideCharacter).toList())
                     .build());
         }
@@ -147,7 +148,7 @@ public class EvaluationHistoryService {
                     .position(position)
                     .text(word)
                     .score(null)
-                    .scoreStatus("UNAVAILABLE")
+                    .scoreStatus(ScoreStatus.UNAVAILABLE)
                     .syllables(syllables.subList(offset, offset + count).stream()
                             .map(this::toGuideCharacter)
                             .toList())

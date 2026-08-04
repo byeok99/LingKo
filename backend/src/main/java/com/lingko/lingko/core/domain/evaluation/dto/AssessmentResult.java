@@ -26,7 +26,12 @@ public class AssessmentResult {
     public record CharacterScore(int position, String text, Double accuracyScore) {
     }
 
-    /** 기준 문장의 공백 단위와 공급자 token이 일치한 단어 점수다. */
+    /**
+     * 기준 문장의 공백 단위와 공급자 token이 일치한 단어 점수다.
+     *
+     * {@code position}은 기준 문장을 공백으로 나눈 0-based 순서이며, 도메인 계층이
+     * 이 값으로 위치를 재검증하기 때문에 어댑터는 순서를 임의로 바꾸지 않는다.
+     */
     public record WordScore(int position, String text, Double accuracyScore) {
     }
 }

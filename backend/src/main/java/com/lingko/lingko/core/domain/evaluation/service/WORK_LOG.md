@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - 무의미한 안내 문구 생성 제거
+
+- 변경 파일: `EvaluationService.java`
+- 내용: guideType을 그대로 문장에 끼워 넣어 가이드 없는 글자에 'Focus on none placement'가 노출되던 문제를 고쳤다. 가이드가 있을 때만 부위별 안내를 만들고 없으면 빈 문자열을 반환한다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
+## 2026-08-04 - 신뢰 불가 단어 행 저장 생략과 상태 enum 적용
+
+- 변경 파일: `EvaluationPersistenceService.java`, `EvaluationService.java`, `EvaluationHistoryService.java`
+- 내용: 점수를 신뢰할 수 있을 때만 단어 행을 저장해 standard_pronunciation에서 파생 가능한 정보의 중복 저장과 word_text 길이 초과를 함께 없앴고, 상태 문자열을 ScoreStatus·GuideStatus enum으로 교체했다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과
+- 리스크: 저장된 단어 행이 없는 기록은 조회 시 standard_pronunciation 기준 복원에 의존함
+
 ## 2026-08-04 - 단어 중심 평가 조립·저장·조회
 
 - 변경 파일: `EvaluationService.java`, `EvaluationPersistenceService.java`, `EvaluationHistoryService.java`, `WORK_LOG.md`

@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - 안내 문구 생성 회귀 테스트
+
+- 변경 파일: `EvaluationServicePrepareTest.java`
+- 내용: 가이드가 없는 글자에는 안내 문구를 만들지 않는다는 계약을 테스트로 고정했다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
+## 2026-08-04 - 단어 행 저장 조건 회귀 테스트
+
+- 변경 파일: `EvaluationPersistenceServiceTest.java`, `EvaluationServiceResultTest.java`, `EvaluationHistoryServiceTest.java`, `EvaluationServicePrepareTest.java`, `EvaluationJobServiceTest.java`
+- 내용: 점수를 신뢰할 수 없으면 word_text 길이를 넘기는 문장 blob이 저장되지 않는다는 계약을 추가하고, 상태 단언을 enum으로 옮겼다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 단어 점수 평가·영속 회귀 테스트
 
 - 변경 파일: `EvaluationServiceResultTest.java`, `EvaluationPersistenceServiceTest.java`, `EvaluationHistoryServiceTest.java`, `EvaluationPersistenceMigrationTest.java`, `WORK_LOG.md`

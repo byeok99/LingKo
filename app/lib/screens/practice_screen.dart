@@ -3,8 +3,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/evaluation_progress.dart';
 import '../models/practice_sentence.dart';
 import '../services/audio_recorder_service.dart';
@@ -49,6 +51,9 @@ class PracticeScreen extends StatefulWidget {
 }
 
 class _PracticeScreenState extends State<PracticeScreen> {
+  /// 화면에 표시하는 상한과 실제 종료 시점을 같은 값에서 가져와 표시와 동작을 일치시킨다.
+  static const maximumRecordingDuration = Duration(seconds: 10);
+
   final TextEditingController customSentenceController =
       TextEditingController();
   final FocusNode customSentenceFocusNode = FocusNode();
@@ -63,6 +68,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
   bool wasPermissionDenied = false;
   Duration recordingDuration = Duration.zero;
   Timer? recordingTimer;
+  StreamSubscription<double>? amplitudeSubscription;
+  double currentAmplitude = 0;
   Timer? sentencePreparationTimer;
   int sentencePreparationRevision = 0;
   bool isSyncingSentenceController = false;
@@ -96,6 +103,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
   @override
   void dispose() {
     recordingTimer?.cancel();
+    amplitudeSubscription?.cancel();
+    amplitudeSubscription = null;
     sentencePreparationTimer?.cancel();
     sentencePreparationRevision += 1;
     unawaited(_cleanupRecording(reportErrors: false));
@@ -232,18 +241,35 @@ class _PracticeScreenState extends State<PracticeScreen> {
       if (!mounted) {
         return;
       }
+      // 녹음은 화면을 보지 않고 수행하는 동작이라 시작·종료를 촉각으로 알린다.
+      unawaited(HapticFeedback.mediumImpact());
       setState(() {
         wasPermissionDenied = false;
         isRecording = true;
       });
       widget.onImmersiveModeChanged(true);
-      recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (mounted) {
-          setState(() {
-            recordingDuration += const Duration(seconds: 1);
-          });
+      // 링과 숫자가 같은 값을 쓰도록 경과 시간을 한 곳에서만 센다.
+      // 100ms 간격이면 진행 링이 끊겨 보이지 않으면서 갱신 비용도 크지 않다.
+      recordingTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+        if (!mounted) {
+          return;
+        }
+        final next = recordingDuration + const Duration(milliseconds: 100);
+        setState(() => recordingDuration = next);
+        // 상한을 넘기면 안내만 하지 않고 실제로 멈춰야 표시와 동작이 일치한다.
+        if (next >= maximumRecordingDuration) {
+          unawaited(_stopRecording());
         }
       });
+      amplitudeSubscription = widget.audioRecorderService
+          .amplitudeStream()
+          .listen((level) {
+            if (mounted) {
+              setState(() => currentAmplitude = level);
+            }
+          }, onError: (_) {
+            // 레벨 표시는 보조 정보이므로 실패해도 녹음 자체는 계속 진행한다.
+          });
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -287,6 +313,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
       return;
     }
     recordingTimer?.cancel();
+    amplitudeSubscription?.cancel();
+    amplitudeSubscription = null;
+    unawaited(HapticFeedback.mediumImpact());
     try {
       final path = await widget.audioRecorderService.stop();
       if (!mounted) {
@@ -324,6 +353,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   Future<void> _cleanupRecording({required bool reportErrors}) async {
     recordingTimer?.cancel();
+    amplitudeSubscription?.cancel();
+    amplitudeSubscription = null;
     final shouldCancel = isRecording;
     final audioPath = recordedAudioPath;
     try {
@@ -422,6 +453,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
           _RecordingView(
             sentence: widget.sentence!,
             duration: recordingDuration,
+            maximumDuration: maximumRecordingDuration,
+            amplitude: currentAmplitude,
             onStop: _stopRecording,
             onCancel: _cancelRecording,
           )
@@ -490,7 +523,7 @@ class _PracticeContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHeader(title: 'Listen'),
+        SectionHeader(title: 'Listen'),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -570,18 +603,30 @@ class _RecordingView extends StatelessWidget {
   const _RecordingView({
     required this.sentence,
     required this.duration,
+    required this.maximumDuration,
+    required this.amplitude,
     required this.onStop,
     required this.onCancel,
   });
 
   final PracticeSentence sentence;
   final Duration duration;
+  final Duration maximumDuration;
+  final double amplitude;
   final VoidCallback onStop;
   final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
-    final seconds = duration.inSeconds.toString().padLeft(2, '0');
+    final elapsed = duration.inSeconds;
+    final minutes = elapsed ~/ 60;
+    final seconds = (elapsed % 60).toString().padLeft(2, '0');
+    final progress = maximumDuration.inMilliseconds == 0
+        ? 0.0
+        : (duration.inMilliseconds / maximumDuration.inMilliseconds).clamp(
+            0.0,
+            1.0,
+          );
     return Column(
       children: [
         AppCard(
@@ -598,37 +643,38 @@ class _RecordingView extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Semantics(
-          label: 'Recording duration 0 minutes $seconds seconds',
+          label: 'Recording duration $minutes minutes $seconds seconds',
           child: SizedBox.square(
             dimension: 194,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                const SizedBox.square(
+                SizedBox.square(
                   dimension: 194,
+                  // 실제 경과 비율을 그린다. 고정값을 쓰면 멈춘 것처럼 보인다.
                   child: CircularProgressIndicator(
-                    value: 0.38,
+                    value: progress,
                     strokeWidth: 13,
-                    backgroundColor: Color(0xFFE7EEF4),
-                    color: AppColors.primary,
+                    backgroundColor: const Color(0xFFE7EEF4),
+                    color: progress >= 1 ? context.palette.warning : context.palette.primary,
                   ),
                 ),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '0:$seconds',
-                      style: const TextStyle(
+                      '$minutes:$seconds',
+                      style: TextStyle(
                         fontSize: 40,
                         fontWeight: FontWeight.w900,
-                        color: AppColors.textPrimary,
+                        color: context.palette.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 5),
-                    const Text(
-                      '/ 10 sec',
+                    Text(
+                      '/ ${maximumDuration.inSeconds} sec',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: context.palette.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -639,12 +685,12 @@ class _RecordingView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        const _RecordingWaveform(),
+        _RecordingWaveform(amplitude: amplitude),
         const SizedBox(height: 17),
-        const Text(
+        Text(
           'Speak naturally. Stop when you finish the full sentence.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(color: context.palette.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 34),
         Row(
@@ -698,24 +744,24 @@ class _RecordingControl extends StatelessWidget {
                 height: primary ? 62 : 46,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: primary ? AppColors.primary : AppColors.card,
+                  color: primary ? context.palette.primary : context.palette.card,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: primary ? AppColors.blue200 : AppColors.border,
+                    color: primary ? context.palette.blue200 : context.palette.border,
                     width: primary ? 5 : 1,
                   ),
                 ),
                 child: Icon(
                   icon,
-                  color: primary ? AppColors.card : AppColors.textPrimary,
+                  color: primary ? context.palette.card : context.palette.textPrimary,
                   size: primary ? 24 : 20,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 label,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: context.palette.textPrimary,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ),
@@ -728,30 +774,62 @@ class _RecordingControl extends StatelessWidget {
   }
 }
 
+/// 마이크 입력 레벨을 막대 높이로 보여준다.
+///
+/// 고정 높이 막대는 마이크가 죽어 있어도 똑같이 보여서, 사용자가 녹음 실패를
+/// 평가 기회를 쓰고 결과를 기다린 뒤에야 알게 된다. 실제 레벨에 반응해야
+/// "지금 소리가 들어오고 있다"를 녹음 중에 확인할 수 있다.
 class _RecordingWaveform extends StatelessWidget {
-  const _RecordingWaveform();
+  const _RecordingWaveform({required this.amplitude});
+
+  /// 0.0(무음)~1.0(최대) 범위의 현재 입력 레벨이다.
+  final double amplitude;
+
+  static const _barCount = 9;
+  static const _minHeight = 6.0;
+  static const _maxHeight = 58.0;
 
   @override
   Widget build(BuildContext context) {
-    const heights = [18.0, 32.0, 48.0, 26.0, 40.0, 58.0, 34.0, 46.0, 24.0];
+    final level = amplitude.clamp(0.0, 1.0);
+    final isSilent = level <= 0.02;
     return Semantics(
-      label: 'Microphone is actively recording',
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          for (final height in heights)
-            Container(
-              width: 5,
-              height: height,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+      // 막대 자체에는 읽을 내용이 없으므로 이 묶음이 하나의 안내 노드가 되게 한다.
+      container: true,
+      label:
+          isSilent
+              ? 'No sound is being picked up'
+              : 'Microphone level ${(level * 100).round()} percent',
+      child: SizedBox(
+        height: _maxHeight,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (var index = 0; index < _barCount; index++)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                curve: Curves.easeOut,
+                width: 5,
+                height: _barHeight(index, level),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                decoration: BoxDecoration(
+                  color: isSilent ? context.palette.border : context.palette.primary,
+                  borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  /// 가운데 막대가 가장 크게 반응하도록 중심에서 멀어질수록 진폭을 줄인다.
+  double _barHeight(int index, double level) {
+    const center = (_barCount - 1) / 2;
+    final distance = (index - center).abs() / center;
+    final falloff = 1 - (distance * 0.65);
+    return _minHeight + (_maxHeight - _minHeight) * level * falloff;
   }
 }
 
@@ -775,7 +853,7 @@ class _SentenceComposerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      color: AppColors.blue50,
+      color: context.palette.blue50,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -801,7 +879,7 @@ class _SentenceComposerCard extends StatelessWidget {
           ),
           if (isLoading) ...[
             const SizedBox(height: AppSpacing.md),
-            const _SentencePreparationStatus(
+            _SentencePreparationStatus(
               icon: SizedBox.square(
                 dimension: 16,
                 child: CircularProgressIndicator(strokeWidth: 2),
@@ -814,13 +892,13 @@ class _SentenceComposerCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SentencePreparationStatus(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.error_outline,
                     size: 18,
-                    color: AppColors.error,
+                    color: context.palette.error,
                   ),
                   text: errorText!,
-                  textColor: AppColors.error,
+                  textColor: context.palette.error,
                 ),
                 Align(
                   alignment: Alignment.centerRight,
@@ -841,26 +919,26 @@ class _SentenceComposerCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
               decoration: BoxDecoration(
-                color: AppColors.card,
-                border: Border.all(color: AppColors.blue200),
+                color: context.palette.card,
+                border: Border.all(color: context.palette.blue200),
                 borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
               ),
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'Standard pronunciation',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: context.palette.textSecondary,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     preparedSentence!.pronunciation,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppColors.primaryDark,
+                    style: TextStyle(
+                      color: context.palette.primaryDark,
                       fontSize: 17,
                       fontWeight: FontWeight.w900,
                     ),
@@ -879,12 +957,14 @@ class _SentencePreparationStatus extends StatelessWidget {
   const _SentencePreparationStatus({
     required this.icon,
     required this.text,
-    this.textColor = AppColors.textSecondary,
+    this.textColor,
   });
 
   final Widget icon;
   final String text;
-  final Color textColor;
+
+  /// 지정하지 않으면 현재 테마의 보조 글자색을 쓴다.
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,33 @@
 # 작업 이력
 
+## 2026-08-04 - 화면 색 참조를 테마 기반으로 전환
+
+- 변경 파일: `home_screen.dart`, `practice_screen.dart`, `result_screen.dart`, `review_screen.dart`, `profile_screen.dart`, `auth_gate_screen.dart`
+- 내용: AppColors 상수 직접 참조를 context.palette로 바꿔 밝기에 따라 색이 따라오게 했다. BuildContext가 없는 CustomPainter에는 팔레트를 생성자로 주입했다.
+- 검증: `flutter analyze`, `flutter test` 83개 통과, 어두운 팔레트 8개 색 조합 WCAG AA 본문 기준 충족 확인
+- 리스크: 실제 기기의 다크 모드 렌더링과 이미지 가이드 대비는 수동 확인이 필요함
+
+## 2026-08-04 - 녹음 화면 피드백 실데이터 연결과 햅틱
+
+- 변경 파일: `practice_screen.dart`
+- 내용: 고정값 0.38이던 진행 링을 실제 경과 비율로, 정지 그림이던 파형을 마이크 레벨 반응형으로 바꿨다. 표시만 하고 지켜지지 않던 10초 상한을 실제 종료로 강제하고, 60초를 넘기면 깨지던 타이머 표기를 고쳤다. 녹음 시작·종료에 촉각 피드백을 추가했다.
+- 검증: `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 촉각 피드백과 실제 마이크 레벨은 시뮬레이터가 아닌 실기기 확인이 필요함
+
+## 2026-08-04 - Result 화면 중복 안내 제거
+
+- 변경 파일: `result_screen.dart`
+- 내용: 버튼처럼 보이는 요소에 대한 조작 안내 문장을 제거해 단어별 발음 영역이 먼저 보이게 했다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
+## 2026-08-04 - 상태 비교를 enum으로 교체
+
+- 변경 파일: `result_screen.dart`
+- 내용: 결과 화면의 점수 노출 판단을 ScoreStatus.isAvailable로 바꿨다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-04 - Practice Result·Review 단어 피드백 전환
 
 - 변경 파일: `result_screen.dart`, `review_screen.dart`, `WORK_LOG.md`
