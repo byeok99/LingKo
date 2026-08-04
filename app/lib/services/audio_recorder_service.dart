@@ -13,6 +13,13 @@ abstract class AudioRecorderService {
 
   Future<String> start();
 
+  /// 현재 입력 레벨을 0.0~1.0으로 정규화해 흘려보낸다.
+  ///
+  /// 화면이 "마이크가 실제로 소리를 받고 있다"를 보여줄 수 있어야 사용자가 녹음 실패를
+  /// 평가 기회를 쓰기 전에 알아차린다. dBFS 원값을 그대로 노출하면 화면이 플러그인 단위에
+  /// 결합되므로 서비스 경계에서 표시용 비율로 바꿔 전달한다.
+  Stream<double> amplitudeStream();
+
   Future<String?> stop();
 
   Future<void> cancel();
@@ -50,6 +57,24 @@ class RecordAudioRecorderService implements AudioRecorderService {
       path: path,
     );
     return path;
+  }
+
+  /// 조용한 방의 잡음이 파형을 흔들지 않도록 이 값보다 작은 입력은 0으로 본다.
+  static const _silenceFloorDb = -45.0;
+
+  @override
+  Stream<double> amplitudeStream() {
+    return _recorder
+        .onAmplitudeChanged(const Duration(milliseconds: 100))
+        .map((amplitude) {
+          // 플러그인은 dBFS를 주므로 0dB를 최대로 두고 무음 기준선까지를 0~1로 편다.
+          final current = amplitude.current;
+          if (!current.isFinite || current <= _silenceFloorDb) {
+            return 0.0;
+          }
+          final normalized = 1 - (current / _silenceFloorDb);
+          return normalized.clamp(0.0, 1.0);
+        });
   }
 
   @override
