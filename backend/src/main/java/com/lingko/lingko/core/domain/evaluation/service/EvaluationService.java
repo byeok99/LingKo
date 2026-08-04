@@ -1,6 +1,8 @@
 package com.lingko.lingko.core.domain.evaluation.service;
 
 import com.lingko.lingko.api.evaluation.dto.GuideCharacterResponse;
+import com.lingko.lingko.api.evaluation.dto.GuideStatus;
+import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
 import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeWordResultResponse;
@@ -139,7 +141,7 @@ public class EvaluationService {
                     .pronunciationText(character)
                     .phonemes(phonemes)
                     .guideType(guideType)
-                    .guideStatus("NONE".equals(guideType) ? "MISSING" : "AVAILABLE")
+                    .guideStatus("NONE".equals(guideType) ? GuideStatus.MISSING : GuideStatus.AVAILABLE)
                     .mouthGuideUrl(mouthGuideUrl)
                     .tongueGuideUrl(tongueGuideUrl)
                     .note("Focus on " + guideType.toLowerCase() + " placement")
@@ -176,7 +178,7 @@ public class EvaluationService {
                 .pronunciationText(character.getPronunciationText())
                 .phonemes(character.getPhonemes())
                 .guideType(guideType)
-                .guideStatus("NONE".equals(guideType) ? "MISSING" : "AVAILABLE")
+                .guideStatus("NONE".equals(guideType) ? GuideStatus.MISSING : GuideStatus.AVAILABLE)
                 .mouthGuideUrl(mouthGuideUrl)
                 .tongueGuideUrl(tongueGuideUrl)
                 .note(character.getNote())
@@ -424,7 +426,7 @@ public class EvaluationService {
                         .text(resolvedCharacter.getText())
                         .pronunciationText(resolvedCharacter.getPronunciationText())
                         .score(characterScore)
-                        .scoreStatus(characterScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
+                        .scoreStatus(characterScoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
                         .phonemes(resolvedCharacter.getPhonemes())
                         .guideType(resolvedCharacter.getGuideType())
                         .guideStatus(resolvedCharacter.getGuideStatus())
@@ -442,15 +444,15 @@ public class EvaluationService {
                 : List.of();
         List<PracticeWordResultResponse> words = buildWordResults(referenceText, characters, result);
         boolean wordScoresAvailable = words.stream()
-                .allMatch(word -> "AVAILABLE".equals(word.getScoreStatus()));
+                .allMatch(word -> word.getScoreStatus().isAvailable());
 
         return PracticeResultResponse.builder()
                 .overallScore(overallScore)
                 .gradeLabel(resolveGradeLabel(overallScore))
                 .summary(resolveSummary(overallScore, result.getRecognizedText()))
                 .recognizedText(result.getRecognizedText())
-                .characterScoreStatus(characterScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
-                .wordScoreStatus(wordScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
+                .characterScoreStatus(characterScoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
+                .wordScoreStatus(wordScoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
                 .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
                         .accuracy(toScore(result.getAccuracyScore()))
                         .fluency(toScore(result.getFluencyScore()))
@@ -497,7 +499,7 @@ public class EvaluationService {
                     .position(position)
                     .text(word)
                     .score(score)
-                    .scoreStatus(scoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
+                    .scoreStatus(scoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
                     .syllables(syllables)
                     .build());
             characterOffset += syllableCount;
@@ -516,7 +518,7 @@ public class EvaluationService {
                 .position(0)
                 .text(referenceText.trim())
                 .score(null)
-                .scoreStatus("UNAVAILABLE")
+                .scoreStatus(ScoreStatus.UNAVAILABLE)
                 .syllables(characters.stream().map(this::toGuideOnlySyllable).toList())
                 .build());
     }
@@ -528,7 +530,7 @@ public class EvaluationService {
                 .text(character.getText())
                 .pronunciationText(character.getPronunciationText())
                 .score(null)
-                .scoreStatus("UNAVAILABLE")
+                .scoreStatus(ScoreStatus.UNAVAILABLE)
                 .phonemes(character.getPhonemes())
                 .guideType(character.getGuideType())
                 .guideStatus(character.getGuideStatus())

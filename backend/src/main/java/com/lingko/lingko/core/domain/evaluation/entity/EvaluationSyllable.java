@@ -38,6 +38,12 @@ public class EvaluationSyllable {
     @JoinColumn(name = "syllable_char", nullable = false)
     private Syllable syllable;
 
+    /**
+     * 단어 단위 점수 도입 이후 음절은 guide-only 단위이므로 신규 기록에서는 항상 null이다.
+     *
+     * V15 이전 기록에는 숫자가 남아 있지만 한국어 음절 점수는 신뢰할 수 없다고 판단해
+     * 조회 계층에서 노출하지 않는다. 과거 데이터 호환을 위해 column만 nullable로 유지한다.
+     */
     @Column(name = "score")
     private Integer score;
 

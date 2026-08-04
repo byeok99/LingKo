@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - WordScore position 계약 주석
+
+- 변경 파일: `AssessmentResult.java`
+- 내용: position이 공백 기준 0-based 순서이며 도메인이 이 값으로 재검증한다는 계약을 남겼다.
+- 검증: `./gradlew compileJava test`, `./gradlew integrationTest`, `flutter analyze`, `flutter test` 74개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-04 - 공급자 독립 단어 점수 모델
 
 - 변경 파일: `AssessmentResult.java`, `WORK_LOG.md`

@@ -2,6 +2,7 @@
 // 선택 이유: 동적 JSON을 형식이 지정된 model로 변환해 잘못된 응답을 UI 경계 전에 차단한다.
 
 import '../utils/practice_sentence_normalizer.dart';
+import 'score_status.dart';
 
 // 화면에 표시할 학습 문장 하나를 표현하는 임시 데이터 모델입니다.
 // 나중에 백엔드 API가 붙으면 이 값들은 서버 응답 DTO와 매핑됩니다.
@@ -171,7 +172,9 @@ class CharacterResult {
     this.mouthGuideUrl,
     this.tongueGuideUrl,
     this.guideStatus,
-    this.scoreStatus = 'AVAILABLE',
+    // 기본값을 unavailable로 두어, scoreStatus를 지정하지 않고 만든 값이
+    // 신뢰할 수 없는 점수를 신뢰 가능한 것처럼 노출하는 fail-open을 막는다.
+    this.scoreStatus = ScoreStatus.unavailable,
   });
 
   factory CharacterResult.fromGuideJson(Map<String, Object?> json) {
@@ -183,7 +186,7 @@ class CharacterResult {
       mouthGuideUrl: _nullableStringValue(json['mouthGuideUrl']),
       tongueGuideUrl: _nullableStringValue(json['tongueGuideUrl']),
       guideStatus: _nullableStringValue(json['guideStatus']),
-      scoreStatus: 'UNAVAILABLE',
+      scoreStatus: ScoreStatus.unavailable,
     );
   }
 
@@ -196,7 +199,7 @@ class CharacterResult {
       mouthGuideUrl: _nullableStringValue(json['mouthGuideUrl']),
       tongueGuideUrl: _nullableStringValue(json['tongueGuideUrl']),
       guideStatus: _nullableStringValue(json['guideStatus']),
-      scoreStatus: _stringValue(json['scoreStatus'], fallback: 'UNAVAILABLE'),
+      scoreStatus: ScoreStatus.fromWire(json['scoreStatus']),
     );
   }
 
@@ -210,7 +213,7 @@ class CharacterResult {
       kind: 'NONE',
       mouthGuideUrl: _nullableStringValue(json['mouthGuideUrl']),
       tongueGuideUrl: _nullableStringValue(json['tongueGuideUrl']),
-      scoreStatus: rawScore is num ? 'AVAILABLE' : 'UNAVAILABLE',
+      scoreStatus: ScoreStatus.ofNullableScore(rawScore is num ? rawScore : null),
     );
   }
 
@@ -221,7 +224,7 @@ class CharacterResult {
   final String? mouthGuideUrl;
   final String? tongueGuideUrl;
   final String? guideStatus;
-  final String scoreStatus;
+  final ScoreStatus scoreStatus;
 }
 
 String _stringValue(Object? value, {String fallback = ''}) {

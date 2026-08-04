@@ -24,7 +24,10 @@ class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
   @override
   void didUpdateWidget(covariant WordSyllableExplorer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (selectedIndex >= widget.words.length || oldWidget.words != widget.words) {
+    // 새 평가 결과가 들어오면 이전 선택 위치가 다른 문장의 단어를 가리키게 되므로
+    // 목록이 교체되거나 길이가 줄면 첫 단어로 되돌려 범위 밖 접근을 원천 차단한다.
+    if (selectedIndex >= widget.words.length ||
+        oldWidget.words != widget.words) {
       selectedIndex = 0;
     }
   }
@@ -116,7 +119,7 @@ class _WordScoreButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scoreAvailable =
-        word.scoreStatus == 'AVAILABLE' && word.score != null;
+        word.scoreStatus.isAvailable && word.score != null;
     return Semantics(
       button: true,
       selected: selected,

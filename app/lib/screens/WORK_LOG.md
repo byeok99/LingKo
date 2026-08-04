@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 상태 비교를 enum으로 교체
+
+- 변경 파일: `result_screen.dart`
+- 내용: 결과 화면의 점수 노출 판단을 ScoreStatus.isAvailable로 바꿨다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-04 - Practice Result·Review 단어 피드백 전환
 
 - 변경 파일: `result_screen.dart`, `review_screen.dart`, `WORK_LOG.md`

@@ -1,5 +1,6 @@
 package com.lingko.lingko.core.domain.evaluation;
 
+import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
 import com.lingko.lingko.api.evaluation.dto.PracticeHistoryResponse;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationLog;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationSyllable;
@@ -88,7 +89,7 @@ class EvaluationHistoryServiceTest {
         assertThat(response.getItems().get(0).getWords()).singleElement().satisfies(word -> {
             assertThat(word.getText()).isEqualTo("맛있겠다");
             assertThat(word.getScore()).isEqualTo(86);
-            assertThat(word.getScoreStatus()).isEqualTo("AVAILABLE");
+            assertThat(word.getScoreStatus()).isEqualTo(ScoreStatus.AVAILABLE);
             assertThat(word.getSyllables()).hasSize(1);
             assertThat(word.getSyllables().get(0).getText()).isEqualTo("마");
             assertThat(word.getSyllables().get(0).getScore()).isNull();

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - next_refill_at nullable 의미 주석
+
+- 변경 파일: `DailyPracticeQuota.java`
+- 내용: null이 '충전 대기 없음'을 뜻한다는 상태값 계약을 필드 주석으로 명시했다.
+- 검증: `./gradlew compileJava test`, `./gradlew integrationTest`, `flutter analyze`, `flutter test` 74개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-07-26 - 동시 상태 전이 책임을 저장소로 이동
 
 - 변경 파일: `DailyPracticeQuota.java`, `WORK_LOG.md`

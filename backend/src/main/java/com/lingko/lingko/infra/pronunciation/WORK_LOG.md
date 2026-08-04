@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - all-or-nothing 파싱 계약 주석
+
+- 변경 파일: `AzurePronunciationResultParser.java`
+- 내용: 빈 목록이 '점수 없음'이 아니라 '이번 응답을 쓰지 말 것'이라는 뜻임을 method Javadoc에 남겼다.
+- 검증: `./gradlew compileJava test`, `./gradlew integrationTest`, `flutter analyze`, `flutter test` 74개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-04 - Azure 단어 점수 신뢰 검증
 
 - 변경 파일: `AzureSpeechEvaluator.java`, `AzurePronunciationResultParser.java`, `WORK_LOG.md`

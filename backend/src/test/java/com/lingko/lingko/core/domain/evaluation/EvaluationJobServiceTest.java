@@ -1,5 +1,6 @@
 package com.lingko.lingko.core.domain.evaluation;
 
+import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.api.evaluation.dto.EvaluationJobRequest;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
@@ -168,7 +169,7 @@ class EvaluationJobServiceTest {
                 .gradeLabel("좋음")
                 .summary("발음이 안정적입니다.")
                 .recognizedText("안녕하세요.")
-                .characterScoreStatus("AVAILABLE")
+                .characterScoreStatus(ScoreStatus.AVAILABLE)
                 .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
                         .accuracy(92)
                         .fluency(90)

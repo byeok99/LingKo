@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 현재 에너지 조회의 write lock 명시
+
+- 변경 파일: `DailyPracticeQuotaRepository.java`
+- 내용: 단순 조회 API도 자연 충전 계산 때문에 FOR UPDATE로 행을 잠근다는 사실을 query 주석에 남겼다.
+- 검증: `./gradlew compileJava test`, `./gradlew integrationTest`, `flutter analyze`, `flutter test` 74개 통과
+- 리스크: 조회 경로의 lock 경합은 부하 시험으로 별도 확인 필요
+
 ## 2026-07-29 - 탈퇴 사용자 쿼터 삭제
 
 - 변경 파일: `DailyPracticeQuotaRepository.java`, `WORK_LOG.md`

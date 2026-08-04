@@ -1,5 +1,6 @@
 package com.lingko.lingko.api.evaluation;
 
+import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
@@ -59,7 +60,7 @@ class EvaluationResultControllerTest {
                 .gradeLabel("Good")
                 .summary("Good pronunciation.")
                 .recognizedText("안녕하세요.")
-                .characterScoreStatus("UNAVAILABLE")
+                .characterScoreStatus(ScoreStatus.UNAVAILABLE)
                 .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
                         .accuracy(88)
                         .fluency(86)

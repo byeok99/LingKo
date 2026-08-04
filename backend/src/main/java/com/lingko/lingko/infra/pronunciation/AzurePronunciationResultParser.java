@@ -21,6 +21,13 @@ public class AzurePronunciationResultParser {
 
     private final ObjectMapper objectMapper;
 
+    /**
+     * 기준 문장과 완전히 정렬된 단어 점수만 반환하고, 하나라도 어긋나면 빈 목록을 반환한다.
+     *
+     * 부분 성공을 허용하면 어긋난 위치의 점수가 다른 단어에 붙어 사용자에게 잘못된 피드백이
+     * 노출되므로, 전부 신뢰하거나 전부 포기하는 all-or-nothing 계약을 선택했다. 빈 목록은
+     * 호출자에게 "점수 없음"이 아니라 "이번 응답의 단어 점수를 쓰지 말 것"을 의미한다.
+     */
     public List<AssessmentResult.WordScore> parseReliableWordScores(
             String rawJson,
             String referenceText

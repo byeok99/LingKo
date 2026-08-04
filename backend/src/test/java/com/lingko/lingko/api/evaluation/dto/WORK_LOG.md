@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - wire format 회귀 테스트 추가
+
+- 변경 파일: `ScoreStatusSerializationTest.java`
+- 내용: enum 전환 후에도 JSON이 기존 대문자 문자열 그대로 나가는지, 점수 상태와 가이드 상태가 독립적으로 직렬화되는지 고정했다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `PronunciationPrepareRequestTest.java`, `WORK_LOG.md`

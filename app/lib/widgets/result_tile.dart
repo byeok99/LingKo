@@ -15,7 +15,7 @@ class ResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final available = result.scoreStatus == 'AVAILABLE';
+    final available = result.scoreStatus.isAvailable;
     final tone = _toneFor(result);
     final label = _labelFor(result);
     final color = switch (tone) {
@@ -94,7 +94,7 @@ Color _softColorFor(StatusTone tone) {
 }
 
 StatusTone _toneFor(CharacterResult result) {
-  if (result.scoreStatus != 'AVAILABLE') {
+  if (!result.scoreStatus.isAvailable) {
     return StatusTone.neutral;
   }
   if (result.score >= 90) {
@@ -110,7 +110,7 @@ StatusTone _toneFor(CharacterResult result) {
 }
 
 String _labelFor(CharacterResult result) {
-  if (result.scoreStatus != 'AVAILABLE') {
+  if (!result.scoreStatus.isAvailable) {
     return 'No score';
   }
   if (result.score >= 90) {

@@ -21,10 +21,10 @@ public class GuideCharacterResponse {
     private String text;
     private String pronunciationText;
     private Integer score;
-    private String scoreStatus;
+    private ScoreStatus scoreStatus;
     private List<String> phonemes;
     private String guideType;
-    private String guideStatus;
+    private GuideStatus guideStatus;
     private String mouthGuideUrl;
     private String tongueGuideUrl;
     private String note;

@@ -66,6 +66,12 @@ public class DailyPracticeQuota {
     @Builder.Default
     private int rewardedReserved = 0;
 
+    /**
+     * 다음 무료 1회가 자연 충전되는 서버 시각이며 null은 충전 대기가 없는 상태다.
+     *
+     * 최대치 보유나 예약 취소로 대기가 사라지면 null로 되돌려, 클라이언트가 남은 시간을
+     * 계산할 수 있는 경우와 카운트다운을 감출 경우를 상태값 하나로 구분하게 한다.
+     */
     @Column(name = "next_refill_at")
     private Instant nextRefillAt;
 
