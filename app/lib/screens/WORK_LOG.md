@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 화면 문자열 ARB 전환
+
+- 변경 파일: `home_screen.dart`, `practice_screen.dart`, `result_screen.dart`, `review_screen.dart`, `profile_screen.dart`, `auth_gate_screen.dart`
+- 내용: 하드코딩 영어 문자열을 AppL10n 참조로 바꾸고, 값이 끼어드는 문장은 placeholder로 정의했다. 연습 기록 개수는 복수형 규칙이 언어마다 다르므로 ICU plural로 옮겼다.
+- 검증: `flutter analyze`, `flutter test` 86개 통과
+- 리스크: 한국어·일본어 번역이 아직 비어 있어 두 언어를 골라도 영어로 표시됨
+
 ## 2026-08-04 - 화면 색 참조를 테마 기반으로 전환
 
 - 변경 파일: `home_screen.dart`, `practice_screen.dart`, `result_screen.dart`, `review_screen.dart`, `profile_screen.dart`, `auth_gate_screen.dart`

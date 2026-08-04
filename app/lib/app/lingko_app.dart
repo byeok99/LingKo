@@ -6,6 +6,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'app_palette.dart';
 
@@ -36,7 +37,7 @@ import 'app_theme.dart';
 // 여기서는 앱 이름, 테마 색상, 기본 글자 스타일, 첫 화면을 정합니다.
 /// Ling Ko App 앱 전역 구성 책임을 제공한다.
 /// 기능별 화면이 전역 테마·최상위 화면 전환 결정을 중복하지 않도록 중앙화했다.
-class LingKoApp extends StatelessWidget {
+class LingKoApp extends StatefulWidget {
   const LingKoApp({
     super.key,
     this.pronunciationApi,
@@ -48,7 +49,14 @@ class LingKoApp extends StatelessWidget {
     this.audioRecorderService,
     this.sentenceSpeechService,
     this.onRequestPracticeReward,
+    this.localeOverride,
   });
+
+  /// 지정하면 기기 로케일 대신 이 언어로 UI를 그린다.
+  ///
+  /// 사용자가 Profile에서 고른 표시 언어를 반영하기 위한 통로다. null이면 기기 설정을
+  /// 따르므로, 별도 설정을 한 적 없는 사용자는 시스템 언어를 그대로 쓰게 된다.
+  final Locale? localeOverride;
 
   final PronunciationApi? pronunciationApi;
   final SentenceApi? sentenceApi;
@@ -61,6 +69,31 @@ class LingKoApp extends StatelessWidget {
   final Future<void> Function()? onRequestPracticeReward;
 
   @override
+  State<LingKoApp> createState() => _LingKoAppState();
+}
+
+/// 표시 언어 선택을 앱 전역 로케일로 반영한다.
+///
+/// MaterialApp의 locale은 그 위에서만 바꿀 수 있어, Profile 화면의 선택을 여기까지
+/// 끌어올렸다. 앱을 다시 시작하지 않고도 언어가 즉시 바뀌게 하기 위한 구조다.
+class _LingKoAppState extends State<LingKoApp> {
+  Locale? displayLocale;
+
+  @override
+  void initState() {
+    super.initState();
+    displayLocale = widget.localeOverride;
+  }
+
+  void _applyDisplayLanguage(String languageCode) {
+    final next = AppL10n.supportedLocales.any(
+      (locale) => locale.languageCode == languageCode,
+    );
+    // 아직 지원하지 않는 언어를 고른 경우 기기 설정으로 되돌려 빈 화면을 만들지 않는다.
+    setState(() => displayLocale = next ? Locale(languageCode) : null);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'LingKo',
@@ -70,19 +103,23 @@ class LingKoApp extends StatelessWidget {
       // 기기 설정을 따른다. 앱 안에 별도 토글을 두면 시스템 다크 모드를 쓰는 사용자가
       // 두 곳을 관리해야 하므로, 앱 내 선택지가 실제로 필요해질 때까지는 시스템에 맡긴다.
       themeMode: ThemeMode.system,
+      locale: displayLocale,
+      localizationsDelegates: AppL10n.localizationsDelegates,
+      supportedLocales: AppL10n.supportedLocales,
       // LingKoShell은 하단 탭과 현재 선택된 화면 상태를 관리합니다.
       home: LingKoShell(
-        pronunciationApi: pronunciationApi ?? DartIoPronunciationApi(),
-        sentenceApi: sentenceApi ?? DartIoSentenceApi(),
-        evaluationApi: evaluationApi ?? DartIoEvaluationApi(),
-        userPreferencesApi: userPreferencesApi ?? DartIoUserPreferencesApi(),
-        practiceQuotaApi: practiceQuotaApi ?? DartIoPracticeQuotaApi(),
-        authService: authService ?? DefaultAppAuthService(),
+        pronunciationApi: widget.pronunciationApi ?? DartIoPronunciationApi(),
+        sentenceApi: widget.sentenceApi ?? DartIoSentenceApi(),
+        evaluationApi: widget.evaluationApi ?? DartIoEvaluationApi(),
+        userPreferencesApi: widget.userPreferencesApi ?? DartIoUserPreferencesApi(),
+        practiceQuotaApi: widget.practiceQuotaApi ?? DartIoPracticeQuotaApi(),
+        authService: widget.authService ?? DefaultAppAuthService(),
         audioRecorderService:
-            audioRecorderService ?? RecordAudioRecorderService(),
+            widget.audioRecorderService ?? RecordAudioRecorderService(),
         sentenceSpeechService:
-            sentenceSpeechService ?? FlutterTtsSentenceSpeechService(),
-        onRequestPracticeReward: onRequestPracticeReward,
+            widget.sentenceSpeechService ?? FlutterTtsSentenceSpeechService(),
+        onRequestPracticeReward: widget.onRequestPracticeReward,
+        onDisplayLanguageChanged: _applyDisplayLanguage,
       ),
     );
   }
@@ -101,6 +138,7 @@ class LingKoShell extends StatefulWidget {
     required this.authService,
     required this.audioRecorderService,
     required this.sentenceSpeechService,
+    required this.onDisplayLanguageChanged,
     this.onRequestPracticeReward,
   });
 
@@ -112,6 +150,7 @@ class LingKoShell extends StatefulWidget {
   final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
   final SentenceSpeechService sentenceSpeechService;
+  final ValueChanged<String> onDisplayLanguageChanged;
   final Future<void> Function()? onRequestPracticeReward;
 
   @override
@@ -651,6 +690,7 @@ class _LingKoShellState extends State<LingKoShell> {
         session: session!,
         onSessionChanged: handleSessionChanged,
         onOpenReview: () => setState(() => selectedTab = 2),
+        onDisplayLanguageChanged: widget.onDisplayLanguageChanged,
       ),
     ];
 

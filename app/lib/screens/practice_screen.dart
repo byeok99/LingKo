@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 
 import '../app/app_theme.dart';
@@ -523,7 +524,7 @@ class _PracticeContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(title: 'Listen'),
+        SectionHeader(title: AppL10n.of(context).listen),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -531,7 +532,7 @@ class _PracticeContent extends StatelessWidget {
               child: ActionButton(
                 key: const ValueKey('play-sentence-normal'),
                 icon: Icons.play_arrow,
-                label: 'Normal',
+                label: AppL10n.of(context).normal,
                 onPressed: onPlayNormal,
               ),
             ),
@@ -540,7 +541,7 @@ class _PracticeContent extends StatelessWidget {
               child: ActionButton(
                 key: const ValueKey('play-sentence-slow'),
                 icon: Icons.slow_motion_video,
-                label: 'Slow',
+                label: AppL10n.of(context).slow,
                 onPressed: onPlaySlow,
               ),
             ),
@@ -550,7 +551,7 @@ class _PracticeContent extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           StatePanel(
             icon: Icons.volume_off_outlined,
-            title: 'Audio playback needs attention',
+            title: AppL10n.of(context).audioPlaybackNeedsAttention,
             message: speechErrorText!,
           ),
         ],
@@ -571,14 +572,14 @@ class _PracticeContent extends StatelessWidget {
         const SizedBox(height: 13),
         if (hasRecording) ...[
           PrimaryButton(
-            label: 'Retry with this recording',
+            label: AppL10n.of(context).retryWithThisRecording,
             icon: Icons.refresh,
             isLoading: isSubmitting,
             onPressed: onRetryRecording,
           ),
           const SizedBox(height: AppSpacing.sm),
           SecondaryButton(
-            label: 'Record again',
+            label: AppL10n.of(context).recordAgain,
             icon: Icons.mic_none,
             onPressed: isSubmitting ? null : onDiscardRecording,
           ),
@@ -643,7 +644,7 @@ class _RecordingView extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Semantics(
-          label: 'Recording duration $minutes minutes $seconds seconds',
+          label: AppL10n.of(context).recordingDurationLabel(minutes, seconds),
           child: SizedBox.square(
             dimension: 194,
             child: Stack(
@@ -672,7 +673,7 @@ class _RecordingView extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      '/ ${maximumDuration.inSeconds} sec',
+                      AppL10n.of(context).recordingLimitLabel(maximumDuration.inSeconds),
                       style: TextStyle(
                         color: context.palette.textSecondary,
                         fontSize: 12,
@@ -688,7 +689,7 @@ class _RecordingView extends StatelessWidget {
         _RecordingWaveform(amplitude: amplitude),
         const SizedBox(height: 17),
         Text(
-          'Speak naturally. Stop when you finish the full sentence.',
+          AppL10n.of(context).speakNaturallyStopWhenYouFinish,
           textAlign: TextAlign.center,
           style: TextStyle(color: context.palette.textSecondary, fontSize: 12),
         ),
@@ -697,12 +698,12 @@ class _RecordingView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _RecordingControl(
-              label: 'Cancel recording',
+              label: AppL10n.of(context).cancelRecording,
               icon: Icons.close,
               onTap: onCancel,
             ),
             _RecordingControl(
-              label: 'Stop and analyze',
+              label: AppL10n.of(context).stopAndAnalyze,
               icon: Icons.stop_rounded,
               primary: true,
               onTap: onStop,
@@ -799,7 +800,7 @@ class _RecordingWaveform extends StatelessWidget {
       label:
           isSilent
               ? 'No sound is being picked up'
-              : 'Microphone level ${(level * 100).round()} percent',
+              : AppL10n.of(context).microphoneLevelPercent((level * 100).round()),
       child: SizedBox(
         height: _maxHeight,
         child: Row(
@@ -858,7 +859,7 @@ class _SentenceComposerCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Practice sentence',
+            AppL10n.of(context).practiceSentence,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: AppSpacing.md),
@@ -872,8 +873,8 @@ class _SentenceComposerCard extends StatelessWidget {
             maxLines: 4,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => focusNode.unfocus(),
-            decoration: const InputDecoration(
-              hintText: 'Type a Korean sentence',
+            decoration: InputDecoration(
+              hintText: AppL10n.of(context).typeAKoreanSentence,
               prefixIcon: Icon(Icons.edit_outlined),
             ),
           ),
@@ -905,7 +906,7 @@ class _SentenceComposerCard extends StatelessWidget {
                   child: TextButton.icon(
                     onPressed: onRetry,
                     icon: const Icon(Icons.refresh, size: 17),
-                    label: const Text('Retry'),
+                    label: Text(AppL10n.of(context).retry),
                   ),
                 ),
               ],
@@ -926,7 +927,7 @@ class _SentenceComposerCard extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Standard pronunciation',
+                    AppL10n.of(context).standardPronunciation,
                     style: TextStyle(
                       color: context.palette.textSecondary,
                       fontSize: 10,

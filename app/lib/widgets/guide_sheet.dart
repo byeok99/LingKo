@@ -4,6 +4,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:video_player/video_player.dart';
 
 import '../app/app_theme.dart';
@@ -56,7 +57,7 @@ class _GuideSheetState extends State<GuideSheet> {
   Widget build(BuildContext context) {
     // 서버가 제공한 실제 입·혀 미디어를 우선하고, URL이 없을 때만 로컬 도식으로 대체한다.
     // 어떤 형식이 왔는지는 시스템 사정이므로 사용자에게 설명하지 않는다.
-    final guideAssets = _guideAssets(widget.result);
+    final guideAssets = _guideAssets(context, widget.result);
     final safeIndex =
         selectedIndex < guideAssets.length ? selectedIndex : 0;
 
@@ -220,15 +221,16 @@ bool _hasMeaningfulNote(String note) {
   ).hasMatch(trimmed);
 }
 
-List<_GuideAsset> _guideAssets(CharacterResult result) {
+/// 탭 라벨은 화면에 보이므로 현재 로케일의 문자열이 필요하다.
+List<_GuideAsset> _guideAssets(BuildContext context, CharacterResult result) {
   final assets = <_GuideAsset>[];
 
   if (_hasGuideUrl(result.mouthGuideUrl)) {
-    assets.add(_GuideAsset(label: 'Mouth guide', url: result.mouthGuideUrl!));
+    assets.add(_GuideAsset(label: AppL10n.of(context).mouthGuide, url: result.mouthGuideUrl!));
   }
 
   if (_hasGuideUrl(result.tongueGuideUrl)) {
-    assets.add(_GuideAsset(label: 'Tongue guide', url: result.tongueGuideUrl!));
+    assets.add(_GuideAsset(label: AppL10n.of(context).tongueGuide, url: result.tongueGuideUrl!));
   }
 
   return assets;
@@ -425,7 +427,7 @@ class _VideoGuideAssetState extends State<_VideoGuideAsset> {
             children: [
               Semantics(
                 button: true,
-                label: 'Playback speed ${_speedLabel()}',
+                label: AppL10n.of(context).playbackSpeedLabel(_speedLabel()),
                 child: Material(
                   color: context.palette.primary,
                   shape: const StadiumBorder(),
@@ -480,7 +482,7 @@ class _UnavailableGuideAsset extends StatelessWidget {
       alignment: Alignment.center,
       color: context.palette.card,
       child: Text(
-        'Guide unavailable',
+        AppL10n.of(context).guideUnavailable,
         style: Theme.of(context).textTheme.bodyMedium,
       ),
     );

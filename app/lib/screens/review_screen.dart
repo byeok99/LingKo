@@ -1,6 +1,7 @@
 // 파일 의도: 실제 평가 기록을 독립 탭에서 조회하고 문장 전체 재연습을 연결한다.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 
 import '../api/evaluation_api.dart';
@@ -83,35 +84,35 @@ class _ReviewScreenState extends State<ReviewScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
         children: [
-          const TopBar(title: 'Review'),
+          TopBar(title: AppL10n.of(context).review),
           const SizedBox(height: 10),
           if (isLoading)
-            const StatePanel(
+            StatePanel(
               icon: Icons.history,
-              title: 'Loading practice history',
+              title: AppL10n.of(context).loadingPracticeHistory,
               isLoading: true,
             )
           else if (errorText != null)
             StatePanel(
               icon: Icons.wifi_off_outlined,
-              title: 'History is unavailable',
+              title: AppL10n.of(context).historyIsUnavailable,
               message: errorText,
               actionLabel: 'Retry',
               onAction: loadHistory,
             )
           else if (items.isEmpty)
-            const StatePanel(
+            StatePanel(
               icon: Icons.history_toggle_off,
-              title: 'No practice history yet',
-              message: 'Complete a pronunciation evaluation to see it here.',
+              title: AppL10n.of(context).noPracticeHistoryYet,
+              message: AppL10n.of(context).completeAPronunciationEvaluationToSee,
             )
           else ...[
             _ReviewSummary(history: history!),
             const SizedBox(height: 24),
             SectionHeader(
-              title: 'Recent practice',
+              title: AppL10n.of(context).recentPractice,
               trailing: Text(
-                '${items.length} ${items.length == 1 ? 'session' : 'sessions'}',
+                AppL10n.of(context).practiceCount(items.length),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
@@ -127,7 +128,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             ),
             const SizedBox(height: AppSpacing.xs),
             SecondaryButton(
-              label: 'Practice again',
+              label: AppL10n.of(context).practiceAgain,
               icon: Icons.replay,
               onPressed:
                   () =>
@@ -161,7 +162,7 @@ class _ReviewSummary extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Recent scores · Last ${scores.length}',
+                  AppL10n.of(context).recentScoresLast(scores.length),
                   style: TextStyle(
                     color: context.palette.textSecondary,
                     fontSize: 12,
@@ -173,7 +174,7 @@ class _ReviewSummary extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Latest score',
+                    AppL10n.of(context).latestScore,
                     style: TextStyle(
                       color: context.palette.textSecondary,
                       fontSize: 10,
@@ -269,7 +270,7 @@ class _ReviewHistoryCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'SCORE',
+                        AppL10n.of(context).score,
                         style: TextStyle(
                           color: context.palette.textSecondary,
                           fontSize: 8,
@@ -537,7 +538,7 @@ class _HistoryDetailSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Standard pronunciation',
+                    AppL10n.of(context).standardPronunciation,
                     style: TextStyle(
                       color: context.palette.textSecondary,
                       fontSize: 11,
@@ -555,11 +556,11 @@ class _HistoryDetailSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(item.summary, style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: AppSpacing.xxl),
-            SectionHeader(title: 'Score details'),
+            SectionHeader(title: AppL10n.of(context).scoreDetails),
             const SizedBox(height: AppSpacing.md),
             _HistoryScoreBreakdown(breakdown: item.scoreBreakdown),
             const SizedBox(height: AppSpacing.xxl),
-            SectionHeader(title: 'Pronunciation by word'),
+            SectionHeader(title: AppL10n.of(context).pronunciationByWord),
             const SizedBox(height: AppSpacing.md),
             WordSyllableExplorer(words: item.words),
           ],
@@ -580,21 +581,21 @@ class _HistoryScoreBreakdown extends StatelessWidget {
       children: [
         Expanded(
           child: _HistoryScoreMetric(
-            label: 'Accuracy',
+            label: AppL10n.of(context).accuracy,
             score: breakdown.accuracy,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: _HistoryScoreMetric(
-            label: 'Fluency',
+            label: AppL10n.of(context).fluency,
             score: breakdown.fluency,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: _HistoryScoreMetric(
-            label: 'Completeness',
+            label: AppL10n.of(context).completeness,
             score: breakdown.completeness,
           ),
         ),

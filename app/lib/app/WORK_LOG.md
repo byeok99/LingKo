@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 표시 언어 설정을 실제 UI 언어로 연결
+
+- 변경 파일: `lingko_app.dart`
+- 내용: MaterialApp의 locale은 그 위에서만 바꿀 수 있어 LingKoApp을 StatefulWidget으로 바꾸고 표시 언어 상태를 끌어올렸다. Profile에서 저장이 성공한 뒤에만 로케일을 바꿔, 실패했는데 화면 언어만 바뀌는 상태를 막는다. 지원하지 않는 언어를 고르면 기기 설정으로 되돌린다.
+- 검증: `flutter analyze`, `flutter test` 86개 통과
+- 리스크: 한국어·일본어 번역이 아직 비어 있어 두 언어를 골라도 영어로 표시됨
+
 ## 2026-08-04 - 다크 모드 지원
 
 - 변경 파일: `app_palette.dart`, `app_theme.dart`, `lingko_app.dart`

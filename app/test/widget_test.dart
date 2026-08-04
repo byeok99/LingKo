@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:lingko_app/api/evaluation_api.dart';
 import 'package:lingko_app/models/score_status.dart';
@@ -28,6 +29,17 @@ import 'package:lingko_app/services/sentence_speech_service.dart';
 import 'package:lingko_app/widgets/guide_sheet.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
 import 'package:lingko_app/widgets/shared_widgets.dart';
+
+/// 위젯 단위 테스트도 앱과 같은 로컬라이제이션 경계를 갖도록 감싼다.
+///
+/// 화면 문자열이 AppL10n을 통과하므로 delegate 없이 pump하면 실제 앱과 다른 환경이 된다.
+MaterialApp _localizedApp(Widget child) {
+  return MaterialApp(
+    localizationsDelegates: AppL10n.localizationsDelegates,
+    supportedLocales: AppL10n.supportedLocales,
+    home: Scaffold(body: child),
+  );
+}
 
 /// 테스트에서 Fake Pronunciation Api 의존성을 결정적으로 대체한다.
 /// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
@@ -2021,7 +2033,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: ResultTile(result: character))),
+      _localizedApp(ResultTile(result: character)),
     );
 
     expect(find.text('55'), findsOneWidget);
@@ -2049,7 +2061,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: ResultTile(result: character))),
+      _localizedApp(ResultTile(result: character)),
     );
     await tester.tap(find.byType(ResultTile));
     await tester.pumpAndSettle();
@@ -2075,7 +2087,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
+      _localizedApp(GuideSheet(result: character)),
     );
 
     // 작은 화면에서 세부를 확인할 수 있도록 한 번에 하나만 전체 폭으로 그린다.
@@ -2105,7 +2117,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
+      _localizedApp(GuideSheet(result: character)),
     );
 
     // 선택지가 하나뿐이면 전환 UI는 공간만 차지한다.
@@ -2126,7 +2138,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
+      _localizedApp(GuideSheet(result: character)),
     );
 
     expect(
@@ -2183,6 +2195,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppL10n.localizationsDelegates,
+        supportedLocales: AppL10n.supportedLocales,
         home: Scaffold(
           body: ResultScreen(
             sentence: sentence,
@@ -2272,6 +2286,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppL10n.localizationsDelegates,
+        supportedLocales: AppL10n.supportedLocales,
         home: Scaffold(
           body: ResultScreen(
             sentence: sentence,
@@ -2447,6 +2463,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppL10n.localizationsDelegates,
+        supportedLocales: AppL10n.supportedLocales,
         home: Scaffold(
           body: ResultScreen(
             sentence: sentence,
@@ -2544,6 +2562,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppL10n.localizationsDelegates,
+        supportedLocales: AppL10n.supportedLocales,
         home: MediaQuery(
           data: const MediaQueryData(
             size: Size(320, 640),

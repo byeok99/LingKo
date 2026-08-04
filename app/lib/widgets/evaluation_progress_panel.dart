@@ -1,6 +1,7 @@
 // 파일 의도: 업로드부터 결과 준비까지 실제 평가 작업 단계를 일관되게 표시한다.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../app/app_theme.dart';
 import '../app/app_palette.dart';
@@ -115,7 +116,7 @@ class EvaluationProgressPanel extends StatelessWidget {
             onRetry != null) ...[
           const SizedBox(height: AppSpacing.lg),
           PrimaryButton(
-            label: 'Retry with this recording',
+            label: AppL10n.of(context).retryWithThisRecording,
             icon: Icons.refresh,
             onPressed: onRetry,
           ),
@@ -129,7 +130,7 @@ class EvaluationProgressPanel extends StatelessWidget {
               Icon(Icons.schedule_outlined, color: context.palette.primary, size: 20),
               SizedBox(width: 10),
               Expanded(
-                child: Text('You can leave and come back. Nothing is lost.'),
+                child: Text(AppL10n.of(context).youCanLeaveAndComeBack),
               ),
             ],
           ),
@@ -137,7 +138,7 @@ class EvaluationProgressPanel extends StatelessWidget {
         if (onContinueInBackground != null) ...[
           const SizedBox(height: 14),
           SecondaryButton(
-            label: 'Continue in background',
+            label: AppL10n.of(context).continueInBackground,
             icon: Icons.arrow_back_rounded,
             onPressed: onContinueInBackground,
           ),

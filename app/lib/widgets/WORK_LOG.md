@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 위젯 문자열 ARB 전환
+
+- 변경 파일: `guide_sheet.dart`, `word_syllable_explorer.dart`, `score_breakdown.dart`, `shared_widgets.dart`, `progress_panel.dart`, `result_tile.dart`, `evaluation_progress_panel.dart`
+- 내용: 표시 문자열과 접근성 라벨을 AppL10n으로 옮겼다. 가이드 탭 라벨이 화면에 보이므로 자산 목록 생성 함수가 BuildContext를 받도록 했다.
+- 검증: `flutter analyze`, `flutter test` 86개 통과
+- 리스크: 한국어·일본어 번역이 아직 비어 있어 두 언어를 골라도 영어로 표시됨
+
 ## 2026-08-04 - 위젯 색 참조를 테마 기반으로 전환
 
 - 변경 파일: `shared_widgets.dart`, `guide_sheet.dart`, `guide_painter.dart`, `result_tile.dart`, `progress_panel.dart`, `evaluation_progress_panel.dart`, `score_breakdown.dart`, `sentence_card.dart`, `settings_row.dart`, `word_syllable_explorer.dart`

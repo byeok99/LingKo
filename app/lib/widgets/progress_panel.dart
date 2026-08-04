@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../app/app_theme.dart';
 import '../app/app_palette.dart';
@@ -160,7 +161,7 @@ class _ProgressPanelState extends State<ProgressPanel> {
               ),
               if (!isMax)
                 Tooltip(
-                  message: 'Watch an ad for one practice',
+                  message: AppL10n.of(context).watchAnAdForOnePractice,
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(

@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../app/app_theme.dart';
 import '../app/app_palette.dart';
@@ -35,13 +36,13 @@ class ResultScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
       children: [
-        const TopBar(title: 'Result', centered: true),
+        TopBar(title: AppL10n.of(context).result, centered: true),
         const SizedBox(height: 10),
         if (currentResult == null)
           StatePanel(
             icon: Icons.info_outline,
-            title: 'Result data is unavailable',
-            message: 'Return to Practice and evaluate the sentence again.',
+            title: AppL10n.of(context).resultDataIsUnavailable,
+            message: AppL10n.of(context).returnToPracticeAndEvaluateThe,
             actionLabel: 'Try This Sentence Again',
             onAction: onTryAgain,
           )
@@ -72,14 +73,14 @@ class ResultScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          SectionHeader(title: 'Pronunciation guide'),
+          SectionHeader(title: AppL10n.of(context).pronunciationGuide),
           const SizedBox(height: 10),
           _PronunciationGuideCard(
             sentence: sentence,
             sentenceSpeechService: sentenceSpeechService,
           ),
           const SizedBox(height: 24),
-          SectionHeader(title: 'Score breakdown'),
+          SectionHeader(title: AppL10n.of(context).scoreBreakdown),
           const SizedBox(height: 10),
           ScoreBreakdown(
             accuracy: currentResult.scoreBreakdown.accuracy,
@@ -87,12 +88,12 @@ class ResultScreen extends StatelessWidget {
             completeness: currentResult.scoreBreakdown.completeness,
           ),
           const SizedBox(height: 24),
-          SectionHeader(title: 'Pronunciation by word'),
+          SectionHeader(title: AppL10n.of(context).pronunciationByWord),
           const SizedBox(height: 10),
           WordSyllableExplorer(words: currentResult.words),
           if (currentResult.weakCharacters.isNotEmpty) ...[
             const SizedBox(height: 24),
-            SectionHeader(title: 'Detailed feedback'),
+            SectionHeader(title: AppL10n.of(context).detailedFeedback),
             const SizedBox(height: 10),
             for (
               var index = 0;
@@ -107,14 +108,14 @@ class ResultScreen extends StatelessWidget {
           const SizedBox(height: 24),
           PrimaryButton(
             key: const ValueKey('retry-whole-sentence'),
-            label: 'Try This Sentence Again',
+            label: AppL10n.of(context).tryThisSentenceAgain,
             icon: Icons.refresh,
             onPressed: onTryAgain,
           ),
           if (onOpenReview != null) ...[
             const SizedBox(height: AppSpacing.sm),
             SecondaryButton(
-              label: 'Open Review',
+              label: AppL10n.of(context).openReview2,
               icon: Icons.history,
               onPressed: onOpenReview,
             ),
@@ -180,7 +181,7 @@ class _PronunciationGuideCardState extends State<_PronunciationGuideCard> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Sentence',
+            AppL10n.of(context).sentence,
             style: TextStyle(
               color: context.palette.textSecondary,
               fontSize: 11,
@@ -209,7 +210,7 @@ class _PronunciationGuideCardState extends State<_PronunciationGuideCard> {
               ),
               SizedBox(width: 6),
               Text(
-                'Standard pronunciation',
+                AppL10n.of(context).standardPronunciation,
                 style: TextStyle(
                   color: context.palette.primaryDark,
                   fontSize: 12,
@@ -236,7 +237,7 @@ class _PronunciationGuideCardState extends State<_PronunciationGuideCard> {
                 child: ActionButton(
                   key: const ValueKey('result-play-pronunciation-normal'),
                   icon: Icons.play_arrow,
-                  label: 'Normal',
+                  label: AppL10n.of(context).normal,
                   onPressed: () => _speak(SentenceSpeechRate.normal),
                 ),
               ),
@@ -245,7 +246,7 @@ class _PronunciationGuideCardState extends State<_PronunciationGuideCard> {
                 child: ActionButton(
                   key: const ValueKey('result-play-pronunciation-slow'),
                   icon: Icons.slow_motion_video,
-                  label: 'Slow',
+                  label: AppL10n.of(context).slow,
                   onPressed: () => _speak(SentenceSpeechRate.slow),
                 ),
               ),

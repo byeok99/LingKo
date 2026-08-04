@@ -1,6 +1,7 @@
 // 파일 의도: 평가 API가 제공하는 점수 항목만 진행 막대로 표시한다.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../app/app_theme.dart';
 import '../app/app_palette.dart';
@@ -48,7 +49,7 @@ class _ScoreProgressRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalizedScore = score.clamp(0, 100);
     return Semantics(
-      label: '$label $normalizedScore out of 100',
+      label: AppL10n.of(context).scoreOutOfHundred(label, normalizedScore),
       child: Row(
         children: [
           SizedBox(

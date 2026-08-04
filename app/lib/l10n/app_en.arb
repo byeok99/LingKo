@@ -1,0 +1,180 @@
+{
+  "@@locale": "en",
+  "unableToAddAPracticeRight": "Unable to add a practice right now.",
+  "uploadingYourRecording": "Uploading your recording.",
+  "creatingYourEvaluationJob": "Creating your evaluation job.",
+  "pronunciationAnalysisIsRunningYouCan": "Pronunciation analysis is running. You can use another tab.",
+  "preparingYourFeedback": "Preparing your feedback.",
+  "yourPronunciationResultIsReady": "Your pronunciation result is ready.",
+  "theEvaluationDidNotFinishRetry": "The evaluation did not finish. Retry with the saved recording when available.",
+  "home": "Home",
+  "practice": "Practice",
+  "review": "Review",
+  "profile": "Profile",
+  "buildClearKoreanPronunciationOneSentence": "Build clear Korean pronunciation, one sentence at a time.",
+  "practiceBySituation": "Practice by situation",
+  "loadingRecommendedSentences": "Loading recommended sentences",
+  "findingPracticeSentencesForYou": "Finding practice sentences for you.",
+  "recommendationsAreUnavailable": "Recommendations are unavailable",
+  "checkYourConnectionAndTryAgain": "Check your connection and try again.",
+  "noRecommendedSentencesYet": "No recommended sentences yet",
+  "youCanStillEnterYourOwn": "You can still enter your own Korean sentence.",
+  "chooseAnotherSituationOrPracticeYour": "Choose another situation or practice your own sentence.",
+  "practiceMyOwnSentence": "Practice my own sentence",
+  "loadingPracticeEnergy": "Loading practice energy",
+  "retryPracticeEnergy": "Retry practice energy",
+  "practiceEnergyUnavailable": "Practice energy unavailable",
+  "listen": "Listen",
+  "normal": "Normal",
+  "slow": "Slow",
+  "audioPlaybackNeedsAttention": "Audio playback needs attention",
+  "retryWithThisRecording": "Retry with this recording",
+  "recordAgain": "Record again",
+  "speakNaturallyStopWhenYouFinish": "Speak naturally. Stop when you finish the full sentence.",
+  "cancelRecording": "Cancel recording",
+  "stopAndAnalyze": "Stop and analyze",
+  "practiceSentence": "Practice sentence",
+  "typeAKoreanSentence": "Type a Korean sentence",
+  "retry": "Retry",
+  "standardPronunciation": "Standard pronunciation",
+  "deleteYourAccount": "Delete your account?",
+  "yourProfileSessionsPracticeHistoryQuota": "Your profile, sessions, practice history, quota, and uploaded audio will be deleted.",
+  "cancel": "Cancel",
+  "deleteAccount": "Delete account",
+  "openReview": "Open review",
+  "languagePreferences": "Language preferences",
+  "loadingSettings": "Loading settings",
+  "settingsSaved": "Settings saved",
+  "displayLanguage": "Display language",
+  "nativeLanguage": "Native language",
+  "savingSettings": "Saving settings",
+  "signOut": "Sign out",
+  "result": "Result",
+  "resultDataIsUnavailable": "Result data is unavailable",
+  "returnToPracticeAndEvaluateThe": "Return to Practice and evaluate the sentence again.",
+  "pronunciationGuide": "Pronunciation guide",
+  "scoreBreakdown": "Score breakdown",
+  "pronunciationByWord": "Pronunciation by word",
+  "detailedFeedback": "Detailed feedback",
+  "tryThisSentenceAgain": "Try This Sentence Again",
+  "openReview2": "Open Review",
+  "sentence": "Sentence",
+  "loadingPracticeHistory": "Loading practice history",
+  "historyIsUnavailable": "History is unavailable",
+  "noPracticeHistoryYet": "No practice history yet",
+  "completeAPronunciationEvaluationToSee": "Complete a pronunciation evaluation to see it here.",
+  "recentPractice": "Recent practice",
+  "practiceAgain": "Practice again",
+  "latestScore": "Latest score",
+  "score": "SCORE",
+  "scoreDetails": "Score details",
+  "accuracy": "Accuracy",
+  "fluency": "Fluency",
+  "completeness": "Completeness",
+  "youCanLeaveAndComeBack": "You can leave and come back. Nothing is lost.",
+  "continueInBackground": "Continue in background",
+  "mouthGuide": "Mouth guide",
+  "tongueGuide": "Tongue guide",
+  "guideUnavailable": "Guide unavailable",
+  "watchAnAdForOnePractice": "Watch an ad for one practice",
+  "wordFeedbackIsUnavailable": "Word feedback is unavailable",
+  "evaluateThisSentenceAgainToReceive": "Evaluate this sentence again to receive word-level feedback.",
+  "noSyllableGuideIsAvailable": "No syllable guide is available.",
+  "noSentencesInCategory": "No {category} sentences yet",
+  "@noSentencesInCategory": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "recordingDurationLabel": "Recording duration {minutes} minutes {seconds} seconds",
+  "@recordingDurationLabel": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "recordingLimitLabel": "/ {seconds} sec",
+  "@recordingLimitLabel": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "recentScoresLast": "Recent scores · Last {count}",
+  "@recentScoresLast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playbackSpeedLabel": "Playback speed {speed}",
+  "@playbackSpeedLabel": {
+    "placeholders": {
+      "speed": {
+        "type": "String"
+      }
+    }
+  },
+  "microphoneLevelPercent": "Microphone level {percent} percent",
+  "@microphoneLevelPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "practiceEnergyOfLimit": "Practice energy {remaining} of {limit}",
+  "@practiceEnergyOfLimit": {
+    "placeholders": {
+      "remaining": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "openGuideForSyllable": "{syllable}. Open pronunciation guide.",
+  "@openGuideForSyllable": {
+    "placeholders": {
+      "syllable": {
+        "type": "String"
+      }
+    }
+  },
+  "scoreOutOfHundred": "{label} {score} out of 100",
+  "@scoreOutOfHundred": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "overallScoreOutOfHundred": "Overall score {score} out of 100",
+  "@overallScoreOutOfHundred": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "practiceCount": "{count, plural, =1{{count} session} other{{count} sessions}}",
+  "@practiceCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}

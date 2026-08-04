@@ -1,6 +1,7 @@
 // 파일 의도: 신뢰 가능한 단어 점수와 guide-only 음절 탐색을 하나의 일관된 UI로 제공한다.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../app/app_theme.dart';
 import '../app/app_palette.dart';
@@ -36,10 +37,10 @@ class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
   @override
   Widget build(BuildContext context) {
     if (widget.words.isEmpty) {
-      return const StatePanel(
+      return StatePanel(
         icon: Icons.space_bar_outlined,
-        title: 'Word feedback is unavailable',
-        message: 'Evaluate this sentence again to receive word-level feedback.',
+        title: AppL10n.of(context).wordFeedbackIsUnavailable,
+        message: AppL10n.of(context).evaluateThisSentenceAgainToReceive,
       );
     }
 
@@ -73,7 +74,7 @@ class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
               ),
               const SizedBox(height: AppSpacing.md),
               if (selectedWord.syllables.isEmpty)
-                const Text('No syllable guide is available.')
+                Text(AppL10n.of(context).noSyllableGuideIsAvailable)
               else
                 Wrap(
                   spacing: AppSpacing.sm,
@@ -175,7 +176,7 @@ class _SyllableGuideButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: '${syllable.character}. Open pronunciation guide.',
+      label: AppL10n.of(context).openGuideForSyllable(syllable.character),
       child: Material(
         color: context.palette.card,
         shape: RoundedRectangleBorder(

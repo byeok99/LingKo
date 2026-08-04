@@ -1,6 +1,7 @@
 // 파일 의도: 계정 정보와 학습 환경 설정만 관리하고 기록은 Review로 분리한다.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../api/user_preferences_api.dart';
 import '../app/app_theme.dart';
@@ -19,6 +20,7 @@ class ProfileScreen extends StatefulWidget {
     required this.session,
     required this.onSessionChanged,
     required this.onOpenReview,
+    required this.onDisplayLanguageChanged,
   });
 
   final UserPreferencesApi userPreferencesApi;
@@ -26,6 +28,9 @@ class ProfileScreen extends StatefulWidget {
   final AuthSession session;
   final ValueChanged<AuthSession?> onSessionChanged;
   final VoidCallback onOpenReview;
+
+  /// 표시 언어가 저장되면 앱 전체 로케일을 바꾸도록 상위에 알린다.
+  final ValueChanged<String> onDisplayLanguageChanged;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -93,6 +98,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           preferences = saved;
           savedMessage = 'Settings saved.';
         });
+        // 저장이 성공한 뒤에만 화면 언어를 바꿔, 실패했는데 UI만 바뀌는 상태를 막는다.
+        widget.onDisplayLanguageChanged(saved.displayLanguage);
       }
     } on AuthSessionExpiredException {
       widget.onSessionChanged(null);
@@ -122,18 +129,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Delete your account?'),
-            content: const Text(
-              'Your profile, sessions, practice history, quota, and uploaded audio will be deleted.',
+            title: Text(AppL10n.of(context).deleteYourAccount),
+            content: Text(
+              AppL10n.of(context).yourProfileSessionsPracticeHistoryQuota,
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: Text(AppL10n.of(context).cancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Delete account'),
+                child: Text(AppL10n.of(context).deleteAccount),
               ),
             ],
           ),
@@ -191,9 +198,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
       children: [
         TopBar(
-          title: 'Profile',
+          title: AppL10n.of(context).profile,
           trailing: IconButton(
-            tooltip: 'Open review',
+            tooltip: AppL10n.of(context).openReview,
             onPressed: widget.onOpenReview,
             icon: const Icon(Icons.history_rounded, size: 21),
           ),
@@ -201,12 +208,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 10),
         _AccountCard(session: widget.session),
         const SizedBox(height: 24),
-        SectionHeader(title: 'Language preferences'),
+        SectionHeader(title: AppL10n.of(context).languagePreferences),
         const SizedBox(height: 10),
         if (isLoading)
-          const StatePanel(
+          StatePanel(
             icon: Icons.settings_outlined,
-            title: 'Loading settings',
+            title: AppL10n.of(context).loadingSettings,
             isLoading: true,
           )
         else ...[
@@ -220,8 +227,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: AppSpacing.md),
           ],
           if (savedMessage != null) ...[
-            const StatusBadge(
-              label: 'Settings saved',
+            StatusBadge(
+              label: AppL10n.of(context).settingsSaved,
               tone: StatusTone.success,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -231,12 +238,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               children: [
                 SettingsRow(
-                  label: 'Display language',
+                  label: AppL10n.of(context).displayLanguage,
                   value: languageLabel(current.displayLanguage),
                   onTap: isSaving ? null : () => selectLanguage(display: true),
                 ),
                 SettingsRow(
-                  label: 'Native language',
+                  label: AppL10n.of(context).nativeLanguage,
                   value: languageLabel(current.nativeLanguage),
                   onTap: isSaving ? null : () => selectLanguage(display: false),
                 ),
@@ -245,7 +252,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           if (isSaving) ...[
             const SizedBox(height: AppSpacing.md),
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox.square(
@@ -253,7 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 SizedBox(width: AppSpacing.sm),
-                Text('Saving settings'),
+                Text(AppL10n.of(context).savingSettings),
               ],
             ),
           ],
@@ -270,7 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: isDeletingAccount ? null : signOut,
             icon: Icon(Icons.logout, color: context.palette.error),
             label: Text(
-              'Sign out',
+              AppL10n.of(context).signOut,
               style: TextStyle(color: context.palette.error),
             ),
           ),

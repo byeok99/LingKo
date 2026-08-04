@@ -1,6 +1,7 @@
 // 파일 의도: LingKo의 공통 정보 계층, 버튼, 카드, 상태 표현을 제공한다.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../app/app_theme.dart';
 import '../app/app_palette.dart';
@@ -303,7 +304,7 @@ class ScoreRing extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalized = score.clamp(0, 100) / 100;
     return Semantics(
-      label: 'Overall score $score out of 100',
+      label: AppL10n.of(context).overallScoreOutOfHundred(score),
       child: SizedBox.square(
         dimension: size,
         child: Stack(

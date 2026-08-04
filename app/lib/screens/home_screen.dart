@@ -1,6 +1,7 @@
 // 파일 의도: 오늘 가능한 실제 연습 행동과 추천 문장을 한 화면에 정리한다.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../app/app_theme.dart';
 import '../app/app_palette.dart';
@@ -171,28 +172,28 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
           const SizedBox(height: 17),
-          SectionHeader(title: 'Practice by situation'),
+          SectionHeader(title: AppL10n.of(context).practiceBySituation),
           const SizedBox(height: 10),
           if (widget.isLoading)
-            const StatePanel(
+            StatePanel(
               icon: Icons.menu_book_outlined,
-              title: 'Loading recommended sentences',
-              message: 'Finding practice sentences for you.',
+              title: AppL10n.of(context).loadingRecommendedSentences,
+              message: AppL10n.of(context).findingPracticeSentencesForYou,
               isLoading: true,
             )
           else if (widget.errorText != null)
             StatePanel(
               icon: Icons.wifi_off_outlined,
-              title: 'Recommendations are unavailable',
-              message: 'Check your connection and try again.',
+              title: AppL10n.of(context).recommendationsAreUnavailable,
+              message: AppL10n.of(context).checkYourConnectionAndTryAgain,
               actionLabel: 'Retry',
               onAction: widget.onRetry,
             )
           else if (widget.sentences.isEmpty)
             StatePanel(
               icon: Icons.inbox_outlined,
-              title: 'No recommended sentences yet',
-              message: 'You can still enter your own Korean sentence.',
+              title: AppL10n.of(context).noRecommendedSentencesYet,
+              message: AppL10n.of(context).youCanStillEnterYourOwn,
               actionLabel: 'Open Practice',
               onAction: widget.onOpenCustomPractice,
             )
@@ -249,8 +250,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (categorySentences.isEmpty)
           StatePanel(
             icon: Icons.inbox_outlined,
-            title: 'No ${selectedCategory.label} sentences yet',
-            message: 'Choose another situation or practice your own sentence.',
+            title: AppL10n.of(context).noSentencesInCategory(selectedCategory.label),
+            message: AppL10n.of(context).chooseAnotherSituationOrPracticeYour,
           )
         else
           AppCard(
@@ -280,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         const SizedBox(height: AppSpacing.sm),
         SecondaryButton(
-          label: 'Practice my own sentence',
+          label: AppL10n.of(context).practiceMyOwnSentence,
           icon: Icons.edit_outlined,
           onPressed: widget.onOpenCustomPractice,
         ),
@@ -308,7 +309,7 @@ class _QuotaSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Semantics(
-        label: 'Loading practice energy',
+        label: AppL10n.of(context).loadingPracticeEnergy,
         child: const SizedBox(
           height: 40,
           child: Center(
@@ -332,7 +333,7 @@ class _QuotaSection extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: IconButton.filledTonal(
               onPressed: onRetry,
-              tooltip: 'Retry practice energy',
+              tooltip: AppL10n.of(context).retryPracticeEnergy,
               style: IconButton.styleFrom(
                 minimumSize: const Size.square(32),
                 maximumSize: const Size.square(32),
@@ -348,7 +349,7 @@ class _QuotaSection extends StatelessWidget {
     final current = quota;
     if (current == null) {
       return Semantics(
-        label: 'Practice energy unavailable',
+        label: AppL10n.of(context).practiceEnergyUnavailable,
         child: const SizedBox(height: 40),
       );
     }
