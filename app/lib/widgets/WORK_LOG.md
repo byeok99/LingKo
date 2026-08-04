@@ -1,5 +1,61 @@
 # 작업 이력
 
+## 2026-08-04 - 단어·음절 탐색 공용 위젯
+
+- 변경 파일: `word_syllable_explorer.dart`, `WORK_LOG.md`
+- 내용: 단어 점수 chip, 선택 상태, 점수 없는 음절 guide 버튼을 Result와 Review가 공유하도록 구현했다.
+- 검증: 단어 전환·가이드 진입 widget test 통과
+- 리스크: 없음
+
+## 2026-08-03 - ProgressPanel 우측 정렬 프레임 명시
+
+- 변경 파일: `progress_panel.dart`, `WORK_LOG.md`
+- 내용: 166px 투명 프레임 안에서 실제 capsule을 오른쪽에 붙이고 capsule 자체의 8px padding과 내용 기반 폭을 분리했다.
+- 검증: 정렬 프레임·capsule 우측 좌표 포함 전체 Flutter test 72개 통과
+- 리스크: 없음
+
+## 2026-08-03 - 에너지 캡슐 내부 여백 조정
+
+- 변경 파일: `progress_panel.dart`, `WORK_LOG.md`
+- 내용: 가변 폭은 유지하면서 테두리와 내용 사이 좌우 padding을 6px에서 8px로 늘렸다.
+- 검증: MAX trailing inset 포함 전체 Flutter test 72개 통과
+- 리스크: 없음
+
+## 2026-08-03 - MAX 상태 우측 빈 공간 제거
+
+- 변경 파일: `progress_panel.dart`, `WORK_LOG.md`
+- 내용: 고정 폭을 유발하던 Expanded를 제거해 `+`가 없는 MAX capsule이 실제 내용 너비만 사용한다.
+- 검증: MAX 축소 및 충전 중 callback 포함 전체 Flutter test 통과
+- 리스크: 없음
+
+## 2026-08-03 - 에너지 횟수 공백 제거
+
+- 변경 파일: `progress_panel.dart`, `WORK_LOG.md`
+- 내용: 현재/최대 횟수를 `5/5`처럼 slash 양옆 공백 없이 표시한다.
+- 검증: 표시 test 포함 전체 Flutter test 72개 통과
+- 리스크: 없음
+
+## 2026-08-03 - 에너지 캡슐 시각 밀도 개선
+
+- 변경 파일: `progress_panel.dart`, `WORK_LOG.md`
+- 내용: 40px 높이, 흰 카드 표면, 얇은 테두리와 soft blue icon으로 기존 UI 결에 맞췄다.
+- 검증: countdown·광고 callback 포함 전체 Flutter test 통과
+- 리스크: compact 요구로 터치 영역은 40px이며 전역 48px 권장값보다 작음
+
+## 2026-08-03 - 48px 에너지 캡슐 재복원
+
+- 변경 파일: `progress_panel.dart`, `WORK_LOG.md`
+- 내용: 전체 폭 68px 디자인을 취소하고 직전의 202px·48px compact capsule 수치로 되돌렸다.
+- 검증: 대상 및 전체 Flutter test 통과
+- 리스크: 실제 기기 시각 확인 필요
+
+## 2026-08-03 - 에너지 캡슐 크기 디자인 롤백
+
+- 변경 파일: `progress_panel.dart`, `WORK_LOG.md`
+- 내용: timer·MAX·광고 callback은 유지하고 아이콘, 숫자, 버튼과 capsule 높이를 이전의 넓은 형태로 복원했다.
+- 검증: 에너지 widget test와 전체 Flutter test 통과
+- 리스크: 실제 기기 시각 확인 필요
+
 ## 2026-07-30 - 평가 단계·가이드 설명 롤백
 
 - 변경 파일: `evaluation_progress_panel.dart`, `guide_sheet.dart`, `WORK_LOG.md`
@@ -56,3 +112,9 @@
 - 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
 - 검증: 파일 생성 여부 확인
 - 리스크: 없음
+## 2026-08-03 - 마이크 에너지 캡슐 구현
+
+- 변경 파일: `progress_panel.dart`
+- 내용: 현재/최대 횟수, 서버 기반 카운트다운 또는 MAX, 조건부 광고 버튼을 표시한다.
+- 검증: 카운트다운·충전 만료·광고 콜백 widget test 통과
+- 리스크: 광고 callback은 외부 연동 전까지 비활성

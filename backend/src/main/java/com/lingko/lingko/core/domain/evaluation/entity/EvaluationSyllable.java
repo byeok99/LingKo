@@ -38,11 +38,15 @@ public class EvaluationSyllable {
     @JoinColumn(name = "syllable_char", nullable = false)
     private Syllable syllable;
 
-    @Column(name = "score", nullable = false)
+    @Column(name = "score")
     private Integer score;
 
     @Column(name = "position_no", nullable = false)
     private Integer positionNo;
+
+    /** 신규 기록의 음절을 상위 단어 위치에 연결하며 과거 기록은 nullable로 호환한다. */
+    @Column(name = "word_position")
+    private Integer wordPosition;
 
     @Column(name = "feedback", length = 500)
     private String feedback;

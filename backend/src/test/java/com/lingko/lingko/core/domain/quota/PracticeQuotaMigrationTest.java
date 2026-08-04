@@ -13,7 +13,7 @@ import java.sql.ResultSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 일일 쿼터 migration이 예약 lifecycle에 필요한 컬럼을 실제 스키마에 추가하는지 검증한다.
+ * 연습 에너지 migration이 예약 lifecycle과 시간 충전에 필요한 컬럼을 실제 스키마에 추가하는지 검증한다.
  */
 class PracticeQuotaMigrationTest {
 
@@ -29,6 +29,25 @@ class PracticeQuotaMigrationTest {
 
             assertColumnDefault(connection, "free_reserved", "0");
             assertColumnDefault(connection, "rewarded_reserved", "0");
+        }
+    }
+
+    @Test
+    @DisplayName("시간 충전 migration은 다음 자연 충전 시각을 추가한다")
+    void addsNextRefillAtColumn() throws Exception {
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:h2:mem:practice_energy_migration;MODE=MySQL;DATABASE_TO_UPPER=false"
+        )) {
+            runMigration(connection, "V1__baseline_schema.sql");
+            runMigration(connection, "V5__add_daily_practice_quota.sql");
+            runMigration(connection, "V7__add_practice_quota_reservations.sql");
+            runMigration(connection, "V14__add_hourly_practice_refill.sql");
+
+            try (ResultSet columns = connection.getMetaData()
+                    .getColumns(null, null, "daily_practice_quota", "next_refill_at")) {
+                assertThat(columns.next()).as("column next_refill_at exists").isTrue();
+                assertThat(columns.getInt("NULLABLE")).isEqualTo(1);
+            }
         }
     }
 

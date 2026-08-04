@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 평가 단어 응답 계약
+
+- 변경 파일: `PracticeResultResponse.java`, `PracticeHistoryItemResponse.java`, `PracticeWordResultResponse.java`, `PracticeHistoryWordResponse.java`, `WORK_LOG.md`
+- 내용: 단어 점수와 하위 guide-only 음절을 Practice 결과와 Review 기록에 제공하는 DTO 계층을 추가했다.
+- 검증: 백엔드 전체 단위 테스트 통과
+- 리스크: 기존 client는 추가 JSON field를 무시해야 함
+
 ## 2026-07-27 - 평가 업로드·작업 DTO 추가
 
 - 변경 파일: `EvaluationUploadRequest.java`, `EvaluationUploadResponse.java`, `EvaluationJobRequest.java`, `EvaluationJobResponse.java`, `WORK_LOG.md`

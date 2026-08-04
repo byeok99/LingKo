@@ -22,9 +22,11 @@ public class PracticeResultResponse {
     private String summary;
     private String recognizedText;
     private String characterScoreStatus;
+    private String wordScoreStatus;
     private ScoreBreakdownResponse scoreBreakdown;
     private List<GuideCharacterResponse> weakCharacters;
     private List<GuideCharacterResponse> characters;
+    private List<PracticeWordResultResponse> words;
 
     @Getter
     @NoArgsConstructor

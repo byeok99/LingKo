@@ -3,6 +3,7 @@ package com.lingko.lingko.core.domain.evaluation;
 import com.lingko.lingko.api.evaluation.dto.PracticeHistoryResponse;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationLog;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationSyllable;
+import com.lingko.lingko.core.domain.evaluation.entity.EvaluationWord;
 import com.lingko.lingko.core.domain.evaluation.entity.Syllable;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationLogRepository;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationHistoryService;
@@ -57,10 +58,16 @@ class EvaluationHistoryServiceTest {
                 .feedback("Older feedback")
                 .build());
         EvaluationLog newer = evaluationLog(user, 91, "맛있겠다.");
+        newer.addWord(EvaluationWord.builder()
+                .positionNo(0)
+                .wordText("맛있겠다")
+                .score(86)
+                .build());
         newer.addSyllable(EvaluationSyllable.builder()
                 .syllable(syllable)
                 .positionNo(0)
-                .score(91)
+                .wordPosition(0)
+                .score(null)
                 .feedback("Stable vowel shape")
                 .mouthGuideUrl("https://example.com/mouth/ma.png")
                 .build());
@@ -78,12 +85,25 @@ class EvaluationHistoryServiceTest {
         assertThat(response.getItems().get(0).getOverallScore()).isEqualTo(91);
         assertThat(response.getItems().get(0).getScoreBreakdown().getAccuracy()).isEqualTo(92);
         assertThat(response.getItems().get(0).getCharacters()).hasSize(1);
+        assertThat(response.getItems().get(0).getWords()).singleElement().satisfies(word -> {
+            assertThat(word.getText()).isEqualTo("맛있겠다");
+            assertThat(word.getScore()).isEqualTo(86);
+            assertThat(word.getScoreStatus()).isEqualTo("AVAILABLE");
+            assertThat(word.getSyllables()).hasSize(1);
+            assertThat(word.getSyllables().get(0).getText()).isEqualTo("마");
+            assertThat(word.getSyllables().get(0).getScore()).isNull();
+        });
         assertThat(response.getPage()).isZero();
         assertThat(response.getSize()).isEqualTo(1);
         assertThat(response.getTotalItems()).isEqualTo(2);
         assertThat(response.getTotalPages()).isEqualTo(2);
         assertThat(response.isHasNext()).isTrue();
         assertThat(response.getBestScore()).isEqualTo(91);
+
+        PracticeHistoryResponse includingLegacy = historyService.findHistory(user.getUserIdx(), 0, 2);
+        assertThat(includingLegacy.getItems().get(1).getWords()).singleElement().satisfies(word ->
+                assertThat(word.getSyllables()).extracting("score").containsOnlyNulls()
+        );
     }
 
     private User persistUser(String socialId) {

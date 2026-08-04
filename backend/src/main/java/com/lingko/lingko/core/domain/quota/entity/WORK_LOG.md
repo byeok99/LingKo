@@ -28,3 +28,9 @@
 - 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
 - 검증: 파일 생성 여부 확인
 - 리스크: 없음
+## 2026-08-03 - 다음 자연 충전 시각 저장
+
+- 변경 파일: `DailyPracticeQuota.java`
+- 내용: 기존 테이블 호환성을 유지하며 nullable `nextRefillAt` 상태를 추가했다.
+- 검증: migration 및 service test 통과
+- 리스크: 실제 MySQL migration 적용 확인 필요

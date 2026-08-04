@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 공급자 독립 단어 점수 모델
+
+- 변경 파일: `AssessmentResult.java`, `WORK_LOG.md`
+- 내용: 기준 문장과 검증된 공급자 단어 점수를 내부 평가 결과에 추가했다.
+- 검증: `EvaluationServiceResultTest`, parser test 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `AssessmentResult.java`, `GuideGenerationJobStatus.java`, `VideoType.java`, `WORK_LOG.md`

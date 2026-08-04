@@ -1,154 +1,210 @@
-// 파일 의도: 실제 일일 연습 할당량을 시각적으로 요약한다.
+// 파일 의도: 서버 기준 발음 평가 에너지를 가로형 capsule과 countdown으로 표시한다.
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
-import 'shared_widgets.dart';
 
-class ProgressPanel extends StatelessWidget {
+/// 현재·최대 평가 기회와 다음 자연 충전까지의 시간을 compact capsule로 제공한다.
+class ProgressPanel extends StatefulWidget {
   const ProgressPanel({
     super.key,
     required this.remaining,
     required this.limit,
-    this.resetLabel,
+    required this.timeUntilNextRefill,
+    required this.onRefillDue,
+    this.onRequestAdReward,
   });
 
   final int remaining;
   final int limit;
-  final String? resetLabel;
+  final Duration? timeUntilNextRefill;
+  final VoidCallback onRefillDue;
+  final Future<void> Function()? onRequestAdReward;
+
+  @override
+  State<ProgressPanel> createState() => _ProgressPanelState();
+}
+
+class _ProgressPanelState extends State<ProgressPanel> {
+  Timer? _timer;
+  Duration? _remainingTime;
+  bool _reportedRefillDue = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _synchronizeCountdown();
+  }
+
+  @override
+  void didUpdateWidget(covariant ProgressPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.remaining != widget.remaining ||
+        oldWidget.limit != widget.limit ||
+        oldWidget.timeUntilNextRefill != widget.timeUntilNextRefill) {
+      _synchronizeCountdown();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _synchronizeCountdown() {
+    _timer?.cancel();
+    _reportedRefillDue = false;
+    _remainingTime = widget.timeUntilNextRefill;
+    if (widget.remaining >= widget.limit || _remainingTime == null) {
+      return;
+    }
+    if (_remainingTime! <= Duration.zero) {
+      scheduleMicrotask(_reportRefillDue);
+      return;
+    }
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final current = _remainingTime;
+      if (!mounted || current == null) {
+        return;
+      }
+      final next = current - const Duration(seconds: 1);
+      setState(() {
+        _remainingTime = next.isNegative ? Duration.zero : next;
+      });
+      if (next <= Duration.zero) {
+        _timer?.cancel();
+        _reportRefillDue();
+      }
+    });
+  }
+
+  void _reportRefillDue() {
+    if (!mounted || _reportedRefillDue) {
+      return;
+    }
+    _reportedRefillDue = true;
+    widget.onRefillDue();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final safeLimit = limit <= 0 ? 1 : limit;
-    final used = (safeLimit - remaining).clamp(0, safeLimit);
-    final progress = used / safeLimit;
-    return Column(
-      children: [
-        AppCard(
-          child: Row(
-            children: [
-              SizedBox.square(
-                dimension: 82,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: progress,
-                      strokeWidth: 8,
-                      backgroundColor: const Color(0xFFE7EEF4),
-                      color: AppColors.primary,
-                    ),
-                    Text(
-                      '${(progress * 100).round()}%',
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Today's practice",
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$used / $safeLimit used',
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 9),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppSizes.pillRadius),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 7,
-                        backgroundColor: const Color(0xFFE7EEF4),
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    if (resetLabel != null) ...[
-                      const SizedBox(height: 7),
-                      Text(
-                        resetLabel!,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
+    final safeLimit = widget.limit <= 0 ? 1 : widget.limit;
+    final safeRemaining = widget.remaining.clamp(0, safeLimit);
+    final isMax = safeRemaining >= safeLimit;
+
+    return Align(
+      key: const ValueKey('practice-energy-alignment-frame'),
+      alignment: Alignment.centerRight,
+      child: Semantics(
+        label:
+            isMax
+                ? 'Practice energy $safeRemaining of $safeLimit, maximum'
+                : 'Practice energy $safeRemaining of $safeLimit, ${_countdownLabel()} until refill',
+        container: true,
+        child: Container(
+          key: const ValueKey('practice-energy-capsule'),
+          constraints: const BoxConstraints(minHeight: 40),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+            border: Border.all(color: AppColors.border),
           ),
-        ),
-        const SizedBox(height: 11),
-        AppCard(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 42,
-                height: 42,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
                   color: AppColors.softBlue,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+                  shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.mic_none_rounded,
+                  Icons.mic_rounded,
                   color: AppColors.primaryDark,
-                  size: 21,
+                  size: 17,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Remaining today',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
+              const SizedBox(width: 10),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$safeRemaining/$safeLimit',
+                    maxLines: 1,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 17,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isMax ? 'MAX' : _countdownLabel(),
+                    style: const TextStyle(
+                      color: AppColors.primaryDark,
+                      fontSize: 13,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ],
+              ),
+              if (!isMax)
+                Tooltip(
+                  message: 'Watch an ad for one practice',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      key: const ValueKey('practice-energy-ad-button'),
+                      onTap: widget.onRequestAdReward,
+                      borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+                      child: SizedBox.square(
+                        dimension: 40,
+                        child: Center(
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: const BoxDecoration(
+                              color: AppColors.softBlue,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.add_rounded,
+                              color:
+                                  widget.onRequestAdReward == null
+                                      ? AppColors.textSecondary
+                                      : AppColors.primaryDark,
+                              size: 18,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      remaining == 1
-                          ? '1 practice left today'
-                          : '$remaining practices left today',
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textPrimary,
-                size: 20,
-              ),
             ],
           ),
         ),
-      ],
+      ),
     );
+  }
+
+  String _countdownLabel() {
+    final remaining = _remainingTime;
+    if (remaining == null) {
+      return '--:--';
+    }
+    final totalSeconds = remaining.inSeconds.clamp(0, 359999);
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }

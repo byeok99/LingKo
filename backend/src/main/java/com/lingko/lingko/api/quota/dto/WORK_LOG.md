@@ -14,3 +14,9 @@
 - 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
 - 검증: 파일 생성 여부 확인
 - 리스크: 없음
+## 2026-08-03 - 시간 충전 응답 계약 추가
+
+- 변경 파일: `PracticeQuotaResponse.java`
+- 내용: `nextRefillAt`, `serverTime`을 추가하고 자정 `resetAt`을 제거했다.
+- 검증: controller 및 service test 통과
+- 리스크: 구버전 앱의 추가 필드 무시 여부 확인 필요

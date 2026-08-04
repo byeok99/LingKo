@@ -12,15 +12,18 @@ class PracticeResult {
     required this.summary,
     this.recognizedText = '',
     this.characterScoreStatus = 'UNAVAILABLE',
+    this.wordScoreStatus = 'UNAVAILABLE',
     required this.scoreBreakdown,
     required this.weakCharacters,
     required this.characters,
+    this.words = const [],
   });
 
   factory PracticeResult.fromJson(Map<String, Object?> json) {
     final scoreBreakdownJson = json['scoreBreakdown'];
     final weakCharactersJson = json['weakCharacters'];
     final charactersJson = json['characters'];
+    final wordsJson = json['words'];
 
     return PracticeResult(
       overallScore: _intValue(json['overallScore']),
@@ -29,6 +32,10 @@ class PracticeResult {
       recognizedText: _stringValue(json['recognizedText']),
       characterScoreStatus: _stringValue(
         json['characterScoreStatus'],
+        fallback: 'UNAVAILABLE',
+      ),
+      wordScoreStatus: _stringValue(
+        json['wordScoreStatus'],
         fallback: 'UNAVAILABLE',
       ),
       scoreBreakdown:
@@ -41,6 +48,7 @@ class PracticeResult {
               ),
       weakCharacters: _charactersFromJson(weakCharactersJson),
       characters: _charactersFromJson(charactersJson),
+      words: _wordsFromJson(wordsJson, history: false),
     );
   }
 
@@ -49,9 +57,63 @@ class PracticeResult {
   final String summary;
   final String recognizedText;
   final String characterScoreStatus;
+  final String wordScoreStatus;
   final PracticeScoreBreakdown scoreBreakdown;
   final List<CharacterResult> weakCharacters;
   final List<CharacterResult> characters;
+  final List<PracticeWordResult> words;
+}
+
+/// 공급자가 신뢰할 수 있게 제공한 단어 점수와 guide-only 음절 목록을 묶는다.
+class PracticeWordResult {
+  const PracticeWordResult({
+    required this.position,
+    required this.text,
+    this.score,
+    this.scoreStatus = 'UNAVAILABLE',
+    required this.syllables,
+  });
+
+  factory PracticeWordResult.fromResultJson(Map<String, Object?> json) {
+    return PracticeWordResult._fromJson(json, history: false);
+  }
+
+  factory PracticeWordResult.fromHistoryJson(Map<String, Object?> json) {
+    return PracticeWordResult._fromJson(json, history: true);
+  }
+
+  factory PracticeWordResult._fromJson(
+    Map<String, Object?> json, {
+    required bool history,
+  }) {
+    final syllablesJson = json['syllables'];
+    return PracticeWordResult(
+      position: _intValue(json['position']),
+      text: _stringValue(json['text']),
+      score: _nullableIntValue(json['score']),
+      scoreStatus: _stringValue(
+        json['scoreStatus'],
+        fallback: json['score'] == null ? 'UNAVAILABLE' : 'AVAILABLE',
+      ),
+      syllables:
+          syllablesJson is List
+              ? syllablesJson
+                  .whereType<Map<String, Object?>>()
+                  .map(
+                    history
+                        ? CharacterResult.fromHistoryJson
+                        : CharacterResult.fromResultJson,
+                  )
+                  .toList(growable: false)
+              : const [],
+    );
+  }
+
+  final int position;
+  final String text;
+  final int? score;
+  final String scoreStatus;
+  final List<CharacterResult> syllables;
 }
 
 /// Practice Score Breakdown 값의 의미와 불변 데이터 구조를 나타낸다.
@@ -85,6 +147,22 @@ List<CharacterResult> _charactersFromJson(Object? value) {
       : const [];
 }
 
+List<PracticeWordResult> _wordsFromJson(
+  Object? value, {
+  required bool history,
+}) {
+  return value is List
+      ? value
+          .whereType<Map<String, Object?>>()
+          .map(
+            history
+                ? PracticeWordResult.fromHistoryJson
+                : PracticeWordResult.fromResultJson,
+          )
+          .toList(growable: false)
+      : const [];
+}
+
 String _stringValue(Object? value, {String fallback = ''}) {
   return value is String ? value : fallback;
 }
@@ -99,4 +177,14 @@ int _intValue(Object? value) {
   }
 
   return 0;
+}
+
+int? _nullableIntValue(Object? value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.round();
+  }
+  return null;
 }

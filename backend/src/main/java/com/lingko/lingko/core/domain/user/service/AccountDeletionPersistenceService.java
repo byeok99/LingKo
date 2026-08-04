@@ -5,6 +5,7 @@ import com.lingko.lingko.core.domain.auth.repository.RefreshTokenSessionReposito
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationJobRepository;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationLogRepository;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationSyllableRepository;
+import com.lingko.lingko.core.domain.evaluation.repository.EvaluationWordRepository;
 import com.lingko.lingko.core.domain.quota.repository.DailyPracticeQuotaRepository;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class AccountDeletionPersistenceService {
     private final EvaluationJobRepository evaluationJobRepository;
     private final EvaluationLogRepository evaluationLogRepository;
     private final EvaluationSyllableRepository evaluationSyllableRepository;
+    private final EvaluationWordRepository evaluationWordRepository;
     private final DailyPracticeQuotaRepository quotaRepository;
 
     /**
@@ -36,6 +38,7 @@ public class AccountDeletionPersistenceService {
         refreshTokenSessionRepository.deleteAllByUserId(userId);
         evaluationJobRepository.deleteAllByUserId(userId);
         evaluationSyllableRepository.deleteAllByUserId(userId);
+        evaluationWordRepository.deleteAllByUserId(userId);
         evaluationLogRepository.deleteAllByUserId(userId);
         quotaRepository.deleteAllByUserId(userId);
         if (userRepository.deleteAccountById(userId) != 1) {

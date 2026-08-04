@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 단어 중심 평가 조립·저장·조회
+
+- 변경 파일: `EvaluationService.java`, `EvaluationPersistenceService.java`, `EvaluationHistoryService.java`, `WORK_LOG.md`
+- 내용: 신뢰 가능한 단어 점수만 노출·저장하고 음절에는 점수를 복제하지 않으며 과거 기록도 점수 없는 단어 그룹으로 복원한다.
+- 검증: 관련 서비스 RED→GREEN 및 백엔드 전체 단위 테스트 통과
+- 리스크: 실제 Azure 한국어 detailed JSON 운영 검증 필요
+
 ## 2026-08-03 - 생성 가이드 URL DB 재사용
 
 - 변경 파일: `GuideMediaResolver.java`, `WORK_LOG.md`

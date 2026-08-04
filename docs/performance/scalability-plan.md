@@ -204,7 +204,7 @@ Redis는 실제 읽기 병목을 확인한 후 도입합니다. 정확성이 중
 | 사용자 환경설정 | 짧은 Redis | 반복 조회 가능 | 수정 후 즉시 무효화 |
 | 평가 기록 | 기본 미캐시 | 사용자별 변경 빈도 | 필요 시 첫 페이지만 짧게 |
 | 최고 점수·통계 | Redis/집계 테이블 | 매 기록 조회 시 MAX 방지 | 저장 트랜잭션과 동기화 |
-| 일일 쿼터 | DB 원자 UPDATE 또는 Redis 원자 연산 | 정확성 필수 | Cache-Aside 금지 |
+| 평가 기회 | DB 원자 UPDATE 또는 Redis 원자 연산 | 예약·시간 충전 정확성 필수 | Cache-Aside 금지 |
 | Refresh Token | Redis 또는 DB | 폐기와 TTL 필요 | 원문 대신 해시 저장 |
 | 작업 상태 | DB + Redis 선택 | 빠른 Polling | DB가 진실의 원천 |
 
@@ -224,15 +224,16 @@ Redis는 실제 읽기 병목을 확인한 후 도입합니다. 정확성이 중
 
 ```sql
 UPDATE daily_practice_quota
-SET free_reserved = free_reserved + 1
+SET free_reserved = free_reserved + 1,
+    next_refill_at = COALESCE(next_refill_at, :nextRefillAt)
 WHERE user_idx = :userId
-  AND quota_date = :today
+  AND quota_date = :currentQuotaDate
   AND free_used + free_reserved < free_limit;
 ```
 
 영향받은 행이 1이면 성공, 0이면 소진 또는 행 부재입니다. 보상 예약과 예약 확정·복구도 각각 업무 조건을 포함한 원자 UPDATE로 처리합니다. 마지막 횟수 경쟁은 재시도하지 않고 HTTP 429로 반환합니다.
 
-일일 행이 없는 최초 생성은 항상 존재하는 사용자 부모 행에 짧은 비관적 lock을 획득한 뒤 쿼터를 locking read로 재확인해 사용자·날짜별 행 하나만 생성합니다. 외부 평가 호출 전에 예약 transaction을 끝내므로 외부 응답 대기 중에는 DB lock을 유지하지 않습니다. 상세 결정은 [ADR-0006](../architecture/adr/0006-atomic-practice-quota-transitions.md)을 따릅니다.
+현재 에너지 행이 없는 최초 생성은 항상 존재하는 사용자 부모 행에 짧은 비관적 lock을 획득한 뒤 최신 쿼터 행을 locking read로 재확인합니다. 조회 시 `next_refill_at`까지 경과한 1시간 구간만 DB 상태에 반영하고 최대 5회에서 timer를 제거합니다. 외부 평가 호출 전에 예약 transaction을 끝내므로 외부 응답 대기 중에는 DB lock을 유지하지 않습니다. 상세 결정은 [ADR-0006](../architecture/adr/0006-atomic-practice-quota-transitions.md)을 따릅니다.
 
 ### Idempotency
 

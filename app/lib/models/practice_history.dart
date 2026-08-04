@@ -61,12 +61,14 @@ class PracticeHistoryItem {
     required this.summary,
     required this.scoreBreakdown,
     required this.characters,
+    this.words = const [],
     this.createdAt,
   });
 
   factory PracticeHistoryItem.fromJson(Map<String, Object?> json) {
     final scoreBreakdownJson = json['scoreBreakdown'];
     final charactersJson = json['characters'];
+    final wordsJson = json['words'];
 
     return PracticeHistoryItem(
       evaluationLogId: _intValue(json['evaluationLogId']),
@@ -90,8 +92,15 @@ class PracticeHistoryItem {
           charactersJson is List
               ? charactersJson
                   .whereType<Map<String, Object?>>()
-                  .map(CharacterResult.fromResultJson)
+                  .map(CharacterResult.fromHistoryJson)
                   .toList()
+              : const [],
+      words:
+          wordsJson is List
+              ? wordsJson
+                  .whereType<Map<String, Object?>>()
+                  .map(PracticeWordResult.fromHistoryJson)
+                  .toList(growable: false)
               : const [],
       createdAt: _dateTimeValue(json['createdAt']),
     );
@@ -123,6 +132,7 @@ class PracticeHistoryItem {
   final String summary;
   final PracticeScoreBreakdown scoreBreakdown;
   final List<CharacterResult> characters;
+  final List<PracticeWordResult> words;
   final DateTime? createdAt;
 }
 

@@ -174,18 +174,39 @@ Authorization: Bearer <access-token>
     "gradeLabel": "Good",
     "summary": "...",
     "recognizedText": "...",
-    "characterScoreStatus": "AVAILABLE",
+    "characterScoreStatus": "UNAVAILABLE",
+    "wordScoreStatus": "AVAILABLE",
     "scoreBreakdown": {
       "accuracy": 84,
       "fluency": 80,
       "completeness": 83
     },
     "weakCharacters": [],
-    "characters": []
+    "characters": [],
+    "words": [
+      {
+        "position": 0,
+        "text": "김치찌개",
+        "score": 82,
+        "scoreStatus": "AVAILABLE",
+        "syllables": [
+          {
+            "position": 0,
+            "text": "김",
+            "score": null,
+            "scoreStatus": "UNAVAILABLE",
+            "mouthGuideUrl": "...",
+            "tongueGuideUrl": "..."
+          }
+        ]
+      }
+    ]
   },
   "errorCode": null
 }
 ```
+
+`words[].score`는 Azure detailed 결과의 단어 수·정규화 텍스트·위치가 기준 문장과 모두 일치할 때만 제공됩니다. `words[].syllables`는 입·혀 가이드 탐색 단위이며 단어 점수를 복제하지 않으므로 `score`가 `null`입니다. 단어 정렬을 신뢰할 수 없으면 `wordScoreStatus`와 각 단어의 `scoreStatus`는 `UNAVAILABLE`입니다.
 
 기존 `POST /api/evaluations` multipart endpoint는 기본 비활성화되며 임시 호환이 필요할 때만 `EVALUATION_LEGACY_MULTIPART_ENABLED=true`로 활성화합니다.
 
@@ -200,13 +221,29 @@ Authorization: Bearer <access-token>
 - `page`: 기본 0, 0 이상
 - `size`: 기본 10, 범위 1~50
 
-## 일일 쿼터
+각 `items[]`는 평가 당시 저장한 `words[]`와 그 하위 `syllables[]`를 반환합니다. 신규 기록은 단어 점수를 snapshot으로 보존하며, 단어 snapshot이 없는 과거 기록은 표준 발음의 공백과 저장된 음절 순서로 점수 없는 그룹을 복원합니다.
+
+## 발음 평가 기회
 
 ### `GET /api/quota/today`
 
-인증 필요. Asia/Seoul 기준 오늘의 무료·보상·잔여 횟수와 다음 갱신 시각을 반환합니다.
+인증 필요. endpoint 경로는 호환성을 위해 유지하며 현재·최대 평가 기회와 서버 기준 다음 자연 충전 시각을 반환합니다. 과거 자정 초기화용 `resetAt`은 응답 계약에서 제거했습니다.
 
-평가 진행 중 예약된 횟수는 `remainingPractices`에서 제외되며, 평가 성공 시 사용량으로 확정되고 시스템 오류 시 복구됩니다.
+```json
+{
+  "date": "2026-08-03",
+  "freeLimit": 5,
+  "freeUsed": 2,
+  "rewardedAvailable": 0,
+  "remainingPractices": 3,
+  "nextRefillAt": "2026-08-03T17:30:00+09:00",
+  "serverTime": "2026-08-03T16:47:42+09:00"
+}
+```
+
+평가 진행 중 예약된 횟수는 `remainingPractices`에서 즉시 제외되고 최초 예약 시 1시간 timer가 시작됩니다. 평가 성공 시 사용량으로 확정되고 시스템 오류 시 복구되며, 다시 최대치가 되면 timer도 제거됩니다. 자연 충전은 API 접근 시 서버가 경과 구간을 계산하는 lazy refill 방식입니다.
+
+광고 SDK와 서버 보상 검증 endpoint는 아직 연결되지 않았습니다. 앱은 5개 미만에서 `+` 버튼과 외부 callback 경계만 제공하며 자체적으로 성공이나 횟수 증가를 만들지 않습니다.
 
 ## 사용자 설정
 

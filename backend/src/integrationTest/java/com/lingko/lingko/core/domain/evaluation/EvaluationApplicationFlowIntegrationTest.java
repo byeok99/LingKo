@@ -113,7 +113,7 @@ class EvaluationApplicationFlowIntegrationTest {
         PracticeQuotaService.PracticeQuotaReservation missingReservation =
                 new PracticeQuotaService.PracticeQuotaReservation(
                         user.getUserIdx(),
-                        LocalDate.now(PracticeQuotaService.RESET_ZONE),
+                        LocalDate.now(PracticeQuotaService.SERVICE_ZONE),
                         PracticeQuotaService.QuotaSource.FREE
                 );
         EvaluationPersistenceService.SaveEvaluationResultCommand command =

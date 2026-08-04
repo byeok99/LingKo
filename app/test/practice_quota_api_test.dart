@@ -26,7 +26,8 @@ void main() {
               'freeUsed': 2,
               'rewardedAvailable': 1,
               'remainingPractices': 4,
-              'resetAt': '2026-06-18T00:00:00+09:00',
+              'nextRefillAt': '2026-06-17T13:00:00+09:00',
+              'serverTime': '2026-06-17T12:17:42+09:00',
             }),
           );
         },
@@ -41,6 +42,7 @@ void main() {
     expect(quota.freeUsed, 2);
     expect(quota.rewardedAvailable, 1);
     expect(quota.remainingPractices, 4);
-    expect(quota.resetAt, DateTime.parse('2026-06-18T00:00:00+09:00'));
+    expect(quota.nextRefillAt, DateTime.parse('2026-06-17T13:00:00+09:00'));
+    expect(quota.serverTime, DateTime.parse('2026-06-17T12:17:42+09:00'));
   });
 }

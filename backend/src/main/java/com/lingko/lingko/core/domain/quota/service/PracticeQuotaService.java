@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -25,9 +27,10 @@ import java.util.Optional;
 @Service
 public class PracticeQuotaService {
 
-    public static final int DAILY_FREE_LIMIT = 5;
-    // 서버 배포 시간대와 무관하게 한국 서비스 날짜를 기준으로 할당량을 초기화한다.
-    public static final ZoneId RESET_ZONE = ZoneId.of("Asia/Seoul");
+    public static final int MAX_NATURAL_PRACTICES = 5;
+    public static final Duration REFILL_INTERVAL = Duration.ofHours(1);
+    // 서버 배포 시간대와 무관하게 API 날짜와 offset을 일관된 서비스 시간대로 제공한다.
+    public static final ZoneId SERVICE_ZONE = ZoneId.of("Asia/Seoul");
 
     private final DailyPracticeQuotaRepository quotaRepository;
     private final UserRepository userRepository;
@@ -40,43 +43,51 @@ public class PracticeQuotaService {
     ) {
         this.quotaRepository = quotaRepository;
         this.userRepository = userRepository;
-        this.clock = clockProvider.getIfAvailable(() -> Clock.system(RESET_ZONE));
+        this.clock = clockProvider.getIfAvailable(() -> Clock.system(SERVICE_ZONE));
     }
 
     @Transactional
     public PracticeQuotaResponse getTodayQuota(Long userId) {
-        LocalDate today = today();
-        return toResponse(findOrCreateQuota(userId, today));
+        return toResponse(findOrCreateCurrentQuota(userId));
     }
 
     @Transactional
     public PracticeQuotaResponse consumePractice(Long userId) {
         PracticeQuotaReservation reservation = reservePractice(userId);
         confirmPractice(reservation);
-        return toResponse(findQuota(userId, reservation.quotaDate()));
+        return toResponse(findCurrentQuota(userId));
     }
 
     @Transactional
     public PracticeQuotaReservation reservePractice(Long userId) {
         LocalDate today = today();
-        findOrCreateQuota(userId, today);
+        DailyPracticeQuota quota = findOrCreateCurrentQuota(userId);
+        LocalDate quotaDate = quota.getQuotaDate();
 
-        if (quotaRepository.reserveFreePractice(userId, today) == 1) {
-            return new PracticeQuotaReservation(userId, today, QuotaSource.FREE);
+        if (quotaRepository.reserveFreePractice(
+                userId,
+                quotaDate,
+                clock.instant().plus(REFILL_INTERVAL)
+        ) == 1) {
+            return new PracticeQuotaReservation(userId, quotaDate, QuotaSource.FREE);
         }
-        if (quotaRepository.reserveRewardedPractice(userId, today) == 1) {
-            return new PracticeQuotaReservation(userId, today, QuotaSource.REWARDED);
+        if (quotaRepository.reserveRewardedPractice(userId, quotaDate) == 1) {
+            return new PracticeQuotaReservation(userId, quotaDate, QuotaSource.REWARDED);
         }
 
         // 조건부 UPDATE가 0이면 다른 요청이 먼저 마지막 횟수를 확보했거나 이미 소진된 상태다.
-        throw new QuotaExceededException("Daily practice quota exceeded");
+        throw new QuotaExceededException("Practice energy exhausted");
     }
 
     @Transactional
     public void confirmPractice(PracticeQuotaReservation reservation) {
         validateReservation(reservation);
         int updated = reservation.source() == QuotaSource.FREE
-                ? quotaRepository.confirmFreePractice(reservation.userId(), reservation.quotaDate())
+                ? quotaRepository.confirmFreePractice(
+                        reservation.userId(),
+                        reservation.quotaDate(),
+                        clock.instant().plus(REFILL_INTERVAL)
+                )
                 : quotaRepository.confirmRewardedPractice(reservation.userId(), reservation.quotaDate());
         requireReservationUpdate(updated);
     }
@@ -101,28 +112,34 @@ public class PracticeQuotaService {
                 : quotaRepository.releaseRewardedPractice(reservation.userId(), reservation.quotaDate());
     }
 
-    private DailyPracticeQuota findOrCreateQuota(Long userId, LocalDate quotaDate) {
-        Optional<DailyPracticeQuota> existingQuota =
-                quotaRepository.findByUserUserIdxAndQuotaDate(userId, quotaDate);
+    private DailyPracticeQuota findOrCreateCurrentQuota(Long userId) {
+        Optional<DailyPracticeQuota> existingQuota = quotaRepository.findCurrentByUserForUpdate(userId);
         if (existingQuota.isPresent()) {
-            return existingQuota.get();
+            return replenish(existingQuota.get());
         }
 
-        // 잠글 quota 행이 없는 최초 생성 경쟁은 항상 존재하는 user 행으로 직렬화한다.
+        // 잠글 energy 행이 없는 최초 생성 경쟁은 항상 존재하는 user 행으로 직렬화한다.
         User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new AuthException("Authenticated user not found"));
-        // Repeatable Read snapshot 재조회 대신 locking read 결과를 그대로 사용해야 앞선 transaction의 생성을 볼 수 있다.
-        return quotaRepository.findByUserAndDateForUpdate(userId, quotaDate)
+        // Repeatable Read snapshot 재조회 대신 locking read로 앞선 transaction이 만든 현재 행을 확인한다.
+        return quotaRepository.findCurrentByUserForUpdate(userId)
+                .map(this::replenish)
                 .orElseGet(() -> quotaRepository.save(DailyPracticeQuota.create(
                         user,
-                        quotaDate,
-                        DAILY_FREE_LIMIT
+                        today(),
+                        MAX_NATURAL_PRACTICES
                 )));
     }
 
-    private DailyPracticeQuota findQuota(Long userId, LocalDate quotaDate) {
-        return quotaRepository.findByUserUserIdxAndQuotaDate(userId, quotaDate)
-                .orElseThrow(() -> new IllegalStateException("daily practice quota does not exist"));
+    private DailyPracticeQuota findCurrentQuota(Long userId) {
+        return quotaRepository.findCurrentByUserForUpdate(userId)
+                .map(this::replenish)
+                .orElseThrow(() -> new IllegalStateException("practice energy does not exist"));
+    }
+
+    private DailyPracticeQuota replenish(DailyPracticeQuota quota) {
+        quota.replenishAt(clock.instant(), REFILL_INTERVAL);
+        return quota;
     }
 
     private void validateReservation(PracticeQuotaReservation reservation) {
@@ -141,24 +158,24 @@ public class PracticeQuotaService {
     }
 
     private PracticeQuotaResponse toResponse(DailyPracticeQuota quota) {
+        Instant now = clock.instant();
         return new PracticeQuotaResponse(
-                quota.getQuotaDate(),
+                today(),
                 quota.getFreeLimit(),
                 quota.getFreeUsed(),
                 quota.getRewardedAvailable(),
                 quota.remainingPractices(),
-                resetAt(quota.getQuotaDate())
+                toOffsetDateTime(quota.getNextRefillAt()),
+                toOffsetDateTime(now)
         );
     }
 
     private LocalDate today() {
-        return LocalDate.now(clock.withZone(RESET_ZONE));
+        return LocalDate.now(clock.withZone(SERVICE_ZONE));
     }
 
-    private OffsetDateTime resetAt(LocalDate quotaDate) {
-        return quotaDate.plusDays(1)
-                .atStartOfDay(RESET_ZONE)
-                .toOffsetDateTime();
+    private OffsetDateTime toOffsetDateTime(Instant instant) {
+        return instant == null ? null : OffsetDateTime.ofInstant(instant, SERVICE_ZONE);
     }
 
     public enum QuotaSource {

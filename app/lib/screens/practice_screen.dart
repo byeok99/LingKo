@@ -554,7 +554,7 @@ class _PracticeContent extends StatelessWidget {
             key: const ValueKey('record-primary'),
             label:
                 quotaExhausted
-                    ? 'No practices left today'
+                    ? 'No evaluation chances available'
                     : wasPermissionDenied
                     ? 'Retry microphone permission'
                     : 'Start recording',

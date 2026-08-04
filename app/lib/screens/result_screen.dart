@@ -8,9 +8,9 @@ import '../app/app_theme.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../services/sentence_speech_service.dart';
-import '../widgets/result_tile.dart';
 import '../widgets/score_breakdown.dart';
 import '../widgets/shared_widgets.dart';
+import '../widgets/word_syllable_explorer.dart';
 
 class ResultScreen extends StatelessWidget {
   const ResultScreen({
@@ -86,61 +86,14 @@ class ResultScreen extends StatelessWidget {
             completeness: currentResult.scoreBreakdown.completeness,
           ),
           const SizedBox(height: 24),
-          const SectionHeader(title: 'All syllable scores'),
+          const SectionHeader(title: 'Pronunciation by word'),
           const SizedBox(height: 5),
           Text(
-            'Tap any syllable to open its available mouth and tongue guide.',
+            'Choose a word to inspect its syllable guides.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 10),
-          if (currentResult.characters.isNotEmpty) ...[
-            const Wrap(
-              spacing: 10,
-              runSpacing: 4,
-              children: [
-                _LegendDot(color: AppColors.success, label: 'Excellent'),
-                _LegendDot(color: AppColors.warning, label: 'Good'),
-                _LegendDot(color: AppColors.warning, label: 'Keep practicing'),
-                _LegendDot(color: AppColors.error, label: 'Needs improvement'),
-                _LegendDot(color: AppColors.textMuted, label: 'No score'),
-              ],
-            ),
-            const SizedBox(height: 10),
-          ],
-          if (currentResult.characters.isEmpty)
-            const StatePanel(
-              icon: Icons.grid_off_outlined,
-              title: 'Character-level scores are unavailable',
-              message:
-                  'No syllable score was returned for this evaluation. The overall result is still valid.',
-            )
-          else ...[
-            if (currentResult.characterScoreStatus == 'UNAVAILABLE') ...[
-              const StatePanel(
-                icon: Icons.touch_app_outlined,
-                title:
-                    'Syllable scores are unavailable, but pronunciation guides can still be opened.',
-                message:
-                    'Tap a syllable to view its available mouth and tongue guide.',
-              ),
-              const SizedBox(height: 10),
-            ],
-            LayoutBuilder(
-              key: const ValueKey('result-character-grid'),
-              builder: (context, constraints) {
-                const spacing = 7.0;
-                final tileWidth = (constraints.maxWidth - spacing * 4) / 5;
-                return Wrap(
-                  spacing: spacing,
-                  runSpacing: spacing,
-                  children: [
-                    for (final character in currentResult.characters)
-                      ResultTile(result: character, width: tileWidth),
-                  ],
-                );
-              },
-            ),
-          ],
+          WordSyllableExplorer(words: currentResult.words),
           if (currentResult.weakCharacters.isNotEmpty) ...[
             const SizedBox(height: 24),
             const SectionHeader(title: 'Detailed feedback'),
@@ -315,36 +268,6 @@ class _PronunciationGuideCardState extends State<_PronunciationGuideCard> {
           ],
         ],
       ),
-    );
-  }
-}
-
-class _LegendDot extends StatelessWidget {
-  const _LegendDot({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
     );
   }
 }

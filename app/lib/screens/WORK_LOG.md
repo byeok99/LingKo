@@ -1,5 +1,47 @@
 # 작업 이력
 
+## 2026-08-04 - Practice Result·Review 단어 피드백 전환
+
+- 변경 파일: `result_screen.dart`, `review_screen.dart`, `WORK_LOG.md`
+- 내용: 전체 음절 점수 그리드를 제거하고 두 화면 모두 단어 선택 후 해당 음절 가이드만 보여주도록 변경했다.
+- 검증: `flutter analyze`, 전체 `flutter test` 통과
+- 리스크: 실제 기기 scroll·bottom sheet 동작 확인 필요
+
+## 2026-08-04 - Review 목록·상세 정보 계층 개선
+
+- 변경 파일: `review_screen.dart`, `WORK_LOG.md`
+- 내용: 최근 연습을 독립 카드로 분리하고 점수·문장·표준 발음·등급·일시를 구분했다. 상세 sheet에 표준 발음, 평가 일시, accuracy·fluency·completeness와 실제 음절 점수를 구조화했다.
+- 검증: Review widget 회귀 테스트, 320px·1.8배 글꼴 응답형 테스트, `flutter analyze`, `flutter test --coverage` 전체 73개 통과, line coverage 85.20%
+- 리스크: 실제 기기의 긴 문장·확대 글꼴 배치는 수동 확인 필요
+
+## 2026-08-03 - MAX 캡슐 가변 폭 허용
+
+- 변경 파일: `home_screen.dart`, `WORK_LOG.md`
+- 내용: 우측 정렬과 최대 166px 제한은 유지하면서 자식 capsule이 내용 너비로 축소될 수 있게 했다.
+- 검증: MAX·충전 중 우측 정렬 포함 전체 Flutter test 72개 통과
+- 리스크: 없음
+
+## 2026-08-03 - 에너지 캡슐 우측 정렬 강화
+
+- 변경 파일: `home_screen.dart`, `WORK_LOG.md`
+- 내용: 상단 capsule 폭을 166px로 고정하고 Home 콘텐츠의 가장 오른쪽에 정렬했다.
+- 검증: 크기·우측 좌표 포함 전체 Flutter test 72개 통과
+- 리스크: 실제 기기 시각 확인 필요
+
+## 2026-08-03 - Home 에너지 소형 배치 재복원
+
+- 변경 파일: `home_screen.dart`, `WORK_LOG.md`
+- 내용: 전체 폭 배치 변경을 취소하고 LingKo 우측 같은 줄의 소형 capsule로 되돌렸다.
+- 검증: 대상·반응형 포함 전체 Flutter test 72개 통과
+- 리스크: 실제 기기 시각 확인 필요
+
+## 2026-08-03 - Home 에너지 배치 디자인 롤백
+
+- 변경 파일: `home_screen.dart`, `WORK_LOG.md`
+- 내용: 충전 기능은 유지하고 소형 우측 캡슐을 인사말 아래의 독립된 전체 폭 영역으로 복원했다.
+- 검증: 에너지 callback 및 작은 화면·큰 글씨 widget test 통과
+- 리스크: 실제 기기 시각 확인 필요
+
 ## 2026-08-03 - Home 상황별 추천 탐색 구성
 
 - 변경 파일: `home_screen.dart`, `WORK_LOG.md`
@@ -147,3 +189,9 @@
 - 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
 - 검증: 파일 생성 여부 확인
 - 리스크: 없음
+## 2026-08-03 - Home 상단 에너지 배치
+
+- 변경 파일: `home_screen.dart`, `practice_screen.dart`
+- 내용: LingKo 제목 반대편에 작은 에너지 캡슐을 배치하고 0회 안내 문구를 갱신했다.
+- 검증: 작은 화면·큰 글씨 및 전체 widget test 통과
+- 리스크: 실제 기기에서 최종 시각 확인 필요

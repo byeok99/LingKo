@@ -48,3 +48,9 @@
 - 내용: 영향도·재발 가능성·조사 난이도·학습 가치에 따른 작성 기준, 제외 기준, 심각도, 인덱스와 표준 템플릿을 추가했다.
 - 검증: 루트 `AGENTS.md` 정책과 필수 항목 대조, 내부 링크 및 Markdown 형식 확인
 - 리스크: 실제 사례 문서는 이후 기준을 만족하는 문제 수정 PR에서 추가해야 함
+## 2026-08-03 - 쿼터 경쟁 조건 노트 확장
+
+- 변경 파일: `2026-07-26-practice-quota-race-condition.md`
+- 내용: 시간 충전 전환 후에도 유지되는 잠금 invariant와 migration rollback을 추가했다.
+- 검증: service·repository·migration 대조
+- 리스크: 실제 MySQL concurrency 운영 검증 필요

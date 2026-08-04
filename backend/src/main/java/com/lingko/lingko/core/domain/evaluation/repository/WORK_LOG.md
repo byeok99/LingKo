@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 평가 단어 저장소
+
+- 변경 파일: `EvaluationWordRepository.java`, `WORK_LOG.md`
+- 내용: 단어 snapshot 조회·저장과 회원 탈퇴 시 사용자 소유 단어 삭제 연산을 추가했다.
+- 검증: `AccountDeletionPersistenceServiceTest` 통과
+- 리스크: 없음
+
 ## 2026-07-29 - 탈퇴 사용자 평가 데이터 bulk 삭제
 
 - 변경 파일: `EvaluationJobRepository.java`, `EvaluationLogRepository.java`, `EvaluationSyllableRepository.java`, `WORK_LOG.md`
