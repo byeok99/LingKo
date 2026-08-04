@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/practice_sentence.dart';
 import 'guide_sheet.dart';
 import 'shared_widgets.dart';
@@ -19,11 +20,11 @@ class ResultTile extends StatelessWidget {
     final tone = _toneFor(result);
     final label = _labelFor(result);
     final color = switch (tone) {
-      StatusTone.success => AppColors.success,
-      StatusTone.warning => AppColors.warning,
-      StatusTone.error => AppColors.error,
-      StatusTone.info => AppColors.primary,
-      StatusTone.neutral => AppColors.textSecondary,
+      StatusTone.success => context.palette.success,
+      StatusTone.warning => context.palette.warning,
+      StatusTone.error => context.palette.error,
+      StatusTone.info => context.palette.primary,
+      StatusTone.neutral => context.palette.textSecondary,
     };
     return Semantics(
       button: true,
@@ -39,10 +40,10 @@ class ResultTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSizes.radius),
           child: Container(
             width: width,
-            constraints: const BoxConstraints(minHeight: 61),
-            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
+            constraints: BoxConstraints(minHeight: 61),
+            padding: EdgeInsets.symmetric(horizontal: 3, vertical: 8),
             decoration: BoxDecoration(
-              color: _softColorFor(tone),
+              color: _softColorFor(context.palette, tone),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: color.withValues(alpha: 0.40)),
             ),
@@ -51,12 +52,12 @@ class ResultTile extends StatelessWidget {
               children: [
                 Text(
                   result.character.isEmpty ? '—' : result.character,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   available ? '${result.score}' : '—',
                   style: TextStyle(
@@ -74,12 +75,13 @@ class ResultTile extends StatelessWidget {
   }
 }
 
-Color _softColorFor(StatusTone tone) {
+/// 상태 색은 테마마다 달라지므로 현재 팔레트를 받아 해석한다.
+Color _softColorFor(AppPalette palette, StatusTone tone) {
   return switch (tone) {
-    StatusTone.success => AppColors.successSoft,
-    StatusTone.warning || StatusTone.info => AppColors.warningSoft,
-    StatusTone.error => AppColors.errorSoft,
-    StatusTone.neutral => AppColors.surface,
+    StatusTone.success => palette.successSoft,
+    StatusTone.warning || StatusTone.info => palette.warningSoft,
+    StatusTone.error => palette.errorSoft,
+    StatusTone.neutral => palette.surface,
   };
 }
 

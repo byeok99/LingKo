@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 화면 색 참조를 테마 기반으로 전환
+
+- 변경 파일: `home_screen.dart`, `practice_screen.dart`, `result_screen.dart`, `review_screen.dart`, `profile_screen.dart`, `auth_gate_screen.dart`
+- 내용: AppColors 상수 직접 참조를 context.palette로 바꿔 밝기에 따라 색이 따라오게 했다. BuildContext가 없는 CustomPainter에는 팔레트를 생성자로 주입했다.
+- 검증: `flutter analyze`, `flutter test` 83개 통과, 어두운 팔레트 8개 색 조합 WCAG AA 본문 기준 충족 확인
+- 리스크: 실제 기기의 다크 모드 렌더링과 이미지 가이드 대비는 수동 확인이 필요함
+
 ## 2026-08-04 - 녹음 화면 피드백 실데이터 연결과 햅틱
 
 - 변경 파일: `practice_screen.dart`

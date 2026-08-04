@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/practice_sentence.dart';
 
 class SentenceCard extends StatelessWidget {
@@ -22,7 +22,7 @@ class SentenceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.card,
+      color: context.palette.card,
       child: InkWell(
         onTap: onTap,
         child: Container(
@@ -31,7 +31,7 @@ class SentenceCard extends StatelessWidget {
           decoration: BoxDecoration(
             border:
                 showDivider
-                    ? const Border(bottom: BorderSide(color: AppColors.border))
+                    ? Border(bottom: BorderSide(color: context.palette.border))
                     : null,
           ),
           child: Row(
@@ -40,13 +40,13 @@ class SentenceCard extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: AppColors.blue50,
+                  color: context.palette.blue50,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.blue200),
+                  border: Border.all(color: context.palette.blue200),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.play_arrow_rounded,
-                  color: AppColors.primaryDark,
+                  color: context.palette.primaryDark,
                   size: 20,
                 ),
               ),
@@ -60,8 +60,8 @@ class SentenceCard extends StatelessWidget {
                       sentence.text,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: context.palette.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
                       ),
@@ -72,8 +72,8 @@ class SentenceCard extends StatelessWidget {
                         sentence.translation,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
+                        style: TextStyle(
+                          color: context.palette.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -81,9 +81,9 @@ class SentenceCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.textSecondary,
+                color: context.palette.textSecondary,
                 size: 21,
               ),
             ],

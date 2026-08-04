@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/practice_sentence.dart';
 import 'guide_painter.dart';
 import 'shared_widgets.dart';
@@ -20,7 +21,7 @@ Future<void> showGuideSheet(BuildContext context, CharacterResult result) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.card,
+    backgroundColor: context.palette.card,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(AppSizes.radiusLarge),
@@ -75,7 +76,7 @@ class _GuideSheetState extends State<GuideSheet> {
               width: 42,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.palette.border,
                 borderRadius: BorderRadius.circular(AppSizes.pillRadius),
               ),
             ),
@@ -108,9 +109,9 @@ class _GuideSheetState extends State<GuideSheet> {
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColors.scaffold,
+                color: context.palette.scaffold,
                 borderRadius: BorderRadius.circular(AppSizes.radius),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: context.palette.border),
               ),
               clipBehavior: Clip.antiAlias,
               child:
@@ -157,7 +158,7 @@ class _GuideTabs extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.softBlue,
+        color: context.palette.softBlue,
         borderRadius: BorderRadius.circular(AppSizes.pillRadius),
       ),
       child: Row(
@@ -179,7 +180,7 @@ class _GuideTabs extends StatelessWidget {
                     decoration: BoxDecoration(
                       color:
                           index == selectedIndex
-                              ? AppColors.card
+                              ? context.palette.card
                               : Colors.transparent,
                       borderRadius: BorderRadius.circular(AppSizes.pillRadius),
                     ),
@@ -190,8 +191,8 @@ class _GuideTabs extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                         color:
                             index == selectedIndex
-                                ? AppColors.primaryDark
-                                : AppColors.textSecondary,
+                                ? context.palette.primaryDark
+                                : context.palette.textSecondary,
                       ),
                     ),
                   ),
@@ -408,7 +409,7 @@ class _VideoGuideAssetState extends State<_VideoGuideAsset> {
       fit: StackFit.expand,
       children: [
         ColoredBox(
-          color: AppColors.card,
+          color: context.palette.card,
           child: Center(
             child: AspectRatio(
               aspectRatio: aspectRatio,
@@ -426,7 +427,7 @@ class _VideoGuideAssetState extends State<_VideoGuideAsset> {
                 button: true,
                 label: 'Playback speed ${_speedLabel()}',
                 child: Material(
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                   shape: const StadiumBorder(),
                   child: InkWell(
                     key: const ValueKey('guide-video-speed'),
@@ -477,7 +478,7 @@ class _UnavailableGuideAsset extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.center,
-      color: AppColors.card,
+      color: context.palette.card,
       child: Text(
         'Guide unavailable',
         style: Theme.of(context).textTheme.bodyMedium,
@@ -496,7 +497,7 @@ class _FallbackGuide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: GuidePainter(result.kind),
+      painter: GuidePainter(result.kind, context.palette),
       child: const SizedBox.expand(),
     );
   }

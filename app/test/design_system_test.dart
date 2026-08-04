@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lingko_app/app/app_palette.dart';
 import 'package:lingko_app/app/app_theme.dart';
 
 void main() {
@@ -18,5 +19,30 @@ void main() {
     expect(AppSizes.radius, 18);
     expect(AppSizes.buttonHeight, 52);
     expect(AppSizes.navigationHeight, 76);
+  });
+
+  test('both brightness themes carry a palette', () {
+    // 화면이 색을 테마에서 읽으므로 팔레트가 빠지면 밝기 전환이 조용히 무시된다.
+    final light = AppTheme.light();
+    final dark = AppTheme.dark();
+
+    expect(light.extension<AppPalette>(), isNotNull);
+    expect(dark.extension<AppPalette>(), isNotNull);
+    expect(light.brightness, Brightness.light);
+    expect(dark.brightness, Brightness.dark);
+  });
+
+  test('dark palette actually differs from light on every surface', () {
+    // 어두운 테마가 밝은 값을 그대로 물려받으면 다크 모드에서 흰 화면이 그대로 남는다.
+    const light = AppPalette.light;
+    const dark = AppPalette.dark;
+
+    expect(dark.scaffold, isNot(light.scaffold));
+    expect(dark.card, isNot(light.card));
+    expect(dark.surface, isNot(light.surface));
+    expect(dark.textPrimary, isNot(light.textPrimary));
+    expect(dark.border, isNot(light.border));
+    // 강조 배경 위 글자색은 밝기에 따라 반대여야 대비가 유지된다.
+    expect(dark.onPrimary, isNot(light.onPrimary));
   });
 }

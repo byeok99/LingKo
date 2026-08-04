@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/evaluation_progress.dart';
 import '../models/practice_quota.dart';
 import '../models/practice_sentence.dart';
@@ -119,10 +120,10 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 'LingKo',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: context.palette.textPrimary,
                   fontSize: 25,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -1.1,
@@ -154,8 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
             widget.displayName == null || widget.displayName!.trim().isEmpty
                 ? 'Ready to practice Korean? 👋'
                 : 'Welcome back, ${widget.displayName!.trim()} 👋',
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: context.palette.textPrimary,
               fontSize: 17,
               fontWeight: FontWeight.w900,
             ),
@@ -170,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
           const SizedBox(height: 17),
-          const SectionHeader(title: 'Practice by situation'),
+          SectionHeader(title: 'Practice by situation'),
           const SizedBox(height: 10),
           if (widget.isLoading)
             const StatePanel(
@@ -377,7 +378,7 @@ class _ActiveEvaluationCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSizes.radius),
         child: AppCard(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          color: failed ? AppColors.errorSoft : AppColors.blue50,
+          color: failed ? context.palette.errorSoft : context.palette.blue50,
           child: Row(
             children: [
               Container(
@@ -387,13 +388,13 @@ class _ActiveEvaluationCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color:
                       failed
-                          ? AppColors.error.withValues(alpha: 0.10)
-                          : AppColors.softBlue,
+                          ? context.palette.error.withValues(alpha: 0.10)
+                          : context.palette.softBlue,
                   borderRadius: BorderRadius.circular(AppSizes.radiusControl),
                 ),
                 child: Icon(
                   failed ? Icons.error_outline : Icons.graphic_eq,
-                  color: failed ? AppColors.error : AppColors.primary,
+                  color: failed ? context.palette.error : context.palette.primary,
                   size: 21,
                 ),
               ),
@@ -419,9 +420,9 @@ class _ActiveEvaluationCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.textPrimary,
+                color: context.palette.textPrimary,
                 size: 20,
               ),
             ],

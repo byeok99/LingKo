@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../services/sentence_speech_service.dart';
@@ -71,14 +72,14 @@ class ResultScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const SectionHeader(title: 'Pronunciation guide'),
+          SectionHeader(title: 'Pronunciation guide'),
           const SizedBox(height: 10),
           _PronunciationGuideCard(
             sentence: sentence,
             sentenceSpeechService: sentenceSpeechService,
           ),
           const SizedBox(height: 24),
-          const SectionHeader(title: 'Score breakdown'),
+          SectionHeader(title: 'Score breakdown'),
           const SizedBox(height: 10),
           ScoreBreakdown(
             accuracy: currentResult.scoreBreakdown.accuracy,
@@ -86,12 +87,12 @@ class ResultScreen extends StatelessWidget {
             completeness: currentResult.scoreBreakdown.completeness,
           ),
           const SizedBox(height: 24),
-          const SectionHeader(title: 'Pronunciation by word'),
+          SectionHeader(title: 'Pronunciation by word'),
           const SizedBox(height: 10),
           WordSyllableExplorer(words: currentResult.words),
           if (currentResult.weakCharacters.isNotEmpty) ...[
             const SizedBox(height: 24),
-            const SectionHeader(title: 'Detailed feedback'),
+            SectionHeader(title: 'Detailed feedback'),
             const SizedBox(height: 10),
             for (
               var index = 0;
@@ -173,15 +174,15 @@ class _PronunciationGuideCardState extends State<_PronunciationGuideCard> {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      color: AppColors.blue50,
+      color: context.palette.blue50,
       padding: const EdgeInsets.all(15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Sentence',
             style: TextStyle(
-              color: AppColors.textSecondary,
+              color: context.palette.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w800,
             ),
@@ -189,28 +190,28 @@ class _PronunciationGuideCardState extends State<_PronunciationGuideCard> {
           const SizedBox(height: 5),
           Text(
             widget.sentence.text,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: context.palette.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 13),
-            child: Divider(height: 1, color: AppColors.border),
+            child: Divider(height: 1, color: context.palette.border),
           ),
-          const Row(
+          Row(
             children: [
               Icon(
                 Icons.record_voice_over_outlined,
                 size: 17,
-                color: AppColors.primary,
+                color: context.palette.primary,
               ),
               SizedBox(width: 6),
               Text(
                 'Standard pronunciation',
                 style: TextStyle(
-                  color: AppColors.primaryDark,
+                  color: context.palette.primaryDark,
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
                 ),
@@ -221,8 +222,8 @@ class _PronunciationGuideCardState extends State<_PronunciationGuideCard> {
           Text(
             standardPronunciation,
             key: const ValueKey('result-standard-pronunciation'),
-            style: const TextStyle(
-              color: AppColors.primaryDark,
+            style: TextStyle(
+              color: context.palette.primaryDark,
               fontSize: 24,
               fontWeight: FontWeight.w900,
               height: 1.35,
@@ -254,8 +255,8 @@ class _PronunciationGuideCardState extends State<_PronunciationGuideCard> {
             const SizedBox(height: 10),
             Text(
               speechError!,
-              style: const TextStyle(
-                color: AppColors.error,
+              style: TextStyle(
+                color: context.palette.error,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -283,13 +284,13 @@ class _FeedbackRow extends StatelessWidget {
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.errorSoft,
+              color: context.palette.errorSoft,
               borderRadius: BorderRadius.circular(13),
             ),
             child: Text(
               result.character,
-              style: const TextStyle(
-                color: AppColors.error,
+              style: TextStyle(
+                color: context.palette.error,
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
               ),
