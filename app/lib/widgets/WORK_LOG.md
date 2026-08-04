@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 위젯 색 참조를 테마 기반으로 전환
+
+- 변경 파일: `shared_widgets.dart`, `guide_sheet.dart`, `guide_painter.dart`, `result_tile.dart`, `progress_panel.dart`, `evaluation_progress_panel.dart`, `score_breakdown.dart`, `sentence_card.dart`, `settings_row.dart`, `word_syllable_explorer.dart`
+- 내용: AppCard의 배경 기본값을 nullable로 바꿔 테마에서 해석하게 하고, GuidePainter는 팔레트를 인자로 받도록 했다. Google 로그인 버튼 색은 제공자 브랜드 규정이라 테마와 무관하게 유지했다.
+- 검증: `flutter analyze`, `flutter test` 83개 통과, 어두운 팔레트 8개 색 조합 WCAG AA 본문 기준 충족 확인
+- 리스크: 실제 기기의 다크 모드 렌더링과 이미지 가이드 대비는 수동 확인이 필요함
+
 ## 2026-08-04 - 가이드 시트 확대와 설명 텍스트 정리
 
 - 변경 파일: `guide_sheet.dart`, `word_syllable_explorer.dart`, `result_tile.dart`, `evaluation_progress_panel.dart`

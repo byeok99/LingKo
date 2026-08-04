@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/evaluation_progress.dart';
 import 'shared_widgets.dart';
 
@@ -57,13 +58,13 @@ class EvaluationProgressPanel extends StatelessWidget {
             height: 86,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.softBlue,
+              color: context.palette.softBlue,
               borderRadius: BorderRadius.circular(28),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.graphic_eq,
               size: 34,
-              color: AppColors.primaryDark,
+              color: context.palette.primaryDark,
             ),
           ),
         ),
@@ -120,12 +121,12 @@ class EvaluationProgressPanel extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 14),
-        const AppCard(
+        AppCard(
           padding: EdgeInsets.all(13),
-          color: AppColors.blue50,
+          color: context.palette.blue50,
           child: Row(
             children: [
-              Icon(Icons.schedule_outlined, color: AppColors.primary, size: 20),
+              Icon(Icons.schedule_outlined, color: context.palette.primary, size: 20),
               SizedBox(width: 10),
               Expanded(
                 child: Text('You can leave and come back. Nothing is lost.'),
@@ -173,10 +174,10 @@ class _EvaluationStepRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (state) {
-      _StepState.complete => AppColors.success,
-      _StepState.active => AppColors.primary,
-      _StepState.failed => AppColors.error,
-      _StepState.pending => AppColors.disabled,
+      _StepState.complete => context.palette.success,
+      _StepState.active => context.palette.primary,
+      _StepState.failed => context.palette.error,
+      _StepState.pending => context.palette.disabled,
     };
     return Container(
       constraints: const BoxConstraints(minHeight: 56),
@@ -188,10 +189,10 @@ class _EvaluationStepRow extends StatelessWidget {
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.softBlue,
+              color: context.palette.softBlue,
               borderRadius: BorderRadius.circular(AppSizes.radiusControl),
             ),
-            child: Icon(leadingIcon, color: AppColors.primaryDark, size: 20),
+            child: Icon(leadingIcon, color: context.palette.primaryDark, size: 20),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -199,12 +200,12 @@ class _EvaluationStepRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           if (state == _StepState.active)
-            const SizedBox.square(
+            SizedBox.square(
               dimension: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                backgroundColor: AppColors.blue200,
-                color: AppColors.primary,
+                backgroundColor: context.palette.blue200,
+                color: context.palette.primary,
               ),
             )
           else
@@ -228,7 +229,7 @@ class _EvaluationStepRow extends StatelessWidget {
                 },
                 color:
                     state == _StepState.complete || state == _StepState.failed
-                        ? AppColors.card
+                        ? context.palette.card
                         : color,
                 size: 15,
               ),

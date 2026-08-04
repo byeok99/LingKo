@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../api/user_preferences_api.dart';
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/auth_session.dart';
 import '../models/user_preferences.dart';
 import '../services/app_auth_service.dart';
@@ -200,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 10),
         _AccountCard(session: widget.session),
         const SizedBox(height: 24),
-        const SectionHeader(title: 'Language preferences'),
+        SectionHeader(title: 'Language preferences'),
         const SizedBox(height: 10),
         if (isLoading)
           const StatePanel(
@@ -262,25 +263,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
           height: AppSizes.buttonHeight,
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.error,
-              backgroundColor: AppColors.errorSoft,
+              foregroundColor: context.palette.error,
+              backgroundColor: context.palette.errorSoft,
               side: const BorderSide(color: Color(0xFFEFCACA)),
             ),
             onPressed: isDeletingAccount ? null : signOut,
-            icon: const Icon(Icons.logout, color: AppColors.error),
-            label: const Text(
+            icon: Icon(Icons.logout, color: context.palette.error),
+            label: Text(
               'Sign out',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: context.palette.error),
             ),
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
         TextButton.icon(
           onPressed: isDeletingAccount ? null : deleteAccount,
-          icon: const Icon(Icons.delete_forever, color: AppColors.error),
+          icon: Icon(Icons.delete_forever, color: context.palette.error),
           label: Text(
             isDeletingAccount ? 'Deleting account' : 'Delete account',
-            style: const TextStyle(color: AppColors.error),
+            style: TextStyle(color: context.palette.error),
           ),
         ),
       ],
@@ -307,13 +308,13 @@ class _AccountCard extends StatelessWidget {
             height: 58,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.softBlue,
+              color: context.palette.softBlue,
               borderRadius: BorderRadius.circular(19),
             ),
             child: Text(
               initial,
-              style: const TextStyle(
-                color: AppColors.primaryDark,
+              style: TextStyle(
+                color: context.palette.primaryDark,
                 fontSize: 25,
                 fontWeight: FontWeight.w900,
               ),

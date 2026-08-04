@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import 'guide_sheet.dart';
@@ -61,7 +62,7 @@ class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
         ),
         const SizedBox(height: AppSpacing.md),
         AppCard(
-          color: AppColors.blue50,
+          color: context.palette.blue50,
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,11 +124,11 @@ class _WordScoreButton extends StatelessWidget {
               ? '${word.text}, score ${word.score}. Show syllables.'
               : '${word.text}, score unavailable. Show syllables.',
       child: Material(
-        color: selected ? AppColors.primary : AppColors.card,
+        color: selected ? context.palette.primary : context.palette.card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radius),
           side: BorderSide(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? context.palette.primary : context.palette.border,
           ),
         ),
         child: InkWell(
@@ -144,7 +145,7 @@ class _WordScoreButton extends StatelessWidget {
                 Text(
                   word.text,
                   style: TextStyle(
-                    color: selected ? Colors.white : AppColors.textPrimary,
+                    color: selected ? Colors.white : context.palette.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -152,7 +153,7 @@ class _WordScoreButton extends StatelessWidget {
                 Text(
                   scoreAvailable ? '${word.score}' : '—',
                   style: TextStyle(
-                    color: selected ? Colors.white : AppColors.primaryDark,
+                    color: selected ? Colors.white : context.palette.primaryDark,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -176,10 +177,10 @@ class _SyllableGuideButton extends StatelessWidget {
       button: true,
       label: '${syllable.character}. Open pronunciation guide.',
       child: Material(
-        color: AppColors.card,
+        color: context.palette.card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radius),
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: context.palette.border),
         ),
         child: InkWell(
           onTap: () => showGuideSheet(context, syllable),
@@ -201,10 +202,10 @@ class _SyllableGuideButton extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                const Icon(
+                Icon(
                   Icons.chevron_right,
                   size: 17,
-                  color: AppColors.primary,
+                  color: context.palette.primary,
                 ),
               ],
             ),

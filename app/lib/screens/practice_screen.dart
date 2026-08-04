@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/evaluation_progress.dart';
 import '../models/practice_sentence.dart';
 import '../services/audio_recorder_service.dart';
@@ -522,7 +523,7 @@ class _PracticeContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHeader(title: 'Listen'),
+        SectionHeader(title: 'Listen'),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -655,7 +656,7 @@ class _RecordingView extends StatelessWidget {
                     value: progress,
                     strokeWidth: 13,
                     backgroundColor: const Color(0xFFE7EEF4),
-                    color: progress >= 1 ? AppColors.warning : AppColors.primary,
+                    color: progress >= 1 ? context.palette.warning : context.palette.primary,
                   ),
                 ),
                 Column(
@@ -663,17 +664,17 @@ class _RecordingView extends StatelessWidget {
                   children: [
                     Text(
                       '$minutes:$seconds',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 40,
                         fontWeight: FontWeight.w900,
-                        color: AppColors.textPrimary,
+                        color: context.palette.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 5),
                     Text(
                       '/ ${maximumDuration.inSeconds} sec',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: context.palette.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -686,10 +687,10 @@ class _RecordingView extends StatelessWidget {
         const SizedBox(height: 14),
         _RecordingWaveform(amplitude: amplitude),
         const SizedBox(height: 17),
-        const Text(
+        Text(
           'Speak naturally. Stop when you finish the full sentence.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(color: context.palette.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 34),
         Row(
@@ -743,24 +744,24 @@ class _RecordingControl extends StatelessWidget {
                 height: primary ? 62 : 46,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: primary ? AppColors.primary : AppColors.card,
+                  color: primary ? context.palette.primary : context.palette.card,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: primary ? AppColors.blue200 : AppColors.border,
+                    color: primary ? context.palette.blue200 : context.palette.border,
                     width: primary ? 5 : 1,
                   ),
                 ),
                 child: Icon(
                   icon,
-                  color: primary ? AppColors.card : AppColors.textPrimary,
+                  color: primary ? context.palette.card : context.palette.textPrimary,
                   size: primary ? 24 : 20,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 label,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: context.palette.textPrimary,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ),
@@ -813,7 +814,7 @@ class _RecordingWaveform extends StatelessWidget {
                 height: _barHeight(index, level),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 decoration: BoxDecoration(
-                  color: isSilent ? AppColors.border : AppColors.primary,
+                  color: isSilent ? context.palette.border : context.palette.primary,
                   borderRadius: BorderRadius.circular(AppSizes.pillRadius),
                 ),
               ),
@@ -852,7 +853,7 @@ class _SentenceComposerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      color: AppColors.blue50,
+      color: context.palette.blue50,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -878,7 +879,7 @@ class _SentenceComposerCard extends StatelessWidget {
           ),
           if (isLoading) ...[
             const SizedBox(height: AppSpacing.md),
-            const _SentencePreparationStatus(
+            _SentencePreparationStatus(
               icon: SizedBox.square(
                 dimension: 16,
                 child: CircularProgressIndicator(strokeWidth: 2),
@@ -891,13 +892,13 @@ class _SentenceComposerCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SentencePreparationStatus(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.error_outline,
                     size: 18,
-                    color: AppColors.error,
+                    color: context.palette.error,
                   ),
                   text: errorText!,
-                  textColor: AppColors.error,
+                  textColor: context.palette.error,
                 ),
                 Align(
                   alignment: Alignment.centerRight,
@@ -918,26 +919,26 @@ class _SentenceComposerCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
               decoration: BoxDecoration(
-                color: AppColors.card,
-                border: Border.all(color: AppColors.blue200),
+                color: context.palette.card,
+                border: Border.all(color: context.palette.blue200),
                 borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
               ),
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'Standard pronunciation',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: context.palette.textSecondary,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     preparedSentence!.pronunciation,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppColors.primaryDark,
+                    style: TextStyle(
+                      color: context.palette.primaryDark,
                       fontSize: 17,
                       fontWeight: FontWeight.w900,
                     ),
@@ -956,12 +957,14 @@ class _SentencePreparationStatus extends StatelessWidget {
   const _SentencePreparationStatus({
     required this.icon,
     required this.text,
-    this.textColor = AppColors.textSecondary,
+    this.textColor,
   });
 
   final Widget icon;
   final String text;
-  final Color textColor;
+
+  /// 지정하지 않으면 현재 테마의 보조 글자색을 쓴다.
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
