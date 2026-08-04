@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - Profile에서 언어 설정 섹션 제거
+
+- 변경 파일: `profile_screen.dart`
+- 내용: 저장만 되고 읽는 코드가 없던 언어 설정 섹션과 관련 상태·조회·저장 흐름을 모두 제거했다. Profile은 계정 정보와 로그아웃·탈퇴만 다룬다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
 ## 2026-08-04 - 표시 언어 설정 제거
 
 - 변경 파일: `profile_screen.dart`

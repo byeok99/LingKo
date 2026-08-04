@@ -258,24 +258,6 @@ Authorization: Bearer <access-token>
 
 광고 SDK와 서버 보상 검증 endpoint는 아직 연결되지 않았습니다. 앱은 5개 미만에서 `+` 버튼과 외부 callback 경계만 제공하며 자체적으로 성공이나 횟수 증가를 만들지 않습니다.
 
-## 사용자 설정
-
-### `GET /api/users/me/preferences`
-
-인증 필요. 학습자의 모국어를 반환합니다.
-
-### `PATCH /api/users/me/preferences`
-
-인증 필요.
-
-```json
-{
-  "nativeLanguage": "ko"
-}
-```
-
-앱 표시 언어(`displayLanguage`)는 다국어 지원 계획이 없어 계약에서 제거했습니다. 설정만 저장되고 화면에는 아무 영향이 없어 사용자에게 동작하지 않는 기능으로 보였습니다.
-
 ## 가이드 생성 작업
 
 ### `POST /api/pronunciation/guide-jobs`

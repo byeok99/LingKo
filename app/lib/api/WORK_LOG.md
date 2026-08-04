@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - preferences API client 삭제
+
+- 변경 파일: `user_preferences_api.dart` (삭제)
+- 내용: 서버에서 해당 endpoint를 제거해 client도 함께 삭제했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
 ## 2026-07-30 - Practice API 입력 정규화
 
 - 변경 파일: `evaluation_api.dart`, `pronunciation_api.dart`, `WORK_LOG.md`

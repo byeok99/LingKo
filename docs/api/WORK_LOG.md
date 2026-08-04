@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 사용자 설정 API 문서 제거
+
+- 변경 파일: `api-reference.md`
+- 내용: 제거한 endpoint 절을 삭제했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
 ## 2026-08-04 - preferences API 계약 갱신
 
 - 변경 파일: `api-reference.md`

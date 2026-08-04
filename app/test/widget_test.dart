@@ -12,7 +12,6 @@ import 'package:lingko_app/models/score_status.dart';
 import 'package:lingko_app/api/practice_quota_api.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 import 'package:lingko_app/api/sentence_api.dart';
-import 'package:lingko_app/api/user_preferences_api.dart';
 import 'package:lingko_app/app/lingko_app.dart';
 import 'package:lingko_app/models/auth_session.dart';
 import 'package:lingko_app/models/evaluation_job.dart';
@@ -20,7 +19,6 @@ import 'package:lingko_app/models/practice_history.dart';
 import 'package:lingko_app/models/practice_quota.dart';
 import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
-import 'package:lingko_app/models/user_preferences.dart';
 import 'package:lingko_app/screens/result_screen.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
@@ -215,46 +213,6 @@ class FakeEvaluationApi implements EvaluationApi {
     }
 
     return history;
-  }
-}
-
-/// 테스트에서 Fake User Preferences Api 의존성을 결정적으로 대체한다.
-/// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
-class FakeUserPreferencesApi implements UserPreferencesApi {
-  UserPreferences preferences = const UserPreferences(
-    nativeLanguage: 'en',
-  );
-  UserPreferences? lastUpdatedPreferences;
-  String? lastAccessToken;
-  Object? error;
-
-  @override
-  Future<UserPreferences> fetchPreferences({
-    required String accessToken,
-  }) async {
-    lastAccessToken = accessToken;
-
-    if (error != null) {
-      throw error!;
-    }
-
-    return preferences;
-  }
-
-  @override
-  Future<UserPreferences> updatePreferences({
-    required String accessToken,
-    required UserPreferences preferences,
-  }) async {
-    lastAccessToken = accessToken;
-    lastUpdatedPreferences = preferences;
-
-    if (error != null) {
-      throw error!;
-    }
-
-    this.preferences = preferences;
-    return preferences;
   }
 }
 
@@ -630,7 +588,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(restoreCompleter: restoreCompleter),
         audioRecorderService: FakeAudioRecorderService(),
@@ -656,7 +613,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: authService,
         audioRecorderService: FakeAudioRecorderService(),
@@ -686,7 +642,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(
           restoreExistingSession: true,
@@ -711,7 +666,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: authService,
         audioRecorderService: FakeAudioRecorderService(),
@@ -739,7 +693,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: recorder,
@@ -828,7 +781,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: sentenceApi,
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
@@ -895,7 +847,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: quotaApi,
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
@@ -964,7 +915,6 @@ void main() {
           pronunciationApi: FakePronunciationApi(),
           sentenceApi: FakeSentenceApi(),
           evaluationApi: FakeEvaluationApi(),
-          userPreferencesApi: FakeUserPreferencesApi(),
           practiceQuotaApi: quotaApi,
           authService: FakeAppAuthService(restoreExistingSession: true),
           audioRecorderService: FakeAudioRecorderService(),
@@ -1022,7 +972,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: evaluationApi,
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
@@ -1085,7 +1034,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: evaluationApi,
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
@@ -1152,7 +1100,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: quotaApi,
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
@@ -1179,7 +1126,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(
           quota: const PracticeQuota(
             date: '2026-06-17',
@@ -1220,7 +1166,6 @@ void main() {
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
         sentenceSpeechService: speechService,
@@ -1284,7 +1229,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(error: 'Validation failed'),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -1319,7 +1263,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
         sentenceSpeechService: speechService,
@@ -1348,7 +1291,6 @@ void main() {
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -1391,7 +1333,6 @@ void main() {
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -1453,7 +1394,6 @@ void main() {
           pronunciationApi: FakePronunciationApi(),
           sentenceApi: FakeSentenceApi(),
           evaluationApi: FakeEvaluationApi(),
-          userPreferencesApi: FakeUserPreferencesApi(),
           authService: FakeAppAuthService(restoreExistingSession: true),
           audioRecorderService: FakeAudioRecorderService(),
         ),
@@ -1500,7 +1440,6 @@ void main() {
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -1563,7 +1502,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: recorder,
       ),
@@ -1722,7 +1660,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -1783,7 +1720,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -1812,7 +1748,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: authService,
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -1843,7 +1778,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         authService: authService,
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -1872,16 +1806,14 @@ void main() {
     expect(find.text('Sign in with Google'), findsOneWidget);
   });
 
-  testWidgets('Profile loads language preferences without a target level', (
+  testWidgets('Profile has no language settings section', (
     WidgetTester tester,
   ) async {
-    final preferencesApi = FakeUserPreferencesApi();
     await tester.pumpWidget(
       LingKoApp(
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: preferencesApi,
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
       ),
@@ -1890,24 +1822,15 @@ void main() {
 
     await tester.tap(_navigationLabel('Profile'));
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
-    await tester.pumpAndSettle();
 
-    expect(preferencesApi.lastAccessToken, 'access.jwt');
-    // 다국어 지원 계획이 없어 표시 언어 설정은 제거했다. 모국어만 남는다.
+    // 언어 설정은 저장만 되고 읽는 코드가 없어 기능 전체를 제거했다.
+    // 다시 살아나면 사용자에게 동작하지 않는 설정이 노출되므로 계약으로 고정한다.
+    expect(find.text('Language preferences'), findsNothing);
     expect(find.text('Display language'), findsNothing);
-    expect(find.text('Native language'), findsOneWidget);
-    expect(find.text('English'), findsWidgets);
-    expect(find.text('Target level'), findsNothing);
-    expect(find.text('Beginner 2 learner'), findsNothing);
-
-    await tester.tap(find.text('Native language'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Japanese').last);
-    await tester.pumpAndSettle();
-
-    expect(preferencesApi.lastUpdatedPreferences?.nativeLanguage, 'ja');
-    expect(find.text('Japanese'), findsOneWidget);
+    expect(find.text('Native language'), findsNothing);
+    // 계정 정보와 세션 조작은 그대로 남아야 한다.
+    expect(find.text('Sign out'), findsOneWidget);
+    expect(find.text('Delete account'), findsOneWidget);
   });
 
   testWidgets('leaving Practice tab deletes a stopped temporary recording', (
@@ -2323,7 +2246,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
@@ -2586,7 +2508,6 @@ void main() {
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
-        userPreferencesApi: FakeUserPreferencesApi(),
         practiceQuotaApi: FakePracticeQuotaApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),

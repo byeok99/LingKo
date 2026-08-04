@@ -46,10 +46,6 @@ public class User {
     @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
-    @Builder.Default
-    @Column(name = "native_language", nullable = false, length = 20)
-    private String nativeLanguage = "en";
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -63,17 +59,6 @@ public class User {
         this.email = email;
         this.name = name;
         this.profileImageUrl = profileImageUrl;
-    }
-
-    /**
-     * 학습 콘텐츠를 설명할 기준 언어인 모국어 설정을 갱신한다.
-     *
-     * 앱 UI 표시 언어는 다국어 지원 계획이 없어 설정 자체를 제거했다. DB의
-     * display_language 컬럼은 기존 데이터 보존을 위해 남겨 두고 코드에서만 참조를 끊었으며,
-     * 컬럼 삭제는 확장 후 축소 절차에 따라 별도 마이그레이션으로 다룬다.
-     */
-    public void updateNativeLanguage(String nativeLanguage) {
-        this.nativeLanguage = nativeLanguage;
     }
 
     public enum SocialType {

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - preferences DTO 삭제
+
+- 변경 파일: `UserPreferencesResponse.java`, `UserPreferencesUpdateRequest.java` (삭제)
+- 내용: endpoint 제거에 따라 전송 계약도 함께 삭제했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
 ## 2026-08-04 - preferences 계약에서 displayLanguage 제거
 
 - 변경 파일: `UserPreferencesResponse.java`, `UserPreferencesUpdateRequest.java`

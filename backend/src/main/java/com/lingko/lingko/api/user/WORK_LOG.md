@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - preferences endpoint 제거
+
+- 변경 파일: `UserPreferencesController.java` (삭제)
+- 내용: 읽는 코드가 없는 값만 다루던 endpoint를 제거했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `UserPreferencesController.java`, `WORK_LOG.md`

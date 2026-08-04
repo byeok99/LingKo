@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - User에서 언어 설정 제거
+
+- 변경 파일: `User.java`
+- 내용: displayLanguage·nativeLanguage 필드와 갱신 메서드를 제거했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
 ## 2026-08-04 - User에서 displayLanguage 참조 제거
 
 - 변경 파일: `User.java`

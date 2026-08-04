@@ -33,8 +33,6 @@
       varchar email
       varchar name
       varchar profile_image_url
-      varchar display_language
-      varchar native_language
       datetime created_at
       datetime last_login_at
     }

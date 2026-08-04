@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - UserPreferences 모델 삭제
+
+- 변경 파일: `user_preferences.dart` (삭제)
+- 내용: displayLanguage에 이어 nativeLanguage도 소비처가 없어 모델 자체를 제거했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
 ## 2026-08-04 - UserPreferences에서 displayLanguage 제거
 
 - 변경 파일: `user_preferences.dart`

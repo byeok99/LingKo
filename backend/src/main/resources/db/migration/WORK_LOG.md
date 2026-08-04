@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 언어 설정 컬럼 제거
+
+- 변경 파일: `V16__remove_user_language_preferences.sql`
+- 내용: 코드에서 참조가 사라진 display_language·native_language 컬럼을 제거했다. V13의 target_level 제거와 같은 방식이다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
 ## 2026-08-04 - 단어 점수 schema 추가
 
 - 변경 파일: `V15__add_evaluation_word_scores.sql`, `WORK_LOG.md`

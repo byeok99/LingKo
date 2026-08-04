@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - preferences controller test 삭제
+
+- 변경 파일: `UserPreferencesControllerTest.java` (삭제)
+- 내용: 대상 endpoint가 사라져 함께 제거했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
 ## 2026-08-03 - Preferences 목표 레벨 부재 API 테스트
 
 - 변경 파일: `UserPreferencesControllerTest.java`, `WORK_LOG.md`
