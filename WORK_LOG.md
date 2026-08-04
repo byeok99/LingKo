@@ -1,3 +1,24 @@
+## 2026-08-04 - 단어 점수 저장 조건 정리와 상태값 타입화
+
+- 변경 파일: backend 평가 DTO·service·test, app models·widgets·screens·test, `docs/api/api-reference.md`
+- 내용: 리뷰에서 찾은 두 문제를 순서대로 처리했다. (1) 점수를 신뢰할 수 없을 때 문장 전체를 한 단어로 저장하던 경로를 없애 `word_text` 길이 초과를 막고 평가 작업 text 상한을 준비 endpoint와 같은 100자로 맞췄다. (2) 26곳에 흩어져 있던 `AVAILABLE`/`UNAVAILABLE` 문자열을 backend `ScoreStatus`·`GuideStatus` enum과 app `ScoreStatus` enum으로 승격하고, 앱은 모르는 값을 unavailable로 닫는 fail-closed 규칙을 적용했다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과. Jackson 기본 직렬화로 JSON 계약이 그대로임을 회귀 테스트로 고정
+- 리스크: 저장된 단어 행이 없는 기록은 조회 시 `standard_pronunciation` 기준 복원에 의존한다. 서버가 상태값을 추가하면 구버전 앱은 해당 점수를 감춘 채 동작한다
+
+## 2026-08-04 - 주석 자동 작성 규칙 명문화
+
+- 변경 파일: `AGENTS.md`, `CLAUDE.md`, `WORK_LOG.md`
+- 내용: 「코드 주석 원칙」에 '적용 시점' 절을 추가해 주석을 코드 작성과 같은 편집에서 넣는 기본 동작으로 규정하고, nullable·상태값·fallback·계층 경계를 주석 없이 통과시키지 않도록 했다. `CLAUDE.md`에는 Write/Edit 호출에 주석을 포함하고 완료 보고 전 자체 확인하라는 Claude 전용 실행 규칙을 넣었다.
+- 검증: 규칙에 따라 이번 작업의 주석 보강을 실제로 수행하고 `./gradlew compileJava test`, `./gradlew integrationTest`, `flutter analyze`, `flutter test` 74개 통과
+- 리스크: 지침 기반 규칙이므로 강제되지 않는다. 강제하려면 별도 hook이 필요함
+
+## 2026-08-04 - Claude Code 운영 지침 추가
+
+- 변경 파일: `CLAUDE.md`, `WORK_LOG.md`
+- 내용: 기존 `AGENTS.md`를 정책 단일 기준으로 유지한 채, Claude Code 세션에서만 달라지는 운영 규칙(subagent 사용 제한, 전용 파일 도구 우선, rtk prefix)과 `AGENTS.md`에 없던 프로젝트 지형도·검증 명령·도메인 규칙을 담은 `CLAUDE.md`를 추가했다.
+- 검증: `rtk git status`로 rtk 동작 확인, 기재한 디렉터리 구조와 Gradle `integrationTest` sourceSet 존재 확인, Claude Code 2.1.221 바이너리에서 메모리 탐색 대상이 `CLAUDE.md`·`CLAUDE.local.md`·`.claude/rules/`뿐이고 `AGENTS.md`는 Codex 임포터 경로에만 있음을 확인
+- 리스크: `AGENTS.md`는 자동 로드되지 않아 `CLAUDE.md`의 `@AGENTS.md` import에 의존한다. 파일명을 바꾸면 정책 본문이 통째로 빠지므로 함께 갱신해야 함
+
 ## 2026-08-03 - 단일 Codex 세션 운영 기준으로 전환
 
 - 변경 파일: `AGENTS.md`, `WORK_LOG.md`
