@@ -11,7 +11,9 @@ void main() {
     expect(AppColors.softBlue, const Color(0xFFEDF6FD));
     expect(AppColors.scaffold, Colors.white);
     expect(AppColors.textPrimary, const Color(0xFF17324A));
-    expect(AppColors.textSecondary, const Color(0xFF667D90));
+    // 본문 크기에서도 WCAG AA(4.5:1)를 넘도록 preview.html과 함께 낮춘 값이다.
+    expect(AppColors.textSecondary, const Color(0xFF5C7386));
+    expect(AppColors.textMuted, const Color(0xFF627585));
     expect(AppColors.border, const Color(0xFFDCE7EF));
     expect(AppSizes.radius, 18);
     expect(AppSizes.buttonHeight, 52);

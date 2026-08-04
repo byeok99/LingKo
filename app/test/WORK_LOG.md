@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 가이드 표시 계약 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `design_system_test.dart`
+- 내용: 가이드를 한 번에 하나만 그리고 탭으로 전환한다는 계약, 자동 생성 note를 감추고 실제 조음 힌트는 노출한다는 계약을 테스트로 고정했다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - fail-closed 상태 해석 회귀 테스트
 
 - 변경 파일: `score_status_test.dart`, `widget_test.dart`, `evaluation_api_test.dart`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 본문 색상 대비 WCAG AA 충족
+
+- 변경 파일: `app_theme.dart`
+- 내용: textSecondary(4.28:1)와 textMuted(2.89:1)가 본문 기준 4.5:1에 미달해 각각 #5C7386(4.94:1), #627585(4.77:1)로 낮췄다. success·warning도 연한 배경 위에서 기준을 넘도록 조정했다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-03 - Home 추천 전체 로드와 직접 입력 진입
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

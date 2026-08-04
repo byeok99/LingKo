@@ -23,26 +23,22 @@ class EvaluationProgressPanel extends StatelessWidget {
     final steps = const [
       (
         EvaluationProgressStage.uploading,
-        'Audio upload',
-        'Sending your recording securely.',
+        'Uploading your recording',
         Icons.file_upload_outlined,
       ),
       (
         EvaluationProgressStage.creatingJob,
-        'Evaluation job',
-        'Creating one evaluation request.',
+        'Sending it for evaluation',
         Icons.article_outlined,
       ),
       (
         EvaluationProgressStage.analyzing,
-        'Pronunciation analysis',
-        'Analyzing your pronunciation.',
+        'Analyzing your pronunciation',
         Icons.graphic_eq,
       ),
       (
         EvaluationProgressStage.preparingFeedback,
-        'Feedback preparation',
-        'Preparing your results.',
+        'Preparing your feedback',
         Icons.view_module_outlined,
       ),
     ];
@@ -80,13 +76,17 @@ class EvaluationProgressPanel extends StatelessWidget {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 8),
-        Text(
-          progress.message ??
-              'You can leave this screen and return anytime. Your evaluation job will be kept.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 18),
+        // 실패 사유 같은 상황별 메시지가 있을 때만 보여준다. 정상 진행 중에는
+        // 아래 안내 카드가 같은 내용을 이미 전달하므로 문장을 중복하지 않는다.
+        if (progress.message != null) ...[
+          Text(
+            progress.message!,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 8),
+        ],
+        const SizedBox(height: 10),
         AppCard(
           padding: EdgeInsets.zero,
           child: Column(
@@ -94,8 +94,7 @@ class EvaluationProgressPanel extends StatelessWidget {
               for (var index = 0; index < steps.length; index++) ...[
                 _EvaluationStepRow(
                   title: steps[index].$2,
-                  subtitle: steps[index].$3,
-                  leadingIcon: steps[index].$4,
+                  leadingIcon: steps[index].$3,
                   state:
                       progress.stage == EvaluationProgressStage.failed &&
                               index == activeIndex
@@ -129,9 +128,7 @@ class EvaluationProgressPanel extends StatelessWidget {
               Icon(Icons.schedule_outlined, color: AppColors.primary, size: 20),
               SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  'Leaving this screen does not create another evaluation job.',
-                ),
+                child: Text('You can leave and come back. Nothing is lost.'),
               ),
             ],
           ),
@@ -165,13 +162,11 @@ enum _StepState { pending, active, complete, failed }
 class _EvaluationStepRow extends StatelessWidget {
   const _EvaluationStepRow({
     required this.title,
-    required this.subtitle,
     required this.leadingIcon,
     required this.state,
   });
 
   final String title;
-  final String subtitle;
   final IconData leadingIcon;
   final _StepState state;
 
@@ -184,7 +179,7 @@ class _EvaluationStepRow extends StatelessWidget {
       _StepState.pending => AppColors.disabled,
     };
     return Container(
-      constraints: const BoxConstraints(minHeight: 66),
+      constraints: const BoxConstraints(minHeight: 56),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
@@ -200,14 +195,7 @@ class _EvaluationStepRow extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 2),
-                Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ),
+            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
           ),
           const SizedBox(width: 8),
           if (state == _StepState.active)

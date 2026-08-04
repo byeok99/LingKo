@@ -70,11 +70,6 @@ class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
                 selectedWord.text,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Tap a syllable for its mouth and tongue guide.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
               const SizedBox(height: AppSpacing.md),
               if (selectedWord.syllables.isEmpty)
                 const Text('No syllable guide is available.')
@@ -187,17 +182,7 @@ class _SyllableGuideButton extends StatelessWidget {
           side: const BorderSide(color: AppColors.border),
         ),
         child: InkWell(
-          onTap: () => showModalBottomSheet<void>(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: AppColors.card,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(AppSizes.radiusLarge),
-              ),
-            ),
-            builder: (_) => GuideSheet(result: syllable),
-          ),
+          onTap: () => showGuideSheet(context, syllable),
           borderRadius: BorderRadius.circular(AppSizes.radius),
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -209,9 +194,10 @@ class _SyllableGuideButton extends StatelessWidget {
               children: [
                 Text(
                   syllable.character.isEmpty ? '—' : syllable.character,
+                  // 한글 음절은 획이 많아 라틴 문자와 같은 크기로는 자모를 구분하기 어렵다.
                   style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),

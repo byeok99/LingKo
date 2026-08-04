@@ -35,17 +35,7 @@ class ResultTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap:
-              () => showModalBottomSheet<void>(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: AppColors.card,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(AppSizes.radiusLarge),
-                  ),
-                ),
-                builder: (_) => GuideSheet(result: result),
-              ),
+              () => showGuideSheet(context, result),
           borderRadius: BorderRadius.circular(AppSizes.radius),
           child: Container(
             width: width,

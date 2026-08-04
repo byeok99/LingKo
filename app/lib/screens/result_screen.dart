@@ -87,11 +87,6 @@ class ResultScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const SectionHeader(title: 'Pronunciation by word'),
-          const SizedBox(height: 5),
-          Text(
-            'Choose a word to inspect its syllable guides.',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
           const SizedBox(height: 10),
           WordSyllableExplorer(words: currentResult.words),
           if (currentResult.weakCharacters.isNotEmpty) ...[

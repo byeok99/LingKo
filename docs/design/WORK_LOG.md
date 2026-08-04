@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 디자인 토큰 대비 상향
+
+- 변경 파일: `preview.html`
+- 내용: ink-500·ink-400·green·amber 토큰을 WCAG AA 본문 기준에 맞춰 조정하고, 앱에서 제거한 조작 안내 문구를 참조 화면에서도 함께 지웠다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 단어 선택형 Result·Review 디자인
 
 - 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`

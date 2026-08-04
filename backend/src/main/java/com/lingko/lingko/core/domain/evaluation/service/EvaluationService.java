@@ -144,7 +144,7 @@ public class EvaluationService {
                     .guideStatus("NONE".equals(guideType) ? GuideStatus.MISSING : GuideStatus.AVAILABLE)
                     .mouthGuideUrl(mouthGuideUrl)
                     .tongueGuideUrl(tongueGuideUrl)
-                    .note("Focus on " + guideType.toLowerCase() + " placement")
+                    .note(resolveArticulationNote(guideType))
                     .build());
             position++;
         }
@@ -183,6 +183,21 @@ public class EvaluationService {
                 .tongueGuideUrl(tongueGuideUrl)
                 .note(character.getNote())
                 .build();
+    }
+
+    /**
+     * 가이드가 있을 때만 어떤 부위에 집중할지 알려주고, 없으면 빈 문자열을 반환한다.
+     *
+     * 이전에는 guideType을 그대로 문장에 끼워 넣어 가이드가 없는 글자에
+     * "Focus on none placement"라는 문장이 사용자에게 노출됐다. 표시할 가이드가 없으면
+     * 안내할 대상도 없으므로 문구를 만들지 않고, 클라이언트가 빈 값을 감추게 한다.
+     */
+    private String resolveArticulationNote(String guideType) {
+        return switch (guideType) {
+            case "TONGUE" -> "Focus on where your tongue touches.";
+            case "MOUTH" -> "Focus on your lip and jaw opening.";
+            default -> "";
+        };
     }
 
     private String resolveGuideType(String mouthGuideUrl, String tongueGuideUrl) {
