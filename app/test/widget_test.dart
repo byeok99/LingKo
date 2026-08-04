@@ -222,7 +222,6 @@ class FakeEvaluationApi implements EvaluationApi {
 /// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakeUserPreferencesApi implements UserPreferencesApi {
   UserPreferences preferences = const UserPreferences(
-    displayLanguage: 'ko',
     nativeLanguage: 'en',
   );
   UserPreferences? lastUpdatedPreferences;
@@ -1895,19 +1894,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(preferencesApi.lastAccessToken, 'access.jwt');
-    expect(find.text('Display language'), findsOneWidget);
-    expect(find.text('Korean'), findsOneWidget);
+    // 다국어 지원 계획이 없어 표시 언어 설정은 제거했다. 모국어만 남는다.
+    expect(find.text('Display language'), findsNothing);
     expect(find.text('Native language'), findsOneWidget);
     expect(find.text('English'), findsWidgets);
     expect(find.text('Target level'), findsNothing);
     expect(find.text('Beginner 2 learner'), findsNothing);
 
-    await tester.tap(find.text('Display language'));
+    await tester.tap(find.text('Native language'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Japanese').last);
     await tester.pumpAndSettle();
 
-    expect(preferencesApi.lastUpdatedPreferences?.displayLanguage, 'ja');
+    expect(preferencesApi.lastUpdatedPreferences?.nativeLanguage, 'ja');
     expect(find.text('Japanese'), findsOneWidget);
   });
 

@@ -262,7 +262,7 @@ Authorization: Bearer <access-token>
 
 ### `GET /api/users/me/preferences`
 
-인증 필요. 표시 언어와 모국어를 반환합니다.
+인증 필요. 학습자의 모국어를 반환합니다.
 
 ### `PATCH /api/users/me/preferences`
 
@@ -270,10 +270,11 @@ Authorization: Bearer <access-token>
 
 ```json
 {
-  "displayLanguage": "en",
   "nativeLanguage": "ko"
 }
 ```
+
+앱 표시 언어(`displayLanguage`)는 다국어 지원 계획이 없어 계약에서 제거했습니다. 설정만 저장되고 화면에는 아무 영향이 없어 사용자에게 동작하지 않는 기능으로 보였습니다.
 
 ## 가이드 생성 작업
 

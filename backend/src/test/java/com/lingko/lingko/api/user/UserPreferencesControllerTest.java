@@ -45,16 +45,15 @@ class UserPreferencesControllerTest {
     @DisplayName("GET /api/users/me/preferences는 access token 사용자 설정을 반환한다")
     void getMyPreferences() throws Exception {
         when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
-        when(preferencesService.findPreferences(7L)).thenReturn(new UserPreferencesResponse(
-                "ko",
-                "en"
-        ));
+        when(preferencesService.findPreferences(7L))
+                .thenReturn(new UserPreferencesResponse("en"));
 
         mockMvc.perform(get("/api/users/me/preferences")
                         .header("Authorization", "Bearer valid-access-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.displayLanguage").value("ko"))
                 .andExpect(jsonPath("$.nativeLanguage").value("en"))
+                // 다국어 지원 계획이 없어 표시 언어 설정을 계약에서 제거했다.
+                .andExpect(jsonPath("$.displayLanguage").doesNotExist())
                 .andExpect(jsonPath("$.targetLevel").doesNotExist());
     }
 
@@ -62,23 +61,16 @@ class UserPreferencesControllerTest {
     @DisplayName("PATCH /api/users/me/preferences는 사용자 설정을 갱신한다")
     void updateMyPreferences() throws Exception {
         when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
-        when(preferencesService.updatePreferences(eq(7L), eq(new UserPreferencesUpdateRequest(
-                "ko",
-                "ja"
-        )))).thenReturn(new UserPreferencesResponse(
-                "ko",
-                "ja"
-        ));
+        when(preferencesService.updatePreferences(eq(7L), eq(new UserPreferencesUpdateRequest("ja"))))
+                .thenReturn(new UserPreferencesResponse("ja"));
 
         mockMvc.perform(patch("/api/users/me/preferences")
                         .header("Authorization", "Bearer valid-access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
-                                "displayLanguage", "ko",
                                 "nativeLanguage", "ja"
                         ))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.displayLanguage").value("ko"))
                 .andExpect(jsonPath("$.nativeLanguage").value("ja"))
                 .andExpect(jsonPath("$.targetLevel").doesNotExist());
     }
@@ -103,8 +95,7 @@ class UserPreferencesControllerTest {
                         .header("Authorization", "Bearer valid-access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
-                                "displayLanguage", "",
-                                "nativeLanguage", "en"
+                                "nativeLanguage", ""
                         ))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));

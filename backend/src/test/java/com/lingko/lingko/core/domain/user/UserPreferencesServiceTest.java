@@ -52,7 +52,6 @@ class UserPreferencesServiceTest {
 
         UserPreferencesResponse response = preferencesService.findPreferences(user.getUserIdx());
 
-        assertThat(response.displayLanguage()).isEqualTo("en");
         assertThat(response.nativeLanguage()).isEqualTo("en");
     }
 
@@ -68,15 +67,13 @@ class UserPreferencesServiceTest {
 
         UserPreferencesResponse response = preferencesService.updatePreferences(
                 user.getUserIdx(),
-                new UserPreferencesUpdateRequest("ko", "ja")
+                new UserPreferencesUpdateRequest("ja")
         );
         entityManager.flush();
         entityManager.clear();
 
         User updated = userRepository.findById(user.getUserIdx()).orElseThrow();
-        assertThat(response.displayLanguage()).isEqualTo("ko");
         assertThat(response.nativeLanguage()).isEqualTo("ja");
-        assertThat(updated.getDisplayLanguage()).isEqualTo("ko");
         assertThat(updated.getNativeLanguage()).isEqualTo("ja");
     }
 

@@ -13,11 +13,6 @@ public record UserPreferencesUpdateRequest(
         @NotBlank
         @Size(max = 20)
         @Pattern(regexp = "en|ko|ja")
-        String displayLanguage,
-
-        @NotBlank
-        @Size(max = 20)
-        @Pattern(regexp = "en|ko|ja")
         String nativeLanguage
 ) {
 }

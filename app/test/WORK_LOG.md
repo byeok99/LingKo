@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 표시 언어 제거 반영
+
+- 변경 파일: `widget_test.dart`, `user_preferences_api_test.dart`
+- 내용: 표시 언어 행이 더 이상 존재하지 않는다는 계약을 단언으로 고정하고, 요청·응답 본문에서 해당 필드를 제거했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 83개 통과
+- 리스크: `users.display_language` 컬럼이 남아 있어 후속 마이그레이션이 필요함
+
 ## 2026-08-04 - 다크 테마 회귀 테스트
 
 - 변경 파일: `design_system_test.dart`

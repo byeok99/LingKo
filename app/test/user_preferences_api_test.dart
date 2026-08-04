@@ -21,7 +21,7 @@ void main() {
 
           return ApiResponse(
             statusCode: 200,
-            body: jsonEncode({'displayLanguage': 'ko', 'nativeLanguage': 'en'}),
+            body: jsonEncode({'nativeLanguage': 'en'}),
           );
         },
       ),
@@ -34,7 +34,7 @@ void main() {
       'http://localhost:8080/api/users/me/preferences',
     );
     expect(requestedHeaders, {'Authorization': 'Bearer access.jwt'});
-    expect(preferences.displayLanguage, 'ko');
+
     expect(preferences.nativeLanguage, 'en');
   });
 
@@ -52,7 +52,7 @@ void main() {
 
           return ApiResponse(
             statusCode: 200,
-            body: jsonEncode({'displayLanguage': 'ko', 'nativeLanguage': 'ja'}),
+            body: jsonEncode({'nativeLanguage': 'ja'}),
           );
         },
       ),
@@ -61,7 +61,6 @@ void main() {
     final preferences = await api.updatePreferences(
       accessToken: 'access.jwt',
       preferences: const UserPreferences(
-        displayLanguage: 'ko',
         nativeLanguage: 'ja',
       ),
     );
@@ -71,7 +70,7 @@ void main() {
       'http://localhost:8080/api/users/me/preferences',
     );
     expect(requestedHeaders, {'Authorization': 'Bearer access.jwt'});
-    expect(requestedBody, {'displayLanguage': 'ko', 'nativeLanguage': 'ja'});
+    expect(requestedBody, {'nativeLanguage': 'ja'});
     expect(preferences.nativeLanguage, 'ja');
   });
 }

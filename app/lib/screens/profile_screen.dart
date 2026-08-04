@@ -163,12 +163,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<void> selectLanguage({required bool display}) async {
+  Future<void> selectNativeLanguage() async {
     final selected = await showModalBottomSheet<String>(
       context: context,
       builder:
           (context) => _OptionSheet<String>(
-            title: display ? 'Display language' : 'Native language',
+            title: 'Native language',
             options: const ['en', 'ko', 'ja'],
             labelFor: languageLabel,
           ),
@@ -177,11 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
     final current = preferences ?? UserPreferences.defaults;
-    await updatePreferences(
-      display
-          ? current.copyWith(displayLanguage: selected)
-          : current.copyWith(nativeLanguage: selected),
-    );
+    await updatePreferences(current.copyWith(nativeLanguage: selected));
   }
 
   @override
@@ -231,14 +227,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               children: [
                 SettingsRow(
-                  label: 'Display language',
-                  value: languageLabel(current.displayLanguage),
-                  onTap: isSaving ? null : () => selectLanguage(display: true),
-                ),
-                SettingsRow(
                   label: 'Native language',
                   value: languageLabel(current.nativeLanguage),
-                  onTap: isSaving ? null : () => selectLanguage(display: false),
+                  onTap: isSaving ? null : selectNativeLanguage,
                 ),
               ],
             ),

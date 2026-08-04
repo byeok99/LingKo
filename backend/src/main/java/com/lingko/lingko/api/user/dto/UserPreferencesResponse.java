@@ -6,7 +6,6 @@ package com.lingko.lingko.api.user.dto;
  * 영속 엔티티를 직접 노출하지 않고 전송 계약을 독립적으로 유지하기 위해 전용 DTO를 선택했다.
  */
 public record UserPreferencesResponse(
-        String displayLanguage,
         String nativeLanguage
 ) {
 }

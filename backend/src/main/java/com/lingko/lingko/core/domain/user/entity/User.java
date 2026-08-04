@@ -47,10 +47,6 @@ public class User {
     private String profileImageUrl;
 
     @Builder.Default
-    @Column(name = "display_language", nullable = false, length = 20)
-    private String displayLanguage = "en";
-
-    @Builder.Default
     @Column(name = "native_language", nullable = false, length = 20)
     private String nativeLanguage = "en";
 
@@ -69,9 +65,14 @@ public class User {
         this.profileImageUrl = profileImageUrl;
     }
 
-    public void updateLanguagePreferences(String displayLanguage, String nativeLanguage) {
-        // 요청이 언어 설정 일부만 적용하지 않도록 표시·모국어 설정을 함께 갱신한다.
-        this.displayLanguage = displayLanguage;
+    /**
+     * 학습 콘텐츠를 설명할 기준 언어인 모국어 설정을 갱신한다.
+     *
+     * 앱 UI 표시 언어는 다국어 지원 계획이 없어 설정 자체를 제거했다. DB의
+     * display_language 컬럼은 기존 데이터 보존을 위해 남겨 두고 코드에서만 참조를 끊었으며,
+     * 컬럼 삭제는 확장 후 축소 절차에 따라 별도 마이그레이션으로 다룬다.
+     */
+    public void updateNativeLanguage(String nativeLanguage) {
         this.nativeLanguage = nativeLanguage;
     }
 
