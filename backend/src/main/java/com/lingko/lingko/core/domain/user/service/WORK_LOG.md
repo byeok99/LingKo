@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - preferences 서비스 삭제
+
+- 변경 파일: `UserPreferencesService.java` (삭제)
+- 내용: 조회·갱신 대상이 사라져 서비스를 제거했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
+## 2026-08-04 - preferences 서비스 단순화
+
+- 변경 파일: `UserPreferencesService.java`
+- 내용: 표시 언어 갱신 경로를 제거하고 모국어만 반영하도록 정리했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 83개 통과
+- 리스크: `users.display_language` 컬럼이 남아 있어 후속 마이그레이션이 필요함
+
 ## 2026-08-04 - 회원 탈퇴 단어 snapshot 삭제
 
 - 변경 파일: `AccountDeletionPersistenceService.java`, `WORK_LOG.md`

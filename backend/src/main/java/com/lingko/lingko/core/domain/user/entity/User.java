@@ -46,14 +46,6 @@ public class User {
     @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
-    @Builder.Default
-    @Column(name = "display_language", nullable = false, length = 20)
-    private String displayLanguage = "en";
-
-    @Builder.Default
-    @Column(name = "native_language", nullable = false, length = 20)
-    private String nativeLanguage = "en";
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -67,12 +59,6 @@ public class User {
         this.email = email;
         this.name = name;
         this.profileImageUrl = profileImageUrl;
-    }
-
-    public void updateLanguagePreferences(String displayLanguage, String nativeLanguage) {
-        // 요청이 언어 설정 일부만 적용하지 않도록 표시·모국어 설정을 함께 갱신한다.
-        this.displayLanguage = displayLanguage;
-        this.nativeLanguage = nativeLanguage;
     }
 
     public enum SocialType {

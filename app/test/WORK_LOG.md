@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - 언어 설정 부재 계약 고정
+
+- 변경 파일: `widget_test.dart`, `user_preferences_api_test.dart` (삭제)
+- 내용: Profile에 언어 설정이 다시 나타나지 않는다는 것과 계정 조작은 남아 있다는 것을 테스트로 고정했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
+## 2026-08-04 - 표시 언어 제거 반영
+
+- 변경 파일: `widget_test.dart`, `user_preferences_api_test.dart`
+- 내용: 표시 언어 행이 더 이상 존재하지 않는다는 계약을 단언으로 고정하고, 요청·응답 본문에서 해당 필드를 제거했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 83개 통과
+- 리스크: `users.display_language` 컬럼이 남아 있어 후속 마이그레이션이 필요함
+
 ## 2026-08-04 - 다크 테마 회귀 테스트
 
 - 변경 파일: `design_system_test.dart`

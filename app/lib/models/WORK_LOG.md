@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - UserPreferences 모델 삭제
+
+- 변경 파일: `user_preferences.dart` (삭제)
+- 내용: displayLanguage에 이어 nativeLanguage도 소비처가 없어 모델 자체를 제거했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
+## 2026-08-04 - UserPreferences에서 displayLanguage 제거
+
+- 변경 파일: `user_preferences.dart`
+- 내용: 다국어 지원 계획이 없어 UI 언어 필드를 제거했다. 학습 콘텐츠 기준 언어인 nativeLanguage는 성격이 달라 유지하고 주석으로 구분을 명시했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 83개 통과
+- 리스크: `users.display_language` 컬럼이 남아 있어 후속 마이그레이션이 필요함
+
 ## 2026-08-04 - ScoreStatus enum과 fail-closed 파싱
 
 - 변경 파일: `score_status.dart`, `practice_result.dart`, `practice_sentence.dart`

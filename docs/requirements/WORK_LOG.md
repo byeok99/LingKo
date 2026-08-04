@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - FR-PREF 요구사항 제거
+
+- 변경 파일: `functional-requirements.md`
+- 내용: 언어 설정 기능과 FR-PREF 항목을 제거했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
+## 2026-08-04 - 설정 요구사항 범위 축소
+
+- 변경 파일: `functional-requirements.md`
+- 내용: FR-PREF 항목에서 표시 언어를 빼고 모국어 설정으로 범위를 좁혔다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 83개 통과
+- 리스크: `users.display_language` 컬럼이 남아 있어 후속 마이그레이션이 필요함
+
 ## 2026-08-04 - 단어 중심 피드백 요구사항 구현 완료
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`

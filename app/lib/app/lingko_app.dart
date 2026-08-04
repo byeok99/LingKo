@@ -14,7 +14,6 @@ import '../api/evaluation_api.dart';
 import '../api/practice_quota_api.dart';
 import '../api/pronunciation_api.dart';
 import '../api/sentence_api.dart';
-import '../api/user_preferences_api.dart';
 import '../models/auth_session.dart';
 import '../models/evaluation_job.dart';
 import '../models/evaluation_progress.dart';
@@ -42,7 +41,6 @@ class LingKoApp extends StatelessWidget {
     this.pronunciationApi,
     this.sentenceApi,
     this.evaluationApi,
-    this.userPreferencesApi,
     this.practiceQuotaApi,
     this.authService,
     this.audioRecorderService,
@@ -53,7 +51,6 @@ class LingKoApp extends StatelessWidget {
   final PronunciationApi? pronunciationApi;
   final SentenceApi? sentenceApi;
   final EvaluationApi? evaluationApi;
-  final UserPreferencesApi? userPreferencesApi;
   final PracticeQuotaApi? practiceQuotaApi;
   final AppAuthService? authService;
   final AudioRecorderService? audioRecorderService;
@@ -75,7 +72,6 @@ class LingKoApp extends StatelessWidget {
         pronunciationApi: pronunciationApi ?? DartIoPronunciationApi(),
         sentenceApi: sentenceApi ?? DartIoSentenceApi(),
         evaluationApi: evaluationApi ?? DartIoEvaluationApi(),
-        userPreferencesApi: userPreferencesApi ?? DartIoUserPreferencesApi(),
         practiceQuotaApi: practiceQuotaApi ?? DartIoPracticeQuotaApi(),
         authService: authService ?? DefaultAppAuthService(),
         audioRecorderService:
@@ -96,7 +92,6 @@ class LingKoShell extends StatefulWidget {
     required this.pronunciationApi,
     required this.sentenceApi,
     required this.evaluationApi,
-    required this.userPreferencesApi,
     required this.practiceQuotaApi,
     required this.authService,
     required this.audioRecorderService,
@@ -107,7 +102,6 @@ class LingKoShell extends StatefulWidget {
   final PronunciationApi pronunciationApi;
   final SentenceApi sentenceApi;
   final EvaluationApi evaluationApi;
-  final UserPreferencesApi userPreferencesApi;
   final PracticeQuotaApi practiceQuotaApi;
   final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
@@ -646,7 +640,6 @@ class _LingKoShellState extends State<LingKoShell> {
         onSessionExpired: () => handleSessionChanged(null),
       ),
       ProfileScreen(
-        userPreferencesApi: widget.userPreferencesApi,
         authService: widget.authService,
         session: session!,
         onSessionChanged: handleSessionChanged,

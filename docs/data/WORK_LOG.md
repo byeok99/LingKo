@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - users 테이블 정의 갱신
+
+- 변경 파일: `data-model.md`
+- 내용: 제거한 두 컬럼을 정의에서 뺐다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
 ## 2026-08-04 - 평가 단어 데이터 모델 문서
 
 - 변경 파일: `data-model.md`, `WORK_LOG.md`

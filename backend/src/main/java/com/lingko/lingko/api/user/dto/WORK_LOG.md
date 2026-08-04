@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - preferences DTO 삭제
+
+- 변경 파일: `UserPreferencesResponse.java`, `UserPreferencesUpdateRequest.java` (삭제)
+- 내용: endpoint 제거에 따라 전송 계약도 함께 삭제했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
+## 2026-08-04 - preferences 계약에서 displayLanguage 제거
+
+- 변경 파일: `UserPreferencesResponse.java`, `UserPreferencesUpdateRequest.java`
+- 내용: 앱이 더 이상 보내지도 쓰지도 않는 표시 언어 필드를 요청·응답 계약에서 제거했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 83개 통과
+- 리스크: `users.display_language` 컬럼이 남아 있어 후속 마이그레이션이 필요함
+
 ## 2026-08-03 - Preferences 목표 레벨 API 계약 제거
 
 - 변경 파일: `UserPreferencesResponse.java`, `UserPreferencesUpdateRequest.java`, `WORK_LOG.md`

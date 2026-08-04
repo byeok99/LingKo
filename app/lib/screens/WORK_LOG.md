@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - Profile에서 언어 설정 섹션 제거
+
+- 변경 파일: `profile_screen.dart`
+- 내용: 저장만 되고 읽는 코드가 없던 언어 설정 섹션과 관련 상태·조회·저장 흐름을 모두 제거했다. Profile은 계정 정보와 로그아웃·탈퇴만 다룬다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
+## 2026-08-04 - 표시 언어 설정 제거
+
+- 변경 파일: `profile_screen.dart`
+- 내용: 저장만 되고 화면에는 아무 영향이 없던 표시 언어 설정 행을 제거하고, 남은 모국어 설정만 다루도록 선택 흐름을 단순화했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 83개 통과
+- 리스크: `users.display_language` 컬럼이 남아 있어 후속 마이그레이션이 필요함
+
 ## 2026-08-04 - 화면 색 참조를 테마 기반으로 전환
 
 - 변경 파일: `home_screen.dart`, `practice_screen.dart`, `result_screen.dart`, `review_screen.dart`, `profile_screen.dart`, `auth_gate_screen.dart`

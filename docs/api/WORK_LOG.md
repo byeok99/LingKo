@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - 사용자 설정 API 문서 제거
+
+- 변경 파일: `api-reference.md`
+- 내용: 제거한 endpoint 절을 삭제했다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 기존 앱 빌드가 호출하던 preferences endpoint가 404가 됨
+
+## 2026-08-04 - preferences API 계약 갱신
+
+- 변경 파일: `api-reference.md`
+- 내용: displayLanguage를 계약에서 제거하고 제거 사유를 문서에 남겼다.
+- 검증: `./gradlew test integrationTest` 통과, `flutter analyze`, `flutter test` 83개 통과
+- 리스크: `users.display_language` 컬럼이 남아 있어 후속 마이그레이션이 필요함
+
 ## 2026-08-04 - 상태값 계약과 text 상한 문서화
 
 - 변경 파일: `api-reference.md`
