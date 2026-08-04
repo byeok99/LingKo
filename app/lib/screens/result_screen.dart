@@ -313,7 +313,7 @@ class _FeedbackRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  result.scoreStatus == 'AVAILABLE'
+                  result.scoreStatus.isAvailable
                       ? 'Score ${result.score}'
                       : 'Score unavailable',
                   style: Theme.of(context).textTheme.bodyMedium,

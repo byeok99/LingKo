@@ -1,5 +1,6 @@
 package com.lingko.lingko.core.domain.evaluation;
 
+import com.lingko.lingko.api.evaluation.dto.GuideStatus;
 import com.lingko.lingko.api.evaluation.dto.GuideCharacterResponse;
 import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareResponse;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
@@ -41,7 +42,7 @@ class EvaluationServicePrepareTest {
         assertThat(first.getPronunciationText()).isEqualTo("마");
         assertThat(first.getPhonemes()).containsExactly("ㅁ", "ㅏ");
         assertThat(first.getGuideType()).isEqualTo("TONGUE");
-        assertThat(first.getGuideStatus()).isEqualTo("AVAILABLE");
+        assertThat(first.getGuideStatus()).isEqualTo(GuideStatus.AVAILABLE);
         assertThat(first.getMouthGuideUrl()).isEqualTo("https://guides/mouth/m.png");
         assertThat(first.getTongueGuideUrl()).isEqualTo("https://guides/tongue/m.png");
     }

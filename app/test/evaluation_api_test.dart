@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingko_app/api/api_client.dart';
 import 'package:lingko_app/api/evaluation_api.dart';
 import 'package:lingko_app/models/evaluation_job.dart';
+import 'package:lingko_app/models/score_status.dart';
 
 void main() {
   test('evaluation uses presigned upload and asynchronous job APIs', () async {
@@ -151,10 +152,10 @@ void main() {
     expect(job.status, EvaluationJobStatus.succeeded);
     expect(job.result?.overallScore, 91);
     expect(job.result?.scoreBreakdown.accuracy, 92);
-    expect(job.result?.wordScoreStatus, 'AVAILABLE');
+    expect(job.result?.wordScoreStatus, ScoreStatus.available);
     expect(job.result?.words.single.text, '안녕하세요');
     expect(job.result?.words.single.score, 91);
-    expect(job.result?.words.single.syllables.single.scoreStatus, 'UNAVAILABLE');
+    expect(job.result?.words.single.syllables.single.scoreStatus, ScoreStatus.unavailable);
   });
 
   test('custom text is sent when creating a job', () async {
@@ -235,8 +236,8 @@ void main() {
 
     final job = await api.fetchJob(accessToken: 'access.jwt', jobId: 'job-id');
 
-    expect(job.result?.characterScoreStatus, 'UNAVAILABLE');
-    expect(job.result?.characters.single.scoreStatus, 'UNAVAILABLE');
+    expect(job.result?.characterScoreStatus, ScoreStatus.unavailable);
+    expect(job.result?.characters.single.scoreStatus, ScoreStatus.unavailable);
   });
 
   test('fetchHistory requests my evaluations and maps response', () async {
@@ -327,10 +328,10 @@ void main() {
     expect(history.items.single.scoreBreakdown.accuracy, 92);
     expect(history.items.single.characters.single.character, '맛');
     expect(history.items.single.characters.single.score, 88);
-    expect(history.items.single.characters.single.scoreStatus, 'AVAILABLE');
+    expect(history.items.single.characters.single.scoreStatus, ScoreStatus.available);
     expect(history.items.single.words.single.text, '마싯게따');
     expect(history.items.single.words.single.score, 88);
-    expect(history.items.single.words.single.syllables.single.scoreStatus, 'UNAVAILABLE');
+    expect(history.items.single.words.single.syllables.single.scoreStatus, ScoreStatus.unavailable);
     expect(
       history.items.single.characters.single.note,
       'Keep the final consonant clear.',

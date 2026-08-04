@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:lingko_app/api/evaluation_api.dart';
+import 'package:lingko_app/models/score_status.dart';
 import 'package:lingko_app/api/practice_quota_api.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 import 'package:lingko_app/api/sentence_api.dart';
@@ -108,12 +109,12 @@ class FakeEvaluationApi implements EvaluationApi {
             position: 0,
             text: '마싯게따',
             score: 88,
-            scoreStatus: 'AVAILABLE',
+            scoreStatus: ScoreStatus.available,
             syllables: [
               CharacterResult(
                 character: '맛',
                 score: 0,
-                scoreStatus: 'UNAVAILABLE',
+                scoreStatus: ScoreStatus.unavailable,
                 note: 'Keep the final consonant clear.',
                 kind: 'NONE',
               ),
@@ -183,7 +184,7 @@ class FakeEvaluationApi implements EvaluationApi {
         gradeLabel: 'Excellent',
         summary: 'Clear pronunciation.',
         recognizedText: '사용자 발음',
-        characterScoreStatus: 'UNAVAILABLE',
+        characterScoreStatus: ScoreStatus.unavailable,
         scoreBreakdown: PracticeScoreBreakdown(
           accuracy: 92,
           fluency: 90,
@@ -1951,7 +1952,7 @@ void main() {
     const character = CharacterResult(
       character: '나',
       score: 55,
-      scoreStatus: 'AVAILABLE',
+      scoreStatus: ScoreStatus.available,
       note: 'Focus on tongue placement',
       kind: 'TONGUE',
     );
@@ -2030,7 +2031,7 @@ void main() {
     const character = CharacterResult(
       character: '마',
       score: 0,
-      scoreStatus: 'UNAVAILABLE',
+      scoreStatus: ScoreStatus.unavailable,
       note: 'Stable vowel shape',
       kind: 'TONGUE',
       guideStatus: 'AVAILABLE',
@@ -2051,7 +2052,7 @@ void main() {
       overallScore: 82,
       gradeLabel: 'Good',
       summary: 'Keep practicing.',
-      characterScoreStatus: 'UNAVAILABLE',
+      characterScoreStatus: ScoreStatus.unavailable,
       scoreBreakdown: PracticeScoreBreakdown(
         accuracy: 82,
         fluency: 80,
@@ -2063,7 +2064,7 @@ void main() {
         PracticeWordResult(
           position: 0,
           text: '마',
-          scoreStatus: 'UNAVAILABLE',
+          scoreStatus: ScoreStatus.unavailable,
           syllables: [character],
         ),
       ],
@@ -2106,14 +2107,14 @@ void main() {
     const kim = CharacterResult(
       character: '김',
       score: 0,
-      scoreStatus: 'UNAVAILABLE',
+      scoreStatus: ScoreStatus.unavailable,
       note: 'Keep the final consonant clear.',
       kind: 'TONGUE',
     );
     const ha = CharacterResult(
       character: '하',
       score: 0,
-      scoreStatus: 'UNAVAILABLE',
+      scoreStatus: ScoreStatus.unavailable,
       note: 'Open the mouth naturally.',
       kind: 'MOUTH',
       mouthGuideUrl: 'https://guides/mouth/ha.png',
@@ -2132,7 +2133,7 @@ void main() {
       overallScore: 84,
       gradeLabel: 'Good',
       summary: 'Keep practicing.',
-      wordScoreStatus: 'AVAILABLE',
+      wordScoreStatus: ScoreStatus.available,
       scoreBreakdown: PracticeScoreBreakdown(
         accuracy: 84,
         fluency: 82,
@@ -2145,14 +2146,14 @@ void main() {
           position: 0,
           text: '김치찌개',
           score: 82,
-          scoreStatus: 'AVAILABLE',
+          scoreStatus: ScoreStatus.available,
           syllables: [kim],
         ),
         PracticeWordResult(
           position: 1,
           text: '하나',
           score: 91,
-          scoreStatus: 'AVAILABLE',
+          scoreStatus: ScoreStatus.available,
           syllables: [ha],
         ),
       ],
@@ -2245,7 +2246,7 @@ void main() {
       overallScore: 87,
       gradeLabel: 'Great',
       summary: 'Clear and natural pronunciation.',
-      characterScoreStatus: 'AVAILABLE',
+      characterScoreStatus: ScoreStatus.available,
       scoreBreakdown: PracticeScoreBreakdown(
         accuracy: 90,
         fluency: 85,
@@ -2295,7 +2296,7 @@ void main() {
           score: 0,
           note: 'Score unavailable.',
           kind: 'NONE',
-          scoreStatus: 'UNAVAILABLE',
+          scoreStatus: ScoreStatus.unavailable,
         ),
       ],
       words: [
@@ -2303,12 +2304,12 @@ void main() {
           position: 0,
           text: '저는',
           score: 94,
-          scoreStatus: 'AVAILABLE',
+          scoreStatus: ScoreStatus.available,
           syllables: [
             CharacterResult(
               character: '저',
               score: 0,
-              scoreStatus: 'UNAVAILABLE',
+              scoreStatus: ScoreStatus.unavailable,
               note: 'Clear.',
               kind: 'MOUTH',
             ),
@@ -2318,12 +2319,12 @@ void main() {
           position: 1,
           text: '커피를',
           score: 62,
-          scoreStatus: 'AVAILABLE',
+          scoreStatus: ScoreStatus.available,
           syllables: [
             CharacterResult(
               character: '피',
               score: 0,
-              scoreStatus: 'UNAVAILABLE',
+              scoreStatus: ScoreStatus.unavailable,
               note: 'Release more air.',
               kind: 'MOUTH',
             ),
@@ -2391,7 +2392,7 @@ void main() {
       summary:
           'The sentence is complete, and a few connected sounds need another clear attempt.',
       recognizedText: '저는 커피를 좋아해요.',
-      characterScoreStatus: 'AVAILABLE',
+      characterScoreStatus: ScoreStatus.available,
       scoreBreakdown: PracticeScoreBreakdown(
         accuracy: 78,
         fluency: 72,

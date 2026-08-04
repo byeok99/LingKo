@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - fail-closed 상태 해석 회귀 테스트
+
+- 변경 파일: `score_status_test.dart`, `widget_test.dart`, `evaluation_api_test.dart`
+- 내용: 미지의 상태 문자열과 상태값 누락이 모두 unavailable로 처리되는지 고정하고, 기존 테스트 단언을 enum으로 옮겼다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 단어 중심 평가 회귀 테스트
 
 - 변경 파일: `evaluation_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`

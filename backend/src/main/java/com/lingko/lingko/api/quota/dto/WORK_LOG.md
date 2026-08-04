@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - serverTime 동봉 이유 주석
+
+- 변경 파일: `PracticeQuotaResponse.java`
+- 내용: 기기 시계 대신 서버 시각 차이로 countdown을 계산하도록 두 필드의 의미와 선택 이유를 기록했다.
+- 검증: `./gradlew compileJava test`, `./gradlew integrationTest`, `flutter analyze`, `flutter test` 74개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `PracticeQuotaResponse.java`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 상태값 계약과 text 상한 문서화
+
+- 변경 파일: `api-reference.md`
+- 내용: scoreStatus 허용 값 표와 미지 값 처리 규칙, guideStatus와의 축 분리를 명시하고 평가 작업 text 상한을 100자로 기록했다.
+- 검증: 문서 내용과 구현 대조
+- 리스크: 없음
+
 ## 2026-08-04 - 단어 중심 평가 API 문서
 
 - 변경 파일: `api-reference.md`, `WORK_LOG.md`

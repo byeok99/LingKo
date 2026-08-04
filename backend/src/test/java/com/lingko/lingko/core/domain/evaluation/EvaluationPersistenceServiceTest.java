@@ -1,5 +1,7 @@
 package com.lingko.lingko.core.domain.evaluation;
 
+import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
+import com.lingko.lingko.api.evaluation.dto.GuideStatus;
 import com.lingko.lingko.api.evaluation.dto.GuideCharacterResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeWordResultResponse;
@@ -114,7 +116,7 @@ class EvaluationPersistenceServiceTest {
                 .position(0)
                 .text("김치찌개")
                 .score(82)
-                .scoreStatus("AVAILABLE")
+                .scoreStatus(ScoreStatus.AVAILABLE)
                 .syllables(List.of(
                         guideOnlyCharacter(0, "김"),
                         guideOnlyCharacter(1, "치")
@@ -125,8 +127,8 @@ class EvaluationPersistenceServiceTest {
                 .gradeLabel("Good")
                 .summary("Good pronunciation.")
                 .recognizedText("김치찌개")
-                .characterScoreStatus("UNAVAILABLE")
-                .wordScoreStatus("AVAILABLE")
+                .characterScoreStatus(ScoreStatus.UNAVAILABLE)
+                .wordScoreStatus(ScoreStatus.AVAILABLE)
                 .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
                         .accuracy(84)
                         .fluency(80)
@@ -156,6 +158,62 @@ class EvaluationPersistenceServiceTest {
         });
         assertThat(found.getSyllableList()).extracting(EvaluationSyllable::getScore).containsOnlyNulls();
         assertThat(found.getSyllableList()).extracting(EvaluationSyllable::getWordPosition).containsOnly(0);
+    }
+
+    @Test
+    @DisplayName("단어 점수를 신뢰할 수 없으면 파생 가능한 단어 행을 저장하지 않는다")
+    void skipsWordRowsWhenWordScoresAreUnavailable() {
+        User user = persistUser();
+        // 단어 경계를 판단하지 못한 결과는 문장 전체를 한 단어처럼 담아 내려온다.
+        String sentence = "김치".repeat(60);
+        PracticeWordResultResponse unreliableWord = PracticeWordResultResponse.builder()
+                .position(0)
+                .text(sentence)
+                .score(null)
+                .scoreStatus(ScoreStatus.UNAVAILABLE)
+                .syllables(List.of(
+                        guideOnlyCharacter(0, "김"),
+                        guideOnlyCharacter(1, "치")
+                ))
+                .build();
+        PracticeResultResponse result = PracticeResultResponse.builder()
+                .overallScore(70)
+                .gradeLabel("Fair")
+                .summary("Keep practicing.")
+                .recognizedText(sentence)
+                .characterScoreStatus(ScoreStatus.UNAVAILABLE)
+                .wordScoreStatus(ScoreStatus.UNAVAILABLE)
+                .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
+                        .accuracy(70)
+                        .fluency(70)
+                        .completeness(70)
+                        .build())
+                .characters(List.of(
+                        guideOnlyCharacter(0, "김"),
+                        guideOnlyCharacter(1, "치")
+                ))
+                .weakCharacters(List.of())
+                .words(List.of(unreliableWord))
+                .build();
+
+        EvaluationLog saved = persistenceService.saveResult(
+                EvaluationPersistenceService.SaveEvaluationResultCommand.builder()
+                        .user(user)
+                        .source(EvaluationLog.PracticeSource.CUSTOM)
+                        .originalText("김치")
+                        .standardPronunciation("김치")
+                        .result(result)
+                        .build()
+        );
+        entityManager.clear();
+
+        EvaluationLog found = evaluationLogRepository.findById(saved.getEvaluationLogIdx()).orElseThrow();
+        // word_text 길이를 넘기는 문장 blob이 저장되지 않고, 음절만 단어 위치 없이 남는다.
+        assertThat(found.getWordList()).isEmpty();
+        assertThat(found.getSyllableList())
+                .extracting(EvaluationSyllable::getWordPosition)
+                .containsOnlyNulls();
+        assertThat(found.getSyllableList()).hasSize(2);
     }
 
     @Test
@@ -210,7 +268,7 @@ class EvaluationPersistenceServiceTest {
                 .gradeLabel("Good")
                 .summary("Good pronunciation.")
                 .recognizedText("마싣게따")
-                .characterScoreStatus("AVAILABLE")
+                .characterScoreStatus(ScoreStatus.AVAILABLE)
                 .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
                         .accuracy(84)
                         .fluency(80)
@@ -227,9 +285,9 @@ class EvaluationPersistenceServiceTest {
                 .text(text)
                 .pronunciationText(text)
                 .score(score)
-                .scoreStatus("AVAILABLE")
+                .scoreStatus(ScoreStatus.AVAILABLE)
                 .guideType("TONGUE")
-                .guideStatus("AVAILABLE")
+                .guideStatus(GuideStatus.AVAILABLE)
                 .mouthGuideUrl("https://example.com/mouth/" + position + ".png")
                 .tongueGuideUrl("https://example.com/tongue/" + position + ".png")
                 .note("Keep the tongue closer for the sibilant sound")
@@ -242,9 +300,9 @@ class EvaluationPersistenceServiceTest {
                 .text(text)
                 .pronunciationText(text)
                 .score(null)
-                .scoreStatus("UNAVAILABLE")
+                .scoreStatus(ScoreStatus.UNAVAILABLE)
                 .guideType("TONGUE")
-                .guideStatus("AVAILABLE")
+                .guideStatus(GuideStatus.AVAILABLE)
                 .tongueGuideUrl("https://example.com/tongue/" + position + ".png")
                 .note("Open the guide")
                 .build();

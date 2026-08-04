@@ -23,6 +23,10 @@ public interface DailyPracticeQuotaRepository extends JpaRepository<DailyPractic
 
     /**
      * 과거 일일 행이 남아 있어도 가장 최근 상태 하나만 현재 에너지로 사용하고 충전 계산을 직렬화한다.
+     *
+     * 자연 충전은 읽는 시점에 경과 시간으로 계산해 기록하므로, 동시 요청이 같은 구간을
+     * 두 번 충전하지 않도록 조회 단계에서 {@code FOR UPDATE}로 행을 잠근다. 이 때문에
+     * 단순 조회 API도 write lock을 잡는다는 점을 호출자가 알고 있어야 한다.
      */
     @Query(value = """
             SELECT *

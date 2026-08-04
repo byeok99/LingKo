@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - 상태 비교를 enum으로 교체
+
+- 변경 파일: `word_syllable_explorer.dart`, `result_tile.dart`
+- 내용: 문자열 비교를 ScoreStatus.isAvailable로 바꿔 오타로 점수가 노출되는 경로를 없앴다.
+- 검증: `./gradlew test integrationTest` 전체 통과, `flutter analyze`, `flutter test` 78개 통과
+- 리스크: 동작 변경 없음
+
+## 2026-08-04 - 단어 선택 초기화 의도 주석
+
+- 변경 파일: `word_syllable_explorer.dart`
+- 내용: 결과 교체 시 이전 선택 위치가 다른 문장을 가리키지 않도록 첫 단어로 되돌리는 이유를 남겼다.
+- 검증: `./gradlew compileJava test`, `./gradlew integrationTest`, `flutter analyze`, `flutter test` 74개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-04 - 단어·음절 탐색 공용 위젯
 
 - 변경 파일: `word_syllable_explorer.dart`, `WORK_LOG.md`
