@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 무의미한 안내 문구 생성 제거
+
+- 변경 파일: `EvaluationService.java`
+- 내용: guideType을 그대로 문장에 끼워 넣어 가이드 없는 글자에 'Focus on none placement'가 노출되던 문제를 고쳤다. 가이드가 있을 때만 부위별 안내를 만들고 없으면 빈 문자열을 반환한다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 신뢰 불가 단어 행 저장 생략과 상태 enum 적용
 
 - 변경 파일: `EvaluationPersistenceService.java`, `EvaluationService.java`, `EvaluationHistoryService.java`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 가이드 시트 확대와 설명 텍스트 정리
+
+- 변경 파일: `guide_sheet.dart`, `word_syllable_explorer.dart`, `result_tile.dart`, `evaluation_progress_panel.dart`
+- 내용: 입·혀 가이드를 나란히 놓아 각 가이드가 화면 폭 절반도 못 쓰던 구조를 탭 전환 단일 표시로 바꾸고, 시트 높이를 88%로 고정해 미디어 면적을 약 4배로 늘렸다. 이미지 핀치 줌과 영상 0.5x·0.25x 배속을 추가하고, 미디어 형식을 설명하던 카드와 중복 안내 문구를 제거했다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 상태 비교를 enum으로 교체
 
 - 변경 파일: `word_syllable_explorer.dart`, `result_tile.dart`

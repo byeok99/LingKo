@@ -1039,7 +1039,9 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const ValueKey('evaluation-progress')), findsOneWidget);
-    expect(find.text('Evaluation job'), findsOneWidget);
+    // 단계 이름은 내부 용어가 아니라 사용자가 읽을 수 있는 문장이어야 한다.
+    expect(find.text('Sending it for evaluation'), findsOneWidget);
+    expect(find.text('Evaluation job'), findsNothing);
     expect(find.text('Result'), findsNothing);
 
     createCompleter.complete(
@@ -1966,16 +1968,39 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('TONGUE guide'), findsWidgets);
-    expect(find.text('Focus on tongue placement'), findsWidgets);
+    // 가이드 종류만 되풀이하는 자동 생성 note와 미디어 형식 설명은 화면 공간만
+    // 차지하므로 표시하지 않는다. 사용자가 볼 것은 가이드 자체다.
+    expect(find.text('Focus on tongue placement'), findsNothing);
     expect(
-      find.text(
-        'A built-in static guide is shown because this evaluation did not provide guide media.',
-      ),
+      find.textContaining('did not provide guide media'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('guide sheet keeps a real articulation hint', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '싯',
+      score: 55,
+      note: 'Touch the ridge behind your teeth, then release slowly.',
+      kind: 'TONGUE',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: ResultTile(result: character))),
+    );
+    await tester.tap(find.byType(ResultTile));
+    await tester.pumpAndSettle();
+
+    // 자동 생성 문구가 아닌 실제 조음 힌트는 그대로 노출되어야 한다.
+    expect(
+      find.text('Touch the ridge behind your teeth, then release slowly.'),
       findsOneWidget,
     );
   });
 
-  testWidgets('guide sheet renders available static guide assets first', (
+  testWidgets('guide sheet shows one guide at a time and switches by tab', (
     WidgetTester tester,
   ) async {
     const character = CharacterResult(
@@ -1992,14 +2017,39 @@ void main() {
       const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
     );
 
-    final images = tester.widgetList<Image>(find.byType(Image)).toList();
-
-    expect(images, hasLength(2));
-    expect((images[0].image as NetworkImage).url, character.mouthGuideUrl);
-    expect((images[1].image as NetworkImage).url, character.tongueGuideUrl);
+    // 작은 화면에서 세부를 확인할 수 있도록 한 번에 하나만 전체 폭으로 그린다.
+    var images = tester.widgetList<Image>(find.byType(Image)).toList();
+    expect(images, hasLength(1));
+    expect((images.single.image as NetworkImage).url, character.mouthGuideUrl);
     expect(find.text('Mouth & tongue guide'), findsOneWidget);
-    expect(find.text('Mouth guide'), findsOneWidget);
-    expect(find.text('Tongue guide'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('guide-tab-tongue-guide')));
+    await tester.pumpAndSettle();
+
+    images = tester.widgetList<Image>(find.byType(Image)).toList();
+    expect(images, hasLength(1));
+    expect((images.single.image as NetworkImage).url, character.tongueGuideUrl);
+  });
+
+  testWidgets('guide sheet omits the tab bar when only one guide exists', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '마',
+      score: 0,
+      note: 'Stable vowel shape',
+      kind: 'MOUTH',
+      guideStatus: 'AVAILABLE',
+      mouthGuideUrl: 'https://guides/mouth/vowel-a.png',
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
+    );
+
+    // 선택지가 하나뿐이면 전환 UI는 공간만 차지한다.
+    expect(find.byKey(const ValueKey('guide-tab-mouth-guide')), findsNothing);
+    expect(tester.widgetList<Image>(find.byType(Image)), hasLength(1));
   });
 
   testWidgets('guide sheet renders MP4 URLs as video media', (

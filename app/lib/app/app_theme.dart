@@ -20,12 +20,15 @@ class AppColors {
   static const card = Colors.white;
   static const textStrong = Color(0xFF102B40);
   static const textPrimary = Color(0xFF17324A);
-  static const textSecondary = Color(0xFF667D90);
-  static const textMuted = Color(0xFF8A9AA8);
+  // 본문 12px에도 쓰이므로 WCAG AA 본문 기준 4.5:1을 넘는 값만 사용한다. 흰 배경 대비 4.94:1.
+  static const textSecondary = Color(0xFF5C7386);
+  // 하단 탭의 비선택 라벨 색이라 가장 흐린 값이어도 읽을 수 있어야 한다.
+  // 흰 배경 4.77:1, 가장 밝은 카드 배경(blue50) 위에서도 4.59:1로 본문 기준을 넘긴다.
+  static const textMuted = Color(0xFF627585);
   static const border = Color(0xFFDCE7EF);
-  static const success = Color(0xFF2E866A);
+  static const success = Color(0xFF27735A);
   static const successSoft = Color(0xFFEAF7F2);
-  static const warning = Color(0xFF9D681A);
+  static const warning = Color(0xFF8A5B16);
   static const warningSoft = Color(0xFFFFF6DF);
   static const error = Color(0xFFB94A4A);
   static const errorSoft = Color(0xFFFFF0F0);

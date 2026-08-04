@@ -45,5 +45,22 @@ class EvaluationServicePrepareTest {
         assertThat(first.getGuideStatus()).isEqualTo(GuideStatus.AVAILABLE);
         assertThat(first.getMouthGuideUrl()).isEqualTo("https://guides/mouth/m.png");
         assertThat(first.getTongueGuideUrl()).isEqualTo("https://guides/tongue/m.png");
+        assertThat(first.getNote()).isEqualTo("Focus on where your tongue touches.");
+    }
+
+    @Test
+    @DisplayName("가이드가 없는 글자에는 안내 문구를 만들지 않는다")
+    void omitsArticulationNoteWhenNoGuideExists() {
+        // 이전 구현은 guideType을 그대로 문장에 끼워 넣어 사용자에게
+        // "Focus on none placement"라는 문구를 노출했다.
+        SyllableMappingUtil mappingUtil = mock(SyllableMappingUtil.class);
+        EvaluationService service = new EvaluationService(mappingUtil);
+
+        PronunciationPrepareResponse response = service.prepareCustomSentence("마");
+
+        GuideCharacterResponse first = response.getSentence().getCharacters().get(0);
+        assertThat(first.getGuideType()).isEqualTo("NONE");
+        assertThat(first.getGuideStatus()).isEqualTo(GuideStatus.MISSING);
+        assertThat(first.getNote()).isEmpty();
     }
 }

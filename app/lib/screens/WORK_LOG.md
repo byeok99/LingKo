@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - Result 화면 중복 안내 제거
+
+- 변경 파일: `result_screen.dart`
+- 내용: 버튼처럼 보이는 요소에 대한 조작 안내 문장을 제거해 단어별 발음 영역이 먼저 보이게 했다.
+- 검증: `flutter analyze`, `flutter test` 80개 통과, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 상태 비교를 enum으로 교체
 
 - 변경 파일: `result_screen.dart`
