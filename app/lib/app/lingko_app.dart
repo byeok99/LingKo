@@ -3,7 +3,10 @@
 
 import 'dart:math';
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../api/api_client.dart';
 import '../api/evaluation_api.dart';
@@ -501,6 +504,9 @@ class _LingKoShellState extends State<LingKoShell> {
                 message: 'Your pronunciation result is ready.',
               );
             });
+            // 평가는 수 분이 걸릴 수 있어 사용자가 다른 일을 하고 있을 가능성이 높다.
+            // 결과 도착과 실패를 소리 없이도 알 수 있게 촉각으로 구분해 알린다.
+            unawaited(HapticFeedback.lightImpact());
           }
           await loadPracticeQuota();
           return;
@@ -536,6 +542,7 @@ class _LingKoShellState extends State<LingKoShell> {
                 'The evaluation did not finish. Retry with the saved recording when available.',
           );
         });
+        unawaited(HapticFeedback.heavyImpact());
       }
       rethrow;
     }

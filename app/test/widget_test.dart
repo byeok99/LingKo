@@ -322,6 +322,13 @@ class FakeAudioRecorderService implements AudioRecorderService {
     return '/tmp/lingko-test.wav';
   }
 
+  /// 테스트가 마이크 레벨을 직접 밀어넣어 파형 반응을 검증할 수 있게 한다.
+  final StreamController<double> amplitudeController =
+      StreamController<double>.broadcast();
+
+  @override
+  Stream<double> amplitudeStream() => amplitudeController.stream;
+
   @override
   Future<String?> stop() async {
     return '/tmp/lingko-test.wav';
@@ -1652,6 +1659,60 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(recorder.cancelCount, 1);
+  });
+
+  testWidgets('recording ring and waveform follow real input', (
+    WidgetTester tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final recorder = FakeAudioRecorderService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: recorder,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('맛있겠다.').first);
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start recording'));
+    await tester.pump();
+
+    CircularProgressIndicator ring() =>
+        tester.widget<CircularProgressIndicator>(
+          find.byType(CircularProgressIndicator).first,
+        );
+
+    // 시작 직후에는 진행이 0이어야 한다. 이전 구현은 0.38에 고정돼 있었다.
+    expect(ring().value, 0.0);
+    expect(find.text('0:00'), findsOneWidget);
+    expect(find.text('/ 10 sec'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 5));
+    expect(ring().value, closeTo(0.5, 0.05));
+    expect(find.text('0:05'), findsOneWidget);
+
+    // 무음일 때와 소리가 들어올 때 파형 안내가 달라져야 한다.
+    expect(
+      find.bySemanticsLabel('No sound is being picked up'),
+      findsOneWidget,
+    );
+    recorder.amplitudeController.add(0.8);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.bySemanticsLabel('Microphone level 80 percent'), findsOneWidget);
+
+    // 표시한 상한에 도달하면 실제로 녹음이 멈춰야 한다.
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pumpAndSettle();
+    expect(find.text('/ 10 sec'), findsNothing);
+
+    semantics.dispose();
   });
 
   testWidgets('Review shows recent practice history and opens retry', (
