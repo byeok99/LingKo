@@ -86,7 +86,7 @@ Worker 다운로드 후에는 실제 바이트를 기준으로 다음을 다시 
 | 원본 음성 | 평가 성공·최종 실패 후 삭제, 미제출·삭제 실패 객체는 1일 Lifecycle 만료 |
 | 생성 가이드 | 공용 콘텐츠 여부와 수명주기 |
 | 로그 | 개인정보 마스킹과 제한된 보존 기간 |
-| 일일 쿼터 | 회원 탈퇴 시 삭제 |
+| 평가 기회 | 회원 탈퇴 시 삭제 |
 
 회원 탈퇴는 `evaluation-audio/{userId}/`의 현재 object, 모든 과거 version과 delete marker를 먼저 삭제합니다. S3 삭제가 실패하면 DB와 인증 세션을 보존하고 재시도 가능한 503을 반환하며, S3 삭제가 끝난 경우에만 하나의 DB transaction으로 Refresh 세션, 평가 작업·기록, 쿼터와 사용자 프로필을 삭제합니다. 공유 음절 기준 데이터는 사용자 개인정보가 아니므로 보존합니다. 실제 AWS Lifecycle·Versioning·탈퇴 E2E는 [#71](https://github.com/byeok99/LingKo/issues/71)에서 검증합니다.
 

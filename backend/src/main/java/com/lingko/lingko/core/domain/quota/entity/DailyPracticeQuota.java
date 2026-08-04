@@ -12,6 +12,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * Daily Practice 할당량 상태와 단일 aggregate 내부 계산 규칙을 영속화한다.
@@ -64,6 +66,9 @@ public class DailyPracticeQuota {
     @Builder.Default
     private int rewardedReserved = 0;
 
+    @Column(name = "next_refill_at")
+    private Instant nextRefillAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -102,6 +107,37 @@ public class DailyPracticeQuota {
 
     public boolean hasRemainingPractice() {
         return remainingPractices() > 0;
+    }
+
+    /**
+     * 서버 기준으로 완료된 1시간 구간만큼 무료 사용량을 되돌리고 최대치에서는 timer를 제거한다.
+     * 광고 등 보상 횟수는 이 자연 충전 clock과 독립적으로 유지한다.
+     */
+    public void replenishAt(Instant now, Duration refillInterval) {
+        if (now == null || refillInterval == null || refillInterval.isZero() || refillInterval.isNegative()) {
+            throw new IllegalArgumentException("valid refill time is required");
+        }
+        if (freeUsed <= 0) {
+            // 예약 중인 평가는 아직 확정 사용량이 아니므로 timer만 유지하고 선충전하지 않는다.
+            if (freeReserved == 0) {
+                nextRefillAt = null;
+            }
+            return;
+        }
+        if (nextRefillAt == null) {
+            nextRefillAt = now.plus(refillInterval);
+            return;
+        }
+        if (now.isBefore(nextRefillAt)) {
+            return;
+        }
+
+        long elapsedIntervals = 1 + Duration.between(nextRefillAt, now).dividedBy(refillInterval);
+        int replenished = (int) Math.min(freeUsed, elapsedIntervals);
+        freeUsed -= replenished;
+        nextRefillAt = freeUsed == 0
+                ? null
+                : nextRefillAt.plus(refillInterval.multipliedBy(replenished));
     }
 
     public void consumePractice() {

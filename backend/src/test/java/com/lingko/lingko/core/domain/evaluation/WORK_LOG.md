@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 단어 점수 평가·영속 회귀 테스트
+
+- 변경 파일: `EvaluationServiceResultTest.java`, `EvaluationPersistenceServiceTest.java`, `EvaluationHistoryServiceTest.java`, `EvaluationPersistenceMigrationTest.java`, `WORK_LOG.md`
+- 내용: 단어 grouping·점수 저장·Review 복원·guide-only 음절·V15 schema 계약을 RED→GREEN으로 검증했다.
+- 검증: 백엔드 전체 단위 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-03 - 가이드 seed migration 회귀 테스트
 
 - 변경 파일: `SyllableGuideSeedMigrationTest.java`, `WORK_LOG.md`

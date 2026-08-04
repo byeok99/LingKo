@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 단어 중심 평가 API 문서
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: Result·Review의 `wordScoreStatus`, `words`, guide-only `syllables` 계약과 신뢰 조건을 문서화했다.
+- 검증: 코드 DTO·Flutter parser와 field 대조
+- 리스크: 없음
+
 ## 2026-08-03 - Preferences API 목표 레벨 제거
 
 - 변경 파일: `api-reference.md`, `WORK_LOG.md`
@@ -62,3 +69,9 @@
 - 내용: Refresh Token 갱신과 현재 기기 로그아웃 endpoint, 요청·응답·오류 계약을 추가했다.
 - 검증: Backend `AuthController` 및 DTO와 계약 대조
 - 리스크: 전체 기기 로그아웃 endpoint는 후속 기능
+## 2026-08-03 - 발음 평가 에너지 API 문서화
+
+- 변경 파일: `api-reference.md`, `error-codes.md`
+- 내용: 시간 충전 응답과 에너지 소진 오류를 현재 구현에 맞췄다.
+- 검증: 코드 응답 field 및 오류 문구 대조
+- 리스크: `/today` 경로명은 호환성을 위해 유지

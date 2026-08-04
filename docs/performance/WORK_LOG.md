@@ -34,3 +34,9 @@
 - 내용: 쿼터 예약 기준을 예약량 포함 조건부 UPDATE로 구체화하고 최초 생성 부모 lock, 무재시도 429, 외부 호출 중 lock 미유지 정책을 반영했다.
 - 검증: `PracticeQuotaService`, repository 원자 SQL, ADR-0006과 대조
 - 리스크: 운영 부하에서 응답시간과 lock wait 측정 필요
+## 2026-08-03 - lazy refill 운영 특성 기록
+
+- 변경 파일: `scalability-plan.md`
+- 내용: 별도 scheduler 없이 요청 시 충전하는 현재 확장성 선택을 문서화했다.
+- 검증: service 구현 대조
+- 리스크: 대규모 트래픽 환경 DB lock 지표 관찰 필요

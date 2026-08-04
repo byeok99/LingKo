@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - Azure 단어 parser 테스트
+
+- 변경 파일: `AzurePronunciationResultParserTest.java`, `WORK_LOG.md`
+- 내용: 정확 일치, 단어 불일치, 점수 누락, 잘못된 JSON의 fail-closed 동작을 검증했다.
+- 검증: 해당 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-03 - Replicate retry·cancel 회귀 테스트
 
 - 변경 파일: `ReplicateApiClientTest.java`, `WORK_LOG.md`

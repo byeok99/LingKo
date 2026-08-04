@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(QuotaExceededException.class)
     public ResponseEntity<ErrorResponse> handleQuotaExceeded(QuotaExceededException exception) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                .body(ErrorResponse.of("QUOTA_EXCEEDED", "Daily practice quota exceeded"));
+                .body(ErrorResponse.of("QUOTA_EXCEEDED", "Practice energy exhausted"));
     }
 
     @ExceptionHandler(EvaluationJobConflictException.class)

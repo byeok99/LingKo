@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
@@ -19,6 +20,19 @@ import java.util.Optional;
 public interface DailyPracticeQuotaRepository extends JpaRepository<DailyPracticeQuota, Long> {
 
     Optional<DailyPracticeQuota> findByUserUserIdxAndQuotaDate(Long userId, LocalDate quotaDate);
+
+    /**
+     * 과거 일일 행이 남아 있어도 가장 최근 상태 하나만 현재 에너지로 사용하고 충전 계산을 직렬화한다.
+     */
+    @Query(value = """
+            SELECT *
+            FROM daily_practice_quota
+            WHERE user_idx = :userId
+            ORDER BY quota_date DESC, daily_practice_quota_id DESC
+            LIMIT 1
+            FOR UPDATE
+            """, nativeQuery = true)
+    Optional<DailyPracticeQuota> findCurrentByUserForUpdate(@Param("userId") Long userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
@@ -39,6 +53,7 @@ public interface DailyPracticeQuotaRepository extends JpaRepository<DailyPractic
     @Query(value = """
             UPDATE daily_practice_quota
             SET free_reserved = free_reserved + 1,
+                next_refill_at = COALESCE(next_refill_at, :nextRefillAt),
                 updated_at = CURRENT_TIMESTAMP
             WHERE user_idx = :userId
               AND quota_date = :quotaDate
@@ -46,7 +61,8 @@ public interface DailyPracticeQuotaRepository extends JpaRepository<DailyPractic
             """, nativeQuery = true)
     int reserveFreePractice(
             @Param("userId") Long userId,
-            @Param("quotaDate") LocalDate quotaDate
+            @Param("quotaDate") LocalDate quotaDate,
+            @Param("nextRefillAt") Instant nextRefillAt
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -68,6 +84,7 @@ public interface DailyPracticeQuotaRepository extends JpaRepository<DailyPractic
             UPDATE daily_practice_quota
             SET free_reserved = free_reserved - 1,
                 free_used = free_used + 1,
+                next_refill_at = COALESCE(next_refill_at, :nextRefillAt),
                 updated_at = CURRENT_TIMESTAMP
             WHERE user_idx = :userId
               AND quota_date = :quotaDate
@@ -75,7 +92,8 @@ public interface DailyPracticeQuotaRepository extends JpaRepository<DailyPractic
             """, nativeQuery = true)
     int confirmFreePractice(
             @Param("userId") Long userId,
-            @Param("quotaDate") LocalDate quotaDate
+            @Param("quotaDate") LocalDate quotaDate,
+            @Param("nextRefillAt") Instant nextRefillAt
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -97,6 +115,10 @@ public interface DailyPracticeQuotaRepository extends JpaRepository<DailyPractic
     @Query(value = """
             UPDATE daily_practice_quota
             SET free_reserved = free_reserved - 1,
+                next_refill_at = CASE
+                    WHEN free_used = 0 AND free_reserved = 1 THEN NULL
+                    ELSE next_refill_at
+                END,
                 updated_at = CURRENT_TIMESTAMP
             WHERE user_idx = :userId
               AND quota_date = :quotaDate

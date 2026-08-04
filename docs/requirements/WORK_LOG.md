@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - 단어 중심 피드백 요구사항 구현 완료
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: 신뢰 가능한 단어 점수, guide-only 음절, 과거 기록 호환 항목을 구현 완료로 갱신했다.
+- 검증: 백엔드·Flutter 테스트 계약과 대조
+- 리스크: 실제 Azure 한국어 응답 운영 E2E 필요
+
+## 2026-08-04 - 단어 점수→음절 가이드 capability 계약
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: Practice 결과와 Review에서 신뢰 가능한 단어 점수만 표시하고, 선택한 단어의 음절은 입·혀 가이드 진입점으로 사용하며 점수를 복제하지 않는 계약을 추가했다.
+- 검증: 구현 전 capability 계약 확정, 코드·API·DB 검증 예정
+- 리스크: Azure `ko-KR` 단어 token이 기준 공백 단위와 다르면 해당 평가의 단어 점수는 `UNAVAILABLE`로 fallback
+
 ## 2026-08-03 - 상황별 추천 문장 요구사항 구체화
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
@@ -104,3 +118,9 @@
 - 내용: 자동 갱신, 회전, 재사용 탐지와 현재 기기 로그아웃 요구사항을 구현 상태로 갱신했다.
 - 검증: Backend·Flutter 테스트 항목과 요구사항 대조
 - 리스크: 전체 기기 로그아웃 요구사항은 미구현
+## 2026-08-03 - 발음 평가 에너지 요구사항 반영
+
+- 변경 파일: `functional-requirements.md`, `non-functional-requirements.md`
+- 내용: 1시간 충전, 최대 5회, MAX, 조건부 광고 버튼과 즉시 갱신을 명시했다.
+- 검증: backend/app 테스트 계약 대조
+- 리스크: 광고 보상 지급은 미구현

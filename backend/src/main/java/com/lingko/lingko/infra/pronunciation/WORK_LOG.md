@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - Azure 단어 점수 신뢰 검증
+
+- 변경 파일: `AzureSpeechEvaluator.java`, `AzurePronunciationResultParser.java`, `WORK_LOG.md`
+- 내용: detailed JSON의 단어 수·정규화 텍스트·위치가 기준 문장과 모두 일치할 때만 AccuracyScore를 채택한다.
+- 검증: parser 단위 테스트와 백엔드 전체 단위 테스트 통과
+- 리스크: 실제 Azure 한국어 응답 운영 E2E 필요
+
 ## 2026-08-03 - Replicate timeout·429 자원 보호
 
 - 변경 파일: `ReplicateApiClient.java`, `WORK_LOG.md`

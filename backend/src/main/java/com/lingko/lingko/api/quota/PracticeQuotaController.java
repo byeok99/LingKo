@@ -21,7 +21,7 @@ public class PracticeQuotaController {
     private final ActiveSessionAuthenticator activeSessionAuthenticator;
 
     /**
-     * 활성 Bearer 세션에 연결된 사용자의 오늘 할당량을 반환한다.
+     * 기존 endpoint 호환성을 유지하면서 활성 사용자의 현재 시간 충전형 평가 기회를 반환한다.
      */
     @GetMapping("/today")
     public PracticeQuotaResponse getTodayQuota(

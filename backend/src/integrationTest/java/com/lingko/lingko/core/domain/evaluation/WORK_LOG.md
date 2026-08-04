@@ -34,3 +34,9 @@
 - 내용: 실제 Spring transaction과 JPA에서 평가 성공 시 결과 저장·쿼터 확정, 외부 실패 시 결과 미저장·쿼터 복구를 검증했다.
 - 검증: `./gradlew integrationTest --tests "*EvaluationApplicationFlowIntegrationTest"` 통과
 - 리스크: MySQL 동시성은 #38에서 별도 검증 필요
+## 2026-08-03 - 평가 흐름 시간대 명칭 정리
+
+- 변경 파일: `EvaluationApplicationFlowIntegrationTest.java`
+- 내용: 자정 초기화 의미를 제거하고 서비스 시간대 명칭으로 갱신했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 없음

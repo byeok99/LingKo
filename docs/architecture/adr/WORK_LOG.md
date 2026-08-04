@@ -41,3 +41,9 @@
 - 내용: 실제 GitHub 기본 브랜치와 최근 작업 흐름에 맞춰 `develop`을 통합 브랜치, `main`을 릴리스 브랜치로 사용하는 전략을 승인했다.
 - 검증: 문서 링크와 브랜치 역할 표현을 확인하고 `git diff --check` 실행
 - 리스크: GitHub 보호 규칙과 CI/CD 설정은 후속 작업으로 적용해야 함
+## 2026-08-03 - 쿼터 ADR 시간 충전 전환
+
+- 변경 파일: `0003-flyway-schema-management.md`, `0006-atomic-practice-quota-transitions.md`, `README.md`
+- 내용: V14 migration과 최신 행 잠금 기반 시간 충전 결정을 기록했다.
+- 검증: migration 및 service 구현 대조
+- 리스크: 물리 테이블명은 호환성을 위해 유지

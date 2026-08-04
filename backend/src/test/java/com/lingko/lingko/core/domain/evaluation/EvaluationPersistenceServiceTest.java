@@ -2,8 +2,10 @@ package com.lingko.lingko.core.domain.evaluation;
 
 import com.lingko.lingko.api.evaluation.dto.GuideCharacterResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
+import com.lingko.lingko.api.evaluation.dto.PracticeWordResultResponse;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationLog;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationSyllable;
+import com.lingko.lingko.core.domain.evaluation.entity.EvaluationWord;
 import com.lingko.lingko.core.domain.evaluation.entity.Syllable;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationLogRepository;
 import com.lingko.lingko.core.domain.evaluation.repository.SyllableRepository;
@@ -105,6 +107,58 @@ class EvaluationPersistenceServiceTest {
     }
 
     @Test
+    @DisplayName("단어 점수는 한 번만 저장하고 하위 음절은 nullable 점수와 단어 위치를 보존한다")
+    void savesWordScoresAndGuideOnlySyllables() {
+        User user = persistUser();
+        PracticeWordResultResponse kimchi = PracticeWordResultResponse.builder()
+                .position(0)
+                .text("김치찌개")
+                .score(82)
+                .scoreStatus("AVAILABLE")
+                .syllables(List.of(
+                        guideOnlyCharacter(0, "김"),
+                        guideOnlyCharacter(1, "치")
+                ))
+                .build();
+        PracticeResultResponse result = PracticeResultResponse.builder()
+                .overallScore(82)
+                .gradeLabel("Good")
+                .summary("Good pronunciation.")
+                .recognizedText("김치찌개")
+                .characterScoreStatus("UNAVAILABLE")
+                .wordScoreStatus("AVAILABLE")
+                .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
+                        .accuracy(84)
+                        .fluency(80)
+                        .completeness(91)
+                        .build())
+                .characters(List.of())
+                .weakCharacters(List.of())
+                .words(List.of(kimchi))
+                .build();
+
+        EvaluationLog saved = persistenceService.saveResult(
+                EvaluationPersistenceService.SaveEvaluationResultCommand.builder()
+                        .user(user)
+                        .source(EvaluationLog.PracticeSource.CUSTOM)
+                        .originalText("김치찌개")
+                        .standardPronunciation("김치찌개")
+                        .result(result)
+                        .build()
+        );
+        entityManager.clear();
+
+        EvaluationLog found = evaluationLogRepository.findById(saved.getEvaluationLogIdx()).orElseThrow();
+        assertThat(found.getWordList()).singleElement().satisfies(word -> {
+            assertThat(word.getPositionNo()).isZero();
+            assertThat(word.getWordText()).isEqualTo("김치찌개");
+            assertThat(word.getScore()).isEqualTo(82);
+        });
+        assertThat(found.getSyllableList()).extracting(EvaluationSyllable::getScore).containsOnlyNulls();
+        assertThat(found.getSyllableList()).extracting(EvaluationSyllable::getWordPosition).containsOnly(0);
+    }
+
+    @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DisplayName("글자별 결과 저장 실패 시 평가 log도 rollback된다")
     void rollsBackLogWhenCharacterResultFails() {
@@ -179,6 +233,20 @@ class EvaluationPersistenceServiceTest {
                 .mouthGuideUrl("https://example.com/mouth/" + position + ".png")
                 .tongueGuideUrl("https://example.com/tongue/" + position + ".png")
                 .note("Keep the tongue closer for the sibilant sound")
+                .build();
+    }
+
+    private GuideCharacterResponse guideOnlyCharacter(int position, String text) {
+        return GuideCharacterResponse.builder()
+                .position(position)
+                .text(text)
+                .pronunciationText(text)
+                .score(null)
+                .scoreStatus("UNAVAILABLE")
+                .guideType("TONGUE")
+                .guideStatus("AVAILABLE")
+                .tongueGuideUrl("https://example.com/tongue/" + position + ".png")
+                .note("Open the guide")
                 .build();
     }
 }

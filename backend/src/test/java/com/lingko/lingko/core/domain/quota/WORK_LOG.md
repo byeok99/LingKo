@@ -35,3 +35,9 @@
 - 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
 - 검증: 파일 생성 여부 확인
 - 리스크: 없음
+## 2026-08-03 - 시간 충전 및 migration 테스트
+
+- 변경 파일: `PracticeQuotaMigrationTest.java`, `PracticeQuotaServiceTest.java`
+- 내용: 1시간 충전, 최대 5회, 자정 무초기화, timer 보존과 새 컬럼을 검증한다.
+- 검증: backend test 및 integrationTest 통과
+- 리스크: 없음

@@ -45,7 +45,8 @@ class PracticeQuotaControllerTest {
                 2,
                 1,
                 4,
-                OffsetDateTime.of(2026, 6, 30, 0, 0, 0, 0, ZoneOffset.ofHours(9))
+                OffsetDateTime.of(2026, 6, 29, 1, 30, 0, 0, ZoneOffset.ofHours(9)),
+                OffsetDateTime.of(2026, 6, 29, 0, 48, 12, 0, ZoneOffset.ofHours(9))
         ));
 
         mockMvc.perform(get("/api/quota/today")
@@ -56,7 +57,8 @@ class PracticeQuotaControllerTest {
                 .andExpect(jsonPath("$.freeUsed").value(2))
                 .andExpect(jsonPath("$.rewardedAvailable").value(1))
                 .andExpect(jsonPath("$.remainingPractices").value(4))
-                .andExpect(jsonPath("$.resetAt").value("2026-06-30T00:00:00+09:00"));
+                .andExpect(jsonPath("$.nextRefillAt").value("2026-06-29T01:30:00+09:00"))
+                .andExpect(jsonPath("$.serverTime").value("2026-06-29T00:48:12+09:00"));
     }
 
     @Test

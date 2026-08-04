@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 단어 점수 schema 추가
+
+- 변경 파일: `V15__add_evaluation_word_scores.sql`, `WORK_LOG.md`
+- 내용: `evaluation_word`와 음절의 nullable `word_position`을 추가하고 기존 음절 score를 nullable로 명시했다.
+- 검증: H2 MySQL mode migration test 통과
+- 리스크: 운영 MySQL migration 적용 전 backup·rollback 절차 확인 필요
+
 ## 2026-08-03 - 사용자 목표 레벨 컬럼 제거
 
 - 변경 파일: `V13__remove_user_target_level.sql`, `WORK_LOG.md`
@@ -69,3 +76,9 @@
 - 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
 - 검증: 파일 생성 여부 확인
 - 리스크: 없음
+## 2026-08-03 - 시간 충전 컬럼 migration
+
+- 변경 파일: `V14__add_hourly_practice_refill.sql`
+- 내용: 기존 쿼터 테이블에 nullable `next_refill_at`을 추가했다.
+- 검증: H2 migration test 및 integrationTest 통과
+- 리스크: 실제 MySQL 환경 적용 확인 필요

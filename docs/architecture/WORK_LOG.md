@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 단어 점수 평가 흐름 동기화
+
+- 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`
+- 내용: Azure 단어 검증, snapshot 저장, 음절 점수 비복제 흐름을 현재 구현과 맞췄다.
+- 검증: 서비스·parser 구현과 대조
+- 리스크: 운영 Azure E2E 필요
+
 ## 2026-07-30 - 점수 독립 영상·terminal 실패 수렴
 
 - 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`
@@ -68,4 +75,10 @@
 - 변경 파일: `system-architecture.md`, `WORK_LOG.md`
 - 내용: Backend 배포 단위의 Java 런타임 기준을 17에서 21로 갱신했다.
 - 검증: 활성 문서의 Java 버전 참조 검색과 Java 21 Docker 이미지 빌드 통과
+- 리스크: 없음
+## 2026-08-03 - 평가 에너지 흐름 갱신
+
+- 변경 파일: `evaluation-flow.md`
+- 내용: 자정 초기화 대신 소비·시간 충전·서버 재조회 흐름을 반영했다.
+- 검증: service 및 app 호출 흐름 대조
 - 리스크: 없음

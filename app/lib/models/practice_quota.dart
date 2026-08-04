@@ -10,7 +10,8 @@ class PracticeQuota {
     required this.freeUsed,
     required this.rewardedAvailable,
     required this.remainingPractices,
-    required this.resetAt,
+    required this.nextRefillAt,
+    required this.serverTime,
   });
 
   final String date;
@@ -18,7 +19,8 @@ class PracticeQuota {
   final int freeUsed;
   final int rewardedAvailable;
   final int remainingPractices;
-  final DateTime? resetAt;
+  final DateTime? nextRefillAt;
+  final DateTime? serverTime;
 
   bool get hasRemainingPractice => remainingPractices > 0;
 
@@ -29,8 +31,20 @@ class PracticeQuota {
       freeUsed: _readInt(json, 'freeUsed'),
       rewardedAvailable: _readInt(json, 'rewardedAvailable'),
       remainingPractices: _readInt(json, 'remainingPractices'),
-      resetAt: _readDateTime(json, 'resetAt'),
+      nextRefillAt: _readDateTime(json, 'nextRefillAt'),
+      serverTime: _readDateTime(json, 'serverTime'),
     );
+  }
+
+  /// 기기 시계 대신 서버가 함께 보낸 두 시각의 차이로 최초 countdown을 계산한다.
+  Duration? get timeUntilNextRefill {
+    final refillAt = nextRefillAt;
+    final currentServerTime = serverTime;
+    if (refillAt == null || currentServerTime == null) {
+      return null;
+    }
+    final remaining = refillAt.difference(currentServerTime);
+    return remaining.isNegative ? Duration.zero : remaining;
   }
 }
 

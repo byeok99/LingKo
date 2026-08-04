@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-04 - 단어 중심 평가 모델
+
+- 변경 파일: `practice_result.dart`, `practice_history.dart`, `WORK_LOG.md`
+- 내용: 단어 점수와 guide-only 음절 목록을 Result·Review 공통 모델로 매핑했다.
+- 검증: `flutter test test/evaluation_api_test.dart` 통과
+- 리스크: 실제 Azure 한국어 응답은 운영 환경 E2E 확인 필요
+
+## 2026-08-04 - Review 음절 기록 응답 매핑 수정
+
+- 변경 파일: `practice_sentence.dart`, `practice_history.dart`, `WORK_LOG.md`
+- 내용: history API의 `text`, `feedback`, nullable `score`를 공통 `CharacterResult`로 변환하는 전용 mapping을 추가해 음절과 점수가 `—`로 표시되던 문제를 수정했다.
+- 검증: history API mapping 회귀 테스트, `flutter analyze`, `flutter test --coverage` 전체 73개 통과, line coverage 85.20%
+- 리스크: 과거 기록에 `score` 값이 없으면 기존 정책대로 점수 미제공 표시
+
 ## 2026-08-03 - User Preferences 목표 레벨 계약 제거
 
 - 변경 파일: `user_preferences.dart`, `WORK_LOG.md`
@@ -48,4 +62,10 @@
 - 변경 파일: `WORK_LOG.md`
 - 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
 - 검증: 파일 생성 여부 확인
+- 리스크: 없음
+## 2026-08-03 - 시간 충전 쿼터 모델 반영
+
+- 변경 파일: `practice_quota.dart`
+- 내용: 서버 기준 `nextRefillAt`, `serverTime`으로 남은 충전 시간을 계산하도록 변경했다.
+- 검증: API 및 widget test 통과
 - 리스크: 없음

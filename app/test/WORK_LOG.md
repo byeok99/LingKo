@@ -1,5 +1,68 @@
 # 작업 이력
 
+## 2026-08-04 - 단어 중심 평가 회귀 테스트
+
+- 변경 파일: `evaluation_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: API 단어 계층 매핑, Result 단어 전환, Review 상세, guide-only 음절 계약을 검증했다.
+- 검증: 개별 RED→GREEN, 전체 `flutter test --coverage` 74개 통과, line coverage 85.4%
+- 리스크: 없음
+
+## 2026-08-04 - Review 기록 매핑·상세 회귀 테스트
+
+- 변경 파일: `evaluation_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: history DTO의 `text/feedback/score` 매핑과 독립 기록 카드, 표준 발음·일시·세부 점수·음절 점수 상세 표시를 검증한다. 320px·1.8배 글꼴에서도 detail이 overflow 없이 표시되는지 확인한다.
+- 검증: 구현 전 빈 음절과 카드 key로 실패 확인, 확대 글꼴 overflow 2건 추가 발견·수정, 대상 API·widget test, `flutter analyze`, `flutter test --coverage` 전체 73개 통과, line coverage 85.20%
+- 리스크: 실제 네트워크 가이드 미디어 재생은 widget test 범위 밖
+
+## 2026-08-03 - ProgressPanel 우측 프레임 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 166px 정렬 프레임과 실제 capsule의 오른쪽 끝이 일치하는지 검증한다.
+- 검증: 구현 전 정렬 프레임 부재로 실패 후 전체 72개 test 통과, line coverage 83.86%
+- 리스크: 없음
+
+## 2026-08-03 - 에너지 캡슐 내부 여백 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: MAX 텍스트와 capsule 오른쪽 테두리 사이 간격을 8~12px 범위로 검증한다.
+- 검증: 구현 전 기존 7px 간격으로 실패 확인 후 전체 72개 test 통과
+- 리스크: 없음
+
+## 2026-08-03 - MAX 캡슐 빈 공간 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: MAX 전환 후 capsule 폭이 충전 중보다 작고 115px 이하이면서 우측 끝 정렬을 유지하는지 검증한다.
+- 검증: 구현 전 고정 166px로 실패 후 전체 72개 test 통과, line coverage 83.86%
+- 리스크: 없음
+
+## 2026-08-03 - 공백 없는 에너지 횟수 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: `3/5`, `4/5`, `5/5` 표시 계약으로 갱신했다.
+- 검증: 구현 전 기존 공백 표시로 실패 확인 후 전체 72개 test 통과
+- 리스크: 없음
+
+## 2026-08-03 - 축소·우측 정렬 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: capsule 높이 42px 이하, 폭 174px 이하, Home 우측 콘텐츠 경계 정렬을 검증한다.
+- 검증: 구현 전 48px 높이에서 실패 후 전체 72개 test 통과, line coverage 83.87%
+- 리스크: 없음
+
+## 2026-08-03 - 소형 에너지 배치 테스트 재복원
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 캡슐 높이와 LingKo 수직 정렬 계약을 직전 소형 디자인 기준으로 되돌렸다.
+- 검증: 구현 전 68px 배치에서 실패 확인 후 전체 72개 test 통과, line coverage 83.81%
+- 리스크: 없음
+
+## 2026-08-03 - 에너지 디자인 롤백 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 전체 폭 68px 이상 캡슐이 LingKo 아래에 배치되면서 기존 countdown과 광고 callback이 유지되는지 검증한다.
+- 검증: 구현 전 48px 소형 배치에서 실패 확인 후 대상 test 통과
+- 리스크: 없음
+
 ## 2026-08-03 - Home 상황별 추천 회귀 테스트
 
 - 변경 파일: `widget_test.dart`, `WORK_LOG.md`
@@ -153,4 +216,10 @@
 - 변경 파일: `WORK_LOG.md`
 - 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
 - 검증: 파일 생성 여부 확인
+- 리스크: 없음
+## 2026-08-03 - 발음 평가 에너지 회귀 테스트
+
+- 변경 파일: `practice_quota_api_test.dart`, `widget_test.dart`
+- 내용: 서버 시간 매핑, 카운트다운, MAX, 광고 callback, 즉시 갱신과 반응형 배치를 검증한다.
+- 검증: 72개 test 통과, 라인 커버리지 83.81%
 - 리스크: 없음

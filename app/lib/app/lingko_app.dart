@@ -43,6 +43,7 @@ class LingKoApp extends StatelessWidget {
     this.authService,
     this.audioRecorderService,
     this.sentenceSpeechService,
+    this.onRequestPracticeReward,
   });
 
   final PronunciationApi? pronunciationApi;
@@ -53,6 +54,7 @@ class LingKoApp extends StatelessWidget {
   final AppAuthService? authService;
   final AudioRecorderService? audioRecorderService;
   final SentenceSpeechService? sentenceSpeechService;
+  final Future<void> Function()? onRequestPracticeReward;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +74,7 @@ class LingKoApp extends StatelessWidget {
             audioRecorderService ?? RecordAudioRecorderService(),
         sentenceSpeechService:
             sentenceSpeechService ?? FlutterTtsSentenceSpeechService(),
+        onRequestPracticeReward: onRequestPracticeReward,
       ),
     );
   }
@@ -90,6 +93,7 @@ class LingKoShell extends StatefulWidget {
     required this.authService,
     required this.audioRecorderService,
     required this.sentenceSpeechService,
+    this.onRequestPracticeReward,
   });
 
   final PronunciationApi pronunciationApi;
@@ -100,6 +104,7 @@ class LingKoShell extends StatefulWidget {
   final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
   final SentenceSpeechService sentenceSpeechService;
+  final Future<void> Function()? onRequestPracticeReward;
 
   @override
   State<LingKoShell> createState() => _LingKoShellState();
@@ -132,6 +137,7 @@ class _LingKoShellState extends State<LingKoShell> {
   // Practice 탭 안에서 연습 화면을 보여줄지, 결과 화면을 보여줄지 결정합니다.
   bool hasResult = false;
   bool isPracticeImmersive = false;
+  bool isRequestingPracticeReward = false;
 
   @override
   void initState() {
@@ -343,6 +349,31 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
+  /// 광고 adapter가 실제 보상을 완료한 뒤에만 서버 quota를 다시 조회한다.
+  Future<void> requestPracticeReward() async {
+    final requestReward = widget.onRequestPracticeReward;
+    if (requestReward == null || isRequestingPracticeReward) {
+      return;
+    }
+    setState(() => isRequestingPracticeReward = true);
+    try {
+      await requestReward();
+      if (mounted) {
+        await loadPracticeQuota();
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to add a practice right now.')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isRequestingPracticeReward = false);
+      }
+    }
+  }
+
   // 홈에서 문장을 선택하면 Practice 탭으로 이동합니다.
   void openPractice(PracticeSentence sentence) {
     final normalizedSentence = sentence.normalizedForPractice();
@@ -447,6 +478,8 @@ class _LingKoShellState extends State<LingKoShell> {
                 'Pronunciation analysis is running. You can use another tab.',
           );
         });
+        // 서버가 평가 기회를 예약한 직후 Home의 남은 수량도 같은 값으로 맞춘다.
+        await loadPracticeQuota();
       }
 
       // 최초 취약 음절 영상 생성이 포함된 작업도 background polling으로 완료까지 기다린다.
@@ -554,7 +587,10 @@ class _LingKoShellState extends State<LingKoShell> {
         onSelect: openPractice,
         onOpenPractice: () => setState(() => selectedTab = 1),
         onOpenCustomPractice: openCustomPractice,
-        onOpenReview: () => setState(() => selectedTab = 2),
+        onRequestPracticeReward:
+            widget.onRequestPracticeReward == null || isRequestingPracticeReward
+                ? null
+                : requestPracticeReward,
         displayName: session?.user.name,
       ),
       hasResult && selectedSentence != null

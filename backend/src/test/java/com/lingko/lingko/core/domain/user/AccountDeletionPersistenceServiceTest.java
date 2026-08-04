@@ -5,10 +5,12 @@ import com.lingko.lingko.core.domain.auth.repository.RefreshTokenSessionReposito
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationLog;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationSyllable;
+import com.lingko.lingko.core.domain.evaluation.entity.EvaluationWord;
 import com.lingko.lingko.core.domain.evaluation.entity.Syllable;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationJobRepository;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationLogRepository;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationSyllableRepository;
+import com.lingko.lingko.core.domain.evaluation.repository.EvaluationWordRepository;
 import com.lingko.lingko.core.domain.evaluation.repository.SyllableRepository;
 import com.lingko.lingko.core.domain.quota.entity.DailyPracticeQuota;
 import com.lingko.lingko.core.domain.quota.repository.DailyPracticeQuotaRepository;
@@ -53,6 +55,8 @@ class AccountDeletionPersistenceServiceTest {
     private EvaluationLogRepository evaluationLogRepository;
     @Autowired
     private EvaluationSyllableRepository evaluationSyllableRepository;
+    @Autowired
+    private EvaluationWordRepository evaluationWordRepository;
     @Autowired
     private SyllableRepository syllableRepository;
     @Autowired
@@ -101,6 +105,11 @@ class AccountDeletionPersistenceServiceTest {
                 .score(90)
                 .positionNo(0)
                 .build());
+        log.addWord(EvaluationWord.builder()
+                .positionNo(0)
+                .wordText("안녕하세요")
+                .score(90)
+                .build());
         evaluationLogRepository.saveAndFlush(log);
 
         deletionService.deleteUserData(user.getUserIdx());
@@ -110,6 +119,7 @@ class AccountDeletionPersistenceServiceTest {
         assertThat(evaluationJobRepository.count()).isZero();
         assertThat(evaluationLogRepository.count()).isZero();
         assertThat(evaluationSyllableRepository.count()).isZero();
+        assertThat(evaluationWordRepository.count()).isZero();
         assertThat(quotaRepository.count()).isZero();
         assertThat(syllableRepository.count()).isEqualTo(1);
     }

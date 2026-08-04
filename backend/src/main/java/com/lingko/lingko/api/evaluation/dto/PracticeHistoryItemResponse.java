@@ -29,5 +29,6 @@ public class PracticeHistoryItemResponse {
     private String summary;
     private PracticeResultResponse.ScoreBreakdownResponse scoreBreakdown;
     private List<PracticeHistoryCharacterResponse> characters;
+    private List<PracticeHistoryWordResponse> words;
     private LocalDateTime createdAt;
 }

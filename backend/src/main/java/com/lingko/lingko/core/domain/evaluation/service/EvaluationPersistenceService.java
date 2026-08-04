@@ -2,8 +2,10 @@ package com.lingko.lingko.core.domain.evaluation.service;
 
 import com.lingko.lingko.api.evaluation.dto.GuideCharacterResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
+import com.lingko.lingko.api.evaluation.dto.PracticeWordResultResponse;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationLog;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationSyllable;
+import com.lingko.lingko.core.domain.evaluation.entity.EvaluationWord;
 import com.lingko.lingko.core.domain.evaluation.entity.Syllable;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationLogRepository;
 import com.lingko.lingko.core.domain.evaluation.repository.SyllableRepository;
@@ -50,14 +52,35 @@ public class EvaluationPersistenceService {
                 .audioUrl(blankToNull(command.audioUrl()))
                 .build();
 
-        for (GuideCharacterResponse character : safeCharacters(result.getCharacters())) {
-            evaluationLog.addSyllable(toSyllableResult(character));
+        List<PracticeWordResultResponse> words = safeWords(result.getWords());
+        if (words.isEmpty()) {
+            for (GuideCharacterResponse character : safeCharacters(result.getCharacters())) {
+                evaluationLog.addSyllable(toSyllableResult(character, null));
+            }
+        } else {
+            for (PracticeWordResultResponse word : words) {
+                evaluationLog.addWord(toWordResult(word));
+                for (GuideCharacterResponse syllable : safeCharacters(word.getSyllables())) {
+                    evaluationLog.addSyllable(toSyllableResult(syllable, word.getPosition()));
+                }
+            }
         }
 
         return evaluationLogRepository.saveAndFlush(evaluationLog);
     }
 
-    private EvaluationSyllable toSyllableResult(GuideCharacterResponse character) {
+    private EvaluationWord toWordResult(PracticeWordResultResponse word) {
+        return EvaluationWord.builder()
+                .positionNo(word.getPosition())
+                .wordText(requireText(word.getText(), "word text"))
+                .score(word.getScore())
+                .build();
+    }
+
+    private EvaluationSyllable toSyllableResult(
+            GuideCharacterResponse character,
+            Integer wordPosition
+    ) {
         String text = requireText(character.getText(), "character text");
         // 표준 음절 metadata를 재사용하고 새 문자가 처음 등장할 때만 생성한다.
         Syllable syllable = syllableRepository.findById(text)
@@ -69,8 +92,9 @@ public class EvaluationPersistenceService {
 
         return EvaluationSyllable.builder()
                 .syllable(syllable)
-                .score(character.getScore() == null ? 0 : character.getScore())
+                .score(character.getScore())
                 .positionNo(character.getPosition())
+                .wordPosition(wordPosition)
                 .feedback(blankToNull(character.getNote()))
                 .mouthGuideUrl(blankToNull(character.getMouthGuideUrl()))
                 .tongueGuideUrl(blankToNull(character.getTongueGuideUrl()))
@@ -103,6 +127,10 @@ public class EvaluationPersistenceService {
 
     private List<GuideCharacterResponse> safeCharacters(List<GuideCharacterResponse> characters) {
         return characters == null ? List.of() : characters;
+    }
+
+    private List<PracticeWordResultResponse> safeWords(List<PracticeWordResultResponse> words) {
+        return words == null ? List.of() : words;
     }
 
     private BigDecimal scoreToDecimal(Integer score) {

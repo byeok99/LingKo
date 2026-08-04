@@ -20,7 +20,13 @@ public class AssessmentResult {
     private String recognizedText;
     private boolean characterScoresAvailable;
     private List<CharacterScore> characterScores;
+    private boolean wordScoresAvailable;
+    private List<WordScore> wordScores;
 
     public record CharacterScore(int position, String text, Double accuracyScore) {
+    }
+
+    /** 기준 문장의 공백 단위와 공급자 token이 일치한 단어 점수다. */
+    public record WordScore(int position, String text, Double accuracyScore) {
     }
 }

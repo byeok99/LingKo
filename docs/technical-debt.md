@@ -38,7 +38,7 @@
 
 - 브랜치 전략: [ADR-0005](architecture/adr/0005-branch-strategy.md)에 따라 `develop`을 통합 브랜치, `main`을 릴리스 브랜치로 사용합니다.
 - Refresh Token 정책: DB에 현재 토큰의 SHA-256 해시를 저장하고 원자적 회전, 이전 토큰 재사용 시 현재 기기 세션 폐기, 절대 만료, 앱의 401 후 1회 자동 갱신을 적용합니다. 운영 전 [#60](https://github.com/byeok99/LingKo/issues/60) 실제 만료 기반 실기기 E2E와 [#62](https://github.com/byeok99/LingKo/issues/62) 동시 DB 부하 검증을 수행합니다.
-- 평가 쿼터 정책: 외부 평가 전에 무료 우선으로 횟수를 예약하고, 성공 시 결과 저장과 함께 사용량으로 확정하며 외부 평가·DB 저장 실패 시 동일 날짜와 종류의 예약을 복구합니다. [ADR-0006](architecture/adr/0006-atomic-practice-quota-transitions.md)에 따라 예약·확정·복구는 조건부 원자 UPDATE로 처리하고, 최초 행 생성만 짧은 사용자 부모 lock으로 직렬화합니다. 비정상 종료로 남은 예약의 회수 정책은 후속 작업입니다.
+- 평가 기회 정책: 최대 5회에서 부족할 때 서버 기준 1시간마다 1회 lazy refill하고, 외부 평가 전에 자연 충전 횟수를 우선 예약합니다. 성공 시 결과 저장과 함께 사용량으로 확정하며 실패 시 reservation token의 횟수를 복구합니다. [ADR-0006](architecture/adr/0006-atomic-practice-quota-transitions.md)에 따라 예약·확정·복구는 조건부 원자 UPDATE로 처리하고, 최초 행 생성만 짧은 사용자 부모 lock으로 직렬화합니다. 광고 SDK·서버 보상 검증과 비정상 종료 예약 회수는 후속 작업입니다.
 - 음성 보존·탈퇴 정책: 평가 성공·최종 실패 후 원본을 삭제하고 미제출·삭제 실패 객체는 S3 1일 Lifecycle로 만료합니다. 회원 탈퇴는 현재 Access·Refresh Token을 재확인하고 S3 current object·version·delete marker 삭제가 성공한 뒤 사용자 소유 DB 데이터를 하나의 transaction으로 삭제합니다. 실제 AWS Lifecycle·Versioning·탈퇴 E2E는 [#71](https://github.com/byeok99/LingKo/issues/71)에서 검증합니다.
 
 ## 완료 기록 방식

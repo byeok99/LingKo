@@ -115,14 +115,12 @@ class PracticeSentence {
       category: category,
       point: point,
       score: score,
-      characters:
-          characters
-              .where(
-                (character) =>
-                    normalizePracticeSentenceText(character.character)
-                        .isNotEmpty,
-              )
-              .toList(growable: false),
+      characters: characters
+          .where(
+            (character) =>
+                normalizePracticeSentenceText(character.character).isNotEmpty,
+          )
+          .toList(growable: false),
     );
   }
 
@@ -199,6 +197,20 @@ class CharacterResult {
       tongueGuideUrl: _nullableStringValue(json['tongueGuideUrl']),
       guideStatus: _nullableStringValue(json['guideStatus']),
       scoreStatus: _stringValue(json['scoreStatus'], fallback: 'UNAVAILABLE'),
+    );
+  }
+
+  /// 평가 기록 DTO의 축약된 문자 field를 Result 화면이 사용하는 공통 형태로 변환한다.
+  factory CharacterResult.fromHistoryJson(Map<String, Object?> json) {
+    final rawScore = json['score'];
+    return CharacterResult(
+      character: _stringValue(json['text']),
+      score: rawScore is num ? rawScore.round() : 0,
+      note: _stringValue(json['feedback']),
+      kind: 'NONE',
+      mouthGuideUrl: _nullableStringValue(json['mouthGuideUrl']),
+      tongueGuideUrl: _nullableStringValue(json['tongueGuideUrl']),
+      scoreStatus: rawScore is num ? 'AVAILABLE' : 'UNAVAILABLE',
     );
   }
 

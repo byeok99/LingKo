@@ -1,5 +1,61 @@
 # 작업 이력
 
+## 2026-08-04 - 단어 선택형 Result·Review 디자인
+
+- 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`
+- 내용: 음절 점수 grid를 단어 점수 선택과 하위 음절 가이드 카드로 교체했다.
+- 검증: Flutter widget test 및 preview markup 키워드 확인
+- 리스크: 실제 기기 시각 검수 필요
+
+## 2026-08-03 - 에너지 우측 슬롯과 내부 여백 분리
+
+- 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`
+- 내용: 166px 투명 우측 슬롯과 내용 기반 capsule을 분리하고 capsule padding 8px을 명시했다.
+- 검증: prototype script 구문 검사 통과
+- 리스크: 없음
+
+## 2026-08-03 - 에너지 캡슐 내부 여백 반영
+
+- 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`
+- 내용: 가변 폭 capsule의 좌우 padding을 8px로 맞췄다.
+- 검증: prototype script 구문 검사 통과
+- 리스크: 없음
+
+## 2026-08-03 - MAX 캡슐 가변 폭 시안
+
+- 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`
+- 내용: 고정 grid를 내용 기반 flex로 바꿔 `+`가 숨겨질 때 오른쪽 빈 열이 남지 않게 했다.
+- 검증: prototype script 구문 검사 통과
+- 리스크: 없음
+
+## 2026-08-03 - 에너지 횟수 표기 정리
+
+- 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`
+- 내용: capsule의 현재/최대 횟수 예시와 prototype을 공백 없는 `5/5` 형식으로 맞췄다.
+- 검증: prototype script 구문 검사 통과
+- 리스크: 없음
+
+## 2026-08-03 - 에너지 캡슐 디자인 재검토
+
+- 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`
+- 내용: capsule을 166×40px로 줄이고 흰 표면·soft blue accent로 Home 카드 계층과 맞췄다.
+- 검증: 500×924 Chrome 렌더 육안 확인 및 prototype script 구문 검사 통과
+- 리스크: 실제 기기 최종 확인 필요
+
+## 2026-08-03 - 소형 에너지 시안 재복원
+
+- 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`
+- 내용: 전체 폭 시안 변경을 취소하고 LingKo 우측 48px capsule 디자인으로 되돌렸다.
+- 검증: prototype script 구문 검사 및 Flutter 전체 test 통과
+- 리스크: 실제 기기 시각 확인 필요
+
+## 2026-08-03 - 에너지 캡슐 시안 롤백
+
+- 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`
+- 내용: Home 상단 우측 소형 배치를 인사말 아래의 전체 폭 capsule 시안으로 복원했다.
+- 검증: prototype script 구문 검사 및 Flutter widget test 통과
+- 리스크: 브라우저·실기기 최종 시각 확인 필요
+
 ## 2026-08-03 - Home 상황별 추천 시안 반영
 
 - 변경 파일: `preview.html`, `README.md`, `WORK_LOG.md`
@@ -83,3 +139,9 @@
 - 내용: 새 프로토타입을 Flutter 앱의 시각 기준으로 명시하고 실제 API가 없는 장식 기능을 제외하는 구현 원칙을 기록했다.
 - 검증: 화면별 Chrome 렌더링 7종 확인, Flutter 디자인 토큰 테스트 통과
 - 리스크: 실제 iPhone Safe Area·키보드·네트워크 상태는 수동 확인 필요
+## 2026-08-03 - Home 에너지 캡슐 시안 갱신
+
+- 변경 파일: `README.md`, `preview.html`
+- 내용: LingKo와 같은 줄 우측에 작은 마이크·횟수·timer/MAX·plus 캡슐을 배치했다.
+- 검증: preview JS 구문 및 렌더 이미지 육안 확인
+- 리스크: 실제 기기별 시각 확인 필요

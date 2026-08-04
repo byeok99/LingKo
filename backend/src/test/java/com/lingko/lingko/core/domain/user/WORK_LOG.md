@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 회원 탈퇴 단어 데이터 회귀 테스트
+
+- 변경 파일: `AccountDeletionPersistenceServiceTest.java`, `WORK_LOG.md`
+- 내용: 탈퇴 시 평가 단어 snapshot도 삭제되고 공용 음절 metadata는 유지되는지 검증했다.
+- 검증: 해당 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-03 - 언어 설정·목표 레벨 제거 테스트
 
 - 변경 파일: `UserPreferencesServiceTest.java`, `UserPreferencesMigrationTest.java`, `WORK_LOG.md`

@@ -78,6 +78,10 @@ public class EvaluationLog {
     @Builder.Default
     private List<EvaluationSyllable> syllableList = new ArrayList<>();
 
+    @OneToMany(mappedBy = "evaluationLog", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<EvaluationWord> wordList = new ArrayList<>();
+
     public void addSyllable(EvaluationSyllable syllable) {
         if (syllable == null) {
             throw new IllegalArgumentException("syllable must not be null");
@@ -85,6 +89,15 @@ public class EvaluationLog {
         // JPA cascade는 aggregate root에서 시작하지만 foreign key는 child가 소유하므로 양방향 관계를 함께 맞춘다.
         syllableList.add(syllable);
         syllable.setEvaluationLog(this);
+    }
+
+    public void addWord(EvaluationWord word) {
+        if (word == null) {
+            throw new IllegalArgumentException("word must not be null");
+        }
+        // 단어도 aggregate root와 양방향 관계를 같이 맞춰 cascade insert의 FK를 보장한다.
+        wordList.add(word);
+        word.setEvaluationLog(this);
     }
 
     public enum PracticeSource {

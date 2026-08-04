@@ -8,6 +8,7 @@ import com.lingko.lingko.core.domain.quota.service.PracticeQuotaService;
 import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -47,6 +49,14 @@ class PracticeQuotaServiceTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private MutableClock clock;
+
+    @BeforeEach
+    void resetClock() {
+        clock.reset();
+    }
+
     @Test
     @DisplayName("오늘 quota가 없으면 Asia/Seoul 날짜 기준으로 기본 5회 quota를 만든다")
     void createsDefaultTodayQuota() {
@@ -59,7 +69,8 @@ class PracticeQuotaServiceTest {
         assertThat(response.freeUsed()).isZero();
         assertThat(response.rewardedAvailable()).isZero();
         assertThat(response.remainingPractices()).isEqualTo(5);
-        assertThat(response.resetAt().toString()).isEqualTo("2026-06-30T00:00+09:00");
+        assertThat(response.nextRefillAt()).isNull();
+        assertThat(response.serverTime().toInstant()).isEqualTo(clock.instant());
         assertThat(quotaRepository.findByUserUserIdxAndQuotaDate(user.getUserIdx(), LocalDate.of(2026, 6, 29)))
                 .isPresent();
     }
@@ -74,6 +85,66 @@ class PracticeQuotaServiceTest {
         assertThat(response.freeUsed()).isEqualTo(1);
         assertThat(response.rewardedAvailable()).isZero();
         assertThat(response.remainingPractices()).isEqualTo(4);
+        assertThat(response.nextRefillAt().toInstant())
+                .isEqualTo(clock.instant().plus(Duration.ofHours(1)));
+    }
+
+    @Test
+    @DisplayName("한 시간마다 1회 충전되고 최대 5회에 도달하면 timer를 제거한다")
+    void replenishesOnePracticeEveryHourUpToMaximum() {
+        User user = saveUser();
+        quotaService.consumePractice(user.getUserIdx());
+        quotaService.consumePractice(user.getUserIdx());
+
+        Instant firstRefillAt = clock.instant().plus(Duration.ofHours(1));
+        assertThat(quotaService.getTodayQuota(user.getUserIdx()).nextRefillAt().toInstant())
+                .isEqualTo(firstRefillAt);
+
+        clock.advance(Duration.ofHours(1).plusMinutes(30));
+        PracticeQuotaResponse afterOneInterval = quotaService.getTodayQuota(user.getUserIdx());
+        assertThat(afterOneInterval.remainingPractices()).isEqualTo(4);
+        assertThat(afterOneInterval.nextRefillAt().toInstant())
+                .isEqualTo(firstRefillAt.plus(Duration.ofHours(1)));
+
+        clock.advance(Duration.ofMinutes(30));
+        PracticeQuotaResponse full = quotaService.getTodayQuota(user.getUserIdx());
+        assertThat(full.remainingPractices()).isEqualTo(5);
+        assertThat(full.nextRefillAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("추가 소모는 이미 진행 중인 자연 충전 timer를 초기화하지 않는다")
+    void additionalConsumptionKeepsExistingRefillTimer() {
+        User user = saveUser();
+        quotaService.consumePractice(user.getUserIdx());
+        Instant firstRefillAt = quotaService.getTodayQuota(user.getUserIdx())
+                .nextRefillAt()
+                .toInstant();
+
+        clock.advance(Duration.ofMinutes(20));
+        PracticeQuotaResponse response = quotaService.consumePractice(user.getUserIdx());
+
+        assertThat(response.remainingPractices()).isEqualTo(3);
+        assertThat(response.nextRefillAt().toInstant()).isEqualTo(firstRefillAt);
+    }
+
+    @Test
+    @DisplayName("날짜가 바뀌어도 자정 초기화 없이 1시간 충전 주기를 유지한다")
+    void keepsHourlyRefillAcrossMidnight() {
+        User user = saveUser();
+        clock.advance(Duration.ofHours(23).plusMinutes(20));
+        for (int attempt = 0; attempt < 5; attempt++) {
+            quotaService.consumePractice(user.getUserIdx());
+        }
+
+        Instant nextRefillAt = clock.instant().plus(Duration.ofHours(1));
+        clock.advance(Duration.ofMinutes(20));
+        PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
+
+        assertThat(response.remainingPractices()).isZero();
+        assertThat(response.date()).isEqualTo(LocalDate.of(2026, 6, 30));
+        assertThat(response.nextRefillAt().toInstant()).isEqualTo(nextRefillAt);
+        assertThat(quotaRepository.count()).isEqualTo(1);
     }
 
     @Test
@@ -111,12 +182,17 @@ class PracticeQuotaServiceTest {
 
         PracticeQuotaService.PracticeQuotaReservation reservation =
                 quotaService.reservePractice(user.getUserIdx());
+        PracticeQuotaResponse reserved = quotaService.getTodayQuota(user.getUserIdx());
+        assertThat(reserved.remainingPractices()).isEqualTo(4);
+        assertThat(reserved.nextRefillAt().toInstant())
+                .isEqualTo(clock.instant().plus(Duration.ofHours(1)));
         quotaService.releasePractice(reservation);
 
         PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
         assertThat(reservation.source()).isEqualTo(PracticeQuotaService.QuotaSource.FREE);
         assertThat(response.freeUsed()).isZero();
         assertThat(response.remainingPractices()).isEqualTo(5);
+        assertThat(response.nextRefillAt()).isNull();
     }
 
     @Test
@@ -177,11 +253,37 @@ class PracticeQuotaServiceTest {
     @TestConfiguration
     static class TestClockConfig {
         @Bean
-        Clock clock() {
-            return Clock.fixed(
-                    Instant.parse("2026-06-28T15:30:00Z"),
-                    ZoneId.of("Asia/Seoul")
-            );
+        MutableClock clock() {
+            return new MutableClock();
+        }
+    }
+
+    static final class MutableClock extends Clock {
+        private static final Instant INITIAL_INSTANT = Instant.parse("2026-06-28T15:30:00Z");
+        private final ZoneId zone = ZoneId.of("Asia/Seoul");
+        private Instant current = INITIAL_INSTANT;
+
+        void reset() {
+            current = INITIAL_INSTANT;
+        }
+
+        void advance(Duration duration) {
+            current = current.plus(duration);
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return zone;
+        }
+
+        @Override
+        public Clock withZone(ZoneId requestedZone) {
+            return Clock.fixed(current, requestedZone);
+        }
+
+        @Override
+        public Instant instant() {
+            return current;
         }
     }
 }

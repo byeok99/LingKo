@@ -116,6 +116,9 @@ class EvaluationServiceResultTest {
         assertThat(response.getCharacters()).extracting("score").containsExactly(92, 55);
         assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly("AVAILABLE");
         assertThat(response.getWeakCharacters()).extracting("text").containsExactly("나");
+        assertThat(response.getWords()).singleElement().satisfies(word ->
+                assertThat(word.getSyllables()).extracting("score").containsOnlyNulls()
+        );
     }
 
     @Test
@@ -129,6 +132,45 @@ class EvaluationServiceResultTest {
         assertThat(response.getCharacters()).extracting("score").containsOnlyNulls();
         assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly("UNAVAILABLE");
         assertThat(response.getWeakCharacters()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("신뢰할 수 있는 단어 점수를 기준 공백 단위로 묶고 음절은 가이드로만 제공한다")
+    void groupsWordScoresWithSyllableGuides() {
+        AssessmentResult result = AssessmentResult.builder()
+                .accuracyScore(82.0)
+                .fluencyScore(84.0)
+                .completenessScore(90.0)
+                .pronunciationScore(85.0)
+                .recognizedText("김치찌개 하나 주세요")
+                .characterScoresAvailable(false)
+                .characterScores(List.of())
+                .wordScoresAvailable(true)
+                .wordScores(List.of(
+                        new AssessmentResult.WordScore(0, "김치찌개", 82.0),
+                        new AssessmentResult.WordScore(1, "하나", 91.0),
+                        new AssessmentResult.WordScore(2, "주세요", 77.0)
+                ))
+                .build();
+        when(speechEvaluator.evaluate(anyString(), eq("김치찌개 하나 주세요"))).thenReturn(result);
+
+        PracticeResultResponse response = service.evaluatePronunciation(
+                wavAudio(),
+                null,
+                "김치찌개 하나 주세요"
+        );
+
+        assertThat(response.getWordScoreStatus()).isEqualTo("AVAILABLE");
+        assertThat(response.getWords()).extracting("text").containsExactly("김치찌개", "하나", "주세요");
+        assertThat(response.getWords()).extracting("score").containsExactly(82, 91, 77);
+        assertThat(response.getWords()).extracting(word -> word.getSyllables().size())
+                .containsExactly(4, 2, 3);
+        assertThat(response.getWords().get(0).getSyllables())
+                .extracting("text")
+                .containsExactly("김", "치", "찌", "개");
+        assertThat(response.getWords().get(0).getSyllables())
+                .extracting("score")
+                .containsOnlyNulls();
     }
 
     @Test

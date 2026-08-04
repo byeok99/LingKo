@@ -3,6 +3,7 @@ package com.lingko.lingko.core.domain.evaluation.service;
 import com.lingko.lingko.api.evaluation.dto.GuideCharacterResponse;
 import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
+import com.lingko.lingko.api.evaluation.dto.PracticeWordResultResponse;
 import com.lingko.lingko.core.domain.evaluation.dto.AssessmentResult;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
@@ -439,6 +440,9 @@ public class EvaluationService {
                         .filter(character -> character.getScore() < WEAK_SCORE_THRESHOLD)
                         .toList()
                 : List.of();
+        List<PracticeWordResultResponse> words = buildWordResults(referenceText, characters, result);
+        boolean wordScoresAvailable = words.stream()
+                .allMatch(word -> "AVAILABLE".equals(word.getScoreStatus()));
 
         return PracticeResultResponse.builder()
                 .overallScore(overallScore)
@@ -446,6 +450,7 @@ public class EvaluationService {
                 .summary(resolveSummary(overallScore, result.getRecognizedText()))
                 .recognizedText(result.getRecognizedText())
                 .characterScoreStatus(characterScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
+                .wordScoreStatus(wordScoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
                 .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
                         .accuracy(toScore(result.getAccuracyScore()))
                         .fluency(toScore(result.getFluencyScore()))
@@ -453,7 +458,101 @@ public class EvaluationService {
                         .build())
                 .characters(characters)
                 .weakCharacters(weakCharacters)
+                .words(words)
                 .build();
+    }
+
+    /**
+     * 기준 문장의 공백을 단어 경계로 사용하고, 음절은 점수 복제 없이 가이드로만 묶는다.
+     */
+    private List<PracticeWordResultResponse> buildWordResults(
+            String referenceText,
+            List<GuideCharacterResponse> characters,
+            AssessmentResult result
+    ) {
+        List<String> referenceWords = List.of(referenceText.trim().split("\\s+"));
+        boolean scoresAvailable = hasReliableWordScores(referenceWords, result);
+        List<PracticeWordResultResponse> words = new ArrayList<>(referenceWords.size());
+        int characterOffset = 0;
+
+        for (int position = 0; position < referenceWords.size(); position++) {
+            String word = referenceWords.get(position);
+            int syllableCount = (int) word.codePoints()
+                    .mapToObj(Character::toString)
+                    .filter(value -> !value.isBlank())
+                    .count();
+            if (characterOffset + syllableCount > characters.size()) {
+                return fallbackWord(referenceText, characters);
+            }
+
+            List<GuideCharacterResponse> syllables = characters
+                    .subList(characterOffset, characterOffset + syllableCount)
+                    .stream()
+                    .map(this::toGuideOnlySyllable)
+                    .toList();
+            Integer score = scoresAvailable
+                    ? toScore(result.getWordScores().get(position).accuracyScore())
+                    : null;
+            words.add(PracticeWordResultResponse.builder()
+                    .position(position)
+                    .text(word)
+                    .score(score)
+                    .scoreStatus(scoresAvailable ? "AVAILABLE" : "UNAVAILABLE")
+                    .syllables(syllables)
+                    .build());
+            characterOffset += syllableCount;
+        }
+
+        return characterOffset == characters.size()
+                ? List.copyOf(words)
+                : fallbackWord(referenceText, characters);
+    }
+
+    private List<PracticeWordResultResponse> fallbackWord(
+            String referenceText,
+            List<GuideCharacterResponse> characters
+    ) {
+        return List.of(PracticeWordResultResponse.builder()
+                .position(0)
+                .text(referenceText.trim())
+                .score(null)
+                .scoreStatus("UNAVAILABLE")
+                .syllables(characters.stream().map(this::toGuideOnlySyllable).toList())
+                .build());
+    }
+
+    /** 단어 하위 음절은 점수 단위가 아니므로 가이드 metadata만 복사한다. */
+    private GuideCharacterResponse toGuideOnlySyllable(GuideCharacterResponse character) {
+        return GuideCharacterResponse.builder()
+                .position(character.getPosition())
+                .text(character.getText())
+                .pronunciationText(character.getPronunciationText())
+                .score(null)
+                .scoreStatus("UNAVAILABLE")
+                .phonemes(character.getPhonemes())
+                .guideType(character.getGuideType())
+                .guideStatus(character.getGuideStatus())
+                .mouthGuideUrl(character.getMouthGuideUrl())
+                .tongueGuideUrl(character.getTongueGuideUrl())
+                .note(character.getNote())
+                .build();
+    }
+
+    private boolean hasReliableWordScores(List<String> referenceWords, AssessmentResult result) {
+        List<AssessmentResult.WordScore> scores = result.getWordScores();
+        if (!result.isWordScoresAvailable() || scores == null || scores.size() != referenceWords.size()) {
+            return false;
+        }
+
+        for (int position = 0; position < referenceWords.size(); position++) {
+            AssessmentResult.WordScore score = scores.get(position);
+            if (score.position() != position
+                    || !referenceWords.get(position).equals(score.text())
+                    || score.accuracyScore() == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean hasReliableCharacterScores(

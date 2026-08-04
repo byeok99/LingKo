@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 단어 점수 snapshot 영속 모델
+
+- 변경 파일: `EvaluationLog.java`, `EvaluationWord.java`, `EvaluationSyllable.java`, `WORK_LOG.md`
+- 내용: 평가 log에 단어 점수를 한 번 저장하고 음절은 nullable `word_position`으로 연결하도록 확장했다.
+- 검증: persistence·history·migration·회원 탈퇴 테스트 통과
+- 리스크: 운영 DB에 V15 migration 적용 필요
+
 ## 2026-07-29 - Queue 발행 상태 제거
 
 - 변경 파일: `EvaluationJob.java`, `WORK_LOG.md`

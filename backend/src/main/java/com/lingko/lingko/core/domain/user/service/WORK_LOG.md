@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-04 - 회원 탈퇴 단어 snapshot 삭제
+
+- 변경 파일: `AccountDeletionPersistenceService.java`, `WORK_LOG.md`
+- 내용: 평가 log 삭제 전에 사용자 소유 `evaluation_word` 행을 foreign key 순서대로 삭제한다.
+- 검증: `AccountDeletionPersistenceServiceTest` 통과
+- 리스크: 없음
+
 ## 2026-08-03 - 언어 Preferences 조율로 단순화
 
 - 변경 파일: `UserPreferencesService.java`, `WORK_LOG.md`

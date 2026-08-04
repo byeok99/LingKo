@@ -46,7 +46,7 @@ class HomeScreen extends StatefulWidget {
     required this.onSelect,
     required this.onOpenPractice,
     required this.onOpenCustomPractice,
-    required this.onOpenReview,
+    this.onRequestPracticeReward,
     this.displayName,
   });
 
@@ -62,7 +62,7 @@ class HomeScreen extends StatefulWidget {
   final ValueChanged<PracticeSentence> onSelect;
   final VoidCallback onOpenPractice;
   final VoidCallback onOpenCustomPractice;
-  final VoidCallback onOpenReview;
+  final Future<void> Function()? onRequestPracticeReward;
   final String? displayName;
 
   @override
@@ -117,14 +117,37 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
         children: [
-          const Text(
-            'LingKo',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 25,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -1.1,
-            ),
+          Row(
+            children: [
+              const Text(
+                'LingKo',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 25,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1.1,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 166),
+                    child: MediaQuery.withClampedTextScaling(
+                      maxScaleFactor: 1.2,
+                      child: _QuotaSection(
+                        quota: widget.quota,
+                        isLoading: widget.isLoadingQuota,
+                        errorText: widget.quotaErrorText,
+                        onRetry: widget.onRetryQuota,
+                        onRequestPracticeReward: widget.onRequestPracticeReward,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           Text(
@@ -136,14 +159,6 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 17,
               fontWeight: FontWeight.w900,
             ),
-          ),
-          const SizedBox(height: 15),
-          _QuotaSection(
-            quota: widget.quota,
-            isLoading: widget.isLoadingQuota,
-            errorText: widget.quotaErrorText,
-            onRetry: widget.onRetryQuota,
-            onOpenReview: widget.onOpenReview,
           ),
           if (widget.evaluationProgress.isActive ||
               widget.evaluationProgress.stage ==
@@ -279,57 +294,69 @@ class _QuotaSection extends StatelessWidget {
     required this.isLoading,
     required this.errorText,
     required this.onRetry,
-    required this.onOpenReview,
+    this.onRequestPracticeReward,
   });
 
   final PracticeQuota? quota;
   final bool isLoading;
   final String? errorText;
   final VoidCallback onRetry;
-  final VoidCallback onOpenReview;
+  final Future<void> Function()? onRequestPracticeReward;
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const StatePanel(
-        icon: Icons.mic_none,
-        title: 'Loading practice quota',
-        isLoading: true,
+      return Semantics(
+        label: 'Loading practice energy',
+        child: const SizedBox(
+          height: 40,
+          child: Center(
+            child: SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+          ),
+        ),
       );
     }
     if (errorText != null) {
-      return StatePanel(
-        icon: Icons.wifi_off_outlined,
-        title: errorText!,
-        message: 'Your practice availability could not be confirmed.',
-        actionLabel: 'Retry',
-        onAction: onRetry,
+      return Semantics(
+        label: errorText,
+        button: true,
+        container: true,
+        excludeSemantics: true,
+        child: SizedBox(
+          height: 40,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: IconButton.filledTonal(
+              onPressed: onRetry,
+              tooltip: 'Retry practice energy',
+              style: IconButton.styleFrom(
+                minimumSize: const Size.square(32),
+                maximumSize: const Size.square(32),
+                padding: EdgeInsets.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+            ),
+          ),
+        ),
       );
     }
     final current = quota;
     if (current == null) {
-      return const StatePanel(
-        icon: Icons.info_outline,
-        title: 'Practice quota unavailable',
+      return Semantics(
+        label: 'Practice energy unavailable',
+        child: const SizedBox(height: 40),
       );
     }
-    return Column(
-      children: [
-        ProgressPanel(
-          remaining: current.remainingPractices,
-          limit: current.freeLimit + current.rewardedAvailable,
-          resetLabel:
-              current.resetAt == null ? null : 'Resets at ${current.resetAt}',
-        ),
-        if (current.remainingPractices == 0) ...[
-          const SizedBox(height: AppSpacing.md),
-          SecondaryButton(
-            label: 'Review previous practices',
-            icon: Icons.history,
-            onPressed: onOpenReview,
-          ),
-        ],
-      ],
+    return ProgressPanel(
+      remaining: current.remainingPractices,
+      limit: current.freeLimit,
+      timeUntilNextRefill: current.timeUntilNextRefill,
+      onRefillDue: onRetry,
+      onRequestAdReward: onRequestPracticeReward,
     );
   }
 }
