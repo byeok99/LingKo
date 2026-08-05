@@ -13,6 +13,7 @@ import '../services/audio_recorder_service.dart';
 import '../services/sentence_speech_service.dart';
 import '../utils/practice_sentence_normalizer.dart';
 import '../widgets/evaluation_progress_panel.dart';
+import '../widgets/romanized_pronunciation.dart';
 import '../widgets/shared_widgets.dart';
 
 const Duration _sentencePreparationDelay = Duration(milliseconds: 700);
@@ -638,6 +639,14 @@ class _RecordingView extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
+              if (sentence.romanizedPronunciation.trim().isNotEmpty) ...[
+                const SizedBox(height: 6),
+                RomanizedPronunciation(
+                  key: const ValueKey('recording-romanized-pronunciation'),
+                  text: sentence.romanizedPronunciation,
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ],
           ),
         ),
@@ -943,6 +952,16 @@ class _SentenceComposerCard extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
+                  if (preparedSentence!.romanizedPronunciation
+                      .trim()
+                      .isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    RomanizedPronunciation(
+                      key: const ValueKey('practice-romanized-pronunciation'),
+                      text: preparedSentence!.romanizedPronunciation,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ],
               ),
             ),

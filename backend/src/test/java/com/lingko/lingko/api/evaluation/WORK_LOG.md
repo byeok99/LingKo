@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 평가 API 로마자 필드 테스트
+
+- 변경 파일: `EvaluationControllerPrepareTest.java`, `EvaluationHistoryControllerTest.java`, `WORK_LOG.md`
+- 내용: 준비·기록 JSON에 `romanizedPronunciation`이 노출되는지 검증했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-07-30 - 변환·준비 API 정규화 테스트
 
 - 변경 파일: `EvaluationControllerPrepareTest.java`, `WORK_LOG.md`

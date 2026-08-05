@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 추천 로마자 파생 테스트
+
+- 변경 파일: `SentenceServiceTest.java`, `WORK_LOG.md`
+- 내용: 추천 문장 응답이 표준 발음에서 로마자 가이드를 파생하는 계약을 검증했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-07-30 - 추천 발음 비영속 계약 테스트
 
 - 변경 파일: `RecommendedSentenceMigrationTest.java`, `SentenceServiceTest.java`, `WORK_LOG.md`

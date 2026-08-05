@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 로마자 변환 규칙 테스트
+
+- 변경 파일: `KoreanRomanizationUtilTest.java`, `WORK_LOG.md`
+- 내용: 음절·단어 경계, 문장부호 정규화, 빈 입력 계약을 고정했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-07-30 - `김` 프레임 전환 mapping 검증
 
 - 변경 파일: `SyllableMappingUtilTest.java`, `WORK_LOG.md`

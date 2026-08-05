@@ -10,8 +10,8 @@
 - Home 추천은 Daily, Food, Travel, Study, Work, Health 상황 칩으로 구분하고 선택한 카테고리의 문장 3개만 먼저 보여준다. 더 많은 문장은 전체 보기로 확장하며 별도 버튼으로 빈 직접 입력 Practice에 진입한다.
 - 진행 중이거나 실패한 평가는 새 추천보다 우선해 Home의 상황별 추천 영역 위에 표시한다.
 - Practice는 추천 문장과 직접 입력을 별도 탭으로 나누지 않는다. 하나의 편집 가능한 문장 입력에서 직접 작성하거나 Home 추천 문장을 이어서 수정할 수 있으며, 입력을 멈추면 표준 발음을 자동 준비한다.
-- 표준 발음 준비가 끝난 현재 문장에는 표준 발음을 항상 바로 보여주고 `Listen`과 녹음을 제공한다. Practice에서는 번역·학습 팁·완료 배지·표준 발음 토글을 두지 않으며, 음절별 상세 가이드는 평가 후 Result에서만 제공한다.
-- Result의 `Pronunciation guide`는 `Sentence`와 `Standard pronunciation`만 비교해 보여주며 사용자 인식 문장은 표시하지 않는다. 표준 발음은 기기 TTS의 `Normal`과 `Slow`로 들을 수 있고 음원 파일은 별도로 보존하지 않는다.
+- 표준 발음 준비가 끝난 현재 문장에는 표준 발음과 음절 하이픈·단어 공백 형식의 로마자 읽기 가이드를 바로 보여주고 `Listen`과 녹음을 제공한다. 같은 로마자 가이드는 Recording, Result, Review 상세에도 유지한다. Practice에서는 번역·학습 팁·완료 배지·표준 발음 토글을 두지 않으며, 음절별 상세 가이드는 평가 후 Result에서만 제공한다.
+- Result의 `Pronunciation guide`는 `Sentence`, `Standard pronunciation`, 그 아래 보조 로마자 읽기를 비교해 보여주며 사용자 인식 문장은 표시하지 않는다. 표준 발음은 기기 TTS의 `Normal`과 `Slow`로 들을 수 있고 음원 파일은 별도로 보존하지 않는다.
 - Result와 Review는 점수가 있는 단어 chip을 먼저 표시한다. 단어를 선택하면 그 단어에 속한 음절만 아래 카드에 펼치며, 음절은 점수 없이 입·혀 가이드 진입점으로만 사용한다. 선택한 URL이 지원 영상이면 음소 단위로 음소거 반복 재생하고, 현재 PNG mapping 등 정적 URL이면 이미지로 표시한다.
 - Recording과 Evaluating은 하단 내비게이션을 숨기며, 평가 중에는 `Continue in background`로 Home에 돌아갈 수 있다.
 - Result와 Review의 단어 점수·음절 grouping은 평가 API 응답을 그대로 사용하며 단어 점수를 음절에 복제하지 않는다.

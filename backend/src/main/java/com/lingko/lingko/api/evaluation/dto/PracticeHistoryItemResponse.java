@@ -23,6 +23,8 @@ public class PracticeHistoryItemResponse {
     private String source;
     private String originalText;
     private String standardPronunciation;
+    /** 저장된 표준 발음에서 조회 시점에 파생한 학습자용 로마자 가이드다. */
+    private String romanizedPronunciation;
     private String recognizedText;
     private int overallScore;
     private String gradeLabel;

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 추천 API 로마자 필드 테스트
+
+- 변경 파일: `SentenceControllerTest.java`, `WORK_LOG.md`
+- 내용: 추천 문장 JSON의 `romanizedPronunciation` 계약을 검증했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-07-30 - 추천 동적 발음 API 계약
 
 - 변경 파일: `SentenceControllerTest.java`, `WORK_LOG.md`

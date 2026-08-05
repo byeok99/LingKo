@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 평가 응답 로마자 계약 추가
+
+- 변경 파일: `PronunciationPrepareResponse.java`, `PracticeHistoryItemResponse.java`, `WORK_LOG.md`
+- 내용: 준비 문장과 평가 기록에 `romanizedPronunciation` 필드를 추가했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 구버전 앱은 추가 JSON 필드를 무시하므로 없음
+
 ## 2026-08-04 - 점수·가이드 상태 enum 도입
 
 - 변경 파일: `ScoreStatus.java`, `GuideStatus.java`, `EvaluationJobRequest.java`, `GuideCharacterResponse.java`, `PracticeResultResponse.java`, `PracticeWordResultResponse.java`, `PracticeHistoryWordResponse.java`

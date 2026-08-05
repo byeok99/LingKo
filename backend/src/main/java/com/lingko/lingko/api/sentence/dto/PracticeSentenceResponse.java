@@ -22,6 +22,8 @@ public class PracticeSentenceResponse {
     private String source;
     private String originalText;
     private String standardPronunciation;
+    /** 표준 발음에서 파생한 학습자용 로마자 읽기 가이드다. */
+    private String romanizedPronunciation;
     private String translation;
     private String categoryLabel;
     private String learningPoint;

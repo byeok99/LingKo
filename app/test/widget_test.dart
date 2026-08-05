@@ -85,6 +85,7 @@ class FakeEvaluationApi implements EvaluationApi {
         source: 'RECOMMENDED',
         originalText: '맛있겠다.',
         standardPronunciation: '마싯게따.',
+        romanizedPronunciation: 'ma-sit-ge-tta',
         recognizedText: '마싯게따.',
         overallScore: 91,
         gradeLabel: 'Excellent',
@@ -450,6 +451,7 @@ const _defaultSentences = [
     source: 'RECOMMENDED',
     text: '맛있겠다.',
     pronunciation: '마싣껟따.',
+    romanizedPronunciation: 'ma-sit-kket-tta',
     translation: 'It looks delicious.',
     level: 'RECOMMENDED',
     category: 'Food',
@@ -723,6 +725,11 @@ void main() {
     );
     expect(find.text('Pronunciation guide'), findsNothing);
     expect(find.text('마싣껟따'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('practice-romanized-pronunciation')),
+      findsOneWidget,
+    );
+    expect(find.text('ma-sit-kket-tta'), findsOneWidget);
     expect(find.text('Check standard pronunciation'), findsNothing);
     expect(find.text('Hide standard pronunciation'), findsNothing);
     expect(find.text('It looks delicious.'), findsNothing);
@@ -736,6 +743,10 @@ void main() {
     await tester.tap(find.text('Start recording'));
     await tester.pumpAndSettle();
     expect(find.text('Stop and analyze'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('recording-romanized-pronunciation')),
+      findsOneWidget,
+    );
     expect(find.text('마싣껟따.'), findsNothing);
 
     await tester.tap(find.text('Stop and analyze'));
@@ -750,6 +761,10 @@ void main() {
     expect(find.text('Recognized speech'), findsNothing);
     expect(find.text('사용자 발음'), findsNothing);
     expect(find.text('마싣껟따'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('result-romanized-pronunciation')),
+      findsOneWidget,
+    );
     final resultNormalButton = find.byKey(
       const ValueKey('result-play-pronunciation-normal'),
     );
@@ -1686,6 +1701,11 @@ void main() {
 
     expect(find.text('Score details'), findsOneWidget);
     expect(find.text('Pronunciation by word'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('review-romanized-pronunciation')),
+      findsOneWidget,
+    );
+    expect(find.text('ma-sit-ge-tta'), findsOneWidget);
     expect(find.text('Accuracy'), findsOneWidget);
     expect(find.text('Fluency'), findsOneWidget);
     expect(find.text('Completeness'), findsOneWidget);

@@ -10,6 +10,7 @@ import com.lingko.lingko.core.domain.evaluation.entity.EvaluationLog;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationSyllable;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationWord;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationLogRepository;
+import com.lingko.lingko.core.util.KoreanRomanizationUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -69,6 +70,7 @@ public class EvaluationHistoryService {
                 .source(log.getSource().name())
                 .originalText(log.getOriginalWord())
                 .standardPronunciation(log.getStandardPronunciation())
+                .romanizedPronunciation(KoreanRomanizationUtil.romanize(log.getStandardPronunciation()))
                 .recognizedText(log.getRecognizedText())
                 .overallScore(log.getScore())
                 .gradeLabel(resolveGradeLabel(log.getScore()))

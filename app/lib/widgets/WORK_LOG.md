@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 공용 로마자 발음 위젯 추가
+
+- 변경 파일: `romanized_pronunciation.dart`, `WORK_LOG.md`
+- 내용: 서버 값이 없으면 공간을 만들지 않고, 있으면 테마 보조색으로 일관되게 표시하는 위젯을 추가했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 위젯 색 참조를 테마 기반으로 전환
 
 - 변경 파일: `shared_widgets.dart`, `guide_sheet.dart`, `guide_painter.dart`, `result_tile.dart`, `progress_panel.dart`, `evaluation_progress_panel.dart`, `score_breakdown.dart`, `sentence_card.dart`, `settings_row.dart`, `word_syllable_explorer.dart`

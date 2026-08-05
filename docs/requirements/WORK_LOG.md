@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 로마자 읽기 요구사항 추가
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: 표준 발음 기반 로마자 파생과 Practice·Recording·Result·Review 상세 표시 완료 기준을 추가했다.
+- 검증: API·Flutter 구현 및 테스트와 대조
+- 리스크: 없음
+
 ## 2026-08-04 - FR-PREF 요구사항 제거
 
 - 변경 파일: `functional-requirements.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 로마자 파생 경계 문서화
+
+- 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`
+- 내용: 로마자는 저장하지 않고 확정된 표준 발음에서 응답 시 파생하는 흐름을 명시했다.
+- 검증: 구현 service와 sequence diagram 대조
+- 리스크: 없음
+
 ## 2026-08-04 - 단어 점수 평가 흐름 동기화
 
 - 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`

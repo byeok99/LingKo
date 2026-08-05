@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 로마자 발음 API 문서화
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: 추천·준비·기록 응답의 `romanizedPronunciation` 파생 규칙을 문서화했다.
+- 검증: 코드 DTO·service 계약과 대조
+- 리스크: 없음
+
 ## 2026-08-04 - 사용자 설정 API 문서 제거
 
 - 변경 파일: `api-reference.md`

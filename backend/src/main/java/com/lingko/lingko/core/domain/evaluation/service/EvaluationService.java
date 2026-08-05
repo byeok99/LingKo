@@ -13,6 +13,7 @@ import com.lingko.lingko.core.domain.sentence.entity.RecommendedSentence;
 import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
 import com.lingko.lingko.core.domain.sentence.repository.RecommendedSentenceRepository;
 import com.lingko.lingko.core.util.KoreanPhonemeUtil;
+import com.lingko.lingko.core.util.KoreanRomanizationUtil;
 import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
 import com.lingko.lingko.core.util.SyllableMappingUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +107,7 @@ public class EvaluationService {
                         .source("CUSTOM")
                         .originalText(normalized)
                         .standardPronunciation(standardPronunciation)
+                        .romanizedPronunciation(KoreanRomanizationUtil.romanize(standardPronunciation))
                         .translation("Practice with your own sentence.")
                         .categoryLabel("Free practice")
                         .learningPoint("Linking across syllables")

@@ -55,6 +55,7 @@ class PracticeHistoryItem {
     required this.source,
     required this.originalText,
     required this.standardPronunciation,
+    this.romanizedPronunciation = '',
     required this.recognizedText,
     required this.overallScore,
     required this.gradeLabel,
@@ -76,6 +77,8 @@ class PracticeHistoryItem {
       source: _stringValue(json['source'], fallback: 'CUSTOM'),
       originalText: _stringValue(json['originalText']),
       standardPronunciation: _stringValue(json['standardPronunciation']),
+      romanizedPronunciation:
+          _stringValue(json['romanizedPronunciation']).trim(),
       recognizedText: _stringValue(json['recognizedText']),
       overallScore: _intValue(json['overallScore']),
       gradeLabel: _stringValue(json['gradeLabel']),
@@ -112,6 +115,7 @@ class PracticeHistoryItem {
       source: source,
       text: originalText,
       pronunciation: standardPronunciation,
+      romanizedPronunciation: romanizedPronunciation,
       translation: 'Practice this sentence again.',
       level: source,
       category: 'History',
@@ -126,6 +130,9 @@ class PracticeHistoryItem {
   final String source;
   final String originalText;
   final String standardPronunciation;
+
+  /// 조회 시 표준 발음에서 파생된 음절 단위 로마자 읽기 가이드다.
+  final String romanizedPronunciation;
   final String recognizedText;
   final int overallScore;
   final String gradeLabel;
