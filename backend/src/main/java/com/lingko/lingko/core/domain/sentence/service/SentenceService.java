@@ -7,6 +7,7 @@ import com.lingko.lingko.core.domain.sentence.entity.RecommendedSentence;
 import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
 import com.lingko.lingko.core.domain.sentence.repository.RecommendedSentenceRepository;
 import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
+import com.lingko.lingko.core.util.KoreanRomanizationUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,7 @@ public class SentenceService {
                 .source("RECOMMENDED")
                 .originalText(originalText)
                 .standardPronunciation(standardPronunciation)
+                .romanizedPronunciation(KoreanRomanizationUtil.romanize(standardPronunciation))
                 .translation(sentence.getTranslation())
                 .categoryLabel(sentence.getCategoryLabel())
                 .learningPoint(sentence.getLearningPoint())

@@ -49,6 +49,7 @@ class SentenceServiceTest {
         assertThat(response.items().get(0).getSource()).isEqualTo("RECOMMENDED");
         assertThat(response.items().get(0).getOriginalText()).isEqualTo("맛있겠다");
         assertThat(response.items().get(0).getStandardPronunciation()).isEqualTo("마싣껟따");
+        assertThat(response.items().get(0).getRomanizedPronunciation()).isEqualTo("ma-sit-kket-tta");
         assertThat(response.items().get(0).getCategoryLabel()).isEqualTo("Food");
         assertThat(response.items().get(0).getCharacters()).hasSize(1);
     }

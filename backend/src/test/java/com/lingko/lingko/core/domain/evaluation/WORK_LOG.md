@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 평가 로마자 파생 테스트
+
+- 변경 파일: `EvaluationServicePrepareTest.java`, `EvaluationHistoryServiceTest.java`, `WORK_LOG.md`
+- 내용: 준비 응답과 기록 조회가 각 표준 발음에 맞는 로마자를 반환하는지 검증했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 안내 문구 생성 회귀 테스트
 
 - 변경 파일: `EvaluationServicePrepareTest.java`

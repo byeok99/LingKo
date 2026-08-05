@@ -34,6 +34,7 @@ class EvaluationServicePrepareTest {
         assertThat(response.getSentence().getSource()).isEqualTo("CUSTOM");
         assertThat(response.getSentence().getOriginalText()).isEqualTo("맛있겠다");
         assertThat(response.getSentence().getStandardPronunciation()).isEqualTo("마싣껟따");
+        assertThat(response.getSentence().getRomanizedPronunciation()).isEqualTo("ma-sit-kket-tta");
         assertThat(response.getSentence().getCharacters()).isNotEmpty();
 
         GuideCharacterResponse first = response.getSentence().getCharacters().get(0);

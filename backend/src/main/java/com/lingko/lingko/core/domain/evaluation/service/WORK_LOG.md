@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 준비·기록 응답 로마자 파생
+
+- 변경 파일: `EvaluationService.java`, `EvaluationHistoryService.java`, `WORK_LOG.md`
+- 내용: 자유 문장 준비와 과거 평가 기록에서 표준 발음 기반 로마자 가이드를 반환한다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 무의미한 안내 문구 생성 제거
 
 - 변경 파일: `EvaluationService.java`

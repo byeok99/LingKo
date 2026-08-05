@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 로마자 읽기 가이드 디자인 반영
+
+- 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`
+- 내용: 표준 발음 아래 보조 로마자 표기와 4개 화면의 일관된 표시 규칙을 설계·preview에 반영했다.
+- 검증: `design_system_test.dart` 포함 Flutter 전체 테스트 통과
+- 리스크: preview는 정적 샘플 데이터임
+
 ## 2026-08-04 - 디자인 토큰 대비 상향
 
 - 변경 파일: `preview.html`

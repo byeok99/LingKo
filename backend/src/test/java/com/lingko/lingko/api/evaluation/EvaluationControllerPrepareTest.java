@@ -39,6 +39,7 @@ class EvaluationControllerPrepareTest {
                         .source("CUSTOM")
                         .originalText("한국어를 배우고 있어요")
                         .standardPronunciation("한구거를 배우고 이써요")
+                        .romanizedPronunciation("han-gu-geo-reul bae-u-go i-sseo-yo")
                         .translation("Practice with your own sentence.")
                         .categoryLabel("Free practice")
                         .learningPoint("Linking across syllables")
@@ -54,7 +55,9 @@ class EvaluationControllerPrepareTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.practiceToken").doesNotExist())
                 .andExpect(jsonPath("$.sentence.source").value("CUSTOM"))
-                .andExpect(jsonPath("$.sentence.standardPronunciation").value("한구거를 배우고 이써요"));
+                .andExpect(jsonPath("$.sentence.standardPronunciation").value("한구거를 배우고 이써요"))
+                .andExpect(jsonPath("$.sentence.romanizedPronunciation")
+                        .value("han-gu-geo-reul bae-u-go i-sseo-yo"));
     }
 
     @Test

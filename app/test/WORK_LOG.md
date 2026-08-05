@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 로마자 API·화면 회귀 테스트
+
+- 변경 파일: `pronunciation_api_test.dart`, `sentence_api_test.dart`, `evaluation_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: API 파싱과 Practice·Recording·Result·Review 상세 표시 계약을 검증했다.
+- 검증: `flutter test --coverage` 81개 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 언어 설정 부재 계약 고정
 
 - 변경 파일: `widget_test.dart`, `user_preferences_api_test.dart` (삭제)

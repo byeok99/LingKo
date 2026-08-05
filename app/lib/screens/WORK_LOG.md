@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 로마자 발음 가이드 화면 연결
+
+- 변경 파일: `practice_screen.dart`, `result_screen.dart`, `review_screen.dart`, `WORK_LOG.md`
+- 내용: Practice·Recording·Result·Review 상세에서 표준 발음 아래 로마자 읽기 가이드를 표시한다.
+- 검증: `flutter analyze`, `flutter test --coverage` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - Profile에서 언어 설정 섹션 제거
 
 - 변경 파일: `profile_screen.dart`

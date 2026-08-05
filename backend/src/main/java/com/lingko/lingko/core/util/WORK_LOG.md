@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 학습자용 로마자 변환기 추가
+
+- 변경 파일: `KoreanRomanizationUtil.java`, `WORK_LOG.md`
+- 내용: 표준 발음을 음절 하이픈과 단어 공백 형식의 로마자로 결정적으로 변환한다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 엄격한 국어 로마자 표기보다 초급 읽기 보조에 맞춘 규칙임
+
 ## 2026-07-30 - 문장 정규화와 받침 대표음 보강
 
 - 변경 파일: `PracticeSentenceNormalizer.java`, `KoreanPhonemeUtil.java`, `WORK_LOG.md`

@@ -45,6 +45,8 @@ void main() {
                   'source': 'CUSTOM',
                   'originalText': '한국어를 배우고 있어요.',
                   'standardPronunciation': '한구거를 배우고 이써요.',
+                  'romanizedPronunciation':
+                      'han-gu-geo-reul bae-u-go i-sseo-yo',
                   'translation': 'Practice with your own sentence.',
                   'categoryLabel': 'Free practice',
                   'learningPoint': 'Linking across syllables',
@@ -78,6 +80,10 @@ void main() {
       expect(requestedBody, {'source': 'CUSTOM', 'text': '한국어를 배우고 있어요'});
       expect(sentence.text, '한국어를 배우고 있어요');
       expect(sentence.pronunciation, '한구거를 배우고 이써요');
+      expect(
+        sentence.romanizedPronunciation,
+        'han-gu-geo-reul bae-u-go i-sseo-yo',
+      );
       expect(sentence.characters.single.kind, 'TONGUE');
       expect(
         sentence.characters.single.tongueGuideUrl,

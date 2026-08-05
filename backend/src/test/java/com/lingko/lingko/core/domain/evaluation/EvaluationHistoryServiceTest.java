@@ -83,6 +83,7 @@ class EvaluationHistoryServiceTest {
         assertThat(response.getItems()).hasSize(1);
         assertThat(response.getItems().get(0).getEvaluationLogId()).isEqualTo(newer.getEvaluationLogIdx());
         assertThat(response.getItems().get(0).getOriginalText()).isEqualTo("맛있겠다.");
+        assertThat(response.getItems().get(0).getRomanizedPronunciation()).isEqualTo("mat-it-get-da");
         assertThat(response.getItems().get(0).getOverallScore()).isEqualTo(91);
         assertThat(response.getItems().get(0).getScoreBreakdown().getAccuracy()).isEqualTo(92);
         assertThat(response.getItems().get(0).getCharacters()).hasSize(1);

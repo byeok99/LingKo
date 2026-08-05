@@ -10,6 +10,7 @@ import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../services/sentence_speech_service.dart';
 import '../widgets/score_breakdown.dart';
+import '../widgets/romanized_pronunciation.dart';
 import '../widgets/shared_widgets.dart';
 import '../widgets/word_syllable_explorer.dart';
 
@@ -229,6 +230,13 @@ class _PronunciationGuideCardState extends State<_PronunciationGuideCard> {
               height: 1.35,
             ),
           ),
+          if (widget.sentence.romanizedPronunciation.trim().isNotEmpty) ...[
+            const SizedBox(height: 5),
+            RomanizedPronunciation(
+              key: const ValueKey('result-romanized-pronunciation'),
+              text: widget.sentence.romanizedPronunciation,
+            ),
+          ],
           const SizedBox(height: 13),
           Row(
             children: [

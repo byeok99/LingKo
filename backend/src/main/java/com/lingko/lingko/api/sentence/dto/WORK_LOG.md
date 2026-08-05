@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 추천 문장 로마자 계약 추가
+
+- 변경 파일: `PracticeSentenceResponse.java`, `WORK_LOG.md`
+- 내용: 추천 문장 응답에 `romanizedPronunciation` 필드를 추가했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `PracticeSentenceResponse.java`, `RecommendedSentencesResponse.java`, `WORK_LOG.md`

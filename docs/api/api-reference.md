@@ -74,7 +74,7 @@ Authorization: Bearer <access-token>
 
 추천 문장 단건을 조회합니다.
 
-추천 문장 응답의 `standardPronunciation`은 DB에 저장한 정답을 반환하지 않습니다. 서버가 `originalText`를 Unicode 문장부호·기호 제거와 공백 정규화한 뒤 현재 한국어 음운 규칙으로 매 요청 계산합니다.
+추천 문장 응답의 `standardPronunciation`은 DB에 저장한 정답을 반환하지 않습니다. 서버가 `originalText`를 Unicode 문장부호·기호 제거와 공백 정규화한 뒤 현재 한국어 음운 규칙으로 매 요청 계산합니다. `romanizedPronunciation`은 이 표준 발음에서 파생하며 음절은 하이픈, 단어는 공백으로 구분합니다.
 
 ## 발음 준비
 
@@ -101,7 +101,7 @@ Authorization: Bearer <access-token>
 }
 ```
 
-응답에는 문장 원문, 표준 발음, 번역·학습 정보, 글자별 가이드가 포함됩니다.
+응답에는 문장 원문, 표준 발음, `romanizedPronunciation`, 번역·학습 정보, 글자별 가이드가 포함됩니다. 로마자 가이드는 저장하지 않고 현재 표준 발음에서 결정적으로 파생합니다.
 
 `mouthGuideUrl`과 `tongueGuideUrl`은 제공된 매체 URL입니다. 문장 준비 응답은 빠른 입력 피드백을 위해 정적 PNG mapping을 반환합니다. 평가가 완료되면 글자 점수 제공 여부와 관계없이 프레임 전환이 필요한 모든 음절의 입·혀 가이드를 Worker가 MP4로 생성하고, 앱은 영상 확장자를 영상으로 재생합니다. 단일 프레임이거나 영상 생성에 실패하면 첫 PNG를 정적 fallback으로 표시합니다. 동일 음절·가이드 종류·프레임 조합의 MP4는 결정적 S3 key로 재사용합니다.
 
@@ -234,7 +234,7 @@ Authorization: Bearer <access-token>
 - `page`: 기본 0, 0 이상
 - `size`: 기본 10, 범위 1~50
 
-각 `items[]`는 평가 당시 저장한 `words[]`와 그 하위 `syllables[]`를 반환합니다. 신규 기록은 단어 점수를 snapshot으로 보존하며, 단어 snapshot이 없는 과거 기록은 표준 발음의 공백과 저장된 음절 순서로 점수 없는 그룹을 복원합니다.
+각 `items[]`는 평가 당시 저장한 `words[]`와 그 하위 `syllables[]`를 반환합니다. `romanizedPronunciation`은 저장된 표준 발음 snapshot에서 조회 시점에 파생합니다. 신규 기록은 단어 점수를 snapshot으로 보존하며, 단어 snapshot이 없는 과거 기록은 표준 발음의 공백과 저장된 음절 순서로 점수 없는 그룹을 복원합니다.
 
 ## 발음 평가 기회
 

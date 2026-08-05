@@ -260,6 +260,7 @@ void main() {
                   'source': 'RECOMMENDED',
                   'originalText': '맛있겠다.',
                   'standardPronunciation': '마싯게따.',
+                  'romanizedPronunciation': 'ma-sit-ge-tta',
                   'recognizedText': '마싯게따.',
                   'overallScore': 91,
                   'gradeLabel': 'Excellent',
@@ -325,6 +326,7 @@ void main() {
     expect(requestedHeaders, {'Authorization': 'Bearer access.jwt'});
     expect(history.bestScore, 91);
     expect(history.items.single.originalText, '맛있겠다.');
+    expect(history.items.single.romanizedPronunciation, 'ma-sit-ge-tta');
     expect(history.items.single.scoreBreakdown.accuracy, 92);
     expect(history.items.single.characters.single.character, '맛');
     expect(history.items.single.characters.single.score, 88);

@@ -28,6 +28,8 @@ public class PronunciationPrepareResponse {
         private String source;
         private String originalText;
         private String standardPronunciation;
+        /** 표준 발음을 음절 하이픈과 단어 공백으로 표현한 학습자용 읽기 가이드다. */
+        private String romanizedPronunciation;
         private String translation;
         private String categoryLabel;
         private String learningPoint;

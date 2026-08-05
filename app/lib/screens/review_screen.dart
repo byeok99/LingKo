@@ -12,6 +12,7 @@ import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../services/app_auth_service.dart';
 import '../widgets/shared_widgets.dart';
+import '../widgets/romanized_pronunciation.dart';
 import '../widgets/word_syllable_explorer.dart';
 
 class ReviewScreen extends StatefulWidget {
@@ -549,6 +550,13 @@ class _HistoryDetailSheet extends StatelessWidget {
                     item.standardPronunciation,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
+                  if (item.romanizedPronunciation.trim().isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    RomanizedPronunciation(
+                      key: const ValueKey('review-romanized-pronunciation'),
+                      text: item.romanizedPronunciation,
+                    ),
+                  ],
                 ],
               ),
             ),

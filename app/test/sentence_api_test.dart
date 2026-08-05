@@ -27,6 +27,7 @@ void main() {
                     'source': 'RECOMMENDED',
                     'originalText': '맛있겠다.',
                     'standardPronunciation': '마싣껟따.',
+                    'romanizedPronunciation': 'ma-sit-kket-tta',
                     'translation': 'It looks delicious.',
                     'categoryLabel': 'Food',
                     'learningPoint': 'Final consonant linking',
@@ -51,6 +52,7 @@ void main() {
       );
       expect(sentences.single.text, '맛있겠다');
       expect(sentences.single.pronunciation, '마싣껟따');
+      expect(sentences.single.romanizedPronunciation, 'ma-sit-kket-tta');
       expect(sentences.single.category, 'Food');
     },
   );
@@ -67,6 +69,7 @@ void main() {
               'source': 'RECOMMENDED',
               'originalText': '물 한 잔 주세요.',
               'standardPronunciation': '물 한 잔 주세요.',
+              'romanizedPronunciation': 'mul han jan ju-se-yo',
               'translation': 'Please give me a glass of water.',
               'categoryLabel': 'Food',
               'learningPoint': 'Final consonant clarity',
@@ -82,6 +85,7 @@ void main() {
 
     expect(sentence.sentenceId, 2);
     expect(sentence.text, '물 한 잔 주세요');
+    expect(sentence.romanizedPronunciation, 'mul han jan ju-se-yo');
   });
 
   test(

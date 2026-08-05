@@ -14,6 +14,7 @@ class PracticeSentence {
     this.source = 'CUSTOM',
     required this.text,
     required this.pronunciation,
+    this.romanizedPronunciation = '',
     required this.translation,
     required this.level,
     required this.category,
@@ -46,6 +47,8 @@ class PracticeSentence {
       pronunciation: normalizePracticeSentenceText(
         _stringValue(sentence['standardPronunciation']),
       ),
+      romanizedPronunciation:
+          _stringValue(sentence['romanizedPronunciation']).trim(),
       translation: _stringValue(sentence['translation']),
       level: _stringValue(sentence['source'], fallback: 'Custom'),
       category: _stringValue(sentence['categoryLabel']),
@@ -72,6 +75,8 @@ class PracticeSentence {
       pronunciation: normalizePracticeSentenceText(
         _stringValue(json['standardPronunciation']),
       ),
+      romanizedPronunciation:
+          _stringValue(json['romanizedPronunciation']).trim(),
       translation: _stringValue(json['translation']),
       level: _stringValue(json['source'], fallback: 'RECOMMENDED'),
       category: _stringValue(json['categoryLabel']),
@@ -111,6 +116,7 @@ class PracticeSentence {
       source: source,
       text: normalizedText,
       pronunciation: normalizedPronunciation,
+      romanizedPronunciation: romanizedPronunciation.trim(),
       translation: translation,
       level: level,
       category: category,
@@ -129,6 +135,9 @@ class PracticeSentence {
   final String source;
   final String text;
   final String pronunciation;
+
+  /// 서버가 표준 발음에서 파생한 음절 단위 학습자용 로마자 읽기 가이드다.
+  final String romanizedPronunciation;
   final String translation;
   final String level;
   final String category;

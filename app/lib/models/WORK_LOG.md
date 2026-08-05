@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 로마자 발음 모델 계약 추가
+
+- 변경 파일: `practice_sentence.dart`, `practice_history.dart`, `WORK_LOG.md`
+- 내용: 준비·추천·기록 응답의 `romanizedPronunciation`을 불변 모델로 매핑하고 재연습에도 보존한다.
+- 검증: `flutter analyze`, `flutter test --coverage` 통과
+- 리스크: 기존 실행 isolate는 class shape 변경으로 hot restart가 필요함
+
 ## 2026-08-04 - UserPreferences 모델 삭제
 
 - 변경 파일: `user_preferences.dart` (삭제)

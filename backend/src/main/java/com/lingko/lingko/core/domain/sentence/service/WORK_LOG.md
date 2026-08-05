@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-05 - 추천 문장 로마자 가이드 제공
+
+- 변경 파일: `SentenceService.java`, `WORK_LOG.md`
+- 내용: 현재 규칙으로 계산한 표준 발음에서 추천 문장 로마자 가이드를 함께 파생한다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-07-30 - 추천 응답 동적 발음 계산
 
 - 변경 파일: `SentenceService.java`, `WORK_LOG.md`
