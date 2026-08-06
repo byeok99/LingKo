@@ -208,25 +208,6 @@ class SecondaryButton extends StatelessWidget {
   }
 }
 
-/// 활성 상태가 아니면 명확히 비활성화되는 보조 기능 버튼이다.
-class ActionButton extends StatelessWidget {
-  const ActionButton({
-    super.key,
-    required this.icon,
-    required this.label,
-    this.onPressed,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SecondaryButton(label: label, onPressed: onPressed, icon: icon);
-  }
-}
-
 enum StatusTone { info, success, warning, error, neutral }
 
 class StatusBadge extends StatelessWidget {

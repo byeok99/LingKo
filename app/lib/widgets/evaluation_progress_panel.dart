@@ -128,7 +128,6 @@ class EvaluationProgressPanel extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           PrimaryButton(
             label: 'Retry with this recording',
-            icon: Icons.refresh,
             onPressed: onRetry,
           ),
         ],

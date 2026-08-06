@@ -738,7 +738,6 @@ class _LingKoShellState extends State<LingKoShell> {
           ? ResultScreen(
             sentence: selectedSentence!,
             result: latestResult,
-            sentenceSpeechService: widget.sentenceSpeechService,
             // 추천 문장만 저장할 수 있다. 직접 입력한 문장은 서버에 식별자가 없다.
             isSaved:
                 selectedSentence!.sentenceId == null

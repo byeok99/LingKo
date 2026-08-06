@@ -806,12 +806,12 @@ void main() {
     final resultSlowButton = find.byKey(
       const ValueKey('result-play-pronunciation-slow'),
     );
-    tester.widget<ActionButton>(resultNormalButton).onPressed?.call();
+    tester.widget<SecondaryButton>(resultNormalButton).onPressed?.call();
     await tester.pump();
     expect(speechService.lastText, '마싣껟따');
     expect(speechService.lastRate, SentenceSpeechRate.normal);
 
-    tester.widget<ActionButton>(resultSlowButton).onPressed?.call();
+    tester.widget<SecondaryButton>(resultSlowButton).onPressed?.call();
     await tester.pump();
     expect(speechService.lastRate, SentenceSpeechRate.slow);
     await tester.scrollUntilVisible(
@@ -1282,13 +1282,13 @@ void main() {
 
     final normalButton = find.byKey(const ValueKey('play-sentence-normal'));
     final slowButton = find.byKey(const ValueKey('play-sentence-slow'));
-    tester.widget<ActionButton>(normalButton).onPressed?.call();
+    tester.widget<SecondaryButton>(normalButton).onPressed?.call();
     await tester.pump();
 
     expect(speechService.lastText, '안녕하세요 LingKo 1 연습테스트좋아요');
     expect(speechService.lastRate, SentenceSpeechRate.normal);
 
-    tester.widget<ActionButton>(slowButton).onPressed?.call();
+    tester.widget<SecondaryButton>(slowButton).onPressed?.call();
     await tester.pump();
 
     expect(speechService.lastRate, SentenceSpeechRate.slow);
@@ -1346,7 +1346,7 @@ void main() {
     await tester.tap(find.text('맛있겠다.').first);
     await tester.pumpAndSettle();
     final normalButton = find.byKey(const ValueKey('play-sentence-normal'));
-    tester.widget<ActionButton>(normalButton).onPressed?.call();
+    tester.widget<SecondaryButton>(normalButton).onPressed?.call();
     await tester.pump();
 
     expect(find.text('Audio playback needs attention'), findsOneWidget);
@@ -2177,7 +2177,6 @@ void main() {
           body: ResultScreen(
             sentence: sentence,
             result: result,
-            sentenceSpeechService: FakeSentenceSpeechService(),
             onTryAgain: () {},
           ),
         ),
@@ -2266,7 +2265,6 @@ void main() {
           body: ResultScreen(
             sentence: sentence,
             result: result,
-            sentenceSpeechService: FakeSentenceSpeechService(),
             onTryAgain: () {},
           ),
         ),
@@ -2440,7 +2438,6 @@ void main() {
           body: ResultScreen(
             sentence: sentence,
             result: result,
-            sentenceSpeechService: FakeSentenceSpeechService(),
             onTryAgain: () => retried = true,
           ),
         ),
@@ -2542,7 +2539,6 @@ void main() {
             body: ResultScreen(
               sentence: sentence,
               result: result,
-              sentenceSpeechService: FakeSentenceSpeechService(),
               onTryAgain: () {},
             ),
           ),

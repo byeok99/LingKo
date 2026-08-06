@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - Result에서 죽은 재생 카드 제거
+
+- 변경 파일: `result_screen.dart`, `practice_screen.dart`, `lingko_app.dart`
+- 내용: 리디자인 후 쓰이지 않게 된 _PronunciationGuideCard가 남아 있었다. 재생은 Practice에서만 한다는 규칙을 어기는 Normal/Slow 버튼이 그 안에 들어 있었다. 함께 ResultScreen의 TTS 의존성도 끊었다. 버튼에 강제로 붙던 아이콘도 걷어 라벨만 남겼다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 그라디언트·그림자 0건, 버튼 아이콘 0건 확인
+- 리스크: 없음
+
 ## 2026-08-06 - 04 Recording · 08 Review 마무리
 
 - 변경 파일: `practice_screen.dart`, `review_screen.dart`

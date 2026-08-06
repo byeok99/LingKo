@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 사용하지 않는 ActionButton 제거
+
+- 변경 파일: `shared_widgets.dart`
+- 내용: SecondaryButton의 아이콘 강제를 없앤 뒤 ActionButton은 얇은 위임만 남아 제거했다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 그라디언트·그림자 0건, 버튼 아이콘 0건 확인
+- 리스크: 없음
+
 ## 2026-08-06 - 버튼·카드에서 그라디언트와 그림자 제거
 
 - 변경 파일: `shared_widgets.dart`

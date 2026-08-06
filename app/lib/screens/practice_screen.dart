@@ -572,14 +572,12 @@ class _PracticeContent extends StatelessWidget {
         if (hasRecording) ...[
           PrimaryButton(
             label: 'Retry with this recording',
-            icon: Icons.refresh,
             isLoading: isSubmitting,
             onPressed: onRetryRecording,
           ),
           const SizedBox(height: AppSpacing.sm),
           SecondaryButton(
             label: 'Record again',
-            icon: Icons.mic_none,
             onPressed: isSubmitting ? null : onDiscardRecording,
           ),
         ] else
