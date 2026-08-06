@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 파란 카드형 공통 위젯과 어절·음절 탐색 적용
+
+- 변경 파일: `shared_widgets.dart`, `progress_panel.dart`, `score_card.dart`, `evaluation_progress_panel.dart`, `word_syllable_explorer.dart`
+- 내용: 카드 그림자와 gradient CTA를 복구하고 energy capsule을 수량·timer/MAX의 세로 정보 구조로 정리했다. Result/Review는 어절 pill을 선택하면 아래에 해당 음절 guide만 표시하며 가장 낮은 실제 어절 점수를 처음 선택한다.
+- 검증: `flutter analyze`, `flutter test --coverage` 88개 통과(라인 80.56%)
+- 리스크: 채점 API가 실제 백분율을 제공하지 않아 Scoring은 서버 단계만 ring으로 표현함
+
 ## 2026-08-06 - 가이드 영상 배속을 0.25 고정으로 변경
 
 - 변경 파일: `guide_sheet.dart`

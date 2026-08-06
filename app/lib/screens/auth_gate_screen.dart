@@ -58,9 +58,9 @@ class LoginScreen extends StatelessWidget {
           Text(
             'Fix your Korean pronunciation, one syllable at a time.',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              fontSize: 31,
+              fontSize: 28,
               height: 1.3,
-              letterSpacing: -1.1,
+              letterSpacing: -0.9,
             ),
           ),
           const SizedBox(height: 18),
@@ -75,14 +75,25 @@ class LoginScreen extends StatelessWidget {
           ),
           const SizedBox(height: 34),
           // 한국어를 못 읽는 사용자에게 이 앱이 다루는 대상을 한 번에 보여준다.
-          // 위아래 선으로만 묶어 카드 없이 구분한다.
+          // 첫 화면의 제품 샘플은 파란 그라디언트 카드로 실제 학습 카드의 재질을 미리 보여준다.
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 20),
+            key: const ValueKey('login-pronunciation-sample'),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: context.palette.line),
-                bottom: BorderSide(color: context.palette.line),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [context.palette.softBlue, context.palette.card],
               ),
+              border: Border.all(color: context.palette.border),
+              borderRadius: BorderRadius.circular(AppSizes.radius),
+              boxShadow: [
+                BoxShadow(
+                  color: context.palette.shadow,
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,15 +104,12 @@ class LoginScreen extends StatelessWidget {
                     color: context.palette.textPrimary,
                     fontSize: 40,
                     height: 1.2,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w900,
                     letterSpacing: -1.2,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const RomanizationText(
-                  'an-nyeong-ha-se-yo',
-                  fontSize: 12,
-                ),
+                const RomanizationText('an-nyeong-ha-se-yo', fontSize: 12),
               ],
             ),
           ),
@@ -196,7 +204,7 @@ class _AuthFrame extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 26),
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 26),
               child:
                   center != null
                       ? Center(child: center)
@@ -249,7 +257,7 @@ class _GoogleSignInButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          // 브랜드 색은 예외로 두되 형태(반경 12·높이 54)는 앱 버튼 규칙을 따른다.
+          // 브랜드 색은 예외로 두되 형태(반경 15·높이 52)는 앱 버튼 규칙을 따른다.
           borderRadius: BorderRadius.circular(AppSizes.radiusControl),
           side: const BorderSide(color: AppColors.providerButtonBorder),
         ),

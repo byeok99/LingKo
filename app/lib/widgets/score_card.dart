@@ -47,6 +47,13 @@ class ScoreCard extends StatelessWidget {
         color: context.palette.card,
         borderRadius: BorderRadius.circular(AppSizes.radius),
         border: Border.all(color: context.palette.border),
+        boxShadow: [
+          BoxShadow(
+            color: context.palette.shadow,
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -58,9 +65,9 @@ class ScoreCard extends StatelessWidget {
                 '$overallScore',
                 style: TextStyle(
                   color: color,
-                  fontSize: 60,
+                  fontSize: 62,
                   height: 1,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w900,
                   letterSpacing: -3,
                   // 점수가 바뀌어도 자리가 흔들리지 않도록 고정폭 숫자를 쓴다.
                   fontFeatures: const [FontFeature.tabularFigures()],

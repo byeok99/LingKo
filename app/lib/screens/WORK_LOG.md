@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - design-repair 11개 화면의 파란 카드형 UI 적용
+
+- 변경 파일: `auth_gate_screen.dart`, `home_screen.dart`, `practice_screen.dart`, `profile_screen.dart`, `result_screen.dart`, `review_screen.dart`, `saved_sentences_screen.dart`, `sound_detail_screen.dart`
+- 내용: Sign in sample, Home 카테고리·추천 카드, Practice/Recording/Scoring, Result/Review 어절 탐색, Profile 그룹 카드, Sound detail, Saved 필터를 LingKo Blue 시안에 맞췄다. Recording은 임시 파일을 폐기하고 같은 문장을 다시 녹음하는 Restart를 추가했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 88개 통과(라인 80.56%)
+- 리스크: Apple 로그인과 광고 SDK는 미연결 상태를 그대로 표시하며, 실제 기기 녹음·TTS·Google 로그인·media 재생 확인 필요
+
 ## 2026-08-06 - Home 취약 음절 타일을 도안 값에 맞춤
 
 - 변경 파일: `home_screen.dart`, `review_screen.dart`

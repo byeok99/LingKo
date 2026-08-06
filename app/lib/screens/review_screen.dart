@@ -83,7 +83,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     return RefreshIndicator(
       onRefresh: loadHistory,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
         children: [
           const TopBar(title: 'Review'),
           const SizedBox(height: 10),
@@ -110,9 +110,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
           else ...[
             _ReviewSummary(history: history!),
             const SizedBox(height: 24),
-            const SizedBox(height: 16),
-            const EyebrowLabel('Recent history'),
-            const SizedBox(height: 8),
+            const SectionHeader(title: 'Recent history'),
+            const SizedBox(height: 10),
             // 기록을 카드 하나로 묶고 행은 구분선으로만 나눈다. 행마다 카드를 두면
             // 목록이 아니라 카드 더미로 보여 훑기 어렵다.
             AppCard(
@@ -190,7 +189,9 @@ class _ReviewSummary extends StatelessWidget {
             child: SizedBox(
               height: 118,
               width: double.infinity,
-              child: CustomPaint(painter: _TrendPainter(scores, context.palette)),
+              child: CustomPaint(
+                painter: _TrendPainter(scores, context.palette),
+              ),
             ),
           ),
         ],
@@ -248,8 +249,8 @@ class _ReviewHistoryCard extends StatelessWidget {
             children: [
               // 점수를 배지로 왼쪽에 고정해 목록을 세로로 훑을 때 숫자만 따라가게 한다.
               Container(
-                width: 44,
-                height: 44,
+                width: 46,
+                height: 46,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color:
@@ -262,9 +263,9 @@ class _ReviewHistoryCard extends StatelessWidget {
                   '${item.overallScore}',
                   style: TextStyle(
                     color: scoreColor(context, item.overallScore),
-                    fontSize: 15,
+                    fontSize: 16,
                     height: 1,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w900,
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
@@ -420,10 +421,8 @@ void _showHistoryDetail(
       ),
     ),
     builder:
-        (context) => _HistoryDetailSheet(
-          item: item,
-          onRetryPractice: onRetryPractice,
-        ),
+        (context) =>
+            _HistoryDetailSheet(item: item, onRetryPractice: onRetryPractice),
   );
 }
 
@@ -539,7 +538,7 @@ class _HistoryDetailSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             _HistoryScoreBreakdown(breakdown: item.scoreBreakdown),
             const SizedBox(height: AppSpacing.xxl),
-            const EyebrowLabel('By word · tap to see its syllables'),
+            const SectionHeader(title: 'Pronunciation by word'),
             const SizedBox(height: AppSpacing.md),
             WordSyllableExplorer(words: item.words),
             const SizedBox(height: AppSpacing.xxl),

@@ -88,65 +88,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
-      children: [
-        TopBar(
-          title: 'Profile',
-          trailing: IconButton(
-            tooltip: 'Open review',
-            onPressed: widget.onOpenReview,
-            icon: const Icon(Icons.history_rounded, size: 21),
-          ),
-        ),
-        const SizedBox(height: 18),
-        _AccountBlock(session: widget.session),
-        const SizedBox(height: 20),
-        const EyebrowLabel('Your content'),
-        _SettingsLinkRow(
-          key: const ValueKey('profile-saved-sentences'),
-          icon: Icons.bookmark_border,
-          label: 'Saved sentences',
-          onTap: widget.onOpenSavedSentences,
-        ),
-        const SizedBox(height: 20),
-        const EyebrowLabel('About'),
-        _SettingsLinkRow(
-          icon: Icons.mic_none_rounded,
-          label: 'Audio & privacy',
-          onTap: null,
-        ),
-        _SettingsLinkRow(
-          icon: Icons.info_outline_rounded,
-          label: 'About LingKo 1.0.0',
-          onTap: null,
-          showDivider: false,
-        ),
-        const SizedBox(height: 28),
-        // 로그아웃은 되돌릴 수 있어 선으로만 두고, 탈퇴는 채우지 않는다.
-        // 파괴적 동작을 채우면 실수로 누르기 쉬운 무게를 갖게 된다.
-        SecondaryButton(label: 'Sign out', onPressed: isDeletingAccount ? null : signOut),
-        const SizedBox(height: AppSpacing.sm),
-        SizedBox(
-          height: AppSizes.buttonHeight,
-          child: OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: context.palette.error,
-              side: BorderSide(color: context.palette.errorBorder),
-            ),
-            onPressed: isDeletingAccount ? null : deleteAccount,
-            child: Text(
-              isDeletingAccount ? 'Deleting account' : 'Delete account',
-              style: TextStyle(color: context.palette.error),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const TopBar(title: 'Profile'),
+          const SizedBox(height: 18),
+          _AccountBlock(session: widget.session),
+          const SizedBox(height: 20),
+          const SectionHeader(title: 'Your content'),
+          const SizedBox(height: 10),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: _SettingsLinkRow(
+              key: const ValueKey('profile-saved-sentences'),
+              icon: Icons.bookmark_border,
+              label: 'Saved sentences',
+              onTap: widget.onOpenSavedSentences,
+              showDivider: false,
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 20),
+          const SectionHeader(title: 'About'),
+          const SizedBox(height: 10),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _SettingsLinkRow(
+                  icon: Icons.mic_none_rounded,
+                  label: 'Audio & privacy',
+                  onTap: null,
+                ),
+                _SettingsLinkRow(
+                  icon: Icons.info_outline_rounded,
+                  label: 'About LingKo 1.0.0',
+                  onTap: null,
+                  showDivider: false,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+          // 로그아웃은 되돌릴 수 있어 선으로만 두고, 탈퇴는 채우지 않는다.
+          // 파괴적 동작을 채우면 실수로 누르기 쉬운 무게를 갖게 된다.
+          SecondaryButton(
+            label: 'Sign out',
+            onPressed: isDeletingAccount ? null : signOut,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: AppSizes.buttonHeight,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: context.palette.error,
+                side: BorderSide(color: context.palette.errorBorder),
+              ),
+              onPressed: isDeletingAccount ? null : deleteAccount,
+              child: Text(
+                isDeletingAccount ? 'Deleting account' : 'Delete account',
+                style: TextStyle(color: context.palette.error),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// 계정 정보 블록이다. 카드로 감싸지 않고 아래 구분선으로만 끊는다.
+/// 계정 정보 블록이다. 설정 목록과 같은 카드 재질로 묶어 프로필의 시작점을 만든다.
 class _AccountBlock extends StatelessWidget {
   const _AccountBlock({required this.session});
 
@@ -157,11 +169,7 @@ class _AccountBlock extends StatelessWidget {
     final user = session.user;
     final initial =
         user.name.trim().isEmpty ? '?' : user.name.trim().characters.first;
-    return Container(
-      padding: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: context.palette.line)),
-      ),
+    return AppCard(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -171,14 +179,14 @@ class _AccountBlock extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: context.palette.softBlue,
-              borderRadius: BorderRadius.circular(AppSizes.radius),
+              shape: BoxShape.circle,
             ),
             child: Text(
               initial.toUpperCase(),
               style: TextStyle(
                 color: context.palette.primaryDark,
                 fontSize: 24,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
@@ -192,15 +200,12 @@ class _AccountBlock extends StatelessWidget {
                   style: TextStyle(
                     color: context.palette.textPrimary,
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w900,
                     letterSpacing: -0.36,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  user.email,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                Text(user.email, style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: 7),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -286,4 +291,3 @@ class _SettingsLinkRow extends StatelessWidget {
     );
   }
 }
-

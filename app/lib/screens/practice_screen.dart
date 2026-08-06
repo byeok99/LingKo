@@ -264,13 +264,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
       });
       amplitudeSubscription = widget.audioRecorderService
           .amplitudeStream()
-          .listen((level) {
-            if (mounted) {
-              setState(() => currentAmplitude = level);
-            }
-          }, onError: (_) {
-            // 레벨 표시는 보조 정보이므로 실패해도 녹음 자체는 계속 진행한다.
-          });
+          .listen(
+            (level) {
+              if (mounted) {
+                setState(() => currentAmplitude = level);
+              }
+            },
+            onError: (_) {
+              // 레벨 표시는 보조 정보이므로 실패해도 녹음 자체는 계속 진행한다.
+            },
+          );
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -352,6 +355,14 @@ class _PracticeScreenState extends State<PracticeScreen> {
     widget.onImmersiveModeChanged(false);
   }
 
+  /// 현재 파일을 평가에 보내지 않고 버린 뒤 같은 문장을 즉시 다시 녹음한다.
+  Future<void> _restartRecording() async {
+    await _cleanupRecording(reportErrors: true);
+    if (mounted && !isRecording) {
+      await _startRecording();
+    }
+  }
+
   Future<void> _cleanupRecording({required bool reportErrors}) async {
     recordingTimer?.cancel();
     amplitudeSubscription?.cancel();
@@ -431,16 +442,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Widget build(BuildContext context) {
     final preparedSentence = isPreparedSentenceCurrent ? widget.sentence : null;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
       children: [
         TopBar(
           title:
               widget.evaluationProgress.isActive
-                  ? 'Evaluating'
+                  ? 'Scoring'
                   : isRecording
                   ? 'Recording'
                   : 'Practice',
-          centered: true,
+          centered: widget.evaluationProgress.isActive || isRecording,
         ),
         const SizedBox(height: 8),
         if (widget.evaluationProgress.isActive ||
@@ -458,6 +469,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
             amplitude: currentAmplitude,
             onStop: _stopRecording,
             onCancel: _cancelRecording,
+            onRestart: _restartRecording,
           )
         else ...[
           _SentenceComposerCard(
@@ -606,6 +618,7 @@ class _RecordingView extends StatelessWidget {
     required this.amplitude,
     required this.onStop,
     required this.onCancel,
+    required this.onRestart,
   });
 
   final PracticeSentence sentence;
@@ -614,21 +627,24 @@ class _RecordingView extends StatelessWidget {
   final double amplitude;
   final VoidCallback onStop;
   final VoidCallback onCancel;
+  final VoidCallback onRestart;
 
   @override
   Widget build(BuildContext context) {
     final elapsed = duration.inSeconds;
     final minutes = elapsed ~/ 60;
     final seconds = (elapsed % 60).toString().padLeft(2, '0');
-    final progress = maximumDuration.inMilliseconds == 0
-        ? 0.0
-        : (duration.inMilliseconds / maximumDuration.inMilliseconds).clamp(
-            0.0,
-            1.0,
-          );
+    final progress =
+        maximumDuration.inMilliseconds == 0
+            ? 0.0
+            : (duration.inMilliseconds / maximumDuration.inMilliseconds).clamp(
+              0.0,
+              1.0,
+            );
     return Column(
       children: [
         AppCard(
+          color: context.palette.blue50,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           child: Column(
             children: [
@@ -663,7 +679,10 @@ class _RecordingView extends StatelessWidget {
                     value: progress,
                     strokeWidth: 13,
                     backgroundColor: const Color(0xFFE7EEF4),
-                    color: progress >= 1 ? context.palette.warning : context.palette.primary,
+                    color:
+                        progress >= 1
+                            ? context.palette.warning
+                            : context.palette.primary,
                   ),
                 ),
                 Column(
@@ -700,15 +719,22 @@ class _RecordingView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _RecordingControl(
-              label: 'Cancel recording',
+              label: 'Cancel',
+              semanticLabel: 'Cancel recording',
               icon: Icons.close,
               onTap: onCancel,
             ),
             _RecordingControl(
-              label: 'Stop and analyze',
+              label: 'Stop',
+              semanticLabel: 'Stop and analyze',
               icon: Icons.stop_rounded,
               primary: true,
               onTap: onStop,
+            ),
+            _RecordingControl(
+              label: 'Restart',
+              icon: Icons.refresh_rounded,
+              onTap: onRestart,
             ),
           ],
         ),
@@ -720,12 +746,14 @@ class _RecordingView extends StatelessWidget {
 class _RecordingControl extends StatelessWidget {
   const _RecordingControl({
     required this.label,
+    this.semanticLabel,
     required this.icon,
     required this.onTap,
     this.primary = false,
   });
 
   final String label;
+  final String? semanticLabel;
   final IconData icon;
   final VoidCallback onTap;
   final bool primary;
@@ -734,7 +762,8 @@ class _RecordingControl extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: label,
+      label: semanticLabel ?? label,
+      excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppSizes.pillRadius),
@@ -747,21 +776,20 @@ class _RecordingControl extends StatelessWidget {
                 height: primary ? 68 : 48,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  // 정지도 채우지 않는다. 인터랙티브 파랑은 다른 곳에 쓰고
-                  // 여기서는 안쪽 붉은 사각형 하나만 눈에 들어오게 한다.
-                  color: context.palette.card,
+                  // 녹음 화면의 핵심 행동은 파란 원으로 다른 보조 제어와 구분한다.
+                  color:
+                      primary ? context.palette.primary : context.palette.card,
                   shape: BoxShape.circle,
                   border: Border.all(color: context.palette.borderStrong),
                 ),
                 child:
                     primary
-                        // 정지는 아이콘이 아니라 사각형이다. 녹음 정지는 이 앱에서
-                        // 붉은색을 쓰는 유일한 컨트롤이라 형태만으로 구분된다.
+                        // 정지는 아이콘이 아니라 사각형이라 색을 보지 않아도 구분된다.
                         ? Container(
                           width: 24,
                           height: 24,
                           decoration: BoxDecoration(
-                            color: context.palette.recordAccent,
+                            color: context.palette.onPrimary,
                             borderRadius: BorderRadius.circular(6),
                           ),
                         )
@@ -828,7 +856,10 @@ class _RecordingWaveform extends StatelessWidget {
                 height: _barHeight(index, level),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 decoration: BoxDecoration(
-                  color: isSilent ? context.palette.border : context.palette.primary,
+                  color:
+                      isSilent
+                          ? context.palette.border
+                          : context.palette.primary,
                   borderRadius: BorderRadius.circular(AppSizes.pillRadius),
                 ),
               ),
@@ -941,21 +972,14 @@ class _SentenceComposerCard extends StatelessWidget {
         if (preparedSentence != null &&
             preparedSentence!.pronunciation.trim().isNotEmpty) ...[
           const SizedBox(height: 26),
-          // 표준 발음은 읽기만 하는 정보라 카드가 아니라 위아래 선으로 묶는다.
-          Container(
+          AppCard(
             key: const ValueKey('practice-standard-pronunciation'),
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: context.palette.line),
-                bottom: BorderSide(color: context.palette.line),
-              ),
-            ),
+            color: context.palette.blue50,
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const EyebrowLabel('How it should sound'),
+                const EyebrowLabel('Standard pronunciation'),
                 const SizedBox(height: 12),
                 Text(
                   preparedSentence!.pronunciation,
@@ -963,7 +987,7 @@ class _SentenceComposerCard extends StatelessWidget {
                     color: context.palette.textPrimary,
                     fontSize: 24,
                     height: 1.45,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w900,
                     letterSpacing: -0.6,
                   ),
                 ),

@@ -1,6 +1,5 @@
 // 파일 의도: 종합 점수와 모든 평가 음절을 숨김없이 보여주고 문장 전체 재연습을 연결한다.
 
-
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -35,7 +34,7 @@ class ResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentResult = result;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
       children: [
         TopBar(
           title: 'Result',
@@ -80,53 +79,55 @@ class ResultScreen extends StatelessWidget {
           // 원문과 표준 발음을 위아래로 붙여 어디가 달라지는지 눈으로 비교하게 한다.
           // 사용자가 실제로 낸 소리를 문자로 재현해 보여주지는 않는다.
           // 보정 없이 정확히 추출할 수 없어 틀린 정보를 사실처럼 보여주게 된다.
-          const EyebrowLabel('How it should sound'),
+          const SectionHeader(title: 'Pronunciation guide'),
           const SizedBox(height: 12),
-          Text(
-            sentence.text,
-            style: TextStyle(
-              color: context.palette.textPrimary,
-              fontSize: 21,
-              height: 1.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.42,
+          AppCard(
+            color: context.palette.blue50,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  sentence.text,
+                  style: TextStyle(
+                    color: context.palette.textPrimary,
+                    fontSize: 21,
+                    height: 1.45,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.42,
+                  ),
+                ),
+                if (sentence.pronunciation.isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  Text(
+                    sentence.pronunciation,
+                    style: TextStyle(
+                      color: context.palette.primaryDark,
+                      fontSize: 18,
+                      height: 1.45,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.36,
+                    ),
+                  ),
+                ],
+                if (sentence.romanization.isNotEmpty) ...[
+                  const SizedBox(height: 7),
+                  RomanizationText(
+                    sentence.romanization,
+                    key: const ValueKey('result-romanized-pronunciation'),
+                    fontSize: 11.5,
+                  ),
+                ],
+              ],
             ),
           ),
-          if (sentence.pronunciation.isNotEmpty) ...[
-            const SizedBox(height: 5),
-            Text(
-              sentence.pronunciation,
-              style: TextStyle(
-                color: context.palette.textSecondary,
-                fontSize: 21,
-                height: 1.5,
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.42,
-              ),
-            ),
-          ],
-          if (sentence.romanization.isNotEmpty) ...[
-            const SizedBox(height: 7),
-            RomanizationText(
-              sentence.romanization,
-              key: const ValueKey('result-romanized-pronunciation'),
-              fontSize: 11.5,
-            ),
-          ],
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.only(top: 12),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: context.palette.line)),
-            ),
-            child: const EyebrowLabel('By word · tap to see its syllables'),
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 20),
+          const SectionHeader(title: 'Pronunciation by word'),
+          const SizedBox(height: 10),
           WordSyllableExplorer(words: currentResult.words),
           const SizedBox(height: 20),
           PrimaryButton(
             key: const ValueKey('retry-whole-sentence'),
-            label: 'Say it again',
+            label: 'Practice this sentence again',
             onPressed: onTryAgain,
           ),
           if (onOpenReview != null) ...[
@@ -141,4 +142,3 @@ class ResultScreen extends StatelessWidget {
     );
   }
 }
-

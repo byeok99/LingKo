@@ -94,7 +94,7 @@ class _SoundDetailScreenState extends State<SoundDetailScreen> {
   Widget build(BuildContext context) {
     final current = detail;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
       children: [
         TopBar(
           title: 'Sound',
@@ -154,49 +154,51 @@ class _SoundHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasScore = detail.attemptCount > 0;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: context.palette.errorSoft,
-            borderRadius: BorderRadius.circular(AppSizes.radius),
-          ),
-          child: Text(
-            detail.text,
-            style: TextStyle(
-              color: context.palette.error,
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
+    return AppCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: context.palette.errorSoft,
+              borderRadius: BorderRadius.circular(AppSizes.radius),
+            ),
+            child: Text(
+              detail.text,
+              style: TextStyle(
+                color: context.palette.error,
+                fontSize: 26,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.5,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RomanizationText(detail.romanization, fontSize: 13),
-              const SizedBox(height: 6),
-              Text(
-                // 시도가 없으면 평균을 0으로 보여주지 않는다. 측정하지 않은 값을
-                // 점수처럼 보여주면 사용자가 자기 실력으로 오해한다.
-                hasScore
-                    ? 'Average ${detail.averageScore} across '
-                        '${detail.attemptCount} '
-                        '${detail.attemptCount == 1 ? 'try' : 'tries'}'
-                    : 'Not practised yet',
-                style: TextStyle(
-                  color: context.palette.textSecondary,
-                  fontSize: 12.5,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RomanizationText(detail.romanization, fontSize: 13),
+                const SizedBox(height: 6),
+                Text(
+                  // 시도가 없으면 평균을 0으로 보여주지 않는다. 측정하지 않은 값을
+                  // 점수처럼 보여주면 사용자가 자기 실력으로 오해한다.
+                  hasScore
+                      ? 'Average ${detail.averageScore} across '
+                          '${detail.attemptCount} '
+                          '${detail.attemptCount == 1 ? 'try' : 'tries'}'
+                      : 'Not practised yet',
+                  style: TextStyle(
+                    color: context.palette.textSecondary,
+                    fontSize: 12.5,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -216,27 +218,26 @@ class _TabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: context.palette.lineSubtle)),
-      ),
-      child: Row(
-        children: [
-          _Tab(
+    return Row(
+      children: [
+        Expanded(
+          child: _Tab(
             key: const ValueKey('sound-detail-tab-practiced'),
             label: 'Practiced $practicedCount',
             selected: selected == _SoundDetailTab.practiced,
             onTap: () => onChanged(_SoundDetailTab.practiced),
           ),
-          const SizedBox(width: 20),
-          _Tab(
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _Tab(
             key: const ValueKey('sound-detail-tab-suggested'),
             label: 'Suggested $suggestedCount',
             selected: selected == _SoundDetailTab.suggested,
             onTap: () => onChanged(_SoundDetailTab.suggested),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -260,25 +261,29 @@ class _Tab extends StatelessWidget {
       selected: selected,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSizes.pillRadius),
         child: Container(
-          constraints: const BoxConstraints(minHeight: AppSizes.minimumTouchTarget),
+          constraints: const BoxConstraints(minHeight: 38),
           alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: selected ? context.palette.primary : Colors.transparent,
-                width: 2,
-              ),
+            color: selected ? context.palette.softBlue : context.palette.card,
+            border: Border.all(
+              color:
+                  selected
+                      ? context.palette.borderStrong
+                      : context.palette.border,
             ),
+            borderRadius: BorderRadius.circular(AppSizes.pillRadius),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontSize: 14,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
               color:
                   selected
-                      ? context.palette.textPrimary
+                      ? context.palette.primaryDark
                       : context.palette.textMuted,
             ),
           ),
@@ -299,18 +304,22 @@ class _PracticedList extends StatelessWidget {
       return const StatePanel(
         icon: Icons.history_rounded,
         title: 'No attempts with this sound yet',
-        message: 'Practise one of the suggested sentences to see progress here.',
+        message:
+            'Practise one of the suggested sentences to see progress here.',
       );
     }
 
-    return Column(
-      children: [
-        for (var index = 0; index < attempts.length; index++)
-          _AttemptRow(
-            attempt: attempts[index],
-            showDivider: index != attempts.length - 1,
-          ),
-      ],
+    return AppCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (var index = 0; index < attempts.length; index++)
+            _AttemptRow(
+              attempt: attempts[index],
+              showDivider: index != attempts.length - 1,
+            ),
+        ],
+      ),
     );
   }
 }
@@ -325,7 +334,7 @@ class _AttemptRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final score = attempt.score;
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         border:
             showDivider
@@ -401,16 +410,21 @@ class _SuggestedList extends StatelessWidget {
       );
     }
 
-    return Column(
-      children: [
-        for (var index = 0; index < sentences.length; index++)
-          SentenceCard(
-            key: ValueKey('sound-detail-suggested-${sentences[index].sentenceId}'),
-            sentence: sentences[index],
-            onTap: () => onSelect(sentences[index]),
-            showDivider: index != sentences.length - 1,
-          ),
-      ],
+    return AppCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (var index = 0; index < sentences.length; index++)
+            SentenceCard(
+              key: ValueKey(
+                'sound-detail-suggested-${sentences[index].sentenceId}',
+              ),
+              sentence: sentences[index],
+              onTap: () => onSelect(sentences[index]),
+              showDivider: index != sentences.length - 1,
+            ),
+        ],
+      ),
     );
   }
 }
