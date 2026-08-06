@@ -52,6 +52,18 @@ class EvaluationProgressPanel extends StatelessWidget {
       key: const ValueKey('evaluation-progress'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // 채점 중에도 빠져나갈 길을 보이게 둔다. 스와이프만 두면 이탈 방법을
+        // 모르는 사용자가 끝날 때까지 붙잡히게 된다.
+        if (onContinueInBackground != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              key: const ValueKey('scoring-back'),
+              tooltip: 'Keep practising',
+              onPressed: onContinueInBackground,
+              icon: const Icon(Icons.chevron_left_rounded, size: 26),
+            ),
+          ),
         Center(
           child: Container(
             width: 86,
@@ -134,14 +146,6 @@ class EvaluationProgressPanel extends StatelessWidget {
             ],
           ),
         ),
-        if (onContinueInBackground != null) ...[
-          const SizedBox(height: 14),
-          SecondaryButton(
-            label: 'Continue in background',
-            icon: Icons.arrow_back_rounded,
-            onPressed: onContinueInBackground,
-          ),
-        ],
       ],
     );
   }

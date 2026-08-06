@@ -11,6 +11,7 @@ import '../models/practice_history.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../services/app_auth_service.dart';
+import '../widgets/score_card.dart';
 import '../widgets/shared_widgets.dart';
 import '../widgets/romanized_pronunciation.dart';
 import '../widgets/word_syllable_explorer.dart';
@@ -109,30 +110,22 @@ class _ReviewScreenState extends State<ReviewScreen> {
           else ...[
             _ReviewSummary(history: history!),
             const SizedBox(height: 24),
-            SectionHeader(
-              title: 'Recent practice',
-              trailing: Text(
-                '${items.length} ${items.length == 1 ? 'session' : 'sessions'}',
-                style: Theme.of(context).textTheme.bodyMedium,
+            const SizedBox(height: 16),
+            const EyebrowLabel('Recent history'),
+            const SizedBox(height: 8),
+            // 기록을 카드 하나로 묶고 행은 구분선으로만 나눈다. 행마다 카드를 두면
+            // 목록이 아니라 카드 더미로 보여 훑기 어렵다.
+            AppCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var index = 0; index < items.length; index++)
+                    _ReviewHistoryCard(
+                      item: items[index],
+                      showDivider: index != items.length - 1,
+                    ),
+                ],
               ),
-            ),
-            const SizedBox(height: 10),
-            Column(
-              children: [
-                for (final item in items)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    child: _ReviewHistoryCard(item: item),
-                  ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            SecondaryButton(
-              label: 'Practice again',
-              icon: Icons.replay,
-              onPressed:
-                  () =>
-                      widget.onRetryPractice(items.first.toPracticeSentence()),
             ),
           ],
         ],
@@ -161,14 +154,7 @@ class _ReviewSummary extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  'Recent scores · Last ${scores.length}',
-                  style: TextStyle(
-                    color: context.palette.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+                child: EyebrowLabel('Your progress · Last ${scores.length} tries'),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -227,134 +213,97 @@ List<int> recentTrendScores(
 }
 
 class _ReviewHistoryCard extends StatelessWidget {
-  const _ReviewHistoryCard({required this.item});
+  const _ReviewHistoryCard({required this.item, this.showDivider = false});
 
   final PracticeHistoryItem item;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      padding: EdgeInsets.zero,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: ValueKey('review-history-card-${item.evaluationLogId}'),
-          onTap: () => _showHistoryDetail(context, item),
-          borderRadius: BorderRadius.circular(AppSizes.radius),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 48,
-                  constraints: const BoxConstraints(minHeight: 52),
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: context.palette.softBlue,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusControl),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${item.overallScore}',
-                        style: TextStyle(
-                          color: context.palette.primaryDark,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'SCORE',
-                        style: TextStyle(
-                          color: context.palette.textSecondary,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.originalText,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        item.standardPronunciation,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: context.palette.primaryMedium,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Wrap(
-                        spacing: AppSpacing.sm,
-                        runSpacing: AppSpacing.xs,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          _GradeChip(label: item.gradeLabel),
-                          if (item.createdAt != null)
-                            Text(
-                              _dateLabel(item.createdAt!),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(top: AppSpacing.md),
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    color: context.palette.textMuted,
-                    size: 20,
-                  ),
-                ),
-              ],
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: ValueKey('review-history-card-${item.evaluationLogId}'),
+        onTap: () => _showHistoryDetail(context, item),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          decoration: BoxDecoration(
+            border:
+                showDivider
+                    ? Border(
+                      bottom: BorderSide(color: context.palette.lineSubtle),
+                    )
+                    : null,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GradeChip extends StatelessWidget {
-  const _GradeChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: context.palette.surface,
-        borderRadius: BorderRadius.circular(AppSizes.pillRadius),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: context.palette.textSecondary,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
+          child: Row(
+            children: [
+              // 점수를 배지로 왼쪽에 고정해 목록을 세로로 훑을 때 숫자만 따라가게 한다.
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color:
+                      item.overallScore >= kPassingScore
+                          ? context.palette.successSoft
+                          : context.palette.errorSoft,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  '${item.overallScore}',
+                  style: TextStyle(
+                    color: scoreColor(context, item.overallScore),
+                    fontSize: 15,
+                    height: 1,
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.originalText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.palette.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.32,
+                      ),
+                    ),
+                    if (item.romanizedPronunciation.trim().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      RomanizationText(
+                        item.romanizedPronunciation,
+                        fontSize: 10.5,
+                      ),
+                    ],
+                    if (item.createdAt != null) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        _dateLabel(item.createdAt!),
+                        style: TextStyle(
+                          color: context.palette.textMuted,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: context.palette.textMuted,
+              ),
+            ],
+          ),
         ),
       ),
     );

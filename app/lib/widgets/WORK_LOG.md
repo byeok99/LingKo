@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 05 Scoring 이탈 경로 추가
+
+- 변경 파일: `evaluation_progress_panel.dart`
+- 내용: 하단 'Continue in background' 버튼을 좌상단 뒤로가기로 옮겼다. 채점 중에도 빠져나갈 길이 보여야 하고, 하단 CTA를 두면 이 화면의 목적이 '기다리기'처럼 보인다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 위젯 테스트는 이전 레이아웃·문구 기준이라 갱신이 필요하다
+
 ## 2026-08-06 - 점수 카드와 어절 아코디언
 
 - 변경 파일: `score_card.dart`, `word_syllable_explorer.dart`, `shared_widgets.dart`

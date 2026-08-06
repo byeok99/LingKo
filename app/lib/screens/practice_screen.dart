@@ -695,12 +695,8 @@ class _RecordingView extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _RecordingWaveform(amplitude: amplitude),
-        const SizedBox(height: 17),
-        Text(
-          'Speak naturally. Stop when you finish the full sentence.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: context.palette.textSecondary, fontSize: 12),
-        ),
+        // 말하는 순간에 읽으라고 문장을 두지 않는다. 사용자는 화면이 아니라
+        // 발음에 집중해야 한다.
         const SizedBox(height: 34),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -749,30 +745,41 @@ class _RecordingControl extends StatelessWidget {
           child: Column(
             children: [
               Container(
-                width: primary ? 62 : 46,
-                height: primary ? 62 : 46,
+                width: primary ? 68 : 48,
+                height: primary ? 68 : 48,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: primary ? context.palette.primary : context.palette.card,
+                  // 정지도 채우지 않는다. 인터랙티브 파랑은 다른 곳에 쓰고
+                  // 여기서는 안쪽 붉은 사각형 하나만 눈에 들어오게 한다.
+                  color: context.palette.card,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: primary ? context.palette.blue200 : context.palette.border,
-                    width: primary ? 5 : 1,
-                  ),
+                  border: Border.all(color: context.palette.borderStrong),
                 ),
-                child: Icon(
-                  icon,
-                  color: primary ? context.palette.card : context.palette.textPrimary,
-                  size: primary ? 24 : 20,
-                ),
+                child:
+                    primary
+                        // 정지는 아이콘이 아니라 사각형이다. 녹음 정지는 이 앱에서
+                        // 붉은색을 쓰는 유일한 컨트롤이라 형태만으로 구분된다.
+                        ? Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: context.palette.recordAccent,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        )
+                        : Icon(
+                          icon,
+                          color: context.palette.textPrimary,
+                          size: 20,
+                        ),
               ),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: TextStyle(
-                  color: context.palette.textPrimary,
+                  color: context.palette.textSecondary,
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
