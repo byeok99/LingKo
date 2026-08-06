@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 어절·음절 로마자 매핑
+
+- 변경 파일: `practice_result.dart`, `practice_sentence.dart`
+- 내용: 서버가 어절·음절마다 내려주는 romanization을 모델에 연결했다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 위젯 테스트는 이전 레이아웃 기준이라 갱신이 필요할 수 있음
+
 ## 2026-08-06 - 문장 모델에 로마자 추가
 
 - 변경 파일: `practice_sentence.dart`

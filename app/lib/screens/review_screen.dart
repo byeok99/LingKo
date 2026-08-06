@@ -82,7 +82,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     return RefreshIndicator(
       onRefresh: loadHistory,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
         children: [
           const TopBar(title: 'Review'),
           const SizedBox(height: 10),

@@ -431,7 +431,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Widget build(BuildContext context) {
     final preparedSentence = isPreparedSentenceCurrent ? widget.sentence : null;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
       children: [
         TopBar(
           title:

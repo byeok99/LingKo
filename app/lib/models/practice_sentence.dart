@@ -187,6 +187,7 @@ class CharacterResult {
     required this.kind,
     this.mouthGuideUrl,
     this.tongueGuideUrl,
+    this.romanization = '',
     this.guideStatus,
     // 기본값을 unavailable로 두어, scoreStatus를 지정하지 않고 만든 값이
     // 신뢰할 수 없는 점수를 신뢰 가능한 것처럼 노출하는 fail-open을 막는다.
@@ -196,6 +197,7 @@ class CharacterResult {
   factory CharacterResult.fromGuideJson(Map<String, Object?> json) {
     return CharacterResult(
       character: _stringValue(json['pronunciationText']),
+      romanization: _stringValue(json['romanization']),
       score: 0,
       note: _stringValue(json['note']),
       kind: _stringValue(json['guideType'], fallback: 'NONE'),
@@ -209,6 +211,7 @@ class CharacterResult {
   factory CharacterResult.fromResultJson(Map<String, Object?> json) {
     return CharacterResult(
       character: _stringValue(json['pronunciationText']),
+      romanization: _stringValue(json['romanization']),
       score: _intValue(json['score']),
       note: _stringValue(json['note']),
       kind: _stringValue(json['guideType'], fallback: 'NONE'),
@@ -224,6 +227,7 @@ class CharacterResult {
     final rawScore = json['score'];
     return CharacterResult(
       character: _stringValue(json['text']),
+      romanization: _stringValue(json['romanization']),
       score: rawScore is num ? rawScore.round() : 0,
       note: _stringValue(json['feedback']),
       kind: 'NONE',
@@ -234,6 +238,9 @@ class CharacterResult {
   }
 
   final String character;
+
+  /// 음절의 로마자다. 어절 로마자를 잘라 쓰지 않고 서버가 만든 값을 그대로 받는다.
+  final String romanization;
   final int score;
   final String note;
   final String kind;

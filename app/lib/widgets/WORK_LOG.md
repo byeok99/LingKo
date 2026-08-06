@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 점수 카드와 어절 아코디언
+
+- 변경 파일: `score_card.dart`, `word_syllable_explorer.dart`, `shared_widgets.dart`
+- 내용: ScoreCard를 새로 만들고 80 기준 2단계 색을 kPassingScore 한곳에서 정의했다. 어절 탐색을 가로 버튼 나열에서 세로 아코디언으로 바꿔 어절이 상위이고 음절이 그 안이라는 관계가 드러나게 했다. 음절 칩에는 점수를 표시하지 않는다. EyebrowLabel을 공용으로 뽑았다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 위젯 테스트는 이전 레이아웃 기준이라 갱신이 필요할 수 있음
+
 ## 2026-08-06 - 문장 행·에너지 캡슐·공용 위젯
 
 - 변경 파일: `sentence_card.dart`, `progress_panel.dart`, `shared_widgets.dart`

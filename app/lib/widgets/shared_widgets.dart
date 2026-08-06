@@ -533,3 +533,26 @@ class RomanizationText extends StatelessWidget {
     );
   }
 }
+
+/// 섹션을 여는 작은 라벨이다.
+///
+/// 큰 제목 대신 이 라벨을 쓰는 이유는, 화면에서 가장 크게 읽혀야 할 것이 한국어 문장과
+/// 점수이지 섹션 이름이 아니기 때문이다. 자간을 넓히고 대문자로 눌러 구분만 하게 한다.
+class EyebrowLabel extends StatelessWidget {
+  const EyebrowLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        color: context.palette.textSecondary,
+        fontSize: 10.5,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.68,
+      ),
+    );
+  }
+}

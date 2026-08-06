@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
         widget.onRetryQuota();
       },
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
         children: [
           Row(
             children: [

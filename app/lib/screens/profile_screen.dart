@@ -87,7 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
       children: [
         TopBar(
           title: 'Profile',
