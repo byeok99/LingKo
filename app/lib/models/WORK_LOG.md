@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 어절 모델 추가
+
+- 변경 파일: `weak_word.dart`, `practice_sentence.dart`
+- 내용: WeakWord와 WordDetail을 정의하고, 추천 문장 응답을 목록과 같은 형태로 바꾸는 변환을 추가했다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 북마크를 켜는 진입점(Home·Result)은 아직 서버와 연결되지 않아 목록이 비어 보일 수 있음
+
 ## 2026-08-06 - 어절·음절 로마자 매핑
 
 - 변경 파일: `practice_result.dart`, `practice_sentence.dart`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - Saved sentences·Word detail 화면 추가
+
+- 변경 파일: `saved_sentences_screen.dart`, `word_detail_screen.dart`, `home_screen.dart`, `profile_screen.dart`
+- 내용: 저장 문장 목록과 취약 어절 상세 화면을 만들었다. Home에 취약 어절 타일 3개를 붙여 상세로 보내고, Profile의 Saved sentences 행을 실제 화면에 연결했다. 상세 화면은 연습 이력이 없으면 Suggested 탭으로 열어 진입 직후 할 수 있는 일이 화면에 있게 했다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 북마크를 켜는 진입점(Home·Result)은 아직 서버와 연결되지 않아 목록이 비어 보일 수 있음
+
 ## 2026-08-06 - 03 Practice · 09 Profile 리디자인
 
 - 변경 파일: `practice_screen.dart`, `profile_screen.dart`

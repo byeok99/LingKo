@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 저장 토글을 PATCH로 변경
+
+- 변경 파일: `SavedSentenceController.java`
+- 내용: 앱 HTTP client에 PUT 전송 경로가 없어 기존 PATCH 경로를 쓰도록 맞췄다. 상태를 일부 바꾸는 동작이라 의미도 어긋나지 않는다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 북마크를 켜는 진입점(Home·Result)은 아직 서버와 연결되지 않아 목록이 비어 보일 수 있음
+
 ## 2026-08-06 - 저장 문장 API 추가
 
 - 변경 파일: `SavedSentenceController.java`

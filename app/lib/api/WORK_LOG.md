@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 저장·취약 어절 API client 추가
+
+- 변경 파일: `practice_content_api.dart`
+- 내용: 저장 목록·토글과 취약 어절·어절 상세 조회를 한 경계로 묶었다. 두 기능 모두 '다음에 무엇을 연습할지'를 다뤄 화면 주입이 단순해진다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 북마크를 켜는 진입점(Home·Result)은 아직 서버와 연결되지 않아 목록이 비어 보일 수 있음
+
 ## 2026-08-04 - preferences API client 삭제
 
 - 변경 파일: `user_preferences_api.dart` (삭제)

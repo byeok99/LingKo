@@ -7,6 +7,7 @@ import '../app/app_palette.dart';
 import '../models/evaluation_progress.dart';
 import '../models/practice_quota.dart';
 import '../models/practice_sentence.dart';
+import '../models/weak_word.dart';
 import '../widgets/progress_panel.dart';
 import '../widgets/sentence_card.dart';
 import '../widgets/shared_widgets.dart';
@@ -45,6 +46,8 @@ class HomeScreen extends StatefulWidget {
     required this.onRetry,
     required this.onRetryQuota,
     required this.onSelect,
+    this.weakWords = const [],
+    this.onSelectWeakWord,
     required this.onOpenPractice,
     required this.onOpenCustomPractice,
     this.onRequestPracticeReward,
@@ -61,6 +64,10 @@ class HomeScreen extends StatefulWidget {
   final VoidCallback onRetry;
   final VoidCallback onRetryQuota;
   final ValueChanged<PracticeSentence> onSelect;
+
+  /// 반복해서 틀리는 어절이다. 비어 있으면 타일 영역을 그리지 않는다.
+  final List<WeakWord> weakWords;
+  final ValueChanged<WeakWord>? onSelectWeakWord;
   final VoidCallback onOpenPractice;
   final VoidCallback onOpenCustomPractice;
   final Future<void> Function()? onRequestPracticeReward;
@@ -152,6 +159,44 @@ class _HomeScreenState extends State<HomeScreen> {
                 : 'What will you\nsay today, ${widget.displayName!.trim()}?',
             style: Theme.of(context).textTheme.headlineLarge,
           ),
+          if (widget.weakWords.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: context.palette.line),
+                  bottom: BorderSide(color: context.palette.line),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const EyebrowLabel('Your weakest words · tap for detail'),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      for (var index = 0; index < widget.weakWords.length; index++) ...[
+                        if (index > 0) const SizedBox(width: 9),
+                        Expanded(
+                          child: _WeakWordTile(
+                            key: ValueKey(
+                              'home-weak-word-${widget.weakWords[index].text}',
+                            ),
+                            word: widget.weakWords[index],
+                            onTap:
+                                () => widget.onSelectWeakWord?.call(
+                                  widget.weakWords[index],
+                                ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (widget.evaluationProgress.isActive ||
               widget.evaluationProgress.stage ==
                   EvaluationProgressStage.failed) ...[
@@ -273,6 +318,65 @@ class _HomeScreenState extends State<HomeScreen> {
 ///
 /// 활성 표시를 배경 채움이 아니라 2px 밑줄로 하는 이유는, 채우면 그 자체가 눌러야 할
 /// 대상처럼 보여 아래 문장 목록과 시선을 나눠 갖기 때문이다.
+/// 반복해서 틀리는 어절 타일이다.
+///
+/// 음절이 아니라 어절인 이유는 신뢰할 수 있는 점수의 최소 단위가 어절이기 때문이다.
+/// 없는 점수를 만들어 보여주지 않는다.
+class _WeakWordTile extends StatelessWidget {
+  const _WeakWordTile({super.key, required this.word, required this.onTap});
+
+  final WeakWord word;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: '${word.text}, average ${word.averageScore}. Open detail.',
+      excludeSemantics: true,
+      child: Material(
+        color: context.palette.errorSoft,
+        borderRadius: BorderRadius.circular(AppSizes.radius),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSizes.radius),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  word.text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.palette.error,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${word.romanization} · ${word.averageScore}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.palette.textSecondary,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _CategoryTab extends StatelessWidget {
   const _CategoryTab({
     super.key,

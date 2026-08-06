@@ -89,6 +89,25 @@ class PracticeSentence {
     );
   }
 
+  /// 어절 상세의 추천 문장 응답을 목록과 같은 형태로 변환한다.
+  factory PracticeSentence.fromSuggestedJson(Map<String, Object?> json) {
+    return PracticeSentence(
+      sentenceId: _intOrNullValue(json['sentenceId']),
+      source: 'RECOMMENDED',
+      text: normalizePracticeSentenceText(_stringValue(json['originalText'])),
+      pronunciation: normalizePracticeSentenceText(
+        _stringValue(json['standardPronunciation']),
+      ),
+      romanization: _stringValue(json['romanization']),
+      translation: _stringValue(json['translation']),
+      level: 'RECOMMENDED',
+      category: '',
+      point: '',
+      score: 0,
+      characters: const [],
+    );
+  }
+
   // 사용자가 직접 입력한 문장을 임시 연습 데이터로 바꿉니다.
   // 실제 구현에서는 백엔드가 표준 발음, 번역, 글자별 가이드를 계산해 내려줍니다.
   factory PracticeSentence.custom(String text) {

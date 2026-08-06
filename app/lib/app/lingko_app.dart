@@ -11,6 +11,7 @@ import 'app_palette.dart';
 
 import '../api/api_client.dart';
 import '../api/evaluation_api.dart';
+import '../api/practice_content_api.dart';
 import '../api/practice_quota_api.dart';
 import '../api/pronunciation_api.dart';
 import '../api/sentence_api.dart';
@@ -20,11 +21,14 @@ import '../models/evaluation_progress.dart';
 import '../models/practice_quota.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
+import '../models/weak_word.dart';
 import '../screens/auth_gate_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/practice_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/review_screen.dart';
+import '../screens/saved_sentences_screen.dart';
+import '../screens/word_detail_screen.dart';
 import '../screens/result_screen.dart';
 import '../services/audio_recorder_service.dart';
 import '../services/app_auth_service.dart';
@@ -42,6 +46,7 @@ class LingKoApp extends StatelessWidget {
     this.sentenceApi,
     this.evaluationApi,
     this.practiceQuotaApi,
+    this.practiceContentApi,
     this.authService,
     this.audioRecorderService,
     this.sentenceSpeechService,
@@ -52,6 +57,7 @@ class LingKoApp extends StatelessWidget {
   final SentenceApi? sentenceApi;
   final EvaluationApi? evaluationApi;
   final PracticeQuotaApi? practiceQuotaApi;
+  final PracticeContentApi? practiceContentApi;
   final AppAuthService? authService;
   final AudioRecorderService? audioRecorderService;
   final SentenceSpeechService? sentenceSpeechService;
@@ -73,6 +79,7 @@ class LingKoApp extends StatelessWidget {
         sentenceApi: sentenceApi ?? DartIoSentenceApi(),
         evaluationApi: evaluationApi ?? DartIoEvaluationApi(),
         practiceQuotaApi: practiceQuotaApi ?? DartIoPracticeQuotaApi(),
+        practiceContentApi: practiceContentApi ?? DartIoPracticeContentApi(),
         authService: authService ?? DefaultAppAuthService(),
         audioRecorderService:
             audioRecorderService ?? RecordAudioRecorderService(),
@@ -93,6 +100,7 @@ class LingKoShell extends StatefulWidget {
     required this.sentenceApi,
     required this.evaluationApi,
     required this.practiceQuotaApi,
+    required this.practiceContentApi,
     required this.authService,
     required this.audioRecorderService,
     required this.sentenceSpeechService,
@@ -103,6 +111,7 @@ class LingKoShell extends StatefulWidget {
   final SentenceApi sentenceApi;
   final EvaluationApi evaluationApi;
   final PracticeQuotaApi practiceQuotaApi;
+  final PracticeContentApi practiceContentApi;
   final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
   final SentenceSpeechService sentenceSpeechService;
@@ -140,6 +149,14 @@ class _LingKoShellState extends State<LingKoShell> {
   bool hasResult = false;
   bool isPracticeImmersive = false;
   bool isRequestingPracticeReward = false;
+
+  /// Home 위에 겹쳐 여는 화면이다. 탭이 아니라 갈래길이라 탭바 index와 분리한다.
+  /// null이면 겹친 화면이 없다.
+  String? openWordDetail;
+  bool isSavedSentencesOpen = false;
+
+  /// Home 타일에 쓰는 취약 어절이다. 비어 있으면 타일 영역 자체를 그리지 않는다.
+  List<WeakWord> weakWords = const [];
 
   @override
   void initState() {
@@ -190,6 +207,29 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
+  Future<void> loadWeakWords() async {
+    final currentSession = session;
+    if (currentSession == null) {
+      return;
+    }
+    try {
+      final words = await widget.authService.runAuthenticated(
+        (accessToken) => widget.practiceContentApi.fetchWeakWords(
+          accessToken: accessToken,
+        ),
+      );
+      if (mounted) {
+        setState(() => weakWords = words);
+      }
+    } catch (_) {
+      // 취약 어절은 보조 정보다. 실패해도 Home의 문장 목록은 그대로 쓸 수 있어야 하므로
+      // 화면에 오류를 띄우지 않고 타일만 비운다.
+      if (mounted) {
+        setState(() => weakWords = const []);
+      }
+    }
+  }
+
   Future<void> restoreSession() async {
     // 보안 저장소 확인이 끝날 때까지 시작 화면을 유지해 로그인 화면과 홈 화면의 순간 전환을 막는다.
     try {
@@ -209,6 +249,7 @@ class _LingKoShellState extends State<LingKoShell> {
           loadRecommendedSentences(),
           loadPracticeQuota(restoredSession),
         ]);
+        await loadWeakWords();
       }
     } catch (_) {
       if (!mounted) {
@@ -591,6 +632,9 @@ class _LingKoShellState extends State<LingKoShell> {
         onRetry: loadRecommendedSentences,
         onRetryQuota: loadPracticeQuota,
         onSelect: openPractice,
+        weakWords: weakWords,
+        onSelectWeakWord:
+            (word) => setState(() => openWordDetail = word.text),
         onOpenPractice: () => setState(() => selectedTab = 1),
         onOpenCustomPractice: openCustomPractice,
         onRequestPracticeReward:
@@ -644,13 +688,45 @@ class _LingKoShellState extends State<LingKoShell> {
         session: session!,
         onSessionChanged: handleSessionChanged,
         onOpenReview: () => setState(() => selectedTab = 2),
+        onOpenSavedSentences:
+            () => setState(() => isSavedSentencesOpen = true),
       ),
     ];
 
     // Scaffold는 일반적인 앱 화면 뼈대입니다.
     // body에는 현재 화면, bottomNavigationBar에는 하단 탭을 둡니다.
+    // 겹쳐 여는 화면은 탭 위에 얹는다. 탭바를 유지해 사용자가 어디에 있는지 잃지 않게 한다.
+    final wordText = openWordDetail;
+    final Widget body;
+    if (wordText != null) {
+      body = WordDetailScreen(
+        wordText: wordText,
+        practiceContentApi: widget.practiceContentApi,
+        authService: widget.authService,
+        onSessionExpired: () => handleSessionChanged(null),
+        onSelectSentence: (sentence) {
+          setState(() => openWordDetail = null);
+          openPractice(sentence);
+        },
+        onClose: () => setState(() => openWordDetail = null),
+      );
+    } else if (isSavedSentencesOpen) {
+      body = SavedSentencesScreen(
+        practiceContentApi: widget.practiceContentApi,
+        authService: widget.authService,
+        onSessionExpired: () => handleSessionChanged(null),
+        onSelect: (sentence) {
+          setState(() => isSavedSentencesOpen = false);
+          openPractice(sentence);
+        },
+        onClose: () => setState(() => isSavedSentencesOpen = false),
+      );
+    } else {
+      body = pages[selectedTab];
+    }
+
     return Scaffold(
-      body: SafeArea(child: pages[selectedTab]),
+      body: SafeArea(child: body),
       bottomNavigationBar:
           selectedTab == 1 && isPracticeImmersive
               ? null
@@ -662,6 +738,10 @@ class _LingKoShellState extends State<LingKoShell> {
                   selectedIndex: selectedTab,
                   onDestinationSelected: (index) {
                     setState(() {
+                      // 탭을 누르면 겹쳐 있던 화면을 닫는다. 남겨두면 탭을 눌렀는데
+                      // 화면이 그대로인 것처럼 보인다.
+                      openWordDetail = null;
+                      isSavedSentencesOpen = false;
                       selectedTab = index;
                     });
                   },

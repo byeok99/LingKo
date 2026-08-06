@@ -34,7 +34,7 @@ public class SavedSentenceController {
      * 화면이 원하는 상태를 보내지 않고 서버가 실제 상태를 뒤집는 이유는, 두 기기에서 동시에
      * 누를 때 뒤늦게 도착한 요청이 이전 상태를 되살리는 것을 막기 위해서다.
      */
-    @PutMapping("/{sentenceId}")
+    @PatchMapping("/{sentenceId}")
     public SavedSentenceResponse toggleSavedSentence(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @PathVariable Long sentenceId

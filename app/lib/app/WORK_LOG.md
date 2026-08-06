@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 겹쳐 여는 화면 상태 추가
+
+- 변경 파일: `lingko_app.dart`
+- 내용: Word detail과 Saved sentences를 탭 위에 얹는 방식으로 연결했다. 탭바를 유지해 사용자가 어디에 있는지 잃지 않게 하고, 탭을 누르면 겹친 화면을 닫는다. 취약 어절 조회는 실패해도 화면에 오류를 띄우지 않는다. 보조 정보라 Home의 문장 목록은 그대로 쓸 수 있어야 한다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 북마크를 켜는 진입점(Home·Result)은 아직 서버와 연결되지 않아 목록이 비어 보일 수 있음
+
 ## 2026-08-06 - Direction A 디자인 토큰 적용
 
 - 변경 파일: `app_theme.dart`, `app_palette.dart`

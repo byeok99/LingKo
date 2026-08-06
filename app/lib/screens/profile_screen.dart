@@ -15,12 +15,14 @@ class ProfileScreen extends StatefulWidget {
     required this.session,
     required this.onSessionChanged,
     required this.onOpenReview,
+    this.onOpenSavedSentences,
   });
 
   final AppAuthService authService;
   final AuthSession session;
   final ValueChanged<AuthSession?> onSessionChanged;
   final VoidCallback onOpenReview;
+  final VoidCallback? onOpenSavedSentences;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -105,9 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           key: const ValueKey('profile-saved-sentences'),
           icon: Icons.bookmark_border,
           label: 'Saved sentences',
-          // 저장 목록은 아직 화면이 없다. 눌러도 아무 일이 없으면 고장으로 보이므로
-          // 연결 전까지는 항목만 보여주고 누를 수 없게 둔다.
-          onTap: null,
+          onTap: widget.onOpenSavedSentences,
         ),
         const SizedBox(height: 20),
         const EyebrowLabel('About'),
