@@ -51,7 +51,10 @@ class EvaluationServiceResultTest {
         assertThat(response.getGradeLabel()).isEqualTo("Good");
         assertThat(response.getScoreBreakdown().getAccuracy()).isEqualTo(88);
         assertThat(response.getRecognizedText()).isEqualTo("바블 머거써요.");
-        assertThat(response.getSummary()).contains("바블 머거써요.");
+        // 판정 문구는 점수와 어절 목록 사이에 놓이는 한 줄이다. 인식된 발음을 붙이면
+        // 사용자가 실제로 낸 소리로 오해하고, 문장이 길어져 다음 단계로 가는 길을 가로막는다.
+        assertThat(response.getSummary()).isEqualTo("Understandable — one sound to refine");
+        assertThat(response.getSummary()).doesNotContain("바블 머거써요.");
     }
 
     @Test
@@ -162,6 +165,11 @@ class EvaluationServiceResultTest {
         );
 
         assertThat(response.getWordScoreStatus()).isEqualTo(ScoreStatus.AVAILABLE);
+        // 화면이 어절·음절마다 로마자를 병기하므로 응답에 함께 실려야 한다.
+        assertThat(response.getWords())
+                .allSatisfy(word -> assertThat(word.getRomanization()).isNotBlank());
+        assertThat(response.getCharacters())
+                .allSatisfy(character -> assertThat(character.getRomanization()).isNotBlank());
         assertThat(response.getWords()).extracting("text").containsExactly("김치찌개", "하나", "주세요");
         assertThat(response.getWords()).extracting("score").containsExactly(82, 91, 77);
         assertThat(response.getWords()).extracting(word -> word.getSyllables().size())

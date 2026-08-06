@@ -1,5 +1,75 @@
 # 작업 이력
 
+## 2026-08-06 - Review 상세에서 사라진 재연습 진입점 복구
+
+- 변경 파일: `review_screen.dart`, `result_screen.dart`
+- 내용: 리디자인 중 Review 상세의 'Practice again' 버튼이 빠져 `onRetryPractice`가 아무 데서도 호출되지 않는 죽은 콜백이 되어 있었다. 기록을 보고 나서 다시 연습할 방법이 없었다. 상세 시트 하단에 되살리고 시트를 먼저 닫은 뒤 Practice로 넘긴다. 상세 시트의 SectionHeader도 결과 화면과 같은 EyebrowLabel 체계로 통일했고, 추이 라벨의 'Last 1 tries' 단수 처리를 했다. Result의 로마자 표기에는 사라졌던 `result-romanized-pronunciation` 키를 복구했다.
+- 검증: `flutter analyze`, `flutter test` 86개 통과
+- 리스크: 없음
+
+## 2026-08-06 - Result에서 죽은 재생 카드 제거
+
+- 변경 파일: `result_screen.dart`, `practice_screen.dart`, `lingko_app.dart`
+- 내용: 리디자인 후 쓰이지 않게 된 _PronunciationGuideCard가 남아 있었다. 재생은 Practice에서만 한다는 규칙을 어기는 Normal/Slow 버튼이 그 안에 들어 있었다. 함께 ResultScreen의 TTS 의존성도 끊었다. 버튼에 강제로 붙던 아이콘도 걷어 라벨만 남겼다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 그라디언트·그림자 0건, 버튼 아이콘 0건 확인
+- 리스크: 없음
+
+## 2026-08-06 - 04 Recording · 08 Review 마무리
+
+- 변경 파일: `practice_screen.dart`, `review_screen.dart`
+- 내용: Recording의 정지 버튼을 68px 흰 원 안의 붉은 사각형으로 바꿨다. 파랑으로 채우면 인터랙티브 색 규칙과 어긋나고, 붉은 사각형은 이 앱에서 유일한 붉은 컨트롤이라 형태만으로 구분된다. 녹음 중 안내 문구는 제거했다. Review는 기록을 카드 하나로 묶고 행을 [44px 점수 배지 · 문장·로마자·날짜 · 화살표]로 바꿔 세로로 훑을 때 숫자만 따라가게 했다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 위젯 테스트는 이전 레이아웃·문구 기준이라 갱신이 필요하다
+
+## 2026-08-06 - Home·Result에 북마크 진입점 연결
+
+- 변경 파일: `home_screen.dart`, `result_screen.dart`
+- 내용: 문장 행과 Result 헤더에서 저장을 켤 수 있게 했다. Result에 둔 이유는 방금 연습한 문장을 다시 하고 싶을 때가 저장할 마음이 가장 큰 순간이기 때문이다. 직접 입력한 문장은 서버 식별자가 없어 토글 자체를 두지 않는다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 저장 상태 조회 실패 시 북마크가 꺼진 것처럼 보인다. 연습 자체는 막지 않는다
+
+## 2026-08-06 - Saved sentences·Word detail 화면 추가
+
+- 변경 파일: `saved_sentences_screen.dart`, `word_detail_screen.dart`, `home_screen.dart`, `profile_screen.dart`
+- 내용: 저장 문장 목록과 취약 어절 상세 화면을 만들었다. Home에 취약 어절 타일 3개를 붙여 상세로 보내고, Profile의 Saved sentences 행을 실제 화면에 연결했다. 상세 화면은 연습 이력이 없으면 Suggested 탭으로 열어 진입 직후 할 수 있는 일이 화면에 있게 했다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 북마크를 켜는 진입점(Home·Result)은 아직 서버와 연결되지 않아 목록이 비어 보일 수 있음
+
+## 2026-08-06 - 03 Practice · 09 Profile 리디자인
+
+- 변경 파일: `practice_screen.dart`, `profile_screen.dart`
+- 내용: Practice는 입력만 카드로 채우고 표준 발음을 위아래 선으로 묶었다. 입력 글자를 21px로 키우고 테두리를 걷어 카드 자체가 입력 영역임을 드러냈다. Listen의 Normal·Slow를 동등한 secondary로 맞추고 CTA를 'Record'로 줄였다. Profile은 계정 카드를 구분선 블록으로 바꾸고 Your content·About 섹션과 설정 행을 넣었다. 아직 화면이 없는 항목은 눌리지 않게 흐리게 뒀다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: Saved sentences 화면(11)이 아직 없어 Profile의 해당 행은 비활성 상태다
+
+## 2026-08-06 - 06 Result 리디자인
+
+- 변경 파일: `result_screen.dart`
+- 내용: 점수 카드(총점 60px + 세부 게이지 3개 + 판정 문구)를 한 덩어리로 묶고, How it should sound에서 원문과 표준 발음을 위아래로 붙여 차이를 눈으로 비교하게 했다. 어절 목록은 아코디언으로 바꿔 누른 어절의 음절만 펼친다. CTA를 'Say it again' 하나로 줄이고 Review 이동은 텍스트 버튼으로 내렸다. 화면 좌우 패딩을 20px로 통일했다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 위젯 테스트는 이전 레이아웃 기준이라 갱신이 필요할 수 있음
+
+## 2026-08-06 - Sign in 상단·하단 고정 배치 수정
+
+- 변경 파일: `auth_gate_screen.dart`
+- 내용: spaceBetween을 써도 바깥 Center가 Column을 통째로 세로 중앙에 놓아 배치가 그대로였다. 상단 내용을 Expanded 안의 스크롤 영역으로 만들어 위에 붙이고, 로그인 수단은 그 아래 바닥에 남게 했다.
+- 검증: `flutter analyze` 통과. 테스트는 사용자가 직접 확인
+- 리스크: 없음
+
+## 2026-08-06 - Sign in 상단 정렬로 배치 수정
+
+- 변경 파일: `auth_gate_screen.dart`
+- 내용: 세로 중앙 정렬이던 로그인 화면을 상단 그룹(워드마크·헤드라인·샘플)과 하단 그룹(로그인 수단·각주)으로 나눴다. 화면이 길면 위아래로 벌리고 짧으면 스크롤한다. 시작 화면은 읽을 것이 없어 중앙 정렬을 유지한다.
+- 검증: `flutter analyze`, `flutter test` 85개 통과
+- 리스크: 없음
+
+## 2026-08-06 - 01 Sign in · 02 Home 리디자인
+
+- 변경 파일: `auth_gate_screen.dart`, `home_screen.dart`
+- 내용: Sign in을 카드 없는 전체 화면으로 바꾸고 헤드라인·안녕하세요 샘플·Google/Apple 버튼·각주로 재구성했다. Home은 워드마크와 에너지 캡슐 헤더, 인사 h1 26px, 카테고리 밑줄 탭, 구분선 기반 문장 목록, 하단 텍스트 버튼 2개로 바꿨다. 카테고리 칩을 밑줄 탭으로 바꾼 이유는 칩이 그 자체로 눌리는 덩어리처럼 보여 문장 목록과 시선을 나눠 갖기 때문이다.
+- 검증: `flutter analyze`, `flutter test` 84개 통과
+- 리스크: 06 Result·03 Practice·09 Profile 리디자인과 신규 화면(10·11)은 후속 작업
+
 ## 2026-08-05 - 로마자 발음 가이드 화면 연결
 
 - 변경 파일: `practice_screen.dart`, `result_screen.dart`, `review_screen.dart`, `WORK_LOG.md`

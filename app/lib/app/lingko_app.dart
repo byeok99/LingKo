@@ -11,6 +11,7 @@ import 'app_palette.dart';
 
 import '../api/api_client.dart';
 import '../api/evaluation_api.dart';
+import '../api/practice_content_api.dart';
 import '../api/practice_quota_api.dart';
 import '../api/pronunciation_api.dart';
 import '../api/sentence_api.dart';
@@ -20,11 +21,14 @@ import '../models/evaluation_progress.dart';
 import '../models/practice_quota.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
+import '../models/weak_word.dart';
 import '../screens/auth_gate_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/practice_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/review_screen.dart';
+import '../screens/saved_sentences_screen.dart';
+import '../screens/word_detail_screen.dart';
 import '../screens/result_screen.dart';
 import '../services/audio_recorder_service.dart';
 import '../services/app_auth_service.dart';
@@ -42,6 +46,7 @@ class LingKoApp extends StatelessWidget {
     this.sentenceApi,
     this.evaluationApi,
     this.practiceQuotaApi,
+    this.practiceContentApi,
     this.authService,
     this.audioRecorderService,
     this.sentenceSpeechService,
@@ -52,6 +57,7 @@ class LingKoApp extends StatelessWidget {
   final SentenceApi? sentenceApi;
   final EvaluationApi? evaluationApi;
   final PracticeQuotaApi? practiceQuotaApi;
+  final PracticeContentApi? practiceContentApi;
   final AppAuthService? authService;
   final AudioRecorderService? audioRecorderService;
   final SentenceSpeechService? sentenceSpeechService;
@@ -73,6 +79,7 @@ class LingKoApp extends StatelessWidget {
         sentenceApi: sentenceApi ?? DartIoSentenceApi(),
         evaluationApi: evaluationApi ?? DartIoEvaluationApi(),
         practiceQuotaApi: practiceQuotaApi ?? DartIoPracticeQuotaApi(),
+        practiceContentApi: practiceContentApi ?? DartIoPracticeContentApi(),
         authService: authService ?? DefaultAppAuthService(),
         audioRecorderService:
             audioRecorderService ?? RecordAudioRecorderService(),
@@ -93,6 +100,7 @@ class LingKoShell extends StatefulWidget {
     required this.sentenceApi,
     required this.evaluationApi,
     required this.practiceQuotaApi,
+    required this.practiceContentApi,
     required this.authService,
     required this.audioRecorderService,
     required this.sentenceSpeechService,
@@ -103,6 +111,7 @@ class LingKoShell extends StatefulWidget {
   final SentenceApi sentenceApi;
   final EvaluationApi evaluationApi;
   final PracticeQuotaApi practiceQuotaApi;
+  final PracticeContentApi practiceContentApi;
   final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
   final SentenceSpeechService sentenceSpeechService;
@@ -140,6 +149,21 @@ class _LingKoShellState extends State<LingKoShell> {
   bool hasResult = false;
   bool isPracticeImmersive = false;
   bool isRequestingPracticeReward = false;
+
+  /// Home 위에 겹쳐 여는 화면이다. 탭이 아니라 갈래길이라 탭바 index와 분리한다.
+  /// null이면 겹친 화면이 없다.
+  String? openWordDetail;
+  bool isSavedSentencesOpen = false;
+
+  /// Home 타일에 쓰는 취약 어절이다. 비어 있으면 타일 영역 자체를 그리지 않는다.
+  List<WeakWord> weakWords = const [];
+
+  /// 저장한 문장의 식별자다. 여러 화면이 같은 저장 상태를 보여줘야 해서
+  /// 화면마다 따로 조회하지 않고 shell이 하나만 들고 내려준다.
+  Set<int> savedSentenceIds = const {};
+
+  /// 서버 응답을 기다리는 동안 중복 요청을 막는다.
+  final Set<int> pendingSavedToggles = {};
 
   @override
   void initState() {
@@ -190,6 +214,111 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
+  Future<void> loadWeakWords() async {
+    final currentSession = session;
+    if (currentSession == null) {
+      return;
+    }
+    try {
+      final words = await widget.authService.runAuthenticated(
+        (accessToken) => widget.practiceContentApi.fetchWeakWords(
+          accessToken: accessToken,
+        ),
+      );
+      if (mounted) {
+        setState(() => weakWords = words);
+      }
+    } catch (_) {
+      // 취약 어절은 보조 정보다. 실패해도 Home의 문장 목록은 그대로 쓸 수 있어야 하므로
+      // 화면에 오류를 띄우지 않고 타일만 비운다.
+      if (mounted) {
+        setState(() => weakWords = const []);
+      }
+    }
+  }
+
+  Future<void> loadSavedSentenceIds() async {
+    if (session == null) {
+      return;
+    }
+    try {
+      final saved = await widget.authService.runAuthenticated(
+        (accessToken) => widget.practiceContentApi.fetchSavedSentences(
+          accessToken: accessToken,
+        ),
+      );
+      if (mounted) {
+        setState(() {
+          savedSentenceIds = {
+            for (final sentence in saved)
+              if (sentence.sentenceId != null) sentence.sentenceId!,
+          };
+        });
+      }
+    } catch (_) {
+      // 저장 상태는 보조 정보다. 실패하면 북마크가 꺼진 것처럼 보이지만
+      // 문장 연습 자체는 막지 않는다.
+    }
+  }
+
+  /// 저장 상태를 뒤집는다.
+  ///
+  /// 화면을 먼저 바꾸고 서버에 알린다. 왕복을 기다리면 북마크가 한 박자 늦게 반응해
+  /// 눌리지 않은 것처럼 느껴진다. 실패하면 되돌린다.
+  Future<void> toggleSavedSentence(int sentenceId) async {
+    if (pendingSavedToggles.contains(sentenceId)) {
+      return;
+    }
+    final wasSaved = savedSentenceIds.contains(sentenceId);
+    setState(() {
+      pendingSavedToggles.add(sentenceId);
+      savedSentenceIds = {
+        for (final id in savedSentenceIds)
+          if (id != sentenceId) id,
+        if (!wasSaved) sentenceId,
+      };
+    });
+
+    try {
+      final saved = await widget.authService.runAuthenticated(
+        (accessToken) => widget.practiceContentApi.toggleSavedSentence(
+          accessToken: accessToken,
+          sentenceId: sentenceId,
+        ),
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        pendingSavedToggles.remove(sentenceId);
+        // 서버가 알려준 실제 상태로 맞춘다. 두 기기에서 동시에 눌렀을 때
+        // 화면이 서버와 어긋나 있을 수 있다.
+        savedSentenceIds = {
+          for (final id in savedSentenceIds)
+            if (id != sentenceId) id,
+          if (saved) sentenceId,
+        };
+      });
+    } on AuthSessionExpiredException {
+      handleSessionChanged(null);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        pendingSavedToggles.remove(sentenceId);
+        savedSentenceIds = {
+          for (final id in savedSentenceIds)
+            if (id != sentenceId) id,
+          if (wasSaved) sentenceId,
+        };
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not update this sentence.')),
+      );
+    }
+  }
+
   Future<void> restoreSession() async {
     // 보안 저장소 확인이 끝날 때까지 시작 화면을 유지해 로그인 화면과 홈 화면의 순간 전환을 막는다.
     try {
@@ -209,6 +338,7 @@ class _LingKoShellState extends State<LingKoShell> {
           loadRecommendedSentences(),
           loadPracticeQuota(restoredSession),
         ]);
+        await Future.wait([loadWeakWords(), loadSavedSentenceIds()]);
       }
     } catch (_) {
       if (!mounted) {
@@ -591,6 +721,11 @@ class _LingKoShellState extends State<LingKoShell> {
         onRetry: loadRecommendedSentences,
         onRetryQuota: loadPracticeQuota,
         onSelect: openPractice,
+        weakWords: weakWords,
+        savedSentenceIds: savedSentenceIds,
+        onToggleSaved: toggleSavedSentence,
+        onSelectWeakWord:
+            (word) => setState(() => openWordDetail = word.text),
         onOpenPractice: () => setState(() => selectedTab = 1),
         onOpenCustomPractice: openCustomPractice,
         onRequestPracticeReward:
@@ -603,7 +738,17 @@ class _LingKoShellState extends State<LingKoShell> {
           ? ResultScreen(
             sentence: selectedSentence!,
             result: latestResult,
-            sentenceSpeechService: widget.sentenceSpeechService,
+            // 추천 문장만 저장할 수 있다. 직접 입력한 문장은 서버에 식별자가 없다.
+            isSaved:
+                selectedSentence!.sentenceId == null
+                    ? null
+                    : savedSentenceIds.contains(selectedSentence!.sentenceId),
+            onToggleSaved: () {
+              final id = selectedSentence!.sentenceId;
+              if (id != null) {
+                unawaited(toggleSavedSentence(id));
+              }
+            },
             onTryAgain: () {
               setState(() {
                 hasResult = false;
@@ -644,13 +789,49 @@ class _LingKoShellState extends State<LingKoShell> {
         session: session!,
         onSessionChanged: handleSessionChanged,
         onOpenReview: () => setState(() => selectedTab = 2),
+        onOpenSavedSentences:
+            () => setState(() => isSavedSentencesOpen = true),
       ),
     ];
 
     // Scaffold는 일반적인 앱 화면 뼈대입니다.
     // body에는 현재 화면, bottomNavigationBar에는 하단 탭을 둡니다.
+    // 겹쳐 여는 화면은 탭 위에 얹는다. 탭바를 유지해 사용자가 어디에 있는지 잃지 않게 한다.
+    final wordText = openWordDetail;
+    final Widget body;
+    if (wordText != null) {
+      body = WordDetailScreen(
+        wordText: wordText,
+        practiceContentApi: widget.practiceContentApi,
+        authService: widget.authService,
+        onSessionExpired: () => handleSessionChanged(null),
+        onSelectSentence: (sentence) {
+          setState(() => openWordDetail = null);
+          openPractice(sentence);
+        },
+        onClose: () => setState(() => openWordDetail = null),
+      );
+    } else if (isSavedSentencesOpen) {
+      body = SavedSentencesScreen(
+        practiceContentApi: widget.practiceContentApi,
+        authService: widget.authService,
+        onSessionExpired: () => handleSessionChanged(null),
+        onSelect: (sentence) {
+          setState(() => isSavedSentencesOpen = false);
+          openPractice(sentence);
+        },
+        onClose: () {
+          setState(() => isSavedSentencesOpen = false);
+          // 저장 화면에서 해제한 결과를 Home 북마크에도 반영한다.
+          unawaited(loadSavedSentenceIds());
+        },
+      );
+    } else {
+      body = pages[selectedTab];
+    }
+
     return Scaffold(
-      body: SafeArea(child: pages[selectedTab]),
+      body: SafeArea(child: body),
       bottomNavigationBar:
           selectedTab == 1 && isPracticeImmersive
               ? null
@@ -662,6 +843,10 @@ class _LingKoShellState extends State<LingKoShell> {
                   selectedIndex: selectedTab,
                   onDestinationSelected: (index) {
                     setState(() {
+                      // 탭을 누르면 겹쳐 있던 화면을 닫는다. 남겨두면 탭을 눌렀는데
+                      // 화면이 그대로인 것처럼 보인다.
+                      openWordDetail = null;
+                      isSavedSentencesOpen = false;
                       selectedTab = index;
                     });
                   },

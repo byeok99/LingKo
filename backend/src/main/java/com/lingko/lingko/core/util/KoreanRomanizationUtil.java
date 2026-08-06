@@ -46,6 +46,22 @@ public final class KoreanRomanizationUtil {
                 .orElse("");
     }
 
+    /**
+     * 어절 하나의 로마자를 반환한다. 음절은 하이픈으로 잇는다.
+     *
+     * 화면이 어절·음절마다 로마자를 병기하므로 문장 전체 결과를 잘라 쓰는 대신
+     * 같은 규칙을 같은 함수로 적용한다. 문장을 잘라 쓰면 정규화로 어절 수가 달라졌을 때
+     * 로마자와 한글이 어긋난다.
+     */
+    public static String romanizeSegment(String segment) {
+        String normalized = PracticeSentenceNormalizer.normalize(segment);
+        if (normalized.isEmpty()) {
+            return "";
+        }
+        // 공백이 남아 있으면 어절 단위로 다시 나눠 문장 규칙과 같은 결과를 만든다.
+        return romanize(normalized);
+    }
+
     private static String romanizeWord(String word) {
         List<String> segments = new ArrayList<>();
         StringBuilder preservedRun = new StringBuilder();

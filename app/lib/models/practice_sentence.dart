@@ -14,6 +14,7 @@ class PracticeSentence {
     this.source = 'CUSTOM',
     required this.text,
     required this.pronunciation,
+    this.romanization = '',
     this.romanizedPronunciation = '',
     required this.translation,
     required this.level,
@@ -47,6 +48,7 @@ class PracticeSentence {
       pronunciation: normalizePracticeSentenceText(
         _stringValue(sentence['standardPronunciation']),
       ),
+      romanization: _stringValue(sentence['romanizedPronunciation']),
       romanizedPronunciation:
           _stringValue(sentence['romanizedPronunciation']).trim(),
       translation: _stringValue(sentence['translation']),
@@ -75,6 +77,7 @@ class PracticeSentence {
       pronunciation: normalizePracticeSentenceText(
         _stringValue(json['standardPronunciation']),
       ),
+      romanization: _stringValue(json['romanizedPronunciation']),
       romanizedPronunciation:
           _stringValue(json['romanizedPronunciation']).trim(),
       translation: _stringValue(json['translation']),
@@ -83,6 +86,25 @@ class PracticeSentence {
       point: _stringValue(json['learningPoint']),
       score: _intValue(json['initialScore']),
       characters: characters,
+    );
+  }
+
+  /// 어절 상세의 추천 문장 응답을 목록과 같은 형태로 변환한다.
+  factory PracticeSentence.fromSuggestedJson(Map<String, Object?> json) {
+    return PracticeSentence(
+      sentenceId: _intOrNullValue(json['sentenceId']),
+      source: 'RECOMMENDED',
+      text: normalizePracticeSentenceText(_stringValue(json['originalText'])),
+      pronunciation: normalizePracticeSentenceText(
+        _stringValue(json['standardPronunciation']),
+      ),
+      romanization: _stringValue(json['romanization']),
+      translation: _stringValue(json['translation']),
+      level: 'RECOMMENDED',
+      category: '',
+      point: '',
+      score: 0,
+      characters: const [],
     );
   }
 
@@ -116,6 +138,7 @@ class PracticeSentence {
       source: source,
       text: normalizedText,
       pronunciation: normalizedPronunciation,
+      romanization: romanization,
       romanizedPronunciation: romanizedPronunciation.trim(),
       translation: translation,
       level: level,
@@ -135,6 +158,9 @@ class PracticeSentence {
   final String source;
   final String text;
   final String pronunciation;
+
+  /// 표준 발음의 로마자다. 대상 사용자가 한글을 읽지 못해 목록·결과 어디서나 병기한다.
+  final String romanization;
 
   /// 서버가 표준 발음에서 파생한 음절 단위 학습자용 로마자 읽기 가이드다.
   final String romanizedPronunciation;
@@ -180,6 +206,7 @@ class CharacterResult {
     required this.kind,
     this.mouthGuideUrl,
     this.tongueGuideUrl,
+    this.romanization = '',
     this.guideStatus,
     // 기본값을 unavailable로 두어, scoreStatus를 지정하지 않고 만든 값이
     // 신뢰할 수 없는 점수를 신뢰 가능한 것처럼 노출하는 fail-open을 막는다.
@@ -189,6 +216,7 @@ class CharacterResult {
   factory CharacterResult.fromGuideJson(Map<String, Object?> json) {
     return CharacterResult(
       character: _stringValue(json['pronunciationText']),
+      romanization: _stringValue(json['romanization']),
       score: 0,
       note: _stringValue(json['note']),
       kind: _stringValue(json['guideType'], fallback: 'NONE'),
@@ -202,6 +230,7 @@ class CharacterResult {
   factory CharacterResult.fromResultJson(Map<String, Object?> json) {
     return CharacterResult(
       character: _stringValue(json['pronunciationText']),
+      romanization: _stringValue(json['romanization']),
       score: _intValue(json['score']),
       note: _stringValue(json['note']),
       kind: _stringValue(json['guideType'], fallback: 'NONE'),
@@ -217,6 +246,7 @@ class CharacterResult {
     final rawScore = json['score'];
     return CharacterResult(
       character: _stringValue(json['text']),
+      romanization: _stringValue(json['romanization']),
       score: rawScore is num ? rawScore.round() : 0,
       note: _stringValue(json['feedback']),
       kind: 'NONE',
@@ -227,6 +257,9 @@ class CharacterResult {
   }
 
   final String character;
+
+  /// 음절의 로마자다. 어절 로마자를 잘라 쓰지 않고 서버가 만든 값을 그대로 받는다.
+  final String romanization;
   final int score;
   final String note;
   final String kind;

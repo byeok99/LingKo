@@ -11,6 +11,7 @@ import '../models/practice_history.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../services/app_auth_service.dart';
+import '../widgets/score_card.dart';
 import '../widgets/shared_widgets.dart';
 import '../widgets/romanized_pronunciation.dart';
 import '../widgets/word_syllable_explorer.dart';
@@ -82,7 +83,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     return RefreshIndicator(
       onRefresh: loadHistory,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
         children: [
           const TopBar(title: 'Review'),
           const SizedBox(height: 10),
@@ -109,30 +110,23 @@ class _ReviewScreenState extends State<ReviewScreen> {
           else ...[
             _ReviewSummary(history: history!),
             const SizedBox(height: 24),
-            SectionHeader(
-              title: 'Recent practice',
-              trailing: Text(
-                '${items.length} ${items.length == 1 ? 'session' : 'sessions'}',
-                style: Theme.of(context).textTheme.bodyMedium,
+            const SizedBox(height: 16),
+            const EyebrowLabel('Recent history'),
+            const SizedBox(height: 8),
+            // 기록을 카드 하나로 묶고 행은 구분선으로만 나눈다. 행마다 카드를 두면
+            // 목록이 아니라 카드 더미로 보여 훑기 어렵다.
+            AppCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var index = 0; index < items.length; index++)
+                    _ReviewHistoryCard(
+                      item: items[index],
+                      showDivider: index != items.length - 1,
+                      onRetryPractice: widget.onRetryPractice,
+                    ),
+                ],
               ),
-            ),
-            const SizedBox(height: 10),
-            Column(
-              children: [
-                for (final item in items)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    child: _ReviewHistoryCard(item: item),
-                  ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            SecondaryButton(
-              label: 'Practice again',
-              icon: Icons.replay,
-              onPressed:
-                  () =>
-                      widget.onRetryPractice(items.first.toPracticeSentence()),
             ),
           ],
         ],
@@ -161,13 +155,9 @@ class _ReviewSummary extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  'Recent scores · Last ${scores.length}',
-                  style: TextStyle(
-                    color: context.palette.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
+                child: EyebrowLabel(
+                  'Your progress · Last ${scores.length} '
+                  '${scores.length == 1 ? 'try' : 'tries'}',
                 ),
               ),
               Column(
@@ -227,134 +217,102 @@ List<int> recentTrendScores(
 }
 
 class _ReviewHistoryCard extends StatelessWidget {
-  const _ReviewHistoryCard({required this.item});
+  const _ReviewHistoryCard({
+    required this.item,
+    required this.onRetryPractice,
+    this.showDivider = false,
+  });
 
   final PracticeHistoryItem item;
+  final ValueChanged<PracticeSentence> onRetryPractice;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      padding: EdgeInsets.zero,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: ValueKey('review-history-card-${item.evaluationLogId}'),
-          onTap: () => _showHistoryDetail(context, item),
-          borderRadius: BorderRadius.circular(AppSizes.radius),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 48,
-                  constraints: const BoxConstraints(minHeight: 52),
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: context.palette.softBlue,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusControl),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${item.overallScore}',
-                        style: TextStyle(
-                          color: context.palette.primaryDark,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'SCORE',
-                        style: TextStyle(
-                          color: context.palette.textSecondary,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.originalText,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        item.standardPronunciation,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: context.palette.primaryMedium,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Wrap(
-                        spacing: AppSpacing.sm,
-                        runSpacing: AppSpacing.xs,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          _GradeChip(label: item.gradeLabel),
-                          if (item.createdAt != null)
-                            Text(
-                              _dateLabel(item.createdAt!),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(top: AppSpacing.md),
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    color: context.palette.textMuted,
-                    size: 20,
-                  ),
-                ),
-              ],
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: ValueKey('review-history-card-${item.evaluationLogId}'),
+        onTap: () => _showHistoryDetail(context, item, onRetryPractice),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          decoration: BoxDecoration(
+            border:
+                showDivider
+                    ? Border(
+                      bottom: BorderSide(color: context.palette.lineSubtle),
+                    )
+                    : null,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GradeChip extends StatelessWidget {
-  const _GradeChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: context.palette.surface,
-        borderRadius: BorderRadius.circular(AppSizes.pillRadius),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: context.palette.textSecondary,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
+          child: Row(
+            children: [
+              // 점수를 배지로 왼쪽에 고정해 목록을 세로로 훑을 때 숫자만 따라가게 한다.
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color:
+                      item.overallScore >= kPassingScore
+                          ? context.palette.successSoft
+                          : context.palette.errorSoft,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  '${item.overallScore}',
+                  style: TextStyle(
+                    color: scoreColor(context, item.overallScore),
+                    fontSize: 15,
+                    height: 1,
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.originalText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.palette.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.32,
+                      ),
+                    ),
+                    if (item.romanizedPronunciation.trim().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      RomanizationText(
+                        item.romanizedPronunciation,
+                        fontSize: 10.5,
+                      ),
+                    ],
+                    if (item.createdAt != null) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        _dateLabel(item.createdAt!),
+                        style: TextStyle(
+                          color: context.palette.textMuted,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: context.palette.textMuted,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -447,7 +405,11 @@ class _TrendPainter extends CustomPainter {
   }
 }
 
-void _showHistoryDetail(BuildContext context, PracticeHistoryItem item) {
+void _showHistoryDetail(
+  BuildContext context,
+  PracticeHistoryItem item,
+  ValueChanged<PracticeSentence> onRetryPractice,
+) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -457,14 +419,22 @@ void _showHistoryDetail(BuildContext context, PracticeHistoryItem item) {
         top: Radius.circular(AppSizes.radiusLarge),
       ),
     ),
-    builder: (context) => _HistoryDetailSheet(item: item),
+    builder:
+        (context) => _HistoryDetailSheet(
+          item: item,
+          onRetryPractice: onRetryPractice,
+        ),
   );
 }
 
 class _HistoryDetailSheet extends StatelessWidget {
-  const _HistoryDetailSheet({required this.item});
+  const _HistoryDetailSheet({
+    required this.item,
+    required this.onRetryPractice,
+  });
 
   final PracticeHistoryItem item;
+  final ValueChanged<PracticeSentence> onRetryPractice;
 
   @override
   Widget build(BuildContext context) {
@@ -563,13 +533,26 @@ class _HistoryDetailSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(item.summary, style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: AppSpacing.xxl),
-            SectionHeader(title: 'Score details'),
+            // 상세 시트도 결과 화면과 같은 eyebrow 체계를 쓴다. 같은 정보를
+            // 다른 무게로 부르면 두 화면이 다른 제품처럼 읽힌다.
+            const EyebrowLabel('Score details'),
             const SizedBox(height: AppSpacing.md),
             _HistoryScoreBreakdown(breakdown: item.scoreBreakdown),
             const SizedBox(height: AppSpacing.xxl),
-            SectionHeader(title: 'Pronunciation by word'),
+            const EyebrowLabel('By word · tap to see its syllables'),
             const SizedBox(height: AppSpacing.md),
             WordSyllableExplorer(words: item.words),
+            const SizedBox(height: AppSpacing.xxl),
+            // 기록을 본 다음에 할 수 있는 일은 하나뿐이다. 시트를 먼저 닫고
+            // Practice 탭으로 넘긴다. 시트가 남으면 다음 화면을 가린다.
+            PrimaryButton(
+              key: const ValueKey('review-retry-practice'),
+              label: 'Practice again',
+              onPressed: () {
+                Navigator.of(context).pop();
+                onRetryPractice(item.toPracticeSentence());
+              },
+            ),
           ],
         ),
       ),

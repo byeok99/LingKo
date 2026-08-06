@@ -117,14 +117,9 @@ class AppCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? context.palette.card,
         borderRadius: BorderRadius.circular(AppSizes.radius),
+        // 그림자를 쓰지 않는다. 면을 띄우는 대신 1px 선으로만 구분해
+        // 화면에서 떠 있는 요소가 하나도 없게 한다.
         border: Border.all(color: context.palette.border),
-        boxShadow: [
-          BoxShadow(
-            color: context.palette.shadow,
-            blurRadius: 20,
-            offset: Offset(0, 6),
-          ),
-        ],
       ),
       child: child,
     );
@@ -153,7 +148,7 @@ class PrimaryButton extends StatelessWidget {
               dimension: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: context.palette.card,
+                color: context.palette.onPrimary,
               ),
             )
             : Row(
@@ -167,36 +162,11 @@ class PrimaryButton extends StatelessWidget {
                 Flexible(child: Text(label, textAlign: TextAlign.center)),
               ],
             );
-    final enabled = onPressed != null && !isLoading;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: enabled ? null : context.palette.border,
-        gradient:
-            enabled
-                ? const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF4387CA), Color(0xFF286EAE)],
-                )
-                : null,
-        borderRadius: BorderRadius.circular(AppSizes.radiusControl),
-        boxShadow:
-            enabled
-                ? const [
-                  BoxShadow(
-                    color: Color(0x3B2F73B9),
-                    blurRadius: 18,
-                    offset: Offset(0, 8),
-                  ),
-                ]
-                : null,
-      ),
+    // 그라디언트와 그림자를 쓰지 않는다. 위계는 재질이 아니라 채움으로만 말한다.
+    // 이전에는 primary만 입체였고 나머지는 평면이라 같은 무게의 버튼끼리 재질이 달랐다.
+    return SizedBox(
+      height: AppSizes.buttonHeight,
       child: FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          disabledBackgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-        ),
         onPressed: isLoading ? null : onPressed,
         child: Semantics(
           label: isLoading ? '$label in progress' : label,
@@ -221,33 +191,20 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentIcon = icon;
     return SizedBox(
       height: AppSizes.buttonHeight,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon ?? Icons.arrow_forward, size: 19),
-        label: Text(label),
-      ),
+      child:
+          currentIcon == null
+              // 라벨만 있는 형태가 기본이다. 아이콘을 강제로 붙이면 동등한 선택지
+              // 두 개를 나란히 뒀을 때 한쪽이 더 무거워 보인다.
+              ? OutlinedButton(onPressed: onPressed, child: Text(label))
+              : OutlinedButton.icon(
+                onPressed: onPressed,
+                icon: Icon(currentIcon, size: 19),
+                label: Text(label),
+              ),
     );
-  }
-}
-
-/// 활성 상태가 아니면 명확히 비활성화되는 보조 기능 버튼이다.
-class ActionButton extends StatelessWidget {
-  const ActionButton({
-    super.key,
-    required this.icon,
-    required this.label,
-    this.onPressed,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SecondaryButton(label: label, onPressed: onPressed, icon: icon);
   }
 }
 
@@ -457,6 +414,101 @@ class CharacterBadge extends StatelessWidget {
           fontSize: large ? 24 : 19,
           fontWeight: FontWeight.w900,
         ),
+      ),
+    );
+  }
+}
+
+/// 제품명 표기다. 화면마다 크기·자간이 갈리지 않도록 한곳에서 정의한다.
+class Wordmark extends StatelessWidget {
+  const Wordmark({super.key, this.fontSize = 24});
+
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'LingKo',
+      style: TextStyle(
+        color: context.palette.textPrimary,
+        fontSize: fontSize,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -fontSize * 0.045,
+      ),
+    );
+  }
+}
+
+/// 한국어 옆에 붙는 로마자 표기다.
+///
+/// 대상 사용자가 한글을 아직 읽지 못하므로 모든 한국어에 병기한다. 자간을 넓게 두는 이유는
+/// 하이픈으로 이어진 음절 경계를 눈으로 끊어 읽을 수 있게 하기 위해서다.
+class RomanizationText extends StatelessWidget {
+  const RomanizationText(
+    this.text, {
+    super.key,
+    this.fontSize = 12,
+    this.highlight,
+  });
+
+  final String text;
+  final double fontSize;
+
+  /// 이 부분만 강조한다. 취약 어절이 문장 어디에 있는지 짚어줄 때 쓴다.
+  final String? highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = TextStyle(
+      color: context.palette.textSecondary,
+      fontSize: fontSize,
+      fontWeight: FontWeight.w500,
+      letterSpacing: fontSize * 0.12,
+      height: 1.4,
+    );
+    final target = highlight;
+    if (target == null || target.isEmpty || !text.contains(target)) {
+      return Text(text, style: base);
+    }
+
+    final index = text.indexOf(target);
+    return Text.rich(
+      TextSpan(
+        style: base,
+        children: [
+          TextSpan(text: text.substring(0, index)),
+          TextSpan(
+            text: target,
+            style: TextStyle(
+              color: context.palette.error,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          TextSpan(text: text.substring(index + target.length)),
+        ],
+      ),
+    );
+  }
+}
+
+/// 섹션을 여는 작은 라벨이다.
+///
+/// 큰 제목 대신 이 라벨을 쓰는 이유는, 화면에서 가장 크게 읽혀야 할 것이 한국어 문장과
+/// 점수이지 섹션 이름이 아니기 때문이다. 자간을 넓히고 대문자로 눌러 구분만 하게 한다.
+class EyebrowLabel extends StatelessWidget {
+  const EyebrowLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        color: context.palette.textSecondary,
+        fontSize: 10.5,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.68,
       ),
     );
   }

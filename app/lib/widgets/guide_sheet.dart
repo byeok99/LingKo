@@ -10,130 +10,133 @@ import '../app/app_theme.dart';
 import '../app/app_palette.dart';
 import '../models/practice_sentence.dart';
 import 'guide_painter.dart';
-import 'shared_widgets.dart';
 
-/// 조음 가이드를 화면 대부분을 차지하는 bottom sheet로 연다.
+/// 조음 가이드를 화면 하단에 붙는 bottom sheet로 연다.
 ///
-/// 기본 bottom sheet는 내용 높이에 맞춰 줄어들어 가이드가 작은 상자에 갇힌다. 가이드는
-/// 세부를 봐야 하는 콘텐츠이므로 높이를 먼저 확보하고 그 안을 미디어가 채우게 한다.
+/// 높이를 비율로 고정하지 않고 내용 높이만큼만 차지하게 둔다. 0.9처럼 비율을 강제하면
+/// 도해가 시트 위쪽에 붙고 아래에 빈 공간이 남아, 손이 닿는 자리가 아무것도 없는 여백이
+/// 된다. 내용에 맞추면 시트가 화면 바닥에서 올라온 만큼만 열린다.
+///
+/// 상한만 화면의 90%로 둔다. 작은 화면이나 큰 글자 설정에서 도해 두 장이 넘칠 때
+/// 잘라내는 대신 시트 안에서 스크롤한다. 두 단면 중 하나라도 못 보면 가이드가 성립하지 않는다.
 /// 호출부마다 같은 설정을 반복하지 않도록 진입점을 하나로 모았다.
 Future<void> showGuideSheet(BuildContext context, CharacterResult result) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: context.palette.card,
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * 0.9,
+    ),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(AppSizes.radiusLarge),
       ),
     ),
-    builder:
-        (_) => FractionallySizedBox(
-          heightFactor: 0.88,
-          child: GuideSheet(result: result),
-        ),
+    builder: (_) => SingleChildScrollView(child: GuideSheet(result: result)),
   );
 }
 
-/// 한 번에 하나의 가이드만 화면 폭 전체로 보여주는 조음 가이드 시트다.
+/// 음절 하나의 입·혀 도해를 세로로 쌓아 함께 보여주는 시트다.
 ///
-/// 입과 혀를 나란히 놓으면 각 가이드가 화면 폭의 절반도 쓰지 못해, 작은 기기에서는
-/// 혀 위치 같은 세부를 분간할 수 없었다. 사용자는 보통 한 번에 하나만 보므로 탭으로
-/// 전환하게 하고 남는 폭과 높이를 전부 미디어에 넘긴다.
-class GuideSheet extends StatefulWidget {
+/// 탭으로 나누지 않는 이유는 입 모양과 혀 위치가 같은 소리를 설명하는 두 단면이기
+/// 때문이다. 번갈아 보면 둘의 관계를 머릿속에서 맞춰야 하지만, 위아래로 쌓으면
+/// 눈만 옮기면 된다. 가로 2열은 각각이 너무 작아 따라 할 수 없다.
+class GuideSheet extends StatelessWidget {
   const GuideSheet({super.key, required this.result});
 
   final CharacterResult result;
 
-  @override
-  State<GuideSheet> createState() => _GuideSheetState();
-}
-
-class _GuideSheetState extends State<GuideSheet> {
-  int selectedIndex = 0;
+  /// 도해 한 장의 높이다. 세로로 쌓아도 두 장이 한 화면에 들어오는 크기로 잡았다.
+  static const _mediaHeight = 214.0;
 
   @override
   Widget build(BuildContext context) {
     // 서버가 제공한 실제 입·혀 미디어를 우선하고, URL이 없을 때만 로컬 도식으로 대체한다.
     // 어떤 형식이 왔는지는 시스템 사정이므로 사용자에게 설명하지 않는다.
-    final guideAssets = _guideAssets(widget.result);
-    final safeIndex =
-        selectedIndex < guideAssets.length ? selectedIndex : 0;
+    final guideAssets = _guideAssets(result);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
-        12,
+        10,
         20,
         MediaQuery.of(context).padding.bottom + 20,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Center(
             child: Container(
-              width: 42,
+              width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: context.palette.border,
+                color: context.palette.borderStrong,
                 borderRadius: BorderRadius.circular(AppSizes.pillRadius),
               ),
             ),
           ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              CharacterBadge(text: widget.result.character, large: true),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  _guideTitle(widget.result),
-                  style: Theme.of(context).textTheme.headlineMedium,
+          const SizedBox(height: 16),
+          // 음절과 로마자를 나란히 두고 아래 선으로 도해와 끊는다.
+          // 자모 분해는 표시하지 않는다. 읽는 법이 아니라 내는 법을 보러 온 화면이다.
+          Container(
+            padding: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: context.palette.line)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  result.character,
+                  style: TextStyle(
+                    color: context.palette.textPrimary,
+                    fontSize: 44,
+                    height: 1,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -1.3,
+                  ),
                 ),
+                const SizedBox(width: 14),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    result.romanization,
+                    style: TextStyle(
+                      color: context.palette.textSecondary,
+                      fontSize: 24,
+                      height: 1,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (guideAssets.isEmpty)
+            SizedBox(
+              height: _mediaHeight,
+              child: _GuideMediaFrame(child: _FallbackGuide(result: result)),
+            )
+          else
+            for (var index = 0; index < guideAssets.length; index++) ...[
+              if (index > 0) const SizedBox(height: 10),
+              _LabeledGuide(
+                key: ValueKey(
+                  'guide-asset-${_guideAssetKey(guideAssets[index].label)}',
+                ),
+                asset: guideAssets[index],
+                height: _mediaHeight,
               ),
             ],
-          ),
-          // 가이드가 둘 다 있을 때만 전환이 의미를 가진다.
-          if (guideAssets.length > 1) ...[
-            const SizedBox(height: 14),
-            _GuideTabs(
-              labels: [for (final asset in guideAssets) asset.label],
-              selectedIndex: safeIndex,
-              onChanged: (index) => setState(() => selectedIndex = index),
-            ),
-          ],
-          const SizedBox(height: 14),
-          // 남은 세로 공간을 미디어가 전부 차지하도록 Expanded로 넘긴다.
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: context.palette.scaffold,
-                borderRadius: BorderRadius.circular(AppSizes.radius),
-                border: Border.all(color: context.palette.border),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child:
-                  guideAssets.isEmpty
-                      ? _FallbackGuide(result: widget.result)
-                      : _GuideAssetView(
-                        key: ValueKey(
-                          'guide-asset-'
-                          '${_guideAssetKey(guideAssets[safeIndex].label)}',
-                        ),
-                        asset: guideAssets[safeIndex],
-                      ),
-            ),
-          ),
           // note는 서버가 실제 조음 힌트를 담아 보낼 때만 의미가 있다.
           // 가이드 종류를 되풀이하는 자동 생성 문구는 표시하지 않는다.
-          if (_hasMeaningfulNote(widget.result.note)) ...[
+          if (_hasMeaningfulNote(result.note)) ...[
             const SizedBox(height: 14),
-            Text(
-              widget.result.note,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
+            Text(result.note, style: Theme.of(context).textTheme.bodyLarge),
           ],
         ],
       ),
@@ -141,66 +144,74 @@ class _GuideSheetState extends State<GuideSheet> {
   }
 }
 
-/// 입·혀 가이드를 오가는 세그먼트 전환이다.
-class _GuideTabs extends StatelessWidget {
-  const _GuideTabs({
-    required this.labels,
-    required this.selectedIndex,
-    required this.onChanged,
+/// 도해 한 장과 그 단면 이름이다.
+class _LabeledGuide extends StatelessWidget {
+  const _LabeledGuide({
+    super.key,
+    required this.asset,
+    required this.height,
   });
 
-  final List<String> labels;
-  final int selectedIndex;
-  final ValueChanged<int> onChanged;
+  final _GuideAsset asset;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: context.palette.softBlue,
-        borderRadius: BorderRadius.circular(AppSizes.pillRadius),
-      ),
-      child: Row(
-        children: [
-          for (var index = 0; index < labels.length; index++)
-            Expanded(
-              child: Semantics(
-                button: true,
-                selected: index == selectedIndex,
-                child: InkWell(
-                  key: ValueKey('guide-tab-${_guideAssetKey(labels[index])}'),
-                  borderRadius: BorderRadius.circular(AppSizes.pillRadius),
-                  onTap: () => onChanged(index),
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      minHeight: AppSizes.minimumTouchTarget - 8,
-                    ),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color:
-                          index == selectedIndex
-                              ? context.palette.card
-                              : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppSizes.pillRadius),
-                    ),
-                    child: Text(
-                      labels[index],
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color:
-                            index == selectedIndex
-                                ? context.palette.primaryDark
-                                : context.palette.textSecondary,
-                      ),
-                    ),
+    return SizedBox(
+      height: height,
+      child: _GuideMediaFrame(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _GuideAssetView(asset: asset),
+            // 어느 단면인지 도해 위에 얹는다. 위아래로 쌓여 있어 라벨이 없으면
+            // 어느 쪽이 입이고 혀인지 그림만으로 판단해야 한다.
+            Positioned(
+              left: 10,
+              top: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: context.palette.card.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+                ),
+                child: Text(
+                  asset.label,
+                  style: TextStyle(
+                    color: context.palette.textSecondary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.2,
                   ),
                 ),
               ),
             ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// 도해를 담는 공통 틀이다. 반경과 배경을 한곳에서 정한다.
+class _GuideMediaFrame extends StatelessWidget {
+  const _GuideMediaFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: context.palette.neutralFill,
+        borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: child,
     );
   }
 }
@@ -224,11 +235,11 @@ List<_GuideAsset> _guideAssets(CharacterResult result) {
   final assets = <_GuideAsset>[];
 
   if (_hasGuideUrl(result.mouthGuideUrl)) {
-    assets.add(_GuideAsset(label: 'Mouth guide', url: result.mouthGuideUrl!));
+    assets.add(_GuideAsset(label: 'LIPS · FRONT VIEW', url: result.mouthGuideUrl!));
   }
 
   if (_hasGuideUrl(result.tongueGuideUrl)) {
-    assets.add(_GuideAsset(label: 'Tongue guide', url: result.tongueGuideUrl!));
+    assets.add(_GuideAsset(label: 'TONGUE · SIDE VIEW', url: result.tongueGuideUrl!));
   }
 
   return assets;
@@ -236,26 +247,6 @@ List<_GuideAsset> _guideAssets(CharacterResult result) {
 
 bool _hasGuideUrl(String? value) {
   return value != null && value.trim().isNotEmpty;
-}
-
-String _guideTitle(CharacterResult result) {
-  final hasMouthGuide = _hasGuideUrl(result.mouthGuideUrl);
-  final hasTongueGuide = _hasGuideUrl(result.tongueGuideUrl);
-
-  if (hasMouthGuide && hasTongueGuide) {
-    return 'Mouth & tongue guide';
-  }
-  if (hasMouthGuide) {
-    return 'Mouth guide';
-  }
-  if (hasTongueGuide) {
-    return 'Tongue guide';
-  }
-
-  final kind = result.kind.trim();
-  return kind.isEmpty || kind.toUpperCase() == 'NONE'
-      ? 'Pronunciation guide'
-      : '$kind guide';
 }
 
 /// Guide Asset 표시를 재사용 가능한 Widget으로 제공한다.
@@ -283,7 +274,7 @@ String _guideAssetKey(String label) {
 
 /// Guide Asset URL의 미디어 형식에 맞는 렌더러를 선택한다.
 class _GuideAssetView extends StatelessWidget {
-  const _GuideAssetView({super.key, required this.asset});
+  const _GuideAssetView({required this.asset});
 
   final _GuideAsset asset;
 

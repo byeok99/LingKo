@@ -431,7 +431,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Widget build(BuildContext context) {
     final preparedSentence = isPreparedSentenceCurrent ? widget.sentence : null;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
       children: [
         TopBar(
           title:
@@ -524,23 +524,22 @@ class _PracticeContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(title: 'Listen'),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
+        // Normal과 Slow는 동등한 선택지라 같은 무게의 secondary로 나란히 둔다.
+        // 한쪽을 채우면 그쪽이 정답처럼 보인다.
         Row(
           children: [
             Expanded(
-              child: ActionButton(
+              child: SecondaryButton(
                 key: const ValueKey('play-sentence-normal'),
-                icon: Icons.play_arrow,
                 label: 'Normal',
                 onPressed: onPlayNormal,
               ),
             ),
             const SizedBox(width: 9),
             Expanded(
-              child: ActionButton(
+              child: SecondaryButton(
                 key: const ValueKey('play-sentence-slow'),
-                icon: Icons.slow_motion_video,
                 label: 'Slow',
                 onPressed: onPlaySlow,
               ),
@@ -573,26 +572,25 @@ class _PracticeContent extends StatelessWidget {
         if (hasRecording) ...[
           PrimaryButton(
             label: 'Retry with this recording',
-            icon: Icons.refresh,
             isLoading: isSubmitting,
             onPressed: onRetryRecording,
           ),
           const SizedBox(height: AppSpacing.sm),
           SecondaryButton(
             label: 'Record again',
-            icon: Icons.mic_none,
             onPressed: isSubmitting ? null : onDiscardRecording,
           ),
         ] else
           PrimaryButton(
             key: const ValueKey('record-primary'),
+            // 남은 기회가 없으면 형태는 그대로 두고 채움만 약화한다(비활성).
+            // 라벨로 이유를 말하되 버튼을 없애면 어디서 다시 시작할지 알 수 없다.
             label:
                 quotaExhausted
-                    ? 'No evaluation chances available'
+                    ? 'No practices left'
                     : wasPermissionDenied
                     ? 'Retry microphone permission'
-                    : 'Start recording',
-            icon: Icons.mic,
+                    : 'Record',
             onPressed: quotaExhausted ? null : onStartRecording,
           ),
       ],
@@ -695,12 +693,8 @@ class _RecordingView extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _RecordingWaveform(amplitude: amplitude),
-        const SizedBox(height: 17),
-        Text(
-          'Speak naturally. Stop when you finish the full sentence.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: context.palette.textSecondary, fontSize: 12),
-        ),
+        // 말하는 순간에 읽으라고 문장을 두지 않는다. 사용자는 화면이 아니라
+        // 발음에 집중해야 한다.
         const SizedBox(height: 34),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -749,30 +743,41 @@ class _RecordingControl extends StatelessWidget {
           child: Column(
             children: [
               Container(
-                width: primary ? 62 : 46,
-                height: primary ? 62 : 46,
+                width: primary ? 68 : 48,
+                height: primary ? 68 : 48,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: primary ? context.palette.primary : context.palette.card,
+                  // 정지도 채우지 않는다. 인터랙티브 파랑은 다른 곳에 쓰고
+                  // 여기서는 안쪽 붉은 사각형 하나만 눈에 들어오게 한다.
+                  color: context.palette.card,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: primary ? context.palette.blue200 : context.palette.border,
-                    width: primary ? 5 : 1,
-                  ),
+                  border: Border.all(color: context.palette.borderStrong),
                 ),
-                child: Icon(
-                  icon,
-                  color: primary ? context.palette.card : context.palette.textPrimary,
-                  size: primary ? 24 : 20,
-                ),
+                child:
+                    primary
+                        // 정지는 아이콘이 아니라 사각형이다. 녹음 정지는 이 앱에서
+                        // 붉은색을 쓰는 유일한 컨트롤이라 형태만으로 구분된다.
+                        ? Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: context.palette.recordAccent,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        )
+                        : Icon(
+                          icon,
+                          color: context.palette.textPrimary,
+                          size: 20,
+                        ),
               ),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: TextStyle(
-                  color: context.palette.textPrimary,
+                  color: context.palette.textSecondary,
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -861,17 +866,16 @@ class _SentenceComposerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      color: context.palette.blue50,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Practice sentence',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          TextField(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const EyebrowLabel('Your sentence · tap to edit'),
+        const SizedBox(height: 11),
+        // 입력만 카드로 채우고 나머지는 선으로 구분한다. 이 화면에서 손을 대는 곳이
+        // 여기 하나뿐이라 유일하게 채워진 면이어야 어디를 눌러야 할지 헷갈리지 않는다.
+        AppCard(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: TextField(
             key: const ValueKey('practice-sentence-field'),
             controller: controller,
             focusNode: focusNode,
@@ -881,93 +885,102 @@ class _SentenceComposerCard extends StatelessWidget {
             maxLines: 4,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => focusNode.unfocus(),
+            style: TextStyle(
+              color: context.palette.textPrimary,
+              fontSize: 21,
+              height: 1.45,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.42,
+            ),
             decoration: const InputDecoration(
               hintText: 'Type a Korean sentence',
-              prefixIcon: Icon(Icons.edit_outlined),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 13,
+              ),
             ),
           ),
-          if (isLoading) ...[
-            const SizedBox(height: AppSpacing.md),
-            _SentencePreparationStatus(
-              icon: SizedBox.square(
-                dimension: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              text: 'Preparing standard pronunciation…',
+        ),
+        if (isLoading) ...[
+          const SizedBox(height: AppSpacing.md),
+          _SentencePreparationStatus(
+            icon: SizedBox.square(
+              dimension: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
-          ] else if (errorText != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            Column(
+            text: 'Preparing standard pronunciation…',
+          ),
+        ] else if (errorText != null) ...[
+          const SizedBox(height: AppSpacing.md),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SentencePreparationStatus(
+                icon: Icon(
+                  Icons.error_outline,
+                  size: 18,
+                  color: context.palette.error,
+                ),
+                text: errorText!,
+                textColor: context.palette.error,
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh, size: 17),
+                  label: const Text('Retry'),
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (preparedSentence != null &&
+            preparedSentence!.pronunciation.trim().isNotEmpty) ...[
+          const SizedBox(height: 26),
+          // 표준 발음은 읽기만 하는 정보라 카드가 아니라 위아래 선으로 묶는다.
+          Container(
+            key: const ValueKey('practice-standard-pronunciation'),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: context.palette.line),
+                bottom: BorderSide(color: context.palette.line),
+              ),
+            ),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SentencePreparationStatus(
-                  icon: Icon(
-                    Icons.error_outline,
-                    size: 18,
-                    color: context.palette.error,
-                  ),
-                  text: errorText!,
-                  textColor: context.palette.error,
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: onRetry,
-                    icon: const Icon(Icons.refresh, size: 17),
-                    label: const Text('Retry'),
+                const EyebrowLabel('How it should sound'),
+                const SizedBox(height: 12),
+                Text(
+                  preparedSentence!.pronunciation,
+                  style: TextStyle(
+                    color: context.palette.textPrimary,
+                    fontSize: 24,
+                    height: 1.45,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.6,
                   ),
                 ),
+                if (preparedSentence!.romanizedPronunciation
+                    .trim()
+                    .isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  RomanizedPronunciation(
+                    key: const ValueKey('practice-romanized-pronunciation'),
+                    text: preparedSentence!.romanizedPronunciation,
+                  ),
+                ],
               ],
             ),
-          ],
-          if (preparedSentence != null &&
-              preparedSentence!.pronunciation.trim().isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.md),
-            Container(
-              key: const ValueKey('practice-standard-pronunciation'),
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-              decoration: BoxDecoration(
-                color: context.palette.card,
-                border: Border.all(color: context.palette.blue200),
-                borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Standard pronunciation',
-                    style: TextStyle(
-                      color: context.palette.textSecondary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    preparedSentence!.pronunciation,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: context.palette.primaryDark,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  if (preparedSentence!.romanizedPronunciation
-                      .trim()
-                      .isNotEmpty) ...[
-                    const SizedBox(height: 5),
-                    RomanizedPronunciation(
-                      key: const ValueKey('practice-romanized-pronunciation'),
-                      text: preparedSentence!.romanizedPronunciation,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }

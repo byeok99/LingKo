@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - Direction A 핸드오프 정합화
+
+- 변경 파일: `design_handoff_lingko_direction_a/`
+- 내용: 05 Scoring에 좌상단 뒤로가기를 추가하고, README가 HTML보다 뒤처져 있던 세 곳(02 재생 버튼·06 CTA·화면 수)을 HTML 기준으로 맞췄다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 취약 목록은 어절 단위다. 디자인의 음절 단위 표기는 화면에서 함께 조정해야 함
+
 ## 2026-08-05 - 로마자 읽기 가이드 디자인 반영
 
 - 변경 파일: `README.md`, `preview.html`, `WORK_LOG.md`

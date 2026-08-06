@@ -27,6 +27,18 @@ import 'package:lingko_app/widgets/guide_sheet.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
 import 'package:lingko_app/widgets/shared_widgets.dart';
 
+/// 화면 아래쪽 컨트롤을 누르기 전에 보이는 위치로 스크롤한다.
+///
+/// 기본 테스트 뷰포트(800x600)는 디자인 기준 기기(402x772)보다 짧아, 하단 CTA가
+/// 화면 밖에 있을 수 있다. 실제 기기에서는 보이지만 테스트에서만 안 보이는 상황이라
+/// 레이아웃을 테스트에 맞춰 줄이지 않고 스크롤로 맞춘다.
+Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
 /// 테스트에서 Fake Pronunciation Api 의존성을 결정적으로 대체한다.
 /// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakePronunciationApi implements PronunciationApi {
@@ -451,6 +463,7 @@ const _defaultSentences = [
     source: 'RECOMMENDED',
     text: '맛있겠다.',
     pronunciation: '마싣껟따.',
+    romanization: 'ma-sit-kket-tta',
     romanizedPronunciation: 'ma-sit-kket-tta',
     translation: 'It looks delicious.',
     level: 'RECOMMENDED',
@@ -598,12 +611,12 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('splash-logo')), findsOneWidget);
-    expect(find.text('Sign in with Google'), findsNothing);
+    expect(find.text('Continue with Google'), findsNothing);
 
     restoreCompleter.complete(null);
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
   });
 
   testWidgets('App requires login before showing Home', (
@@ -622,11 +635,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.byKey(const Key('google-sign-in-logo')), findsOneWidget);
     expect(find.text('Practice by situation'), findsNothing);
 
-    await tester.tap(find.text('Sign in with Google'));
+    await tester.tap(find.text('Continue with Google'));
     await tester.pumpAndSettle();
 
     expect(authService.signInCalled, isTrue);
@@ -654,8 +667,33 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.text('Practice by situation'), findsNothing);
+  });
+
+  testWidgets('Login anchors the wordmark to the top, not the middle', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final screenHeight = tester.getSize(find.byType(Scaffold)).height;
+    final wordmarkTop = tester.getTopLeft(find.text('LingKo')).dy;
+    final buttonTop = tester.getTopLeft(find.text('Continue with Google')).dy;
+
+    // 전체를 세로 중앙에 모으면 화면 크기마다 시작 위치가 달라져 첫인상이 흔들린다.
+    // 워드마크는 상단에 붙고, 로그인 수단은 손이 닿는 아래쪽에 있어야 한다.
+    expect(wordmarkTop, lessThan(screenHeight * 0.2));
+    expect(buttonTop, greaterThan(screenHeight * 0.5));
   });
 
   testWidgets('Login hides authentication error details', (
@@ -675,7 +713,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Sign in with Google'));
+    await tester.tap(find.text('Continue with Google'));
     await tester.pumpAndSettle();
 
     expect(
@@ -738,10 +776,9 @@ void main() {
 
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('Start recording'), findsOneWidget);
+    expect(find.text('Record'), findsOneWidget);
 
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Record'));
     expect(find.text('Stop and analyze'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('recording-romanized-pronunciation')),
@@ -749,15 +786,14 @@ void main() {
     );
     expect(find.text('마싣껟따.'), findsNothing);
 
-    await tester.tap(find.text('Stop and analyze'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Stop and analyze'));
 
     expect(find.text('Result'), findsOneWidget);
-    expect(find.text('Excellent'), findsOneWidget);
+    // 등급 라벨 대신 한 줄 판정을 보여준다. 'Excellent' 같은 단어는
+    // 점수와 같은 말을 두 번 하는 것이라 다음 행동을 알려주지 않는다.
+    expect(find.text('Clear pronunciation.'), findsOneWidget);
     expect(find.text('91'), findsOneWidget);
-    expect(find.text('Pronunciation guide'), findsOneWidget);
-    expect(find.text('Sentence'), findsOneWidget);
-    expect(find.text('Standard pronunciation'), findsOneWidget);
+    expect(find.text('HOW IT SHOULD SOUND'), findsOneWidget);
     expect(find.text('Recognized speech'), findsNothing);
     expect(find.text('사용자 발음'), findsNothing);
     expect(find.text('마싣껟따'), findsOneWidget);
@@ -765,20 +801,12 @@ void main() {
       find.byKey(const ValueKey('result-romanized-pronunciation')),
       findsOneWidget,
     );
-    final resultNormalButton = find.byKey(
-      const ValueKey('result-play-pronunciation-normal'),
+    // 듣기(보통·느리게)는 Practice 화면에만 둔다. Result는 결과를 읽는 자리라
+    // 재생 버튼을 다시 얹으면 다음에 할 일(다시 말하기)이 묻힌다.
+    expect(
+      find.byKey(const ValueKey('result-play-pronunciation-normal')),
+      findsNothing,
     );
-    final resultSlowButton = find.byKey(
-      const ValueKey('result-play-pronunciation-slow'),
-    );
-    tester.widget<ActionButton>(resultNormalButton).onPressed?.call();
-    await tester.pump();
-    expect(speechService.lastText, '마싣껟따');
-    expect(speechService.lastRate, SentenceSpeechRate.normal);
-
-    tester.widget<ActionButton>(resultSlowButton).onPressed?.call();
-    await tester.pump();
-    expect(speechService.lastRate, SentenceSpeechRate.slow);
     await tester.scrollUntilVisible(
       find.text('Word feedback is unavailable'),
       300,
@@ -806,24 +834,24 @@ void main() {
     expect(sentenceApi.lastLimit, 50);
     expect(sentenceApi.lastCategory, isNull);
     expect(find.text('Practice by situation'), findsOneWidget);
-    expect(find.text('Daily Life'), findsOneWidget);
-    expect(find.text('3 sentences'), findsOneWidget);
+    // 카테고리는 밑줄 탭 라벨로만 보인다. 별도 섹션 제목·개수 표기는 두지 않는다.
+    expect(find.text('Daily'), findsOneWidget);
     expect(find.text('천천히 말씀해 주세요.'), findsOneWidget);
     expect(find.text('Start Practice'), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('home-category-food')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Food & Café'), findsOneWidget);
-    expect(find.text('4 sentences'), findsOneWidget);
+    // 카테고리 전환은 탭 라벨과 목록 내용으로 확인한다.
+    expect(find.text('Food'), findsOneWidget);
     expect(find.text('맛있겠다.'), findsOneWidget);
     expect(find.text('물 한 잔 주세요.'), findsOneWidget);
     expect(find.text('커피가 뜨거워요.'), findsNothing);
-    expect(find.text('View all 4 sentences'), findsOneWidget);
+    expect(find.text('Show 1 more'), findsOneWidget);
 
     await tester.drag(_verticalScrollable().first, const Offset(0, -250));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('View all 4 sentences'));
+    await tester.tap(find.text('Show 1 more'));
     await tester.pumpAndSettle();
 
     expect(find.text('커피가 뜨거워요.'), findsOneWidget);
@@ -831,7 +859,7 @@ void main() {
 
     await tester.drag(_verticalScrollable().first, const Offset(0, -400));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Practice my own sentence'));
+    await tester.tap(find.text('Type my own sentence'));
     await tester.pumpAndSettle();
 
     final customSentenceField = tester.widget<TextField>(
@@ -882,7 +910,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(quotaApi.lastAccessToken, 'access.jwt');
-    expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
+    // 하단 탭에도 마이크 아이콘이 있어 캡슐 안으로 범위를 좁힌다.
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('practice-energy-capsule')),
+        matching: find.byIcon(Icons.mic_none_rounded),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('3/5'), findsOneWidget);
     expect(find.text('42:18'), findsOneWidget);
     expect(
@@ -890,9 +925,12 @@ void main() {
       findsOneWidget,
     );
     final capsule = find.byKey(const ValueKey('practice-energy-capsule'));
-    expect(tester.getSize(capsule).height, lessThanOrEqualTo(42));
-    expect(tester.getSize(capsule).width, lessThanOrEqualTo(174));
-    expect(tester.getTopRight(capsule).dx, closeTo(782, 0.1));
+    // 충전 버튼의 히트 영역이 44px이라 캡슐 높이는 그보다 작아질 수 없다.
+    expect(tester.getSize(capsule).height, lessThanOrEqualTo(46));
+    // 캡슐이 [마이크 3/5 | 42:18 +]로 늘어나 이전보다 넓다. 헤더의 워드마크를
+    // 밀어내지 않는 선을 상한으로 둔다.
+    expect(tester.getSize(capsule).width, lessThanOrEqualTo(215));
+    expect(tester.getTopRight(capsule).dx, closeTo(780, 0.1));
     expect(
       (tester.getCenter(find.text('LingKo')).dy - tester.getCenter(capsule).dy)
           .abs(),
@@ -941,7 +979,8 @@ void main() {
       final alignmentFrame = find.byKey(
         const ValueKey('practice-energy-alignment-frame'),
       );
-      expect(tester.getSize(alignmentFrame).width, 166);
+      // 캡슐이 [마이크 3/5 | 42:18 +]로 늘어나 헤더가 내주는 폭도 함께 넓혔다.
+      expect(tester.getSize(alignmentFrame).width, 215);
       final refillWidth = tester.getSize(capsule).width;
 
       quotaApi.quota = const PracticeQuota(
@@ -956,15 +995,17 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
+      // 최대치에서는 남은 수량만 보여준다. 5/5 자체가 최대라는 뜻이라
+      // 별도 라벨을 더하면 캡슐이 길어지기만 한다.
       expect(find.text('5/5'), findsOneWidget);
-      expect(find.text('MAX'), findsOneWidget);
+      expect(find.text('MAX'), findsNothing);
       expect(
         find.byKey(const ValueKey('practice-energy-ad-button')),
         findsNothing,
       );
       expect(tester.getSize(capsule).width, lessThan(refillWidth));
-      expect(tester.getSize(capsule).width, lessThanOrEqualTo(115));
-      expect(tester.getTopRight(capsule).dx, closeTo(782, 0.1));
+      expect(tester.getSize(capsule).width, lessThanOrEqualTo(120));
+      expect(tester.getTopRight(capsule).dx, closeTo(780, 0.1));
       expect(
         tester.getTopRight(capsule).dx,
         tester.getTopRight(alignmentFrame).dx,
@@ -997,13 +1038,18 @@ void main() {
     await tester.tap(find.text('맛있겠다.').first);
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('Start recording'),
+      find.text('Record'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
+    await tester.ensureVisible(find.text('Record'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Record'));
+    await tester.pump();
+    // 중간 상태를 관찰해야 해서 pumpAndSettle을 쓰지 않는다. 위치만 먼저 확보한다.
+    await tester.ensureVisible(find.text('Stop and analyze'));
     await tester.pump();
     await tester.tap(find.text('Stop and analyze'));
     await tester.pump();
@@ -1035,7 +1081,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Result'), findsOneWidget);
-    expect(find.text('Excellent'), findsOneWidget);
+    expect(find.text('Clear pronunciation.'), findsOneWidget);
   });
 
   testWidgets('evaluation job survives tab changes until Result is ready', (
@@ -1059,21 +1105,25 @@ void main() {
     await tester.tap(find.text('맛있겠다.').first);
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('Start recording'),
+      find.text('Record'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
+    await tester.ensureVisible(find.text('Record'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Record'));
+    await tester.pump();
+    // 중간 상태를 관찰해야 해서 pumpAndSettle을 쓰지 않는다. 위치만 먼저 확보한다.
+    await tester.ensureVisible(find.text('Stop and analyze'));
     await tester.pump();
     await tester.tap(find.text('Stop and analyze'));
     await tester.pump();
 
     expect(find.byType(NavigationBar), findsNothing);
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
-    await tester.pump();
-    await tester.tap(find.text('Continue in background'));
+    // 채점 화면을 빠져나가는 길은 하단 CTA가 아니라 좌상단 뒤로가기다.
+    await tester.tap(find.byKey(const ValueKey('scoring-back')));
     await tester.pump();
     expect(find.text('Evaluation in progress'), findsOneWidget);
 
@@ -1163,8 +1213,8 @@ void main() {
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
 
-    expect(find.text('No evaluation chances available'), findsOneWidget);
-    await tester.tap(find.text('No evaluation chances available'));
+    expect(find.text('No practices left'), findsOneWidget);
+    await tester.tap(find.text('No practices left'));
     await tester.pumpAndSettle();
 
     expect(recorder.permissionChecks, 0);
@@ -1191,12 +1241,12 @@ void main() {
     await tester.tap(_navigationLabel('Practice'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Practice sentence'), findsOneWidget);
+    expect(find.text('YOUR SENTENCE · TAP TO EDIT'), findsOneWidget);
     expect(find.text('Recommended'), findsNothing);
     expect(find.text('My sentence'), findsNothing);
     expect(find.text('Use this sentence'), findsNothing);
     expect(find.text('맛있겠다.'), findsNothing);
-    expect(find.text('Start recording'), findsNothing);
+    expect(find.text('Record'), findsNothing);
 
     await tester.enterText(
       find.byKey(const ValueKey('practice-sentence-field')),
@@ -1209,7 +1259,7 @@ void main() {
     );
     expect(customSentenceField.controller?.text, '안녕하세요 LingKo 1 연습테스트좋아요');
     expect(api.lastText, isNull);
-    expect(find.text('Start recording'), findsNothing);
+    expect(find.text('Record'), findsNothing);
 
     await tester.pump(const Duration(milliseconds: 699));
     expect(api.lastText, isNull);
@@ -1218,19 +1268,19 @@ void main() {
 
     expect(api.lastText, '안녕하세요 LingKo 1 연습테스트좋아요');
     expect(find.text('Standard pronunciation ready'), findsNothing);
-    expect(find.text('Start recording'), findsOneWidget);
+    expect(find.text('Record'), findsOneWidget);
     expect(find.text('서버 표준 발음'), findsOneWidget);
     expect(find.text('Practice with your own sentence.'), findsNothing);
 
     final normalButton = find.byKey(const ValueKey('play-sentence-normal'));
     final slowButton = find.byKey(const ValueKey('play-sentence-slow'));
-    tester.widget<ActionButton>(normalButton).onPressed?.call();
+    tester.widget<SecondaryButton>(normalButton).onPressed?.call();
     await tester.pump();
 
     expect(speechService.lastText, '안녕하세요 LingKo 1 연습테스트좋아요');
     expect(speechService.lastRate, SentenceSpeechRate.normal);
 
-    tester.widget<ActionButton>(slowButton).onPressed?.call();
+    tester.widget<SecondaryButton>(slowButton).onPressed?.call();
     await tester.pump();
 
     expect(speechService.lastRate, SentenceSpeechRate.slow);
@@ -1288,7 +1338,7 @@ void main() {
     await tester.tap(find.text('맛있겠다.').first);
     await tester.pumpAndSettle();
     final normalButton = find.byKey(const ValueKey('play-sentence-normal'));
-    tester.widget<ActionButton>(normalButton).onPressed?.call();
+    tester.widget<SecondaryButton>(normalButton).onPressed?.call();
     await tester.pump();
 
     expect(find.text('Audio playback needs attention'), findsOneWidget);
@@ -1330,7 +1380,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Start recording'), findsNothing);
+    expect(find.text('Record'), findsNothing);
   });
 
   testWidgets('Practice ignores stale automatic pronunciation responses', (
@@ -1528,8 +1578,7 @@ void main() {
 
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Record'));
 
     expect(
       find.text(
@@ -1569,10 +1618,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop and analyze'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Record'));
+    await _tapVisible(tester, find.text('Stop and analyze'));
 
     expect(
       find.text(
@@ -1603,8 +1650,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Record'));
 
     expect(find.byType(NavigationBar), findsNothing);
     await tester.tap(find.text('Cancel recording'));
@@ -1633,7 +1679,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
+    await tester.tap(find.text('Record'));
     await tester.pump();
 
     CircularProgressIndicator ring() =>
@@ -1684,8 +1730,8 @@ void main() {
     await tester.tap(_navigationLabel('Review'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Recent practice'), findsOneWidget);
-    expect(find.text('1 session'), findsOneWidget);
+    expect(find.text('RECENT HISTORY'), findsOneWidget);
+    expect(find.text('YOUR PROGRESS · LAST 1 TRY'), findsOneWidget);
     expect(find.text('Latest score'), findsOneWidget);
     expect(find.text('91'), findsWidgets);
     expect(find.text('맛있겠다.'), findsOneWidget);
@@ -1693,30 +1739,29 @@ void main() {
       find.byKey(const ValueKey('review-history-card-10')),
       findsOneWidget,
     );
-    expect(find.text('마싯게따.'), findsOneWidget);
+    // 목록 행은 원문·로마자·시각만 담는다. 표준 발음은 상세에서 보여준다.
+    expect(find.text('마싯게따.'), findsNothing);
     expect(find.text('2026-06-26 09:30'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('review-history-card-10')));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.byKey(const ValueKey('review-history-card-10')));
 
-    expect(find.text('Score details'), findsOneWidget);
-    expect(find.text('Pronunciation by word'), findsOneWidget);
+    expect(find.text('SCORE DETAILS'), findsOneWidget);
+    expect(find.text('마싯게따.'), findsOneWidget);
+    expect(find.text('BY WORD · TAP TO SEE ITS SYLLABLES'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('review-romanized-pronunciation')),
       findsOneWidget,
     );
-    expect(find.text('ma-sit-ge-tta'), findsOneWidget);
+    expect(find.text('ma-sit-ge-tta'), findsWidgets);
     expect(find.text('Accuracy'), findsOneWidget);
     expect(find.text('Fluency'), findsOneWidget);
     expect(find.text('Completeness'), findsOneWidget);
-    expect(find.text('맛'), findsOneWidget);
     expect(find.text('88'), findsOneWidget);
+    await _tapVisible(tester, find.byKey(const ValueKey('word-score-0')));
+    expect(find.text('맛'), findsOneWidget);
 
-    Navigator.of(tester.element(find.text('Score details'))).pop();
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Practice again'));
-    await tester.pumpAndSettle();
+    // 재연습은 상세 시트 안에서 시작한다. 버튼이 시트를 먼저 닫고 Practice로 넘긴다.
+    await _tapVisible(tester, find.byKey(const ValueKey('review-retry-practice')));
 
     expect(find.text('Practice'), findsWidgets);
     expect(find.text('Check standard pronunciation'), findsNothing);
@@ -1751,10 +1796,9 @@ void main() {
       find.byKey(const ValueKey('review-history-card-10')),
       260,
     );
-    await tester.tap(find.byKey(const ValueKey('review-history-card-10')));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.byKey(const ValueKey('review-history-card-10')));
 
-    expect(find.text('Score details'), findsOneWidget);
+    expect(find.text('SCORE DETAILS'), findsOneWidget);
     expect(find.text('Completeness'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -1785,7 +1829,7 @@ void main() {
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.text('Practice by situation'), findsNothing);
   });
 
@@ -1807,8 +1851,7 @@ void main() {
     await tester.tap(_navigationLabel('Profile'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Delete account'), 300);
-    await tester.tap(find.text('Delete account'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Delete account'));
 
     expect(find.text('Delete your account?'), findsOneWidget);
     expect(
@@ -1823,7 +1866,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(authService.deleteAccountCalled, isTrue);
-    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
   });
 
   testWidgets('Profile has no language settings section', (
@@ -1872,10 +1915,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop and analyze'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Record'));
+    await _tapVisible(tester, find.text('Stop and analyze'));
 
     expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
   });
@@ -1900,15 +1941,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop and analyze'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Record'));
+    await _tapVisible(tester, find.text('Stop and analyze'));
 
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Continue in background'));
-    await tester.pumpAndSettle();
+    // 채점 화면에는 스크롤할 내용이 없다. 좌상단 뒤로가기로 빠져나간다.
+    await _tapVisible(tester, find.byKey(const ValueKey('scoring-back')));
     await tester.tap(find.byKey(const ValueKey('home-category-travel')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
@@ -1942,13 +1979,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop and analyze'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Record'));
+    await _tapVisible(tester, find.text('Stop and analyze'));
 
     expect(find.text('Result'), findsOneWidget);
-    expect(find.text('Excellent'), findsOneWidget);
+    expect(find.text('Clear pronunciation.'), findsOneWidget);
   });
 
   testWidgets('weak character opens its pronunciation guide', (
@@ -1970,7 +2005,10 @@ void main() {
     await tester.tap(find.byType(ResultTile));
     await tester.pumpAndSettle();
 
-    expect(find.text('TONGUE guide'), findsWidgets);
+    // 가이드 URL이 없으면 라벨 붙은 도해 대신 로컬 대체 도해만 그린다.
+    // 시트가 어느 음절을 설명하는지는 머리말로 알린다.
+    expect(find.text('나'), findsWidgets);
+    expect(find.text('TONGUE · SIDE VIEW'), findsNothing);
     // 가이드 종류만 되풀이하는 자동 생성 note와 미디어 형식 설명은 화면 공간만
     // 차지하므로 표시하지 않는다. 사용자가 볼 것은 가이드 자체다.
     expect(find.text('Focus on tongue placement'), findsNothing);
@@ -2003,7 +2041,7 @@ void main() {
     );
   });
 
-  testWidgets('guide sheet shows one guide at a time and switches by tab', (
+  testWidgets('guide sheet stacks the lips and tongue guides together', (
     WidgetTester tester,
   ) async {
     const character = CharacterResult(
@@ -2017,21 +2055,27 @@ void main() {
     );
 
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: GuideSheet(result: character))),
+      // showGuideSheet과 같은 조건으로 띄운다. 도해 두 장이 세로로 쌓여
+      // 작은 화면에서는 넘치므로 실제 시트도 스크롤 안에 둔다.
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(child: GuideSheet(result: character)),
+        ),
+      ),
     );
 
-    // 작은 화면에서 세부를 확인할 수 있도록 한 번에 하나만 전체 폭으로 그린다.
-    var images = tester.widgetList<Image>(find.byType(Image)).toList();
-    expect(images, hasLength(1));
-    expect((images.single.image as NetworkImage).url, character.mouthGuideUrl);
-    expect(find.text('Mouth & tongue guide'), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey('guide-tab-tongue-guide')));
-    await tester.pumpAndSettle();
-
-    images = tester.widgetList<Image>(find.byType(Image)).toList();
-    expect(images, hasLength(1));
-    expect((images.single.image as NetworkImage).url, character.tongueGuideUrl);
+    // 입 모양과 혀 위치는 같은 소리의 두 단면이라 탭으로 번갈아 보지 않고
+    // 위아래로 쌓는다. 눈만 옮기면 둘의 관계를 볼 수 있다.
+    final images = tester.widgetList<Image>(find.byType(Image)).toList();
+    expect(images, hasLength(2));
+    expect(
+      images.map((image) => (image.image as NetworkImage).url).toList(),
+      [character.mouthGuideUrl, character.tongueGuideUrl],
+    );
+    expect(find.text('LIPS · FRONT VIEW'), findsOneWidget);
+    expect(find.text('TONGUE · SIDE VIEW'), findsOneWidget);
+    // 탭 전환은 더 이상 없다.
+    expect(find.byKey(const ValueKey('guide-tab-tongue-guide')), findsNothing);
   });
 
   testWidgets('guide sheet omits the tab bar when only one guide exists', (
@@ -2055,6 +2099,45 @@ void main() {
     expect(tester.widgetList<Image>(find.byType(Image)), hasLength(1));
   });
 
+  testWidgets('guide sheet hugs its content at the bottom of the screen', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '마',
+      score: 0,
+      note: 'Stable vowel shape',
+      kind: 'MOUTH',
+      guideStatus: 'AVAILABLE',
+      mouthGuideUrl: 'https://guides/mouth/vowel-a.png',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder:
+                (context) => TextButton(
+                  onPressed: () => showGuideSheet(context, character),
+                  child: const Text('open guide'),
+                ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open guide'));
+    await tester.pumpAndSettle();
+
+    final screenHeight = tester.view.physicalSize.height /
+        tester.view.devicePixelRatio;
+    final sheet = tester.getRect(find.byType(GuideSheet));
+
+    // 시트는 화면 바닥에 붙는다. 도해가 위로 뜨고 아래에 빈 공간이 남으면
+    // 손이 닿는 자리가 아무것도 없는 여백이 된다.
+    expect(sheet.bottom, closeTo(screenHeight, 0.1));
+    // 높이는 비율로 고정하지 않고 내용에 맞춘다. 상한(90%)에 닿지 않아야 한다.
+    expect(sheet.height, lessThan(screenHeight * 0.9));
+  });
+
   testWidgets('guide sheet renders MP4 URLs as video media', (
     WidgetTester tester,
   ) async {
@@ -2072,7 +2155,7 @@ void main() {
     );
 
     expect(
-      find.byKey(const ValueKey('guide-video-mouth-guide')),
+      find.byKey(const ValueKey('guide-video-lips-front-view')),
       findsOneWidget,
     );
     expect(find.byType(Image), findsNothing);
@@ -2129,7 +2212,6 @@ void main() {
           body: ResultScreen(
             sentence: sentence,
             result: result,
-            sentenceSpeechService: FakeSentenceSpeechService(),
             onTryAgain: () {},
           ),
         ),
@@ -2140,7 +2222,9 @@ void main() {
       find.byKey(const ValueKey('word-score-0')),
       300,
     );
-    expect(find.text('Pronunciation by word'), findsOneWidget);
+    expect(find.text('BY WORD · TAP TO SEE ITS SYLLABLES'), findsOneWidget);
+    // 음절은 어절을 펼쳐야 나온다. 접힌 상태가 기본이다.
+    await _tapVisible(tester, find.byKey(const ValueKey('word-score-0')));
     expect(find.byKey(const ValueKey('syllable-guide-0-0')), findsOneWidget);
     expect(find.text('—'), findsWidgets);
 
@@ -2151,7 +2235,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('syllable-guide-0-0')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Mouth & tongue guide'), findsOneWidget);
+    // 가이드 종류를 제목으로 되풀이하지 않는다. 시트가 열렸는지로 확인한다.
+    expect(find.byType(GuideSheet), findsOneWidget);
   });
 
   testWidgets('Result groups word scores and switches guide-only syllables', (
@@ -2218,7 +2303,6 @@ void main() {
           body: ResultScreen(
             sentence: sentence,
             result: result,
-            sentenceSpeechService: FakeSentenceSpeechService(),
             onTryAgain: () {},
           ),
         ),
@@ -2229,7 +2313,7 @@ void main() {
       find.byKey(const ValueKey('word-score-0')),
       300,
     );
-    expect(find.text('Pronunciation by word'), findsOneWidget);
+    expect(find.text('BY WORD · TAP TO SEE ITS SYLLABLES'), findsOneWidget);
     expect(find.text('김치찌개'), findsWidgets);
     expect(
       find.descendant(
@@ -2238,6 +2322,8 @@ void main() {
       ),
       findsOneWidget,
     );
+    // 음절은 어절을 펼쳐야 나온다. 접힌 상태가 기본이다.
+    await _tapVisible(tester, find.byKey(const ValueKey('word-score-0')));
     expect(find.byKey(const ValueKey('syllable-guide-0-0')), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('word-score-1')));
@@ -2255,7 +2341,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('syllable-guide-1-0')));
     await tester.pumpAndSettle();
-    expect(find.text('Mouth guide'), findsWidgets);
+    expect(find.byType(GuideSheet), findsOneWidget);
   });
 
   testWidgets('authenticated shell exposes Home Practice Review Profile tabs', (
@@ -2392,7 +2478,6 @@ void main() {
           body: ResultScreen(
             sentence: sentence,
             result: result,
-            sentenceSpeechService: FakeSentenceSpeechService(),
             onTryAgain: () => retried = true,
           ),
         ),
@@ -2404,7 +2489,7 @@ void main() {
       300,
     );
 
-    expect(find.text('Pronunciation by word'), findsOneWidget);
+    expect(find.text('BY WORD · TAP TO SEE ITS SYLLABLES'), findsOneWidget);
     expect(find.text('저는'), findsWidgets);
     expect(find.text('커피를'), findsOneWidget);
     expect(
@@ -2421,16 +2506,16 @@ void main() {
       ),
       findsOneWidget,
     );
+    // 음절은 어절을 펼쳐야 나온다. 접힌 상태가 기본이다.
+    await _tapVisible(tester, find.byKey(const ValueKey('word-score-0')));
     expect(find.byKey(const ValueKey('syllable-guide-0-0')), findsOneWidget);
     expect(find.text('Practice 저 Again'), findsNothing);
     expect(find.text('Practice Weak Sound'), findsNothing);
 
-    await tester.scrollUntilVisible(
+    await _tapVisible(
+      tester,
       find.byKey(const ValueKey('retry-whole-sentence')),
-      300,
     );
-    await tester.tap(find.text('Try This Sentence Again'));
-    await tester.pump();
 
     expect(retried, isTrue);
   });
@@ -2494,7 +2579,6 @@ void main() {
             body: ResultScreen(
               sentence: sentence,
               result: result,
-              sentenceSpeechService: FakeSentenceSpeechService(),
               onTryAgain: () {},
             ),
           ),
@@ -2508,7 +2592,7 @@ void main() {
       maxScrolls: 20,
     );
 
-    expect(find.text('Try This Sentence Again'), findsOneWidget);
+    expect(find.text('Say it again'), findsOneWidget);
   });
 
   testWidgets('main tabs remain usable on a small screen with large text', (
@@ -2536,7 +2620,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_navigationLabel('Home'), findsOneWidget);
-    expect(find.textContaining('Welcome back'), findsOneWidget);
+    expect(find.textContaining('What will you'), findsOneWidget);
 
     await tester.tap(_navigationLabel('Practice'));
     await tester.pumpAndSettle();

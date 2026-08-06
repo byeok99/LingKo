@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-06 - 결과 판정 문구 축약
+
+- 변경 파일: `EvaluationService.java`
+- 내용: 두 문장에 인식된 발음까지 붙던 요약을 한 줄 판정으로 줄였다. 이 문구는 점수와 어절 목록 사이에 놓여, 길면 사용자가 무엇이 틀렸는지 보러 가는 길을 가로막는다. 인식된 발음은 보정을 거친 값이라 사용자가 실제로 낸 소리로 오해할 수 있어 노출을 끊었다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 없음
+
+## 2026-08-06 - 취약 어절 집계 서비스 추가
+
+- 변경 파일: `WeakWordService.java`, `EvaluationService.java`, `EvaluationHistoryService.java`
+- 내용: 반복해서 틀리는 어절을 평균 점수 오름차순으로 집계하고, 어절 하나의 과거 시도와 다음 후보를 한 응답으로 제공한다. 음절이 아니라 어절 단위인 이유는 신뢰할 수 있는 점수의 최소 단위가 어절이기 때문이다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 취약 목록은 어절 단위다. 디자인의 음절 단위 표기는 화면에서 함께 조정해야 함
+
 ## 2026-08-05 - 준비·기록 응답 로마자 파생
 
 - 변경 파일: `EvaluationService.java`, `EvaluationHistoryService.java`, `WORK_LOG.md`

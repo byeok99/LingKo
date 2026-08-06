@@ -15,12 +15,14 @@ class ProfileScreen extends StatefulWidget {
     required this.session,
     required this.onSessionChanged,
     required this.onOpenReview,
+    this.onOpenSavedSentences,
   });
 
   final AppAuthService authService;
   final AuthSession session;
   final ValueChanged<AuthSession?> onSessionChanged;
   final VoidCallback onOpenReview;
+  final VoidCallback? onOpenSavedSentences;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -87,7 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 15, 18, 22),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
       children: [
         TopBar(
           title: 'Profile',
@@ -97,32 +99,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: const Icon(Icons.history_rounded, size: 21),
           ),
         ),
-        const SizedBox(height: 10),
-        _AccountCard(session: widget.session),
-        const SizedBox(height: 24),
+        const SizedBox(height: 18),
+        _AccountBlock(session: widget.session),
+        const SizedBox(height: 20),
+        const EyebrowLabel('Your content'),
+        _SettingsLinkRow(
+          key: const ValueKey('profile-saved-sentences'),
+          icon: Icons.bookmark_border,
+          label: 'Saved sentences',
+          onTap: widget.onOpenSavedSentences,
+        ),
+        const SizedBox(height: 20),
+        const EyebrowLabel('About'),
+        _SettingsLinkRow(
+          icon: Icons.mic_none_rounded,
+          label: 'Audio & privacy',
+          onTap: null,
+        ),
+        _SettingsLinkRow(
+          icon: Icons.info_outline_rounded,
+          label: 'About LingKo 1.0.0',
+          onTap: null,
+          showDivider: false,
+        ),
+        const SizedBox(height: 28),
+        // 로그아웃은 되돌릴 수 있어 선으로만 두고, 탈퇴는 채우지 않는다.
+        // 파괴적 동작을 채우면 실수로 누르기 쉬운 무게를 갖게 된다.
+        SecondaryButton(label: 'Sign out', onPressed: isDeletingAccount ? null : signOut),
+        const SizedBox(height: AppSpacing.sm),
         SizedBox(
           height: AppSizes.buttonHeight,
-          child: OutlinedButton.icon(
+          child: OutlinedButton(
             style: OutlinedButton.styleFrom(
               foregroundColor: context.palette.error,
-              backgroundColor: context.palette.errorSoft,
-              side: const BorderSide(color: Color(0xFFEFCACA)),
+              side: BorderSide(color: context.palette.errorBorder),
             ),
-            onPressed: isDeletingAccount ? null : signOut,
-            icon: Icon(Icons.logout, color: context.palette.error),
-            label: Text(
-              'Sign out',
+            onPressed: isDeletingAccount ? null : deleteAccount,
+            child: Text(
+              isDeletingAccount ? 'Deleting account' : 'Delete account',
               style: TextStyle(color: context.palette.error),
             ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        TextButton.icon(
-          onPressed: isDeletingAccount ? null : deleteAccount,
-          icon: Icon(Icons.delete_forever, color: context.palette.error),
-          label: Text(
-            isDeletingAccount ? 'Deleting account' : 'Delete account',
-            style: TextStyle(color: context.palette.error),
           ),
         ),
       ],
@@ -130,8 +146,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-class _AccountCard extends StatelessWidget {
-  const _AccountCard({required this.session});
+/// 계정 정보 블록이다. 카드로 감싸지 않고 아래 구분선으로만 끊는다.
+class _AccountBlock extends StatelessWidget {
+  const _AccountBlock({required this.session});
 
   final AuthSession session;
 
@@ -140,9 +157,13 @@ class _AccountCard extends StatelessWidget {
     final user = session.user;
     final initial =
         user.name.trim().isEmpty ? '?' : user.name.trim().characters.first;
-    return AppCard(
-      padding: const EdgeInsets.all(15),
+    return Container(
+      padding: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: context.palette.line)),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 58,
@@ -150,29 +171,117 @@ class _AccountCard extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: context.palette.softBlue,
-              borderRadius: BorderRadius.circular(19),
+              borderRadius: BorderRadius.circular(AppSizes.radius),
             ),
             child: Text(
-              initial,
+              initial.toUpperCase(),
               style: TextStyle(
                 color: context.palette.primaryDark,
-                fontSize: 25,
-                fontWeight: FontWeight.w900,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: 13),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user.name, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 2),
-                Text(user.email, style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  user.name,
+                  style: TextStyle(
+                    color: context.palette.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.36,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  user.email,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 7),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.palette.softBlue,
+                    borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+                  ),
+                  child: Text(
+                    'Google',
+                    style: TextStyle(
+                      color: context.palette.primaryDark,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 설정 목록의 한 행이다. 아직 연결되지 않은 항목은 눌리지 않게 흐리게 둔다.
+class _SettingsLinkRow extends StatelessWidget {
+  const _SettingsLinkRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.showDivider = true,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    final color =
+        enabled ? context.palette.textPrimary : context.palette.textMuted;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 52),
+        decoration: BoxDecoration(
+          border:
+              showDivider
+                  ? Border(
+                    bottom: BorderSide(color: context.palette.lineSubtle),
+                  )
+                  : null,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: context.palette.textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }

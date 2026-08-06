@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 어절 모델 추가
+
+- 변경 파일: `weak_word.dart`, `practice_sentence.dart`
+- 내용: WeakWord와 WordDetail을 정의하고, 추천 문장 응답을 목록과 같은 형태로 바꾸는 변환을 추가했다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 북마크를 켜는 진입점(Home·Result)은 아직 서버와 연결되지 않아 목록이 비어 보일 수 있음
+
+## 2026-08-06 - 어절·음절 로마자 매핑
+
+- 변경 파일: `practice_result.dart`, `practice_sentence.dart`
+- 내용: 서버가 어절·음절마다 내려주는 romanization을 모델에 연결했다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 위젯 테스트는 이전 레이아웃 기준이라 갱신이 필요할 수 있음
+
+## 2026-08-06 - 문장 모델에 로마자 추가
+
+- 변경 파일: `practice_sentence.dart`
+- 내용: 서버의 romanizedPronunciation을 받아 목록·결과 어디서나 병기할 수 있게 했다.
+- 검증: `flutter analyze`, `flutter test` 84개 통과
+- 리스크: 06 Result·03 Practice·09 Profile 리디자인과 신규 화면(10·11)은 후속 작업
+
 ## 2026-08-05 - 로마자 발음 모델 계약 추가
 
 - 변경 파일: `practice_sentence.dart`, `practice_history.dart`, `WORK_LOG.md`

@@ -99,7 +99,12 @@ class _ProgressPanelState extends State<ProgressPanel> {
     return Align(
       key: const ValueKey('practice-energy-alignment-frame'),
       alignment: Alignment.centerRight,
-      child: Semantics(
+      // 좁은 화면이나 큰 글자 설정에서 캡슐이 헤더를 넘치는 대신 통째로 줄어들게 한다.
+      // 내용을 숨기면 남은 횟수나 충전 시각 중 하나를 잃지만, 축소는 둘 다 보존한다.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: Semantics(
         label:
             isMax
                 ? 'Practice energy $safeRemaining of $safeLimit, maximum'
@@ -108,90 +113,86 @@ class _ProgressPanelState extends State<ProgressPanel> {
         child: Container(
           key: const ValueKey('practice-energy-capsule'),
           constraints: const BoxConstraints(minHeight: 40),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          padding: const EdgeInsets.only(left: 12),
           decoration: BoxDecoration(
-            color: context.palette.card,
             borderRadius: BorderRadius.circular(AppSizes.pillRadius),
-            border: Border.all(color: context.palette.border),
+            // 카드처럼 채우지 않고 선으로만 묶는다. 헤더에서 워드마크와 무게가 같아야 한다.
+            border: Border.all(color: context.palette.borderStrong),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: context.palette.softBlue,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.mic_rounded,
-                  color: context.palette.primaryDark,
-                  size: 17,
+              Icon(
+                Icons.mic_none_rounded,
+                color: context.palette.textPrimary,
+                size: 16,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                '$safeRemaining/$safeLimit',
+                maxLines: 1,
+                style: TextStyle(
+                  color: context.palette.textPrimary,
+                  fontSize: 14,
+                  height: 1,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(width: 10),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$safeRemaining/$safeLimit',
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: context.palette.textPrimary,
-                      fontSize: 17,
-                      height: 1,
-                      fontWeight: FontWeight.w900,
-                    ),
+              if (!isMax) ...[
+                // 남은 수량과 다음 충전 시각은 성격이 달라 세로선으로 끊는다.
+                Container(
+                  width: 1,
+                  height: 14,
+                  margin: const EdgeInsets.symmetric(horizontal: 9),
+                  color: context.palette.borderStrong,
+                ),
+                Text(
+                  _countdownLabel(),
+                  style: TextStyle(
+                    color: context.palette.textSecondary,
+                    fontSize: 12.5,
+                    height: 1,
+                    fontWeight: FontWeight.w500,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isMax ? 'MAX' : _countdownLabel(),
-                    style: TextStyle(
-                      color: context.palette.primaryDark,
-                      fontSize: 13,
-                      height: 1,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                ],
-              ),
-              if (!isMax)
-                Tooltip(
-                  message: 'Watch an ad for one practice',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      key: const ValueKey('practice-energy-ad-button'),
-                      onTap: widget.onRequestAdReward,
-                      borderRadius: BorderRadius.circular(AppSizes.pillRadius),
-                      child: SizedBox.square(
-                        dimension: 40,
-                        child: Center(
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: context.palette.softBlue,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.add_rounded,
-                              color:
-                                  widget.onRequestAdReward == null
-                                      ? context.palette.textSecondary
-                                      : context.palette.primaryDark,
-                              size: 18,
-                            ),
+                ),
+                Semantics(
+                  button: true,
+                  label: 'Add one practice',
+                  child: InkWell(
+                    key: const ValueKey('practice-energy-ad-button'),
+                    onTap: widget.onRequestAdReward,
+                    borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+                    // 시각 요소는 28px이지만 히트 영역은 44px를 유지한다.
+                    // 캡슐이 헤더에 들어가야 해서 48px 기본값 대신 44px를 쓴다.
+                    child: SizedBox.square(
+                      dimension: 44,
+                      child: Center(
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: context.palette.softBlue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.add_rounded,
+                            color:
+                                widget.onRequestAdReward == null
+                                    ? context.palette.textMuted
+                                    : context.palette.primaryDark,
+                            size: 17,
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
+              ] else
+                // 최대치에서는 오른쪽 여백을 왼쪽 패딩과 맞춰 캡슐이 한쪽으로 쏠리지 않게 한다.
+                const SizedBox(width: 10),
             ],
+          ),
           ),
         ),
       ),

@@ -1,5 +1,54 @@
 # 작업 이력
 
+## 2026-08-06 - 07 Sound guide 시트를 화면 하단에 붙임
+
+- 변경 파일: `guide_sheet.dart`
+- 내용: `FractionallySizedBox(heightFactor: 0.9)`로 높이를 비율 고정하던 것을 걷어내고 내용 높이만큼만 차지하게 했다. 비율을 강제하면 도해가 시트 위쪽에 붙고 아래에 빈 공간이 남아, 손이 닿는 자리가 아무것도 없는 여백이 된다. 상한만 화면의 90%로 두어 작은 화면·큰 글자에서는 시트 안에서 스크롤한다.
+- 검증: `flutter analyze`, `flutter test` 86개 통과
+- 리스크: 없음
+
+## 2026-08-06 - 07 Sound guide를 세로 스택으로 되돌림
+
+- 변경 파일: `guide_sheet.dart`
+- 내용: 입·혀 도해를 탭으로 전환하던 것을 핸드오프대로 세로 스택 2장(각 214px)으로 바꿨다. 입 모양과 혀 위치는 같은 소리를 설명하는 두 단면이라, 번갈아 보면 둘의 관계를 머릿속에서 맞춰야 하지만 위아래로 쌓으면 눈만 옮기면 된다. 헤더를 음절 44px + 로마자 24px로 맞추고 자모 분해는 두지 않았다. 도해가 세로로 쌓여 넘칠 수 있어 시트를 스크롤 가능하게 했다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 탭 전환 기준으로 쓰인 위젯 테스트 3건이 실패한다
+
+## 2026-08-06 - 사용하지 않는 ActionButton 제거
+
+- 변경 파일: `shared_widgets.dart`
+- 내용: SecondaryButton의 아이콘 강제를 없앤 뒤 ActionButton은 얇은 위임만 남아 제거했다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 그라디언트·그림자 0건, 버튼 아이콘 0건 확인
+- 리스크: 없음
+
+## 2026-08-06 - 버튼·카드에서 그라디언트와 그림자 제거
+
+- 변경 파일: `shared_widgets.dart`
+- 내용: PrimaryButton이 테마를 우회해 그라디언트와 그림자를 직접 그리고 있어 토큰 교체가 화면에 반영되지 않았다. 평면 채움으로 바꿔 위계를 재질이 아니라 채움으로만 표현한다. SecondaryButton의 기본 화살표 아이콘도 없앴다. 아이콘을 강제하면 동등한 선택지 둘을 나란히 뒀을 때 한쪽이 더 무거워 보인다. AppCard의 그림자도 제거했다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 없음
+
+## 2026-08-06 - 05 Scoring 이탈 경로 추가
+
+- 변경 파일: `evaluation_progress_panel.dart`
+- 내용: 하단 'Continue in background' 버튼을 좌상단 뒤로가기로 옮겼다. 채점 중에도 빠져나갈 길이 보여야 하고, 하단 CTA를 두면 이 화면의 목적이 '기다리기'처럼 보인다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 위젯 테스트는 이전 레이아웃·문구 기준이라 갱신이 필요하다
+
+## 2026-08-06 - 점수 카드와 어절 아코디언
+
+- 변경 파일: `score_card.dart`, `word_syllable_explorer.dart`, `shared_widgets.dart`
+- 내용: ScoreCard를 새로 만들고 80 기준 2단계 색을 kPassingScore 한곳에서 정의했다. 어절 탐색을 가로 버튼 나열에서 세로 아코디언으로 바꿔 어절이 상위이고 음절이 그 안이라는 관계가 드러나게 했다. 음절 칩에는 점수를 표시하지 않는다. EyebrowLabel을 공용으로 뽑았다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 위젯 테스트는 이전 레이아웃 기준이라 갱신이 필요할 수 있음
+
+## 2026-08-06 - 문장 행·에너지 캡슐·공용 위젯
+
+- 변경 파일: `sentence_card.dart`, `progress_panel.dart`, `shared_widgets.dart`
+- 내용: 문장 행을 [한국어 → 로마자 → 번역] 세로 구조로 바꾸고 북마크 토글과 취약 어절 강조를 넣었다. 재생 버튼은 제거했다(소리는 Practice에서만). 에너지 캡슐을 선으로만 묶은 pill로 바꾸고 좁은 화면에서는 내용을 숨기는 대신 통째로 축소하게 했다. Wordmark와 RomanizationText를 공용 위젯으로 뽑았다.
+- 검증: `flutter analyze`, `flutter test` 84개 통과
+- 리스크: 06 Result·03 Practice·09 Profile 리디자인과 신규 화면(10·11)은 후속 작업
+
 ## 2026-08-05 - 공용 로마자 발음 위젯 추가
 
 - 변경 파일: `romanized_pronunciation.dart`, `WORK_LOG.md`

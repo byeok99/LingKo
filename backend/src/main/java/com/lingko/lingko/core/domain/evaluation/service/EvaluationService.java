@@ -141,6 +141,7 @@ public class EvaluationService {
                     .position(position)
                     .text(character)
                     .pronunciationText(character)
+                    .romanization(KoreanRomanizationUtil.romanizeSegment(character))
                     .phonemes(phonemes)
                     .guideType(guideType)
                     .guideStatus("NONE".equals(guideType) ? GuideStatus.MISSING : GuideStatus.AVAILABLE)
@@ -178,6 +179,7 @@ public class EvaluationService {
                 .position(character.getPosition())
                 .text(character.getText())
                 .pronunciationText(character.getPronunciationText())
+                .romanization(character.getRomanization())
                 .phonemes(character.getPhonemes())
                 .guideType(guideType)
                 .guideStatus("NONE".equals(guideType) ? GuideStatus.MISSING : GuideStatus.AVAILABLE)
@@ -442,6 +444,7 @@ public class EvaluationService {
                         .position(resolvedCharacter.getPosition())
                         .text(resolvedCharacter.getText())
                         .pronunciationText(resolvedCharacter.getPronunciationText())
+                        .romanization(resolvedCharacter.getRomanization())
                         .score(characterScore)
                         .scoreStatus(characterScoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
                         .phonemes(resolvedCharacter.getPhonemes())
@@ -466,7 +469,7 @@ public class EvaluationService {
         return PracticeResultResponse.builder()
                 .overallScore(overallScore)
                 .gradeLabel(resolveGradeLabel(overallScore))
-                .summary(resolveSummary(overallScore, result.getRecognizedText()))
+                .summary(resolveSummary(overallScore))
                 .recognizedText(result.getRecognizedText())
                 .characterScoreStatus(characterScoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
                 .wordScoreStatus(wordScoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
@@ -515,6 +518,7 @@ public class EvaluationService {
             words.add(PracticeWordResultResponse.builder()
                     .position(position)
                     .text(word)
+                    .romanization(KoreanRomanizationUtil.romanizeSegment(word))
                     .score(score)
                     .scoreStatus(scoresAvailable ? ScoreStatus.AVAILABLE : ScoreStatus.UNAVAILABLE)
                     .syllables(syllables)
@@ -534,6 +538,7 @@ public class EvaluationService {
         return List.of(PracticeWordResultResponse.builder()
                 .position(0)
                 .text(referenceText.trim())
+                .romanization(KoreanRomanizationUtil.romanizeSegment(referenceText))
                 .score(null)
                 .scoreStatus(ScoreStatus.UNAVAILABLE)
                 .syllables(characters.stream().map(this::toGuideOnlySyllable).toList())
@@ -546,6 +551,7 @@ public class EvaluationService {
                 .position(character.getPosition())
                 .text(character.getText())
                 .pronunciationText(character.getPronunciationText())
+                .romanization(character.getRomanization())
                 .score(null)
                 .scoreStatus(ScoreStatus.UNAVAILABLE)
                 .phonemes(character.getPhonemes())
@@ -615,20 +621,24 @@ public class EvaluationService {
         return "Needs work";
     }
 
-    private String resolveSummary(int score, String recognizedText) {
-        String scoreSummary;
+    /**
+     * 점수 카드 아래에 붙는 한 줄 판정이다.
+     *
+     * 짧게 유지하는 이유는 이 문구가 점수와 어절 목록 사이에 놓이기 때문이다. 여러 줄이면
+     * 사용자가 "무엇이 틀렸는지"를 보러 가는 길을 문장이 가로막는다. 무엇을 고칠지는
+     * 아래 어절 목록이 이미 붉은색으로 말한다.
+     *
+     * 인식된 발음은 붙이지 않는다. 공급자가 들은 문자열을 그대로 보여주면 사용자가 실제로
+     * 낸 소리로 오해하는데, 인식 결과는 보정을 거친 값이라 발음의 근거가 될 수 없다.
+     */
+    private String resolveSummary(int score) {
         if (score >= 90) {
-            scoreSummary = "Clear pronunciation. Keep the same rhythm and articulation.";
-        } else if (score >= 75) {
-            scoreSummary = "Good pronunciation. Review the highlighted sounds and try once more.";
-        } else {
-            scoreSummary = "Pronunciation needs more practice. Focus on the guide items before retrying.";
+            return "Clear — keep this rhythm";
         }
-
-        if (recognizedText == null || recognizedText.isBlank()) {
-            return scoreSummary;
+        if (score >= WEAK_SCORE_THRESHOLD) {
+            return "Understandable — one sound to refine";
         }
-        return scoreSummary + " Recognized speech: " + recognizedText.trim();
+        return "Needs work — start with the red words";
     }
 
     private SpeechEvaluator requireSpeechEvaluator() {

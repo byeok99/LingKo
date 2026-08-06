@@ -68,6 +68,7 @@ class PracticeWordResult {
   const PracticeWordResult({
     required this.position,
     required this.text,
+    this.romanization = '',
     this.score,
     this.scoreStatus = ScoreStatus.unavailable,
     required this.syllables,
@@ -89,6 +90,7 @@ class PracticeWordResult {
     return PracticeWordResult(
       position: _intValue(json['position']),
       text: _stringValue(json['text']),
+      romanization: _stringValue(json['romanization']),
       score: _nullableIntValue(json['score']),
       scoreStatus: json['scoreStatus'] == null
           ? ScoreStatus.ofNullableScore(json['score'])
@@ -109,6 +111,9 @@ class PracticeWordResult {
 
   final int position;
   final String text;
+
+  /// 어절의 로마자다. 한글을 못 읽는 학습자가 대상이라 목록마다 병기한다.
+  final String romanization;
   final int? score;
   final ScoreStatus scoreStatus;
   final List<CharacterResult> syllables;
