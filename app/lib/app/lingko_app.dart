@@ -21,14 +21,14 @@ import '../models/evaluation_progress.dart';
 import '../models/practice_quota.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
-import '../models/weak_word.dart';
+import '../models/weak_sound.dart';
 import '../screens/auth_gate_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/practice_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/review_screen.dart';
 import '../screens/saved_sentences_screen.dart';
-import '../screens/word_detail_screen.dart';
+import '../screens/sound_detail_screen.dart';
 import '../screens/result_screen.dart';
 import '../services/audio_recorder_service.dart';
 import '../services/app_auth_service.dart';
@@ -152,11 +152,11 @@ class _LingKoShellState extends State<LingKoShell> {
 
   /// Home 위에 겹쳐 여는 화면이다. 탭이 아니라 갈래길이라 탭바 index와 분리한다.
   /// null이면 겹친 화면이 없다.
-  String? openWordDetail;
+  String? openSoundDetail;
   bool isSavedSentencesOpen = false;
 
-  /// Home 타일에 쓰는 취약 어절이다. 비어 있으면 타일 영역 자체를 그리지 않는다.
-  List<WeakWord> weakWords = const [];
+  /// Home 타일에 쓰는 취약 음절이다. 비어 있으면 타일 영역 자체를 그리지 않는다.
+  List<WeakSound> weakSounds = const [];
 
   /// 저장한 문장의 식별자다. 여러 화면이 같은 저장 상태를 보여줘야 해서
   /// 화면마다 따로 조회하지 않고 shell이 하나만 들고 내려준다.
@@ -214,25 +214,25 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
-  Future<void> loadWeakWords() async {
+  Future<void> loadWeakSounds() async {
     final currentSession = session;
     if (currentSession == null) {
       return;
     }
     try {
-      final words = await widget.authService.runAuthenticated(
-        (accessToken) => widget.practiceContentApi.fetchWeakWords(
+      final sounds = await widget.authService.runAuthenticated(
+        (accessToken) => widget.practiceContentApi.fetchWeakSounds(
           accessToken: accessToken,
         ),
       );
       if (mounted) {
-        setState(() => weakWords = words);
+        setState(() => weakSounds = sounds);
       }
     } catch (_) {
-      // 취약 어절은 보조 정보다. 실패해도 Home의 문장 목록은 그대로 쓸 수 있어야 하므로
+      // 취약 음절은 보조 정보다. 실패해도 Home의 문장 목록은 그대로 쓸 수 있어야 하므로
       // 화면에 오류를 띄우지 않고 타일만 비운다.
       if (mounted) {
-        setState(() => weakWords = const []);
+        setState(() => weakSounds = const []);
       }
     }
   }
@@ -338,7 +338,7 @@ class _LingKoShellState extends State<LingKoShell> {
           loadRecommendedSentences(),
           loadPracticeQuota(restoredSession),
         ]);
-        await Future.wait([loadWeakWords(), loadSavedSentenceIds()]);
+        await Future.wait([loadWeakSounds(), loadSavedSentenceIds()]);
       }
     } catch (_) {
       if (!mounted) {
@@ -721,11 +721,11 @@ class _LingKoShellState extends State<LingKoShell> {
         onRetry: loadRecommendedSentences,
         onRetryQuota: loadPracticeQuota,
         onSelect: openPractice,
-        weakWords: weakWords,
+        weakSounds: weakSounds,
         savedSentenceIds: savedSentenceIds,
         onToggleSaved: toggleSavedSentence,
-        onSelectWeakWord:
-            (word) => setState(() => openWordDetail = word.text),
+        onSelectWeakSound:
+            (sound) => setState(() => openSoundDetail = sound.text),
         onOpenPractice: () => setState(() => selectedTab = 1),
         onOpenCustomPractice: openCustomPractice,
         onRequestPracticeReward:
@@ -797,19 +797,19 @@ class _LingKoShellState extends State<LingKoShell> {
     // Scaffold는 일반적인 앱 화면 뼈대입니다.
     // body에는 현재 화면, bottomNavigationBar에는 하단 탭을 둡니다.
     // 겹쳐 여는 화면은 탭 위에 얹는다. 탭바를 유지해 사용자가 어디에 있는지 잃지 않게 한다.
-    final wordText = openWordDetail;
+    final character = openSoundDetail;
     final Widget body;
-    if (wordText != null) {
-      body = WordDetailScreen(
-        wordText: wordText,
+    if (character != null) {
+      body = SoundDetailScreen(
+        character: character,
         practiceContentApi: widget.practiceContentApi,
         authService: widget.authService,
         onSessionExpired: () => handleSessionChanged(null),
         onSelectSentence: (sentence) {
-          setState(() => openWordDetail = null);
+          setState(() => openSoundDetail = null);
           openPractice(sentence);
         },
-        onClose: () => setState(() => openWordDetail = null),
+        onClose: () => setState(() => openSoundDetail = null),
       );
     } else if (isSavedSentencesOpen) {
       body = SavedSentencesScreen(
@@ -845,7 +845,7 @@ class _LingKoShellState extends State<LingKoShell> {
                     setState(() {
                       // 탭을 누르면 겹쳐 있던 화면을 닫는다. 남겨두면 탭을 눌렀는데
                       // 화면이 그대로인 것처럼 보인다.
-                      openWordDetail = null;
+                      openSoundDetail = null;
                       isSavedSentencesOpen = false;
                       selectedTab = index;
                     });

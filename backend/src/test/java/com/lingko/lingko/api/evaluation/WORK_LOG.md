@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `EvaluationHistoryControllerTest.java`
+- 내용: mock bean 타입을 `WeakSoundService`로 맞췄다.
+- 검증: `./gradlew test` 통과
+- 리스크: 없음
+
 ## 2026-08-05 - 평가 API 로마자 필드 테스트
 
 - 변경 파일: `EvaluationControllerPrepareTest.java`, `EvaluationHistoryControllerTest.java`, `WORK_LOG.md`

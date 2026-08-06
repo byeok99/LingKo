@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `EvaluationWordRepository.java`
+- 내용: `findWeakWords`를 `findScoredWordAggregates`로 바꿔 최소 시도 필터를 걷어냈다. 필터가 이제 음절 단위라 어절 단계에서 거르면 안 된다. `findPracticedByWord`는 `findPracticedByCharacter`로 바꿔 부분 일치로 찾는다.
+- 검증: `./gradlew test` 통과
+- 리스크: 음절 조회가 한 글자 like 앞뒤 wildcard라 index를 타지 못한다. 사용자 한 명의 어절 snapshot으로 범위가 좁아 현재는 감당 가능하나, 이력이 매우 긴 사용자에서 재확인 필요
+
 ## 2026-08-04 - 평가 단어 저장소
 
 - 변경 파일: `EvaluationWordRepository.java`, `WORK_LOG.md`

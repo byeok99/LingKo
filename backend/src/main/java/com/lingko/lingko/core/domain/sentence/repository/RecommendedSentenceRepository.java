@@ -25,17 +25,18 @@ public interface RecommendedSentenceRepository extends JpaRepository<Recommended
     Optional<RecommendedSentence> findBySentenceIdAndActiveTrue(Long sentenceId);
 
     /**
-     * 특정 어절이 들어간 추천 문장 중 아직 연습하지 않은 것을 반환한다.
+     * 특정 음절이 들어간 추천 문장 중 아직 연습하지 않은 것을 반환한다.
      *
      * 이미 연습한 문장을 다시 제안하면 Practiced 목록과 겹쳐 같은 문장이 두 번 보인다.
      * 추천 문장은 표준 발음을 저장하지 않고 조회 시 변환하므로(V12) 원문만 대상으로 찾는다.
-     * 표기가 달라 놓치는 후보는 있을 수 있으나, 잘못된 후보를 올리는 것보다 낫다.
+     * 원문 기준이라 발음이 바뀌는 음절(좋 → 조)은 놓칠 수 있으나, 표준 발음으로 찾으면
+     * 원문에 없는 글자로 문장을 고르게 되어 사용자가 왜 이 문장이 나왔는지 알 수 없게 된다.
      */
     @Query("""
             select sentence
             from RecommendedSentence sentence
             where sentence.active = true
-              and sentence.originalText like %:wordText%
+              and sentence.originalText like %:character%
               and sentence.sentenceId not in (
                   select log.sentenceId
                   from EvaluationLog log
@@ -44,9 +45,9 @@ public interface RecommendedSentenceRepository extends JpaRepository<Recommended
               )
             order by sentence.sortOrder asc, sentence.sentenceId asc
             """)
-    List<RecommendedSentence> findUnpracticedByWord(
+    List<RecommendedSentence> findUnpracticedByCharacter(
             @Param("userId") Long userId,
-            @Param("wordText") String wordText,
+            @Param("character") String character,
             Pageable pageable
     );
 }

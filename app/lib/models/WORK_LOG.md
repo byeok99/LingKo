@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `weak_word.dart` → `weak_sound.dart`
+- 내용: `WeakWord`/`WordDetail`을 `WeakSound`/`SoundDetail`로 바꿨다. `averageScore`가 음절 측정값이 아니라 그 음절이 든 어절 점수들의 가중 평균이라는 점을 주석으로 남겼다. 앱은 서버 값을 다시 계산하지 않는다.
+- 검증: `flutter analyze`, `flutter test` 87개 통과
+- 리스크: 없음
+
 ## 2026-08-06 - 취약 어절 모델 추가
 
 - 변경 파일: `weak_word.dart`, `practice_sentence.dart`

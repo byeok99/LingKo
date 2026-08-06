@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:lingko_app/api/evaluation_api.dart';
 import 'package:lingko_app/models/score_status.dart';
+import 'package:lingko_app/api/practice_content_api.dart';
 import 'package:lingko_app/api/practice_quota_api.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 import 'package:lingko_app/api/sentence_api.dart';
@@ -19,6 +20,7 @@ import 'package:lingko_app/models/practice_history.dart';
 import 'package:lingko_app/models/practice_quota.dart';
 import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
+import 'package:lingko_app/models/weak_sound.dart';
 import 'package:lingko_app/screens/result_screen.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
@@ -37,6 +39,54 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
   await tester.tap(finder);
   await tester.pumpAndSettle();
+}
+
+/// 취약 음절과 저장 문장 조회를 결정적으로 대체한다.
+///
+/// 취약 음절은 서버가 어절 점수를 음절에 귀속시켜 만든 값이라, 앱은 받은 대로 표시하고
+/// 다시 계산하지 않는다. 그 계약을 지키는지 보려면 화면에 무엇이 그려지는지만 확인하면 된다.
+class FakePracticeContentApi implements PracticeContentApi {
+  FakePracticeContentApi({this.weakSounds = const [], this.detail});
+
+  final List<WeakSound> weakSounds;
+  final SoundDetail? detail;
+
+  /// 상세 화면이 어떤 음절을 요청했는지 확인하기 위해 마지막 인자를 남긴다.
+  String? lastRequestedCharacter;
+
+  @override
+  Future<List<PracticeSentence>> fetchSavedSentences({
+    required String accessToken,
+  }) async => const [];
+
+  @override
+  Future<bool> toggleSavedSentence({
+    required String accessToken,
+    required int sentenceId,
+  }) async => true;
+
+  @override
+  Future<List<WeakSound>> fetchWeakSounds({
+    required String accessToken,
+    int limit = 3,
+  }) async => weakSounds;
+
+  @override
+  Future<SoundDetail> fetchSoundDetail({
+    required String accessToken,
+    required String character,
+  }) async {
+    lastRequestedCharacter = character;
+    return detail ??
+        SoundDetail(
+          text: character,
+          romanization: 'ssi',
+          averageScore: 62,
+          attemptCount: 8,
+          practiced: const [],
+          suggested: const [],
+        );
+  }
 }
 
 /// 테스트에서 Fake Pronunciation Api 의존성을 결정적으로 대체한다.
@@ -813,6 +863,54 @@ void main() {
     );
     expect(find.text('Word feedback is unavailable'), findsOneWidget);
     expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
+  });
+
+  testWidgets('Home lists weak sounds by syllable and opens their detail', (
+    WidgetTester tester,
+  ) async {
+    final contentApi = FakePracticeContentApi(
+      weakSounds: const [
+        WeakSound(
+          text: '씨',
+          romanization: 'ssi',
+          averageScore: 62,
+          attemptCount: 8,
+        ),
+        WeakSound(
+          text: '늘',
+          romanization: 'neul',
+          averageScore: 71,
+          attemptCount: 4,
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        practiceContentApi: contentApi,
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 취약 단위는 어절이 아니라 음절이다. 타일에는 한 글자만 오고, 점수는 그 음절이
+    // 들어간 연습들의 평균이라 로마자와 한 줄에 묶어 측정값처럼 보이지 않게 한다.
+    expect(find.text('SOUNDS TO FIX · TAP FOR DETAIL'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-weak-sound-씨')), findsOneWidget);
+    expect(find.text('씨'), findsOneWidget);
+    expect(find.text('ssi · 62'), findsOneWidget);
+    expect(find.text('neul · 71'), findsOneWidget);
+
+    await _tapVisible(tester, find.byKey(const ValueKey('home-weak-sound-씨')));
+
+    // 상세는 어절이 아니라 그 음절 하나를 요청해야 한다.
+    expect(contentApi.lastRequestedCharacter, '씨');
+    expect(find.text('Sound'), findsOneWidget);
+    expect(find.text('Average 62 across 8 tries'), findsOneWidget);
   });
 
   testWidgets('Home browses compact recommendations by situation', (

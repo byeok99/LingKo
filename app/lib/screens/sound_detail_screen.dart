@@ -1,4 +1,4 @@
-// 파일 의도: 반복해서 틀리는 어절 하나를 파고들어 다음 연습 대상을 고르게 한다.
+// 파일 의도: 반복해서 틀리는 음절 하나를 파고들어 다음 연습 대상을 고르게 한다.
 // 선택 이유: 점수만 보여주면 무엇을 해야 할지 알 수 없어, 과거 시도와 다음 후보를 함께 둔다.
 
 import 'package:flutter/material.dart';
@@ -7,20 +7,20 @@ import '../api/practice_content_api.dart';
 import '../app/app_palette.dart';
 import '../app/app_theme.dart';
 import '../models/practice_sentence.dart';
-import '../models/weak_word.dart';
+import '../models/weak_sound.dart';
 import '../services/app_auth_service.dart';
 import '../widgets/score_card.dart';
 import '../widgets/sentence_card.dart';
 import '../widgets/shared_widgets.dart';
 
-/// 어절 상세 화면의 두 목록이다.
-enum _WordDetailTab { practiced, suggested }
+/// 음절 상세 화면의 두 목록이다.
+enum _SoundDetailTab { practiced, suggested }
 
-/// 취약 어절 하나의 누적 성적과 연습 이력·다음 후보를 보여준다.
-class WordDetailScreen extends StatefulWidget {
-  const WordDetailScreen({
+/// 취약 음절 하나의 누적 성적과 연습 이력·다음 후보를 보여준다.
+class SoundDetailScreen extends StatefulWidget {
+  const SoundDetailScreen({
     super.key,
-    required this.wordText,
+    required this.character,
     required this.practiceContentApi,
     required this.authService,
     required this.onSessionExpired,
@@ -28,7 +28,7 @@ class WordDetailScreen extends StatefulWidget {
     required this.onClose,
   });
 
-  final String wordText;
+  final String character;
   final PracticeContentApi practiceContentApi;
   final AppAuthService authService;
   final VoidCallback onSessionExpired;
@@ -36,14 +36,14 @@ class WordDetailScreen extends StatefulWidget {
   final VoidCallback onClose;
 
   @override
-  State<WordDetailScreen> createState() => _WordDetailScreenState();
+  State<SoundDetailScreen> createState() => _SoundDetailScreenState();
 }
 
-class _WordDetailScreenState extends State<WordDetailScreen> {
-  WordDetail? detail;
+class _SoundDetailScreenState extends State<SoundDetailScreen> {
+  SoundDetail? detail;
   bool isLoading = true;
   String? errorText;
-  _WordDetailTab tab = _WordDetailTab.practiced;
+  _SoundDetailTab tab = _SoundDetailTab.practiced;
 
   @override
   void initState() {
@@ -58,9 +58,9 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
     });
     try {
       final result = await widget.authService.runAuthenticated(
-        (accessToken) => widget.practiceContentApi.fetchWordDetail(
+        (accessToken) => widget.practiceContentApi.fetchSoundDetail(
           accessToken: accessToken,
-          wordText: widget.wordText,
+          character: widget.character,
         ),
       );
       if (mounted) {
@@ -70,8 +70,8 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
           // 진입 직후 할 수 있는 일이 화면에 있어야 한다.
           tab =
               result.practiced.isEmpty
-                  ? _WordDetailTab.suggested
-                  : _WordDetailTab.practiced;
+                  ? _SoundDetailTab.suggested
+                  : _SoundDetailTab.practiced;
         });
       }
     } on AuthSessionExpiredException {
@@ -80,7 +80,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
       if (mounted) {
         setState(() {
           errorText =
-              'This word could not be loaded. Check your connection and retry.';
+              'This sound could not be loaded. Check your connection and retry.';
         });
       }
     } finally {
@@ -97,10 +97,10 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
       children: [
         TopBar(
-          title: 'Word',
+          title: 'Sound',
           centered: true,
           leading: IconButton(
-            key: const ValueKey('word-detail-close'),
+            key: const ValueKey('sound-detail-close'),
             tooltip: 'Back',
             onPressed: widget.onClose,
             icon: const Icon(Icons.chevron_left_rounded, size: 26),
@@ -110,7 +110,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
         if (isLoading)
           const StatePanel(
             icon: Icons.trending_down_rounded,
-            title: 'Loading this word',
+            title: 'Loading this sound',
             isLoading: true,
           )
         else if (errorText != null)
@@ -121,7 +121,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
             onAction: load,
           )
         else if (current != null) ...[
-          _WordHeader(detail: current),
+          _SoundHeader(detail: current),
           const SizedBox(height: 20),
           _TabBar(
             selected: tab,
@@ -132,7 +132,7 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
           const SizedBox(height: 6),
           // 두 목록을 동시에 보여주지 않는다. 지나온 것과 앞으로 할 것은 성격이 달라
           // 나란히 두면 어느 쪽을 눌러야 할지 판단이 늦어진다.
-          if (tab == _WordDetailTab.practiced)
+          if (tab == _SoundDetailTab.practiced)
             _PracticedList(attempts: current.practiced)
           else
             _SuggestedList(
@@ -145,11 +145,11 @@ class _WordDetailScreenState extends State<WordDetailScreen> {
   }
 }
 
-/// 어절과 누적 성적을 보여주는 머리말이다.
-class _WordHeader extends StatelessWidget {
-  const _WordHeader({required this.detail});
+/// 음절과 누적 성적을 보여주는 머리말이다.
+class _SoundHeader extends StatelessWidget {
+  const _SoundHeader({required this.detail});
 
-  final WordDetail detail;
+  final SoundDetail detail;
 
   @override
   Widget build(BuildContext context) {
@@ -209,10 +209,10 @@ class _TabBar extends StatelessWidget {
     required this.onChanged,
   });
 
-  final _WordDetailTab selected;
+  final _SoundDetailTab selected;
   final int practicedCount;
   final int suggestedCount;
-  final ValueChanged<_WordDetailTab> onChanged;
+  final ValueChanged<_SoundDetailTab> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -223,17 +223,17 @@ class _TabBar extends StatelessWidget {
       child: Row(
         children: [
           _Tab(
-            key: const ValueKey('word-detail-tab-practiced'),
+            key: const ValueKey('sound-detail-tab-practiced'),
             label: 'Practiced $practicedCount',
-            selected: selected == _WordDetailTab.practiced,
-            onTap: () => onChanged(_WordDetailTab.practiced),
+            selected: selected == _SoundDetailTab.practiced,
+            onTap: () => onChanged(_SoundDetailTab.practiced),
           ),
           const SizedBox(width: 20),
           _Tab(
-            key: const ValueKey('word-detail-tab-suggested'),
+            key: const ValueKey('sound-detail-tab-suggested'),
             label: 'Suggested $suggestedCount',
-            selected: selected == _WordDetailTab.suggested,
-            onTap: () => onChanged(_WordDetailTab.suggested),
+            selected: selected == _SoundDetailTab.suggested,
+            onTap: () => onChanged(_SoundDetailTab.suggested),
           ),
         ],
       ),
@@ -298,7 +298,7 @@ class _PracticedList extends StatelessWidget {
     if (attempts.isEmpty) {
       return const StatePanel(
         icon: Icons.history_rounded,
-        title: 'No attempts with this word yet',
+        title: 'No attempts with this sound yet',
         message: 'Practise one of the suggested sentences to see progress here.',
       );
     }
@@ -396,7 +396,7 @@ class _SuggestedList extends StatelessWidget {
     if (sentences.isEmpty) {
       return const StatePanel(
         icon: Icons.check_circle_outline,
-        title: 'No new sentences with this word',
+        title: 'No new sentences with this sound',
         message: 'You have already practised every recommendation we have.',
       );
     }
@@ -405,7 +405,7 @@ class _SuggestedList extends StatelessWidget {
       children: [
         for (var index = 0; index < sentences.length; index++)
           SentenceCard(
-            key: ValueKey('word-detail-suggested-${sentences[index].sentenceId}'),
+            key: ValueKey('sound-detail-suggested-${sentences[index].sentenceId}'),
             sentence: sentences[index],
             onTap: () => onSelect(sentences[index]),
             showDivider: index != sentences.length - 1,

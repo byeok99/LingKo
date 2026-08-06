@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-06 - 음절 상세 형식 검증 테스트 추가
+
+- 변경 파일: `WeakSoundServiceTest.java`
+- 내용: `%`, `_`, 자모, 여러 글자가 빈 결과가 되고 정상 음절만 조회되는지 고정했다. wildcard가 패턴으로 새는 경로는 예외 없이 통과하므로 테스트가 없으면 드러나지 않는다.
+- 검증: `./gradlew test` 통과
+- 리스크: 없음
+
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `WeakWordServiceTest.java` → `WeakSoundServiceTest.java`
+- 내용: 귀속·가중·중복 글자·비한글 제외를 검증하는 테스트를 추가했다. 특히 어절 평균을 단순 평균하면 70, 시도 횟수로 가중하면 60이 나오는 fixture로 가중치가 실제로 적용되는지 고정했다.
+- 검증: `./gradlew test` 통과
+- 리스크: 없음
+
 ## 2026-08-05 - 평가 로마자 파생 테스트
 
 - 변경 파일: `EvaluationServicePrepareTest.java`, `EvaluationHistoryServiceTest.java`, `WORK_LOG.md`

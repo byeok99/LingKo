@@ -1,8 +1,8 @@
-// 파일 의도: 저장 문장과 취약 어절 관련 백엔드 통신 경계를 정의한다.
+// 파일 의도: 저장 문장과 취약 음절 관련 백엔드 통신 경계를 정의한다.
 // 선택 이유: 두 기능 모두 "다음에 무엇을 연습할지"를 다루므로 한 경계로 묶어 화면 주입을 단순화한다.
 
 import '../models/practice_sentence.dart';
-import '../models/weak_word.dart';
+import '../models/weak_sound.dart';
 import 'api_client.dart';
 
 /// Practice Content Api 백엔드 통신 계약을 정의한다.
@@ -22,16 +22,16 @@ abstract class PracticeContentApi {
     required int sentenceId,
   });
 
-  /// 반복해서 틀리는 어절을 평균 점수가 낮은 순으로 가져온다.
-  Future<List<WeakWord>> fetchWeakWords({
+  /// 반복해서 틀리는 음절을 평균 점수가 낮은 순으로 가져온다.
+  Future<List<WeakSound>> fetchWeakSounds({
     required String accessToken,
     int limit = 3,
   });
 
-  /// 어절 하나의 누적 성적과 과거 시도·다음 후보를 한 번에 가져온다.
-  Future<WordDetail> fetchWordDetail({
+  /// 음절 하나의 누적 성적과 과거 시도·다음 후보를 한 번에 가져온다.
+  Future<SoundDetail> fetchSoundDetail({
     required String accessToken,
-    required String wordText,
+    required String character,
   });
 }
 
@@ -82,36 +82,37 @@ class DartIoPracticeContentApi implements PracticeContentApi {
   }
 
   @override
-  Future<List<WeakWord>> fetchWeakWords({
+  Future<List<WeakSound>> fetchWeakSounds({
     required String accessToken,
     int limit = 3,
   }) async {
-    final json = await _client.getJson('/api/evaluations/me/weak-words', {
+    final json = await _client.getJson('/api/evaluations/me/weak-sounds', {
       'limit': limit,
     }, _auth(accessToken));
     final items = json['items'];
     if (items is! List) {
-      throw const FormatException('Missing weak words');
+      throw const FormatException('Missing weak sounds');
     }
     return [
       for (final item in items)
         if (item is Map<String, Object?>)
-          WeakWord.fromJson(item)
+          WeakSound.fromJson(item)
         else
-          throw const FormatException('Invalid weak word item'),
+          throw const FormatException('Invalid weak sound item'),
     ];
   }
 
   @override
-  Future<WordDetail> fetchWordDetail({
+  Future<SoundDetail> fetchSoundDetail({
     required String accessToken,
-    required String wordText,
+    required String character,
   }) async {
     final json = await _client.getJson(
-      '/api/evaluations/me/words/${Uri.encodeComponent(wordText)}',
+      // 경로에 한글 한 글자가 들어가므로 반드시 인코딩한다.
+      '/api/evaluations/me/sounds/${Uri.encodeComponent(character)}',
       const {},
       _auth(accessToken),
     );
-    return WordDetail.fromJson(json);
+    return SoundDetail.fromJson(json);
   }
 }

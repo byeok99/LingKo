@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `EvaluationHistoryController.java`
+- 내용: `/me/weak-words` → `/me/weak-sounds`, `/me/words/{wordText}` → `/me/sounds/{character}`. 경로 변수 상한을 100자에서 8자로 줄였다. 한글 한 글자를 기대하지만 형식 검증은 service가 맡고, 한글이 아닌 값은 빈 결과라 400을 돌려줄 오류가 아니다.
+- 검증: `./gradlew test`, `./gradlew integrationTest` 통과
+- 리스크: 앱 이전 버전은 삭제된 경로를 호출한다. 배포 순서상 서버가 먼저 나가므로 구버전 앱에서 Home 취약 타일이 비게 된다(오류는 아님)
+
 ## 2026-07-30 - 변환 API 원문 정규화
 
 - 변경 파일: `EvaluationController.java`, `WORK_LOG.md`

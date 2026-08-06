@@ -1,11 +1,11 @@
 package com.lingko.lingko.api.evaluation;
 
 import com.lingko.lingko.api.evaluation.dto.PracticeHistoryResponse;
-import com.lingko.lingko.api.evaluation.dto.WeakWordListResponse;
-import com.lingko.lingko.api.evaluation.dto.WordDetailResponse;
+import com.lingko.lingko.api.evaluation.dto.WeakSoundListResponse;
+import com.lingko.lingko.api.evaluation.dto.SoundDetailResponse;
 import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationHistoryService;
-import com.lingko.lingko.core.domain.evaluation.service.WeakWordService;
+import com.lingko.lingko.core.domain.evaluation.service.WeakSoundService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class EvaluationHistoryController {
 
     private final EvaluationHistoryService historyService;
-    private final WeakWordService weakWordService;
+    private final WeakSoundService weakSoundService;
     private final ActiveSessionAuthenticator activeSessionAuthenticator;
 
     /**
@@ -49,35 +49,37 @@ public class EvaluationHistoryController {
     }
 
     /**
-     * 반복해서 틀리는 어절을 평균 점수가 낮은 순으로 반환한다.
+     * 반복해서 틀리는 음절을 평균 점수가 낮은 순으로 반환한다.
      *
-     * Home은 상위 3개만 쓰지만 Word detail 진입 등 다른 화면이 더 넓은 목록을 필요로 할 수 있어
+     * Home은 상위 3개만 쓰지만 Sound detail 진입 등 다른 화면이 더 넓은 목록을 필요로 할 수 있어
      * 개수를 요청 측이 정하게 두고 상한만 고정한다.
      */
-    @GetMapping("/me/weak-words")
-    public WeakWordListResponse getMyWeakWords(
+    @GetMapping("/me/weak-sounds")
+    public WeakSoundListResponse getMyWeakSounds(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(defaultValue = "3") @Min(1) @Max(20) int limit
     ) {
-        return weakWordService.findWeakWords(
+        return weakSoundService.findWeakSounds(
                 activeSessionAuthenticator.authenticateBearer(authorization),
                 limit
         );
     }
 
     /**
-     * 어절 하나의 누적 성적과 과거 시도·다음 후보를 한 번에 반환한다.
+     * 음절 하나의 누적 성적과 과거 시도·다음 후보를 한 번에 반환한다.
      *
      * 세 자료를 따로 조회하면 시점이 어긋나 머리말의 평균·횟수와 아래 목록이 맞지 않게 보인다.
+     * 경로 변수는 한글 한 글자를 기대하지만, 길이 상한만 두고 형식 검증은 service가 맡는다.
+     * 한글이 아닌 값이 오면 빈 결과가 되어 400을 돌려줄 만한 오류가 아니다.
      */
-    @GetMapping("/me/words/{wordText}")
-    public WordDetailResponse getMyWordDetail(
+    @GetMapping("/me/sounds/{character}")
+    public SoundDetailResponse getMySoundDetail(
             @RequestHeader(value = "Authorization", required = false) String authorization,
-            @PathVariable @NotBlank @Size(max = 100) String wordText
+            @PathVariable @NotBlank @Size(max = 8) String character
     ) {
-        return weakWordService.findWordDetail(
+        return weakSoundService.findSoundDetail(
                 activeSessionAuthenticator.authenticateBearer(authorization),
-                wordText
+                character
         );
     }
 }

@@ -78,7 +78,13 @@ public final class KoreanRomanizationUtil {
         return String.join("-", segments);
     }
 
-    private static boolean isHangulSyllable(int codePoint) {
+    /**
+     * 완성형 한글 음절 한 글자인지 판별한다.
+     *
+     * 취약 음절 집계처럼 문자열을 글자 단위로 쪼개는 쪽에서도 같은 기준이 필요해 공개한다.
+     * 자모(ㄱ, ㅏ)나 구두점·공백은 발음 학습의 단위가 아니므로 false다.
+     */
+    public static boolean isHangulSyllable(int codePoint) {
         return codePoint >= HANGUL_BASE && codePoint <= HANGUL_END;
     }
 
