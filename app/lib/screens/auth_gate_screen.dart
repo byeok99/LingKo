@@ -192,38 +192,35 @@ class _AuthFrame extends StatelessWidget {
     return Scaffold(
       backgroundColor: context.palette.scaffold,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (center != null) {
-              return Center(child: center);
-            }
-            // 화면이 충분히 길면 위·아래로 벌리고, 짧으면 스크롤한다.
-            // 하단 고정만 쓰면 큰 글자 설정에서 버튼이 화면 밖으로 밀린다.
-            return SingleChildScrollView(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 26),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 42,
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        top ?? const SizedBox.shrink(),
-                        if (bottom != null) ...[
-                          const SizedBox(height: 34),
-                          bottom!,
+              child:
+                  center != null
+                      ? Center(child: center)
+                      // 상단 내용은 위에 붙이고 남는 공간을 흡수한다. 로그인 수단은
+                      // 그 아래 바닥에 남는다. 전체를 감싸 중앙 정렬하면 화면 크기마다
+                      // 시작 위치가 달라져 첫인상이 흔들린다.
+                      : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              // 큰 글자 설정에서 상단 내용이 길어지면 여기서만 스크롤한다.
+                              // 하단 버튼은 항상 같은 자리에 남는다.
+                              child: top ?? const SizedBox.shrink(),
+                            ),
+                          ),
+                          if (bottom != null) ...[
+                            const SizedBox(height: 24),
+                            bottom!,
+                          ],
                         ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
+                      ),
+            ),
+          ),
         ),
       ),
     );

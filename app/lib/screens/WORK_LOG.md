@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - Sign in 상단·하단 고정 배치 수정
+
+- 변경 파일: `auth_gate_screen.dart`
+- 내용: spaceBetween을 써도 바깥 Center가 Column을 통째로 세로 중앙에 놓아 배치가 그대로였다. 상단 내용을 Expanded 안의 스크롤 영역으로 만들어 위에 붙이고, 로그인 수단은 그 아래 바닥에 남게 했다.
+- 검증: `flutter analyze` 통과. 테스트는 사용자가 직접 확인
+- 리스크: 없음
+
 ## 2026-08-06 - Sign in 상단 정렬로 배치 수정
 
 - 변경 파일: `auth_gate_screen.dart`
