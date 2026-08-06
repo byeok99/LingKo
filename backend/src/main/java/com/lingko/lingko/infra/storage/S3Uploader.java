@@ -5,6 +5,7 @@ import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationExcepti
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
@@ -98,6 +99,15 @@ public class S3Uploader {
 
     /**
      * 결정적 key의 생성 가이드가 이미 존재하면 외부 생성 없이 재사용할 공개 URL을 반환한다.
+     *
+     * <p>조회에 실패해도 예외를 던지지 않고 "캐시 없음"으로 답한다. 이 호출은 생성을 건너뛸 수
+     * 있는지 묻는 최적화이지 생성의 전제 조건이 아니다. 실패를 위로 올리면 호출자가 이를 생성
+     * 실패로 처리해 정적 이미지로 강등하므로, 캐시 조회 한 번이 실제 가이드 생성을 막는다.
+     *
+     * <p>특히 IAM 정책에 {@code s3:ListBucket}이 없으면 S3는 없는 key에 404가 아니라 403을
+     * 돌려준다. 404만 "없음"으로 보면 이 환경에서 캐시가 빈 순간부터 영상이 영영 만들어지지
+     * 않으면서 오류도 드러나지 않는다. 잘못 판단했을 때의 대가는 이미 있는 파일을 다시 만드는
+     * 비용뿐이라, 관대하게 처리하고 원인은 로그로 남긴다.
      */
     public Optional<String> findPublicUrl(String s3Key) {
         try {
@@ -107,10 +117,20 @@ public class S3Uploader {
                     .build());
             return Optional.of(publicUrl(s3Key));
         } catch (S3Exception exception) {
-            if (exception.statusCode() == 404) {
-                return Optional.empty();
+            // 404는 캐시가 없는 정상 상태다. 로그를 남기지 않는다.
+            if (exception.statusCode() != 404) {
+                log.warn(
+                        "S3 guide cache lookup failed; regenerating: key={}, status={}",
+                        s3Key,
+                        exception.statusCode(),
+                        exception
+                );
             }
-            throw new VideoGenerationException("S3 guide cache lookup failed", exception);
+            return Optional.empty();
+        } catch (SdkException exception) {
+            // 자격증명·네트워크 문제도 같은 이유로 생성을 막지 않는다.
+            log.warn("S3 guide cache lookup failed; regenerating: key={}", s3Key, exception);
+            return Optional.empty();
         }
     }
 
