@@ -103,6 +103,39 @@ void main() {
     expect(buttonBox.boxShadow, isNotEmpty);
   });
 
+  testWidgets('a loading primary button keeps its fill so the spinner reads', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: PrimaryButton(
+            label: 'Retry with this recording',
+            isLoading: true,
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    // 진행 중인 CTA는 채움을 유지해야 한다. 비활성 회색으로 떨어뜨리면 흰 spinner가
+    // 밝은 면 위에 놓여 대비 1.12:1이 되고, 사용자에게는 빈 회색 버튼으로 보인다.
+    final decoration =
+        tester
+                .widget<DecoratedBox>(
+                  find.byKey(const ValueKey('primary-button-gradient')),
+                )
+                .decoration
+            as BoxDecoration;
+    expect(decoration.gradient, isA<LinearGradient>());
+
+    final spinner = tester.widget<CircularProgressIndicator>(
+      find.byType(CircularProgressIndicator),
+    );
+    expect(spinner.color, AppPalette.light.onPrimary);
+  });
+
   test('both brightness themes carry a palette', () {
     // 화면이 색을 테마에서 읽으므로 팔레트가 빠지면 밝기 전환이 조용히 무시된다.
     final light = AppTheme.light();

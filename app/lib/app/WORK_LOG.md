@@ -4,7 +4,7 @@
 
 - 변경 파일: `app_theme.dart`, `app_palette.dart`
 - 내용: 흰 배경·파란 ink/line, 18px 카드, 15px·52px 버튼, 900 굵기 정보 계층을 design-repair 시안에 맞췄다. dark theme 구조는 유지했다.
-- 검증: `flutter analyze`, `flutter test --coverage` 88개 통과(라인 80.56%)
+- 검증: `flutter analyze`, `flutter test --coverage` 89개 통과(라인 80.64%)
 - 리스크: 실제 기기의 dark mode 대비는 수동 확인 필요
 
 ## 2026-08-06 - radiusTile 토큰 추가

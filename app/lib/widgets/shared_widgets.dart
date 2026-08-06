@@ -148,13 +148,21 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 채움 여부는 "누를 수 있는가"가 아니라 "동작이 붙어 있는가"로 정한다.
+    // 진행 중에는 누를 수 없지만 버튼은 여전히 살아 있는 상태이므로 채움을 유지한다.
+    // 이 둘을 묶으면 로딩 중에 버튼이 비활성 회색으로 떨어지고, 그 위의 흰 spinner가
+    // 대비 1.12:1이 되어 사용자에게는 빈 회색 버튼으로 보인다.
+    final isFilled = onPressed != null;
+    // 전경색은 실제로 깔린 면을 따라간다. 채움이면 onPrimary, 비활성 채움이면 disabled.
+    final foreground =
+        isFilled ? context.palette.onPrimary : context.palette.disabled;
     final child =
         isLoading
             ? SizedBox.square(
               dimension: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: context.palette.onPrimary,
+                color: foreground,
               ),
             )
             : Row(
@@ -168,7 +176,6 @@ class PrimaryButton extends StatelessWidget {
                 Flexible(child: Text(label, textAlign: TextAlign.center)),
               ],
             );
-    final enabled = !isLoading && onPressed != null;
     final gradientColors =
         Theme.of(context).brightness == Brightness.light
             ? const [AppColors.ctaGradientStart, AppColors.ctaGradientEnd]
@@ -176,11 +183,11 @@ class PrimaryButton extends StatelessWidget {
     return DecoratedBox(
       key: const ValueKey('primary-button-gradient'),
       decoration: BoxDecoration(
-        color: enabled ? null : context.palette.neutralFill,
-        gradient: enabled ? LinearGradient(colors: gradientColors) : null,
+        color: isFilled ? null : context.palette.neutralFill,
+        gradient: isFilled ? LinearGradient(colors: gradientColors) : null,
         borderRadius: BorderRadius.circular(AppSizes.radiusControl),
         boxShadow:
-            enabled
+            isFilled
                 ? [
                   BoxShadow(
                     color: context.palette.primary.withValues(alpha: 0.23),
