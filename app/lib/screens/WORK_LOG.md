@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - Home 취약 음절 타일을 도안 값에 맞춤
+
+- 변경 파일: `home_screen.dart`, `review_screen.dart`
+- 내용: 핸드오프 HTML과 대조해 8곳을 맞췄다. 라벨 문구('Your weakest sounds · tap for the guide'), 내용 가운데 정렬(좌측이었음), 음절 26px(22였음), 로마자 11px·w600·자간 1.32(10.5·w500·자간 없음), 반경 14(16이었음), 세로 여백 12·가로 0(10/10이었음), 음절-로마자 간격 5(3이었음), 블록 상단 여백 24와 하단 패딩 18. `review_screen.dart`는 같은 반경 리터럴 14를 새 토큰으로 바꾸기만 했다(시각 변화 없음).
+- 검증: `flutter analyze`, `flutter test` 87개 통과
+- 리스크: 도안 라벨이 'tap for the guide'인데 실제 탭은 07 가이드 시트가 아니라 10 Sound detail로 간다. 핸드오프 README의 흐름 정의와 HTML 문구가 서로 다르며, 이번에는 문구를 도안대로 따랐다
+
 ## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
 
 - 변경 파일: `home_screen.dart`, `word_detail_screen.dart` → `sound_detail_screen.dart`

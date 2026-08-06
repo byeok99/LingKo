@@ -314,13 +314,16 @@ class _VideoGuideAsset extends StatefulWidget {
 }
 
 class _VideoGuideAssetState extends State<_VideoGuideAsset> {
-  /// 조음 동작은 실시간 속도로는 따라가기 어려워 느린 배속을 선택지로 제공한다.
-  static const playbackSpeeds = [1.0, 0.5, 0.25];
+  /// 조음 동작은 실시간 속도로는 따라갈 수 없어 항상 4배 느리게 재생한다.
+  ///
+  /// 배속을 선택지로 두지 않는 이유는, 이 영상이 감상용이 아니라 따라 하기용이기 때문이다.
+  /// 원속도로 보여줄 이유가 없는 콘텐츠에 속도 버튼을 두면 사용자가 "몇 배로 봐야 하나"를
+  /// 먼저 판단해야 하고, 기본값이 너무 빨라 대부분은 매번 같은 값으로 다시 내리게 된다.
+  static const _playbackSpeed = 0.25;
 
   late final VideoPlayerController controller;
   bool isReady = false;
   bool hasError = false;
-  int speedIndex = 0;
 
   @override
   void initState() {
@@ -337,6 +340,8 @@ class _VideoGuideAssetState extends State<_VideoGuideAsset> {
       await controller.initialize();
       await controller.setLooping(true);
       await controller.setVolume(0);
+      // 재생을 시작하기 전에 배속을 잡는다. 먼저 play하면 첫 반복만 원속도로 지나간다.
+      await controller.setPlaybackSpeed(_playbackSpeed);
       await controller.play();
       if (mounted) {
         setState(() => isReady = true);
@@ -368,23 +373,6 @@ class _VideoGuideAssetState extends State<_VideoGuideAsset> {
     }
   }
 
-  /// 1x → 0.5x → 0.25x 순으로 순환해 버튼 하나로 배속을 오갈 수 있게 한다.
-  Future<void> _cycleSpeed() async {
-    if (!isReady) {
-      return;
-    }
-    final nextIndex = (speedIndex + 1) % playbackSpeeds.length;
-    await controller.setPlaybackSpeed(playbackSpeeds[nextIndex]);
-    if (mounted) {
-      setState(() => speedIndex = nextIndex);
-    }
-  }
-
-  String _speedLabel() {
-    final speed = playbackSpeeds[speedIndex];
-    return speed == 1.0 ? '1x' : '${speed}x';
-  }
-
   @override
   Widget build(BuildContext context) {
     if (hasError) {
@@ -408,51 +396,18 @@ class _VideoGuideAssetState extends State<_VideoGuideAsset> {
             ),
           ),
         ),
+        // 배속 버튼은 두지 않는다. 항상 같은 속도로 재생하므로 남길 조작은
+        // 멈춤/재생 하나뿐이고, 그것도 특정 순간을 붙잡아 보려는 용도다.
         Positioned(
           right: 8,
           bottom: 8,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Semantics(
-                button: true,
-                label: 'Playback speed ${_speedLabel()}',
-                child: Material(
-                  color: context.palette.primary,
-                  shape: const StadiumBorder(),
-                  child: InkWell(
-                    key: const ValueKey('guide-video-speed'),
-                    customBorder: const StadiumBorder(),
-                    onTap: _cycleSpeed,
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        minWidth: AppSizes.minimumTouchTarget,
-                        minHeight: AppSizes.minimumTouchTarget,
-                      ),
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        _speedLabel(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton.filled(
-                tooltip:
-                    controller.value.isPlaying ? 'Pause guide' : 'Play guide',
-                onPressed: _togglePlayback,
-                icon: Icon(
-                  controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                ),
-              ),
-            ],
+          child: IconButton.filled(
+            key: const ValueKey('guide-video-playback'),
+            tooltip: controller.value.isPlaying ? 'Pause guide' : 'Play guide',
+            onPressed: _togglePlayback,
+            icon: Icon(
+              controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+            ),
           ),
         ),
       ],
