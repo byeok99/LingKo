@@ -167,9 +167,11 @@ class _HomeScreenState extends State<HomeScreen> {
             style: Theme.of(context).textTheme.headlineLarge,
           ),
           if (widget.weakSounds.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              // 아래를 2px 더 띄운다. 타일 아래 카테고리 탭이 바로 붙어 있어
+              // 위아래 여백이 같으면 이 블록이 탭에 끌려가 보인다.
+              padding: const EdgeInsets.fromLTRB(0, 16, 0, 18),
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(color: context.palette.line),
@@ -179,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const EyebrowLabel('Sounds to fix · tap for detail'),
+                  const EyebrowLabel('Your weakest sounds · tap for the guide'),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -362,15 +364,16 @@ class _WeakSoundTile extends StatelessWidget {
       excludeSemantics: true,
       child: Material(
         color: context.palette.errorSoft,
-        borderRadius: BorderRadius.circular(AppSizes.radius),
+        borderRadius: BorderRadius.circular(AppSizes.radiusTile),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSizes.radius),
+          borderRadius: BorderRadius.circular(AppSizes.radiusTile),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 52),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            // 가로 여백을 두지 않는다. 세 타일이 같은 폭을 나눠 갖고 내용은 가운데
+            // 정렬이라, 안쪽 여백을 주면 좁은 화면에서 로마자가 먼저 잘린다.
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
@@ -381,20 +384,22 @@ class _WeakSoundTile extends StatelessWidget {
                     color: context.palette.error,
                     // 한 글자라 어절보다 크게 둘 수 있다. 타일에서 먼저 읽혀야 할 것이
                     // 소리 자체이므로 점수보다 무겁게 잡는다.
-                    fontSize: 22,
+                    fontSize: 26,
                     height: 1.15,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 5),
                 Text(
                   '${sound.romanization} · ${sound.averageScore}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: context.palette.textSecondary,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    // 로마자는 소리를 끊어 읽는 표기라 자간을 벌려야 음절 경계가 보인다.
+                    letterSpacing: 1.32,
                   ),
                 ),
               ],

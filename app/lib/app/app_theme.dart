@@ -87,6 +87,8 @@ class AppSizes {
   static const double radiusControl = 12;
   /// 카드 반경.
   static const double radius = 16;
+  /// 한 덩어리로 읽히는 작은 타일 반경. 취약 음절 타일, Review 점수 배지가 쓴다.
+  static const double radiusTile = 14;
   /// bottom sheet 상단 반경.
   static const double radiusLarge = 22;
   static const double pillRadius = 999;

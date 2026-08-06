@@ -256,7 +256,7 @@ class _ReviewHistoryCard extends StatelessWidget {
                       item.overallScore >= kPassingScore
                           ? context.palette.successSoft
                           : context.palette.errorSoft,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusTile),
                 ),
                 child: Text(
                   '${item.overallScore}',

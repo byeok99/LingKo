@@ -899,11 +899,33 @@ void main() {
 
     // 취약 단위는 어절이 아니라 음절이다. 타일에는 한 글자만 오고, 점수는 그 음절이
     // 들어간 연습들의 평균이라 로마자와 한 줄에 묶어 측정값처럼 보이지 않게 한다.
-    expect(find.text('SOUNDS TO FIX · TAP FOR DETAIL'), findsOneWidget);
+    expect(
+      find.text('YOUR WEAKEST SOUNDS · TAP FOR THE GUIDE'),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('home-weak-sound-씨')), findsOneWidget);
     expect(find.text('씨'), findsOneWidget);
     expect(find.text('ssi · 62'), findsOneWidget);
     expect(find.text('neul · 71'), findsOneWidget);
+
+    // 도안 값을 고정한다. 눈으로만 보면 22px과 26px, 좌측/가운데 정렬을 구분하기
+    // 어려워 조용히 어긋난 채로 남는다.
+    final syllable = tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-weak-sound-씨')),
+        matching: find.text('씨'),
+      ),
+    );
+    expect(syllable.style?.fontSize, 26);
+    final tileColumn = tester.widget<Column>(
+      find
+          .descendant(
+            of: find.byKey(const ValueKey('home-weak-sound-씨')),
+            matching: find.byType(Column),
+          )
+          .first,
+    );
+    expect(tileColumn.crossAxisAlignment, CrossAxisAlignment.center);
 
     await _tapVisible(tester, find.byKey(const ValueKey('home-weak-sound-씨')));
 
