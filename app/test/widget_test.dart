@@ -670,6 +670,31 @@ void main() {
     expect(find.text('Practice by situation'), findsNothing);
   });
 
+  testWidgets('Login anchors the wordmark to the top, not the middle', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final screenHeight = tester.getSize(find.byType(Scaffold)).height;
+    final wordmarkTop = tester.getTopLeft(find.text('LingKo')).dy;
+    final buttonTop = tester.getTopLeft(find.text('Continue with Google')).dy;
+
+    // 전체를 세로 중앙에 모으면 화면 크기마다 시작 위치가 달라져 첫인상이 흔들린다.
+    // 워드마크는 상단에 붙고, 로그인 수단은 손이 닿는 아래쪽에 있어야 한다.
+    expect(wordmarkTop, lessThan(screenHeight * 0.2));
+    expect(buttonTop, greaterThan(screenHeight * 0.5));
+  });
+
   testWidgets('Login hides authentication error details', (
     WidgetTester tester,
   ) async {

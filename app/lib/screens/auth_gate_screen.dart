@@ -15,8 +15,9 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const _AuthFrame(
-      child: Column(
+      centered: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           _LogoImage(key: Key('splash-logo'), size: 156),
           SizedBox(height: 24),
@@ -46,7 +47,10 @@ class LoginScreen extends StatelessWidget {
     return _AuthFrame(
       // 카드로 감싸지 않는다. 첫 화면은 제품이 무엇인지 말하는 자리라
       // 테두리로 내용을 가두는 대신 여백으로 위계를 만든다.
-      child: Column(
+      //
+      // 위아래로 나눠 워드마크와 설명은 상단에 붙이고 로그인 수단은 바닥에 둔다.
+      // 전체를 세로 중앙에 모으면 화면 크기마다 시작 위치가 달라져 첫인상이 흔들린다.
+      top: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Wordmark(),
@@ -101,8 +105,12 @@ class LoginScreen extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+      bottom: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           if (errorText != null) ...[
-            const SizedBox(height: AppSpacing.lg),
             Text(
               errorText!,
               style: TextStyle(
@@ -110,8 +118,8 @@ class LoginScreen extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
+            const SizedBox(height: AppSpacing.lg),
           ],
-          const SizedBox(height: 34),
           _GoogleSignInButton(
             isLoading: isLoading,
             onPressed: isLoading ? null : onSignIn,
@@ -167,23 +175,55 @@ class _AppleSignInButton extends StatelessWidget {
 /// Auth Frame 사용자 화면과 interaction 경계를 제공한다.
 /// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
 class _AuthFrame extends StatelessWidget {
-  const _AuthFrame({required this.child});
+  const _AuthFrame({this.top, this.bottom, this.centered});
 
-  final Widget child;
+  /// 화면 위쪽에 붙는 내용이다.
+  final Widget? top;
+
+  /// 화면 아래쪽에 붙는 내용이다. 로그인 수단처럼 손이 닿는 자리에 두는 것들이다.
+  final Widget? bottom;
+
+  /// 세로 중앙에 모을 내용이다. 시작 화면처럼 읽을 것이 없을 때만 쓴다.
+  final Widget? centered;
 
   @override
   Widget build(BuildContext context) {
+    final center = centered;
     return Scaffold(
       backgroundColor: context.palette.scaffold,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 26),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: child,
-            ),
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (center != null) {
+              return Center(child: center);
+            }
+            // 화면이 충분히 길면 위·아래로 벌리고, 짧으면 스크롤한다.
+            // 하단 고정만 쓰면 큰 글자 설정에서 버튼이 화면 밖으로 밀린다.
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 26),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 42,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        top ?? const SizedBox.shrink(),
+                        if (bottom != null) ...[
+                          const SizedBox(height: 34),
+                          bottom!,
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
