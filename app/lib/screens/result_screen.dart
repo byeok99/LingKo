@@ -107,7 +107,11 @@ class ResultScreen extends StatelessWidget {
           ],
           if (sentence.romanization.isNotEmpty) ...[
             const SizedBox(height: 7),
-            RomanizationText(sentence.romanization, fontSize: 11.5),
+            RomanizationText(
+              sentence.romanization,
+              key: const ValueKey('result-romanized-pronunciation'),
+              fontSize: 11.5,
+            ),
           ],
           const SizedBox(height: 14),
           Container(

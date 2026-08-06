@@ -123,6 +123,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     _ReviewHistoryCard(
                       item: items[index],
                       showDivider: index != items.length - 1,
+                      onRetryPractice: widget.onRetryPractice,
                     ),
                 ],
               ),
@@ -154,7 +155,10 @@ class _ReviewSummary extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: EyebrowLabel('Your progress · Last ${scores.length} tries'),
+                child: EyebrowLabel(
+                  'Your progress · Last ${scores.length} '
+                  '${scores.length == 1 ? 'try' : 'tries'}',
+                ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -213,9 +217,14 @@ List<int> recentTrendScores(
 }
 
 class _ReviewHistoryCard extends StatelessWidget {
-  const _ReviewHistoryCard({required this.item, this.showDivider = false});
+  const _ReviewHistoryCard({
+    required this.item,
+    required this.onRetryPractice,
+    this.showDivider = false,
+  });
 
   final PracticeHistoryItem item;
+  final ValueChanged<PracticeSentence> onRetryPractice;
   final bool showDivider;
 
   @override
@@ -224,7 +233,7 @@ class _ReviewHistoryCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         key: ValueKey('review-history-card-${item.evaluationLogId}'),
-        onTap: () => _showHistoryDetail(context, item),
+        onTap: () => _showHistoryDetail(context, item, onRetryPractice),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           decoration: BoxDecoration(
@@ -396,7 +405,11 @@ class _TrendPainter extends CustomPainter {
   }
 }
 
-void _showHistoryDetail(BuildContext context, PracticeHistoryItem item) {
+void _showHistoryDetail(
+  BuildContext context,
+  PracticeHistoryItem item,
+  ValueChanged<PracticeSentence> onRetryPractice,
+) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -406,14 +419,22 @@ void _showHistoryDetail(BuildContext context, PracticeHistoryItem item) {
         top: Radius.circular(AppSizes.radiusLarge),
       ),
     ),
-    builder: (context) => _HistoryDetailSheet(item: item),
+    builder:
+        (context) => _HistoryDetailSheet(
+          item: item,
+          onRetryPractice: onRetryPractice,
+        ),
   );
 }
 
 class _HistoryDetailSheet extends StatelessWidget {
-  const _HistoryDetailSheet({required this.item});
+  const _HistoryDetailSheet({
+    required this.item,
+    required this.onRetryPractice,
+  });
 
   final PracticeHistoryItem item;
+  final ValueChanged<PracticeSentence> onRetryPractice;
 
   @override
   Widget build(BuildContext context) {
@@ -512,13 +533,26 @@ class _HistoryDetailSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(item.summary, style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: AppSpacing.xxl),
-            SectionHeader(title: 'Score details'),
+            // 상세 시트도 결과 화면과 같은 eyebrow 체계를 쓴다. 같은 정보를
+            // 다른 무게로 부르면 두 화면이 다른 제품처럼 읽힌다.
+            const EyebrowLabel('Score details'),
             const SizedBox(height: AppSpacing.md),
             _HistoryScoreBreakdown(breakdown: item.scoreBreakdown),
             const SizedBox(height: AppSpacing.xxl),
-            SectionHeader(title: 'Pronunciation by word'),
+            const EyebrowLabel('By word · tap to see its syllables'),
             const SizedBox(height: AppSpacing.md),
             WordSyllableExplorer(words: item.words),
+            const SizedBox(height: AppSpacing.xxl),
+            // 기록을 본 다음에 할 수 있는 일은 하나뿐이다. 시트를 먼저 닫고
+            // Practice 탭으로 넘긴다. 시트가 남으면 다음 화면을 가린다.
+            PrimaryButton(
+              key: const ValueKey('review-retry-practice'),
+              label: 'Practice again',
+              onPressed: () {
+                Navigator.of(context).pop();
+                onRetryPractice(item.toPracticeSentence());
+              },
+            ),
           ],
         ),
       ),
