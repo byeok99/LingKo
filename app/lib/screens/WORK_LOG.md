@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 03 Practice · 09 Profile 리디자인
+
+- 변경 파일: `practice_screen.dart`, `profile_screen.dart`
+- 내용: Practice는 입력만 카드로 채우고 표준 발음을 위아래 선으로 묶었다. 입력 글자를 21px로 키우고 테두리를 걷어 카드 자체가 입력 영역임을 드러냈다. Listen의 Normal·Slow를 동등한 secondary로 맞추고 CTA를 'Record'로 줄였다. Profile은 계정 카드를 구분선 블록으로 바꾸고 Your content·About 섹션과 설정 행을 넣었다. 아직 화면이 없는 항목은 눌리지 않게 흐리게 뒀다.
+- 검증: `flutter analyze` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: Saved sentences 화면(11)이 아직 없어 Profile의 해당 행은 비활성 상태다
+
 ## 2026-08-06 - 06 Result 리디자인
 
 - 변경 파일: `result_screen.dart`
