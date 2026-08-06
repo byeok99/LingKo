@@ -158,6 +158,13 @@ class _LingKoShellState extends State<LingKoShell> {
   /// Home 타일에 쓰는 취약 어절이다. 비어 있으면 타일 영역 자체를 그리지 않는다.
   List<WeakWord> weakWords = const [];
 
+  /// 저장한 문장의 식별자다. 여러 화면이 같은 저장 상태를 보여줘야 해서
+  /// 화면마다 따로 조회하지 않고 shell이 하나만 들고 내려준다.
+  Set<int> savedSentenceIds = const {};
+
+  /// 서버 응답을 기다리는 동안 중복 요청을 막는다.
+  final Set<int> pendingSavedToggles = {};
+
   @override
   void initState() {
     super.initState();
@@ -230,6 +237,88 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
+  Future<void> loadSavedSentenceIds() async {
+    if (session == null) {
+      return;
+    }
+    try {
+      final saved = await widget.authService.runAuthenticated(
+        (accessToken) => widget.practiceContentApi.fetchSavedSentences(
+          accessToken: accessToken,
+        ),
+      );
+      if (mounted) {
+        setState(() {
+          savedSentenceIds = {
+            for (final sentence in saved)
+              if (sentence.sentenceId != null) sentence.sentenceId!,
+          };
+        });
+      }
+    } catch (_) {
+      // 저장 상태는 보조 정보다. 실패하면 북마크가 꺼진 것처럼 보이지만
+      // 문장 연습 자체는 막지 않는다.
+    }
+  }
+
+  /// 저장 상태를 뒤집는다.
+  ///
+  /// 화면을 먼저 바꾸고 서버에 알린다. 왕복을 기다리면 북마크가 한 박자 늦게 반응해
+  /// 눌리지 않은 것처럼 느껴진다. 실패하면 되돌린다.
+  Future<void> toggleSavedSentence(int sentenceId) async {
+    if (pendingSavedToggles.contains(sentenceId)) {
+      return;
+    }
+    final wasSaved = savedSentenceIds.contains(sentenceId);
+    setState(() {
+      pendingSavedToggles.add(sentenceId);
+      savedSentenceIds = {
+        for (final id in savedSentenceIds)
+          if (id != sentenceId) id,
+        if (!wasSaved) sentenceId,
+      };
+    });
+
+    try {
+      final saved = await widget.authService.runAuthenticated(
+        (accessToken) => widget.practiceContentApi.toggleSavedSentence(
+          accessToken: accessToken,
+          sentenceId: sentenceId,
+        ),
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        pendingSavedToggles.remove(sentenceId);
+        // 서버가 알려준 실제 상태로 맞춘다. 두 기기에서 동시에 눌렀을 때
+        // 화면이 서버와 어긋나 있을 수 있다.
+        savedSentenceIds = {
+          for (final id in savedSentenceIds)
+            if (id != sentenceId) id,
+          if (saved) sentenceId,
+        };
+      });
+    } on AuthSessionExpiredException {
+      handleSessionChanged(null);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        pendingSavedToggles.remove(sentenceId);
+        savedSentenceIds = {
+          for (final id in savedSentenceIds)
+            if (id != sentenceId) id,
+          if (wasSaved) sentenceId,
+        };
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not update this sentence.')),
+      );
+    }
+  }
+
   Future<void> restoreSession() async {
     // 보안 저장소 확인이 끝날 때까지 시작 화면을 유지해 로그인 화면과 홈 화면의 순간 전환을 막는다.
     try {
@@ -249,7 +338,7 @@ class _LingKoShellState extends State<LingKoShell> {
           loadRecommendedSentences(),
           loadPracticeQuota(restoredSession),
         ]);
-        await loadWeakWords();
+        await Future.wait([loadWeakWords(), loadSavedSentenceIds()]);
       }
     } catch (_) {
       if (!mounted) {
@@ -633,6 +722,8 @@ class _LingKoShellState extends State<LingKoShell> {
         onRetryQuota: loadPracticeQuota,
         onSelect: openPractice,
         weakWords: weakWords,
+        savedSentenceIds: savedSentenceIds,
+        onToggleSaved: toggleSavedSentence,
         onSelectWeakWord:
             (word) => setState(() => openWordDetail = word.text),
         onOpenPractice: () => setState(() => selectedTab = 1),
@@ -648,6 +739,17 @@ class _LingKoShellState extends State<LingKoShell> {
             sentence: selectedSentence!,
             result: latestResult,
             sentenceSpeechService: widget.sentenceSpeechService,
+            // 추천 문장만 저장할 수 있다. 직접 입력한 문장은 서버에 식별자가 없다.
+            isSaved:
+                selectedSentence!.sentenceId == null
+                    ? null
+                    : savedSentenceIds.contains(selectedSentence!.sentenceId),
+            onToggleSaved: () {
+              final id = selectedSentence!.sentenceId;
+              if (id != null) {
+                unawaited(toggleSavedSentence(id));
+              }
+            },
             onTryAgain: () {
               setState(() {
                 hasResult = false;
@@ -719,7 +821,11 @@ class _LingKoShellState extends State<LingKoShell> {
           setState(() => isSavedSentencesOpen = false);
           openPractice(sentence);
         },
-        onClose: () => setState(() => isSavedSentencesOpen = false),
+        onClose: () {
+          setState(() => isSavedSentencesOpen = false);
+          // 저장 화면에서 해제한 결과를 Home 북마크에도 반영한다.
+          unawaited(loadSavedSentenceIds());
+        },
       );
     } else {
       body = pages[selectedTab];

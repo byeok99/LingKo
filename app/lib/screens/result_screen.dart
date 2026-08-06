@@ -21,6 +21,8 @@ class ResultScreen extends StatelessWidget {
     required this.result,
     required this.sentenceSpeechService,
     required this.onTryAgain,
+    this.isSaved,
+    this.onToggleSaved,
     this.onOpenReview,
   });
 
@@ -28,6 +30,10 @@ class ResultScreen extends StatelessWidget {
   final PracticeResult? result;
   final SentenceSpeechService sentenceSpeechService;
   final VoidCallback onTryAgain;
+
+  /// 저장 상태다. null이면 저장할 수 없는 문장(직접 입력 등)이라 토글을 두지 않는다.
+  final bool? isSaved;
+  final VoidCallback? onToggleSaved;
   final VoidCallback? onOpenReview;
 
   @override
@@ -36,7 +42,27 @@ class ResultScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
       children: [
-        const TopBar(title: 'Result', centered: true),
+        TopBar(
+          title: 'Result',
+          centered: true,
+          // 방금 연습한 문장을 다시 하고 싶을 때가 저장할 마음이 가장 큰 순간이다.
+          trailing:
+              isSaved == null
+                  ? null
+                  : IconButton(
+                    key: const ValueKey('result-save-sentence'),
+                    tooltip: isSaved! ? 'Saved' : 'Save this sentence',
+                    onPressed: onToggleSaved,
+                    icon: Icon(
+                      isSaved! ? Icons.bookmark : Icons.bookmark_border,
+                      size: 20,
+                      color:
+                          isSaved!
+                              ? context.palette.primary
+                              : context.palette.textMuted,
+                    ),
+                  ),
+        ),
         const SizedBox(height: 10),
         if (currentResult == null)
           StatePanel(

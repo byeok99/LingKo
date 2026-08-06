@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - Home·Result에 북마크 진입점 연결
+
+- 변경 파일: `home_screen.dart`, `result_screen.dart`
+- 내용: 문장 행과 Result 헤더에서 저장을 켤 수 있게 했다. Result에 둔 이유는 방금 연습한 문장을 다시 하고 싶을 때가 저장할 마음이 가장 큰 순간이기 때문이다. 직접 입력한 문장은 서버 식별자가 없어 토글 자체를 두지 않는다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 저장 상태 조회 실패 시 북마크가 꺼진 것처럼 보인다. 연습 자체는 막지 않는다
+
 ## 2026-08-06 - Saved sentences·Word detail 화면 추가
 
 - 변경 파일: `saved_sentences_screen.dart`, `word_detail_screen.dart`, `home_screen.dart`, `profile_screen.dart`

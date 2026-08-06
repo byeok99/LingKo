@@ -48,6 +48,8 @@ class HomeScreen extends StatefulWidget {
     required this.onSelect,
     this.weakWords = const [],
     this.onSelectWeakWord,
+    this.savedSentenceIds = const {},
+    this.onToggleSaved,
     required this.onOpenPractice,
     required this.onOpenCustomPractice,
     this.onRequestPracticeReward,
@@ -68,6 +70,10 @@ class HomeScreen extends StatefulWidget {
   /// 반복해서 틀리는 어절이다. 비어 있으면 타일 영역을 그리지 않는다.
   final List<WeakWord> weakWords;
   final ValueChanged<WeakWord>? onSelectWeakWord;
+
+  /// 저장한 문장의 식별자다. 행마다 서버에 묻지 않도록 shell이 한 번에 내려준다.
+  final Set<int> savedSentenceIds;
+  final ValueChanged<int>? onToggleSaved;
   final VoidCallback onOpenPractice;
   final VoidCallback onOpenCustomPractice;
   final Future<void> Function()? onRequestPracticeReward;
@@ -289,6 +295,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   sentence: visibleSentences[index],
                   onTap: () => widget.onSelect(visibleSentences[index]),
                   showDivider: index != visibleSentences.length - 1,
+                  // 추천 문장만 저장할 수 있다. 직접 입력한 문장은 서버에 식별자가 없다.
+                  isSaved:
+                      visibleSentences[index].sentenceId == null
+                          ? null
+                          : widget.savedSentenceIds.contains(
+                            visibleSentences[index].sentenceId,
+                          ),
+                  onToggleSaved: () {
+                    final id = visibleSentences[index].sentenceId;
+                    if (id != null) {
+                      widget.onToggleSaved?.call(id);
+                    }
+                  },
                 ),
             ],
           ),
