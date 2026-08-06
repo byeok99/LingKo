@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 디자인 토큰 회귀 테스트 갱신
+
+- 변경 파일: `design_system_test.dart`, `widget_test.dart`
+- 내용: 기준을 구 preview.html에서 Direction A 핸드오프로 옮기고, 허용 굵기 4단계와 버튼 무그림자 규칙을 계약으로 고정했다. 버튼이 커지며 테스트 뷰포트(800x600) 밖으로 밀린 하단 CTA는 레이아웃을 줄이지 않고 스크롤 후 탭하도록 고쳤다.
+- 검증: `flutter analyze`, `flutter test` 84개 통과. 밝은 테마 12개 색 조합과 어두운 테마 8개 조합의 WCAG AA 본문 기준 충족을 계산으로 확인
+- 리스크: 화면별 위젯 리디자인은 후속 작업이다. 지금은 토큰만 교체돼 기존 레이아웃에 새 값이 적용된 상태다
+
 ## 2026-08-05 - 로마자 API·화면 회귀 테스트
 
 - 변경 파일: `pronunciation_api_test.dart`, `sentence_api_test.dart`, `evaluation_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`

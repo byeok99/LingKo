@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - Direction A 디자인 토큰 적용
+
+- 변경 파일: `app_theme.dart`, `app_palette.dart`
+- 내용: 색·타이포·형태 토큰을 Direction A 핸드오프 값으로 교체했다. 폰트 굵기를 400~700 네 단계로 줄이고(기존 800~900 혼용 폐지), 버튼 그림자와 강조 테두리를 없애 위계를 채움→선→글자로만 표현한다. 버튼 높이 54·반경 12, 카드 반경 16으로 고정하고 line·lineSubtle·borderStrong·neutralFill·recordAccent 토큰을 추가했다.
+- 검증: `flutter analyze`, `flutter test` 84개 통과. 밝은 테마 12개 색 조합과 어두운 테마 8개 조합의 WCAG AA 본문 기준 충족을 계산으로 확인
+- 리스크: 화면별 위젯 리디자인은 후속 작업이다. 지금은 토큰만 교체돼 기존 레이아웃에 새 값이 적용된 상태다
+
 ## 2026-08-04 - preferences 의존성 제거
 
 - 변경 파일: `lingko_app.dart`

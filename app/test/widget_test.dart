@@ -27,6 +27,18 @@ import 'package:lingko_app/widgets/guide_sheet.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
 import 'package:lingko_app/widgets/shared_widgets.dart';
 
+/// 화면 아래쪽 컨트롤을 누르기 전에 보이는 위치로 스크롤한다.
+///
+/// 기본 테스트 뷰포트(800x600)는 디자인 기준 기기(402x772)보다 짧아, 하단 CTA가
+/// 화면 밖에 있을 수 있다. 실제 기기에서는 보이지만 테스트에서만 안 보이는 상황이라
+/// 레이아웃을 테스트에 맞춰 줄이지 않고 스크롤로 맞춘다.
+Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
 /// 테스트에서 Fake Pronunciation Api 의존성을 결정적으로 대체한다.
 /// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
 class FakePronunciationApi implements PronunciationApi {
@@ -740,8 +752,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Start recording'), findsOneWidget);
 
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Start recording'));
     expect(find.text('Stop and analyze'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('recording-romanized-pronunciation')),
@@ -749,8 +760,7 @@ void main() {
     );
     expect(find.text('마싣껟따.'), findsNothing);
 
-    await tester.tap(find.text('Stop and analyze'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Stop and analyze'));
 
     expect(find.text('Result'), findsOneWidget);
     expect(find.text('Excellent'), findsOneWidget);
@@ -1003,7 +1013,12 @@ void main() {
     );
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Start recording'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Start recording'));
+    await tester.pump();
+    // 중간 상태를 관찰해야 해서 pumpAndSettle을 쓰지 않는다. 위치만 먼저 확보한다.
+    await tester.ensureVisible(find.text('Stop and analyze'));
     await tester.pump();
     await tester.tap(find.text('Stop and analyze'));
     await tester.pump();
@@ -1065,7 +1080,12 @@ void main() {
     );
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -120));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Start recording'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Start recording'));
+    await tester.pump();
+    // 중간 상태를 관찰해야 해서 pumpAndSettle을 쓰지 않는다. 위치만 먼저 확보한다.
+    await tester.ensureVisible(find.text('Stop and analyze'));
     await tester.pump();
     await tester.tap(find.text('Stop and analyze'));
     await tester.pump();
@@ -1528,8 +1548,7 @@ void main() {
 
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Start recording'));
 
     expect(
       find.text(
@@ -1569,10 +1588,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop and analyze'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Start recording'));
+    await _tapVisible(tester, find.text('Stop and analyze'));
 
     expect(
       find.text(
@@ -1603,8 +1620,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Start recording'));
 
     expect(find.byType(NavigationBar), findsNothing);
     await tester.tap(find.text('Cancel recording'));
@@ -1872,10 +1888,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop and analyze'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Start recording'));
+    await _tapVisible(tester, find.text('Stop and analyze'));
 
     expect(recorder.deletedPaths, ['/tmp/lingko-test.wav']);
   });
@@ -1900,10 +1914,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop and analyze'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Start recording'));
+    await _tapVisible(tester, find.text('Stop and analyze'));
 
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
     await tester.pumpAndSettle();
@@ -1942,10 +1954,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start recording'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stop and analyze'));
-    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Start recording'));
+    await _tapVisible(tester, find.text('Stop and analyze'));
 
     expect(find.text('Result'), findsOneWidget);
     expect(find.text('Excellent'), findsOneWidget);

@@ -28,6 +28,13 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.textSecondary,
     required this.textMuted,
     required this.border,
+    required this.line,
+    required this.lineSubtle,
+    required this.borderStrong,
+    required this.errorBorder,
+    required this.neutralFill,
+    required this.recordAccent,
+
     required this.success,
     required this.successSoft,
     required this.warning,
@@ -54,6 +61,24 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color textSecondary;
   final Color textMuted;
   final Color border;
+
+  /// 섹션을 가르는 선. 리스트 행 구분선(lineSubtle)보다 진하다.
+  final Color line;
+
+  /// 리스트 행 사이의 얇은 선.
+  final Color lineSubtle;
+
+  /// 버튼 테두리. 카드 테두리(border)보다 진해 눌리는 것임을 구분한다.
+  final Color borderStrong;
+
+  /// 파괴적 동작 버튼의 테두리. 채우지 않고 선으로만 경고한다.
+  final Color errorBorder;
+
+  /// 재생 원형 버튼과 비활성 버튼의 채움.
+  final Color neutralFill;
+
+  /// 녹음 정지 사각형. 인터랙티브 파랑과 구분되는 유일한 붉은 컨트롤이다.
+  final Color recordAccent;
   final Color success;
   final Color successSoft;
   final Color warning;
@@ -84,6 +109,12 @@ class AppPalette extends ThemeExtension<AppPalette> {
     textSecondary: AppColors.textSecondary,
     textMuted: AppColors.textMuted,
     border: AppColors.border,
+    line: AppColors.line,
+    lineSubtle: AppColors.lineSubtle,
+    borderStrong: AppColors.borderStrong,
+    errorBorder: AppColors.errorBorder,
+    neutralFill: AppColors.neutralFill,
+    recordAccent: AppColors.recordAccent,
     success: AppColors.success,
     successSoft: AppColors.successSoft,
     warning: AppColors.warning,
@@ -117,13 +148,21 @@ class AppPalette extends ThemeExtension<AppPalette> {
     textSecondary: Color(0xFFA8B8C6),
     textMuted: Color(0xFF8DA0B0),
     border: Color(0xFF2B3B49),
+    line: Color(0xFF243543),
+    lineSubtle: Color(0xFF1F2E3A),
+    borderStrong: Color(0xFF35485A),
+    errorBorder: Color(0xFF5E3236),
+    neutralFill: Color(0xFF20303D),
+    recordAccent: Color(0xFFE2726A),
     success: Color(0xFF6FCFAA),
     successSoft: Color(0xFF16302A),
     warning: Color(0xFFE0B366),
     warningSoft: Color(0xFF322715),
     error: Color(0xFFF08C8C),
     errorSoft: Color(0xFF33191C),
-    disabled: Color(0xFF6B7C8A),
+    // 어두운 채움(neutralFill) 위에서 본문 기준을 넘도록 밝힌 값이다.
+    // 비활성 버튼도 '왜 못 누르는지'를 알려주므로 읽혀야 한다.
+    disabled: Color(0xFF93A2AE),
     shadow: Color(0x66000000),
     onPrimary: Color(0xFF0F1720),
   );
@@ -145,6 +184,13 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? textSecondary,
     Color? textMuted,
     Color? border,
+    Color? line,
+    Color? lineSubtle,
+    Color? borderStrong,
+    Color? errorBorder,
+    Color? neutralFill,
+    Color? recordAccent,
+
     Color? success,
     Color? successSoft,
     Color? warning,
@@ -171,6 +217,13 @@ class AppPalette extends ThemeExtension<AppPalette> {
       textSecondary: textSecondary ?? this.textSecondary,
       textMuted: textMuted ?? this.textMuted,
       border: border ?? this.border,
+      line: line ?? this.line,
+      lineSubtle: lineSubtle ?? this.lineSubtle,
+      borderStrong: borderStrong ?? this.borderStrong,
+      errorBorder: errorBorder ?? this.errorBorder,
+      neutralFill: neutralFill ?? this.neutralFill,
+      recordAccent: recordAccent ?? this.recordAccent,
+
       success: success ?? this.success,
       successSoft: successSoft ?? this.successSoft,
       warning: warning ?? this.warning,
@@ -205,6 +258,13 @@ class AppPalette extends ThemeExtension<AppPalette> {
       textSecondary: mix(textSecondary, other.textSecondary),
       textMuted: mix(textMuted, other.textMuted),
       border: mix(border, other.border),
+      line: mix(line, other.line),
+      lineSubtle: mix(lineSubtle, other.lineSubtle),
+      borderStrong: mix(borderStrong, other.borderStrong),
+      errorBorder: mix(errorBorder, other.errorBorder),
+      neutralFill: mix(neutralFill, other.neutralFill),
+      recordAccent: mix(recordAccent, other.recordAccent),
+
       success: mix(success, other.success),
       successSoft: mix(successSoft, other.successSoft),
       warning: mix(warning, other.warning),
