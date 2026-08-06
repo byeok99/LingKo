@@ -16,6 +16,7 @@
 
 ### 설계와 구현
 
+- [LingKo Blue 디자인 복구 기준](design-repair/README.md)
 - [시스템 아키텍처](architecture/system-architecture.md)
 - [인증 흐름](architecture/authentication-flow.md)
 - [발음 평가 흐름](architecture/evaluation-flow.md)

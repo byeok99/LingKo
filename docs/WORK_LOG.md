@@ -1,3 +1,10 @@
+## 2026-08-06 - LingKo Blue 디자인 기준 연결
+
+- 변경 파일: `README.md`, `design-repair/README.md`, `design-repair/LingKo Blue Merged.dc.html`
+- 내용: 새 design-repair 시안을 활성 디자인 기준으로 정리하고 문서 인덱스에서 바로 찾을 수 있게 연결했다.
+- 검증: 상대 링크 확인, `git diff --check`
+- 리스크: 실제 기기 시각 검수는 후속 확인 필요
+
 ## 2026-08-06 - MVP 출시 실행 체크리스트 추가
 
 - 변경 파일: `mvp-release-execution-checklist.md`, `README.md`, `WORK_LOG.md`
