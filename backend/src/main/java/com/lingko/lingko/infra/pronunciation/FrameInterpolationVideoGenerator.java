@@ -31,7 +31,8 @@ import java.util.stream.IntStream;
  * 1. 정적 이미지 처리 (단일 프레임)
  * 2. 영상 생성 (Frame Interpolation)
  * 3. 세그먼트 병합
- * 4. S3 업로드
+ * 4. 모바일 재생 호환 보정
+ * 5. S3 업로드
  */
 @Component
 @RequiredArgsConstructor
@@ -44,6 +45,7 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
     private final VideoMerger videoMerger;
     private final S3Uploader s3Uploader;
     private final ExternalMediaUrlValidator externalMediaUrlValidator;
+    private final VideoPlaybackNormalizer videoPlaybackNormalizer;
     private final List<Object> generationLocks = IntStream
             .range(0, GENERATION_LOCK_STRIPES)
             .mapToObj(ignored -> new Object())
@@ -147,14 +149,22 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
                 log.info("세그먼트 {}개 병합 완료", segmentPaths.size());
             }
 
-            // 3. 최종 영상을 S3에 업로드
-            String s3Url = s3Uploader.upload(finalVideoPath.toString(), s3Key);
+            // 3. 모바일이 디코딩할 수 있는 형식으로 보정한다.
+            //    병합을 건너뛰거나(-세그먼트 1개) 병합하더라도 -c copy라 재인코딩이 없어,
+            //    여기가 픽셀 포맷을 바로잡을 수 있는 유일한 지점이다.
+            Path uploadPath = videoPlaybackNormalizer.normalize(finalVideoPath);
+            if (!uploadPath.equals(finalVideoPath)) {
+                tempFiles.add(uploadPath);
+            }
+
+            // 4. 최종 영상을 S3에 업로드
+            String s3Url = s3Uploader.upload(uploadPath.toString(), s3Key);
 
             log.info("영상 생성 완료: {} -> {}", syllable, s3Url);
             return s3Url;
 
         } finally {
-            // 4. 모든 임시 파일 삭제
+            // 5. 모든 임시 파일 삭제
             cleanupTempFiles(tempFiles);
         }
     }

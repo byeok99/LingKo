@@ -31,7 +31,8 @@ class FrameInterpolationVideoGeneratorCacheTest {
                 replicateApiClient,
                 videoMerger,
                 s3Uploader,
-                urlValidator
+                urlValidator,
+                mock(VideoPlaybackNormalizer.class)
         );
         List<List<String>> pairs = List.of(
                 List.of("https://guides/tongue/g.png", "https://guides/tongue/i.png"),

@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-06 - 영상 호환 보정 fallback 테스트 추가
+
+- 변경 파일: `VideoPlaybackNormalizerTest.java`(신규), `FrameInterpolationVideoGeneratorTest.java`, `FrameInterpolationVideoGeneratorCacheTest.java`
+- 내용: 보정이 실패해도 원본 경로를 돌려주고 부산물을 남기지 않는지 검증한다. 이 단계에서 예외를 던지면 Replicate 호출까지 끝난 결과가 통째로 버려진다. 기존 두 테스트는 생성자에 추가된 의존성만 반영했다.
+- 검증: `./gradlew test` 통과
+- 리스크: 없음
+
+## 2026-08-06 - 단어 정렬 폐기 갈래 테스트 보강
+
+- 변경 파일: `AzurePronunciationResultParserTest.java`
+- 내용: 개수는 맞고 표기만 다른 경우(`한` vs `1`)와 문장부호만 다른 경우를 추가했다. 전자는 실제 기록에서 확인된 폐기 사례이고, 후자는 표준 발음에 마침표가 남는 흔한 상황이라 정상 통과해야 한다. 진단 로그의 `text-mismatch` 갈래도 이 테스트로 실행된다.
+- 검증: `./gradlew test` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - Azure 단어 parser 테스트
 
 - 변경 파일: `AzurePronunciationResultParserTest.java`, `WORK_LOG.md`
