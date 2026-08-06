@@ -58,7 +58,7 @@ SEV-1·SEV-2, 보안·개인정보 또는 데이터 유실 위험은 답변 수�
 
 | 날짜 | 심각도 | 영역 | 제목 | 상태 | 관련 Issue |
 |---|---|---|---|---|---|
-| 2026-08-06 | SEV-2 | Backend / External / Flutter | [가이드 영상이 오류 없이 흰 화면으로만 재생되는 문제](2026-08-06-guide-video-yuv444-white-screen.md) | 해결 | 미할당 |
+| 2026-08-06 | SEV-2 | Backend / External / Flutter | [가이드 영상이 오류 없이 흰 화면으로만 재생되는 문제](2026-08-06-guide-video-yuv444-white-screen.md) | 해결 | [#93](https://github.com/byeok99/LingKo/issues/93) |
 | 2026-08-03 | SEV-3 | Backend / External / Operations | [Replicate Prediction timeout 이후 429가 연쇄 발생하는 문제](2026-08-03-replicate-prediction-timeout-rate-limit.md) | 완화 | [#44](https://github.com/byeok99/LingKo/issues/44) |
 | 2026-07-30 | SEV-3 | Backend / DB / Transaction | [평가 작업 terminal 상태가 PROCESSING에 남는 문제](2026-07-29-evaluation-job-status-lost-after-quota-update.md) | 해결 | [#47](https://github.com/byeok99/LingKo/issues/47) |
 | 2026-07-29 | SEV-3 | Backend / DB / Concurrency | [평가 재시도에서 작업과 쿼터가 중복 생성될 위험](2026-07-29-evaluation-request-idempotency.md) | 해결 | [#39](https://github.com/byeok99/LingKo/issues/39) |

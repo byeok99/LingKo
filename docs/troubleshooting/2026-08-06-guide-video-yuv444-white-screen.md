@@ -5,8 +5,8 @@
 - 영향 범위: 발음 가이드 시트에서 영상 가이드를 보는 모든 iOS 사용자. 홀수 해상도로 생성된 음절이 대상이며 실측 7건 중 5건
 - 심각도: SEV-2
 - 영역: Backend / External / Flutter
-- 관련 Issue: 미할당
-- 관련 PR: 미할당
+- 관련 Issue: [#93](https://github.com/byeok99/LingKo/issues/93)
+- 관련 PR: [#91](https://github.com/byeok99/LingKo/pull/91)
 
 ## 문제 현상
 
