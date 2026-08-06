@@ -25,4 +25,30 @@ class KoreanRomanizationUtilTest {
         assertThat(KoreanRomanizationUtil.romanize(null))
                 .isEmpty();
     }
+
+    @Test
+    @DisplayName("어절과 음절 단위도 문장과 같은 규칙으로 로마자를 만든다")
+    void romanizesSegmentsWithTheSameRule() {
+        // 화면이 어절·음절마다 로마자를 병기하므로, 문장 결과를 잘라 쓰지 않고
+        // 같은 함수로 만들어 한글과 로마자가 어긋나지 않게 한다.
+        assertThat(KoreanRomanizationUtil.romanizeSegment("커피를")).isEqualTo("keo-pi-reul");
+        assertThat(KoreanRomanizationUtil.romanizeSegment("조")).isEqualTo("jo");
+
+        // 어절 로마자를 이어붙이면 문장 로마자와 같아야 한다.
+        String joined = String.join(
+                " ",
+                KoreanRomanizationUtil.romanizeSegment("저는"),
+                KoreanRomanizationUtil.romanizeSegment("커피를"),
+                KoreanRomanizationUtil.romanizeSegment("조아해요")
+        );
+        assertThat(joined).isEqualTo(KoreanRomanizationUtil.romanize("저는 커피를 조아해요"));
+    }
+
+    @Test
+    @DisplayName("빈 값과 기호만 있는 입력은 빈 문자열을 반환한다")
+    void romanizeSegmentHandlesEmptyInput() {
+        assertThat(KoreanRomanizationUtil.romanizeSegment("")).isEmpty();
+        assertThat(KoreanRomanizationUtil.romanizeSegment("  ")).isEmpty();
+        assertThat(KoreanRomanizationUtil.romanizeSegment("!?")).isEmpty();
+    }
 }

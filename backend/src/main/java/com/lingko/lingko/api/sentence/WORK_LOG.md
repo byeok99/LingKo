@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 저장 문장 API 추가
+
+- 변경 파일: `SavedSentenceController.java`
+- 내용: 저장 목록 조회와 토글 endpoint를 추가했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 취약 목록은 어절 단위다. 디자인의 음절 단위 표기는 화면에서 함께 조정해야 함
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `SentenceController.java`, `WORK_LOG.md`

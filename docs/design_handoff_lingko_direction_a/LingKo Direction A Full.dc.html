@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#eceae6;font-family:'Noto Sans KR',-apple-system,system-ui,sans-serif}
+a{color:#2f73b9}a:hover{color:#245f9b}
+</style></helmet>
+
+<div style="padding:40px 44px 60px">
+
+<div style="display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start;margin-bottom:38px">
+<div style="width:500px;background:#fcfcfb;border:1px solid rgba(27,34,40,.12);border-radius:10px;padding:26px 28px">
+<div style="font:600 10px 'Noto Sans KR',system-ui;letter-spacing:.18em;color:#5c7386;text-transform:uppercase">개선안 A · 전체 화면</div>
+<h1 style="margin:12px 0 12px;font:700 25px/1.3 'Noto Sans KR',system-ui;color:#1b2228;letter-spacing:-.025em">파랑은 액션에만, 점수는 의미색, 카드 대신 여백</h1>
+<p style="margin:0 0 12px;font:400 13px/1.75 'Noto Sans KR',system-ui;color:#4a4d50;text-wrap:pretty">1차 <strong style="font-weight:700">개선안 A</strong>의 규칙을 11개 화면 전체에 적용했습니다. 대상이 한글을 아직 못 읽는 학습자이므로 모든 한국어에 <strong style="font-weight:700">로마자를 병기</strong>하고 UI 언어는 영어로 고정했습니다.</p>
+<p style="margin:0;font:400 13px/1.75 'Noto Sans KR',system-ui;color:#4a4d50">색 규칙: <span style="color:#2f73b9;font-weight:600">#2f73b9은 누를 수 있는 것에만</span>, 점수는 <span style="color:#27735a;font-weight:600">80 이상</span>·<span style="color:#b94a4a;font-weight:600">80 미만</span> 두 단계 의미색. 테두리+그림자 카드는 전부 없애고 얇은 구분선과 여백으로 묶었습니다.</p>
+</div>
+
+<div style="width:720px;background:#fcfcfb;border:1px solid rgba(27,34,40,.12);border-radius:10px;padding:26px 28px">
+<div style="font:600 10px 'Noto Sans KR',system-ui;letter-spacing:.18em;color:#5c7386;text-transform:uppercase">버튼 시스템 · 입체/평면 혼용을 없앤 규칙</div>
+<p style="margin:12px 0 20px;font:400 13px/1.75 'Noto Sans KR',system-ui;color:#4a4d50">이전 디자인은 primary만 그라디언트+그림자였고 나머지는 평면이라 같은 무게의 버튼끼리도 재질이 달랐습니다. 이제 규칙 하나입니다 — <strong style="font-weight:700">그라디언트·그림자 금지 / 반경 12px / 높이 54px / 라벨 700 15px 고정.</strong> 위계는 재질이 아니라 <em>채움 → 선 → 글자</em> 세 단계로만 말합니다.</p>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px 18px">
+<div><div style="min-height:54px;display:grid;place-items:center;border-radius:12px;background:#2f73b9;color:#fff;font:700 15px 'Noto Sans KR',system-ui">Say it again</div><div style="margin-top:9px;font:400 11.5px/1.5 'Noto Sans KR',system-ui;color:#5c7386">1 · PRIMARY — 화면당 한 개만</div></div>
+<div><div style="min-height:54px;display:grid;place-items:center;border:1px solid #d5d3ce;border-radius:12px;color:#1b2228;font:700 15px 'Noto Sans KR',system-ui">Hear it slow</div><div style="margin-top:9px;font:400 11.5px/1.5 'Noto Sans KR',system-ui;color:#5c7386">2 · SECONDARY — 동등한 선택지</div></div>
+<div><div style="min-height:54px;display:grid;place-items:center;color:#2f73b9;font:700 15px 'Noto Sans KR',system-ui">Type my own sentence</div><div style="margin-top:9px;font:400 11.5px/1.5 'Noto Sans KR',system-ui;color:#5c7386">3 · TEXT — 부수적 이동</div></div>
+<div><div style="min-height:54px;display:grid;place-items:center;border-radius:12px;background:#f1f0ed;color:#627585;font:700 15px 'Noto Sans KR',system-ui">Record</div><div style="margin-top:9px;font:400 11.5px/1.5 'Noto Sans KR',system-ui;color:#5c7386">DISABLED — 같은 형태, 채움만 약하게</div></div>
+<div><div style="min-height:54px;display:grid;place-items:center;border:1px solid #dcc3c3;border-radius:12px;color:#b94a4a;font:700 15px 'Noto Sans KR',system-ui">Delete account</div><div style="margin-top:9px;font:400 11.5px/1.5 'Noto Sans KR',system-ui;color:#5c7386">DESTRUCTIVE — 채우지 않음</div></div>
+<div><div style="min-height:54px;display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:#f1f0ed;color:#2f73b9;font-size:12px">▶</span><span style="width:54px;height:54px;display:grid;place-items:center;border:1px solid #d5d3ce;border-radius:50%"><span style="width:20px;height:20px;border-radius:5px;background:#c0453a"></span></span></div><div style="margin-top:9px;font:400 11.5px/1.5 'Noto Sans KR',system-ui;color:#5c7386">예외 2개 — 재생(Practice·Sound guide 한정) / 녹음</div></div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start">
+
+<div data-screen-label="01">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">01 · Sign in</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;padding:16px 20px 0;background:#fcfcfb;color:#1b2228;display:flex;flex-direction:column">
+<span style="font:700 24px 'Noto Sans KR',system-ui;letter-spacing:-.045em">LingKo</span>
+<div style="flex:1;display:flex;flex-direction:column;padding:28px 0 50px">
+<h1 style="margin:0;font:700 31px/1.3 'Noto Sans KR',system-ui;letter-spacing:-.035em;text-wrap:pretty">Fix your Korean pronunciation, one syllable at a time.</h1>
+<p style="margin:18px 0 0;font:400 14px/1.75 'Noto Sans KR',system-ui;color:#5c7386;text-wrap:pretty">Say a sentence. See which syllables drifted, and hear how they should sound.</p>
+<div style="margin:34px 0 0;padding:20px 0;border-top:1px solid #e8e6e1;border-bottom:1px solid #e8e6e1">
+<div style="font:700 40px/1.2 'Noto Sans KR',system-ui;letter-spacing:-.03em">안녕하세요</div>
+<div style="margin-top:8px;font:500 12px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386">an-nyeong-ha-se-yo</div>
+</div>
+</div>
+<div style="padding-bottom:26px">
+<div style="min-height:54px;display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:10px;border:1px solid #d5d3ce;border-radius:12px;background:#fff;color:#1b2228;font:700 15px 'Noto Sans KR',system-ui"><svg viewBox="0 0 48 48" width="20" height="20"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/></svg>Continue with Google</div>
+<div style="min-height:54px;display:flex;align-items:center;justify-content:center;gap:11px;border-radius:12px;background:#1b2228;color:#fff;font:700 15px 'Noto Sans KR',system-ui"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M17.05 12.72c-.02-2.2 1.8-3.26 1.88-3.31-1.02-1.5-2.62-1.7-3.19-1.73-1.36-.14-2.65.8-3.34.8-.69 0-1.75-.78-2.87-.76-1.48.02-2.84.86-3.6 2.18-1.53 2.66-.39 6.6 1.1 8.76.73 1.06 1.6 2.25 2.74 2.2 1.1-.04 1.52-.71 2.85-.71 1.33 0 1.71.71 2.87.69 1.19-.02 1.94-1.08 2.66-2.14.84-1.23 1.19-2.42 1.21-2.48-.03-.01-2.32-.89-2.34-3.5zM14.9 5.98c.6-.74 1.01-1.75.9-2.77-.87.04-1.93.58-2.56 1.31-.56.65-1.05 1.69-.92 2.68.97.08 1.97-.49 2.58-1.22z"/></svg>Continue with Apple</div>
+<p style="margin:16px 0 0;font:400 11.5px/1.6 'Noto Sans KR',system-ui;color:#627585;text-align:center">Recordings are deleted right after scoring.</p>
+</div>
+</div>
+</div>
+</div>
+
+<div data-screen-label="02">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">02 · Home</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;padding:16px 20px 0;background:#fcfcfb;color:#1b2228">
+<div style="display:flex;align-items:center;justify-content:space-between;min-height:46px">
+<span style="font:700 24px 'Noto Sans KR',system-ui;letter-spacing:-.045em">LingKo</span>
+<span style="display:flex;align-items:center;gap:10px;padding:5px 5px 5px 12px;border:1px solid #d5d3ce;border-radius:999px">
+<span style="display:flex;align-items:center;gap:7px;color:#245f9b"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg><b style="font:700 14px 'Noto Sans KR',system-ui;color:#1b2228;font-variant-numeric:tabular-nums">3<span style="color:#5c7386;font-weight:400">/5</span></b></span>
+<span style="width:1px;height:16px;background:#e2e0dc"></span>
+<span style="font:500 12px 'Noto Sans KR',system-ui;color:#5c7386;font-variant-numeric:tabular-nums">42:18</span>
+<span style="width:44px;height:44px;display:grid;place-items:center"><span style="width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#edf6fd;color:#245f9b;font:600 16px 'Noto Sans KR',system-ui">+</span></span>
+</span>
+</div>
+<h1 style="margin:20px 0 0;font:700 26px/1.28 'Noto Sans KR',system-ui;letter-spacing:-.035em">What will you<br>say today, Ana?</h1>
+<div style="margin:24px 0 0;padding:16px 0 18px;border-top:1px solid #e8e6e1;border-bottom:1px solid #e8e6e1">
+<div style="font:600 10.5px 'Noto Sans KR',system-ui;letter-spacing:.16em;color:#5c7386;text-transform:uppercase">Your weakest sounds · tap for the guide</div>
+<div style="display:flex;gap:9px;margin-top:12px"><span style="flex:1;display:grid;justify-items:center;gap:5px;padding:12px 0;border-radius:14px;background:#fdeeee"><b style="font:700 26px 'Noto Sans KR',system-ui;color:#b94a4a">씨</b><span style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">ssi · 62</span></span><span style="flex:1;display:grid;justify-items:center;gap:5px;padding:12px 0;border-radius:14px;background:#fdeeee"><b style="font:700 26px 'Noto Sans KR',system-ui;color:#b94a4a">짜</b><span style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">jja · 68</span></span><span style="flex:1;display:grid;justify-items:center;gap:5px;padding:12px 0;border-radius:14px;background:#fdeeee"><b style="font:700 26px 'Noto Sans KR',system-ui;color:#b94a4a">늘</b><span style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">neul · 71</span></span></div>
+</div>
+<div style="display:flex;gap:18px;margin:18px 0 0;border-bottom:1px solid #e8e6e1">
+<span style="display:flex;align-items:center;gap:5px;padding:0 0 9px;border-bottom:2px solid #1b2228;font:600 13px 'Noto Sans KR',system-ui">Daily</span>
+<span style="padding:0 0 9px;font:400 13px 'Noto Sans KR',system-ui;color:#5c7386">Food</span>
+<span style="padding:0 0 9px;font:400 13px 'Noto Sans KR',system-ui;color:#5c7386">Travel</span>
+<span style="padding:0 0 9px;font:400 13px 'Noto Sans KR',system-ui;color:#5c7386">Study</span>
+<span style="padding:0 0 9px;font:400 13px 'Noto Sans KR',system-ui;color:#5c7386">Work</span>
+
+</div>
+<div style="display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:center;padding:15px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:700 19px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">내일 날씨가 어때요?</span><span style="display:block;margin-top:4px;font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#b94a4a">nae-il nal-<b style="font-weight:700">ssi</b>-ga eo-ttae-yo</span><span style="display:block;margin-top:4px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">What’s the weather like tomorrow?</span></span>
+<span style="width:44px;height:44px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="19" height="19" fill="#245f9b" stroke="#245f9b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4-5.5 4z"/></svg></span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:center;padding:15px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:700 19px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">오늘은 집에서 쉬어요.</span><span style="display:block;margin-top:4px;font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">o-neu-reun ji-be-seo swi-eo-yo</span><span style="display:block;margin-top:4px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">I’m resting at home today.</span></span>
+<span style="width:44px;height:44px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#627585" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4-5.5 4z"/></svg></span>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0 0;font:700 13px 'Noto Sans KR',system-ui;color:#2f73b9"><span>Show 2 more</span><span>Type my own sentence</span></div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:76px;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;border-top:1px solid #e8e6e1;background:#fcfcfb"><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#245f9b"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;background:#edf6fd;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20H4z"/></svg></span><span style="font:600 11px 'Noto Sans KR',system-ui">Home</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Practice</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V12M12 20V5M19 20v-6"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Review</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.7"/><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Profile</span></span></div>
+</div>
+</div>
+</div>
+
+<div data-screen-label="03">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">03 · Practice — sentence setup</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;padding:16px 20px 0;background:#fcfcfb;color:#1b2228;display:flex;flex-direction:column">
+<h1 style="margin:0;min-height:34px;font:700 22px 'Noto Sans KR',system-ui;letter-spacing:-.03em">Practice</h1>
+<div style="flex:1;display:flex;flex-direction:column;padding:20px 0 150px">
+<div>
+<div style="font:600 10.5px 'Noto Sans KR',system-ui;letter-spacing:.16em;color:#5c7386;text-transform:uppercase">Your sentence · tap to edit</div>
+<div style="margin-top:11px;padding:15px 16px;border:1px solid #d5d3ce;border-radius:12px;background:#fff">
+<span style="font:700 21px/1.45 'Noto Sans KR',system-ui;letter-spacing:-.02em">저는 커피를 좋아해요.</span><span style="display:inline-block;width:2px;height:20px;margin-left:2px;background:#2f73b9;vertical-align:-3px"></span>
+</div>
+</div>
+<div style="margin:26px 0 0;padding:20px 0;border-top:1px solid #e8e6e1;border-bottom:1px solid #e8e6e1">
+<div style="font:600 10.5px 'Noto Sans KR',system-ui;letter-spacing:.16em;color:#5c7386;text-transform:uppercase">How it should sound</div>
+<div style="margin-top:12px;font:700 24px/1.45 'Noto Sans KR',system-ui;letter-spacing:-.025em">저는 커피를 조아해요</div>
+<div style="margin-top:8px;font:500 12px 'Noto Sans KR',system-ui;letter-spacing:.13em;color:#5f666c">jeo-neun keo-pi-reul jo-a-hae-yo</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">
+<span style="min-height:54px;display:grid;place-items:center;border:1px solid #d5d3ce;border-radius:12px;font:700 15px 'Noto Sans KR',system-ui">Normal</span>
+<span style="min-height:54px;display:grid;place-items:center;border:1px solid #d5d3ce;border-radius:12px;font:700 15px 'Noto Sans KR',system-ui">Slow</span>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:20px;right:20px;bottom:94px">
+<span style="width:100%;min-height:54px;display:grid;place-items:center;border-radius:12px;background:#2f73b9;color:#fff;font:700 15px 'Noto Sans KR',system-ui">Record</span>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:76px;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;border-top:1px solid #e8e6e1;background:#fcfcfb"><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20H4z"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Home</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#245f9b"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;background:#edf6fd;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg></span><span style="font:600 11px 'Noto Sans KR',system-ui">Practice</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V12M12 20V5M19 20v-6"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Review</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.7"/><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Profile</span></span></div>
+</div>
+</div>
+</div>
+
+<div data-screen-label="04">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">04 · Recording</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;padding:16px 20px 0;background:#fcfcfb;color:#1b2228;display:flex;flex-direction:column">
+<div style="display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:34px">
+<span style="width:44px;height:34px;display:grid;place-items:center;color:#1b2228;font-size:18px">‹</span>
+<h1 style="margin:0;text-align:center;font:700 17px 'Noto Sans KR',system-ui;letter-spacing:-.025em">Recording</h1>
+<span></span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;padding-bottom:16px">
+<div style="padding:18px 16px;border:1px solid #e0ded9;border-radius:14px;background:#fff">
+<p style="margin:0;font:700 22px/1.4 'Noto Sans KR',system-ui;letter-spacing:-.03em">저는 커피를 좋아해요.</p>
+<p style="margin:9px 0 0;font:500 12px 'Noto Sans KR',system-ui;letter-spacing:.13em;color:#5c7386">jeo-neun keo-pi-reul jo-a-hae-yo</p>
+<p style="margin:6px 0 0;font:400 12.5px 'Noto Sans KR',system-ui;color:#5c7386">“I like coffee.”</p>
+</div>
+<div style="width:194px;height:194px;display:grid;place-items:center;margin:26px auto 0;border-radius:50%;background:conic-gradient(#2f73b9 0 40%,#e7e5e0 40%)">
+<div style="width:172px;height:172px;display:grid;place-items:center;align-content:center;border-radius:50%;background:#fcfcfb">
+<strong style="font:700 40px/1 'Noto Sans KR',system-ui;letter-spacing:-.04em;font-variant-numeric:tabular-nums">0:04</strong>
+<span style="margin-top:7px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">/ 10 sec</span>
+</div>
+</div>
+<div style="height:52px;display:flex;align-items:center;justify-content:center;gap:5px;margin-top:22px"><i style="display:block;width:4px;height:15px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:27px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:42px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:25px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:36px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:18px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:46px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:31px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:20px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:39px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:22px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:44px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:28px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:17px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:33px;border-radius:999px;background:#2f73b9"></i><i style="display:block;width:4px;height:24px;border-radius:999px;background:#2f73b9"></i></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;align-items:end;padding-bottom:30px">
+<span style="display:grid;place-items:center;align-content:center;gap:8px;font:600 11px 'Noto Sans KR',system-ui;color:#5c7386"><span style="width:48px;height:48px;display:grid;place-items:center;border:1px solid #d5d3ce;border-radius:50%;color:#1b2228;font-size:17px">×</span>Cancel</span>
+<span style="display:grid;place-items:center;align-content:center;gap:8px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span style="width:68px;height:68px;display:grid;place-items:center;border:1px solid #d5d3ce;border-radius:50%;background:#fcfcfb"><span style="width:24px;height:24px;border-radius:6px;background:#c0453a"></span></span>Stop</span>
+<span style="display:grid;place-items:center;align-content:center;gap:8px;font:600 11px 'Noto Sans KR',system-ui;color:#5c7386"><span style="width:48px;height:48px;display:grid;place-items:center;border:1px solid #d5d3ce;border-radius:50%;color:#1b2228;font-size:16px">↻</span>Restart</span>
+</div>
+</div>
+</div>
+</div>
+
+<div data-screen-label="05">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">05 · Scoring</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;padding:16px 20px 0;background:#fcfcfb;color:#1b2228;display:flex;flex-direction:column">
+<div style="display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:34px"><span style="width:44px;height:34px;display:grid;place-items:center;color:#1b2228;font-size:18px">‹</span><span style="text-align:center;font:600 13px 'Noto Sans KR',system-ui">Scoring</span><span></span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:70px">
+<h1 style="margin:0;font:700 25px/1.32 'Noto Sans KR',system-ui;letter-spacing:-.035em">Listening to your<br>pronunciation…</h1>
+<p style="margin:12px 0 0;font:400 12.5px 'Noto Sans KR',system-ui;color:#5c7386">Swipe down to keep practising — your score lands on Home.</p>
+<div style="margin:26px 0 0;border-top:1px solid #e8e6e1">
+<div style="display:grid;grid-template-columns:1fr 22px;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:600 14px 'Noto Sans KR',system-ui;color:#1b2228">Recording uploaded</span><span style="display:block;margin-top:3px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">0:04 · 168 KB</span></span>
+<span style="width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#27735a;color:#fff;font:700 10px 'Noto Sans KR',system-ui">✓</span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 22px;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:600 14px 'Noto Sans KR',system-ui;color:#1b2228">Compared with the standard</span><span style="display:block;margin-top:3px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">저는 커피를 조아해요</span></span>
+<span style="width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#27735a;color:#fff;font:700 10px 'Noto Sans KR',system-ui">✓</span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 22px;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:600 14px 'Noto Sans KR',system-ui;color:#1b2228">Scoring each syllable</span><span style="display:block;margin-top:3px;font:400 12px 'Noto Sans KR',system-ui;color:#1b2228">In progress</span></span>
+<span style="width:20px;height:20px;display:grid;place-items:center"><span style="width:8px;height:8px;border-radius:50%;background:#2f73b9"></span></span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 22px;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:600 14px 'Noto Sans KR',system-ui;color:#627585">Preparing your mouth guides</span><span style="display:block;margin-top:3px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">Waiting</span></span>
+<span></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div data-screen-label="06">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">06 · Result</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;padding:16px 20px 0;background:#fcfcfb;color:#1b2228">
+<div style="display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:34px">
+<span style="width:44px;height:34px;display:grid;place-items:center;color:#1b2228;font-size:18px">‹</span>
+<h1 style="margin:0;text-align:center;font:700 17px 'Noto Sans KR',system-ui;letter-spacing:-.025em">Result</h1>
+<span style="width:44px;height:34px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#627585" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4-5.5 4z"/></svg></span>
+</div>
+<div style="margin:16px 0 0;padding:16px;border:1px solid #e0ded9;border-radius:16px;background:#fff">
+<div style="display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center">
+<strong style="font:700 60px/1 'Noto Sans KR',system-ui;letter-spacing:-.05em;color:#27735a;font-variant-numeric:tabular-nums">87</strong>
+<span style="display:grid;gap:9px"><div style="display:grid;grid-template-columns:1fr 26px;gap:9px;align-items:center"><span><span style="display:block;font:400 11px 'Noto Sans KR',system-ui;color:#5c7386">Accuracy</span><span style="display:block;margin-top:4px;height:5px;border-radius:999px;background:#e7e5e0;overflow:hidden"><span style="display:block;height:100%;width:90%;background:#27735a"></span></span></span><b style="font:700 12.5px 'Noto Sans KR',system-ui;text-align:right;font-variant-numeric:tabular-nums;padding-top:11px">90</b></div><div style="display:grid;grid-template-columns:1fr 26px;gap:9px;align-items:center"><span><span style="display:block;font:400 11px 'Noto Sans KR',system-ui;color:#5c7386">Fluency</span><span style="display:block;margin-top:4px;height:5px;border-radius:999px;background:#e7e5e0;overflow:hidden"><span style="display:block;height:100%;width:85%;background:#27735a"></span></span></span><b style="font:700 12.5px 'Noto Sans KR',system-ui;text-align:right;font-variant-numeric:tabular-nums;padding-top:11px">85</b></div><div style="display:grid;grid-template-columns:1fr 26px;gap:9px;align-items:center"><span><span style="display:block;font:400 11px 'Noto Sans KR',system-ui;color:#5c7386">Full sentence</span><span style="display:block;margin-top:4px;height:5px;border-radius:999px;background:#e7e5e0;overflow:hidden"><span style="display:block;height:100%;width:88%;background:#27735a"></span></span></span><b style="font:700 12.5px 'Noto Sans KR',system-ui;text-align:right;font-variant-numeric:tabular-nums;padding-top:11px">88</b></div></span>
+</div>
+<div style="margin-top:13px;padding-top:12px;border-top:1px solid #efedea;font:600 13px 'Noto Sans KR',system-ui;color:#27735a">Understandable — one sound to refine</div>
+</div>
+<div style="margin:15px 0 0">
+<div style="font:600 10.5px 'Noto Sans KR',system-ui;letter-spacing:.16em;color:#5c7386;text-transform:uppercase">How it should sound</div>
+<p style="margin:12px 0 0;font:700 21px/1.5 'Noto Sans KR',system-ui;letter-spacing:-.02em">저는 커피를 좋아해요</p>
+<p style="margin:5px 0 0;font:500 21px/1.5 'Noto Sans KR',system-ui;letter-spacing:-.02em;color:#5c7386">저는 커피를 조아해요</p>
+<p style="margin:7px 0 0;font:500 11.5px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">jeo-neun keo-pi-reul <span style="color:#1b2228">jo-a</span>-hae-yo</p>
+</div>
+<div style="margin:14px 0 0;padding-top:12px;border-top:1px solid #e8e6e1">
+<div style="margin-bottom:6px;font:600 10.5px 'Noto Sans KR',system-ui;letter-spacing:.16em;color:#5c7386;text-transform:uppercase">By word · tap to see its syllables</div>
+<div style="display:grid;grid-template-columns:1fr auto 34px;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid #efedea"><span style="font:700 17px 'Noto Sans KR',system-ui">저는</span><span style="font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.1em;color:#5c7386">jeo-neun</span><span style="font:700 13px 'Noto Sans KR',system-ui;text-align:right;font-variant-numeric:tabular-nums;color:#27735a">92</span></div><div style="display:grid;grid-template-columns:1fr auto 34px;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid #efedea"><span style="font:700 17px 'Noto Sans KR',system-ui">커피를</span><span style="font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.1em;color:#5c7386">keo-pi-reul</span><span style="font:700 13px 'Noto Sans KR',system-ui;text-align:right;font-variant-numeric:tabular-nums;color:#1b2228">84</span></div><div style="display:grid;grid-template-columns:1fr auto 34px;gap:12px;align-items:baseline;padding:7px 0;"><span style="font:700 17px 'Noto Sans KR',system-ui;color:#b94a4a">조아해요</span><span style="font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.1em;color:#5c7386">jo-a-hae-yo</span><span style="font:700 13px 'Noto Sans KR',system-ui;text-align:right;font-variant-numeric:tabular-nums;color:#b94a4a">78</span></div>
+<div style="display:flex;gap:7px;padding:2px 0 4px"><span style="display:grid;justify-items:center;gap:3px;padding:8px 11px;border-radius:11px;background:#fdeeee"><b style="font:700 17px 'Noto Sans KR',system-ui;color:#b94a4a">조</b><span style="font:500 9.5px 'Noto Sans KR',system-ui;letter-spacing:.08em;color:#5c7386">jo</span></span><span style="display:grid;justify-items:center;gap:3px;padding:8px 11px;border-radius:11px;background:#f1f0ed"><b style="font:700 17px 'Noto Sans KR',system-ui;color:#1b2228">아</b><span style="font:500 9.5px 'Noto Sans KR',system-ui;letter-spacing:.08em;color:#5c7386">a</span></span><span style="display:grid;justify-items:center;gap:3px;padding:8px 11px;border-radius:11px;background:#f1f0ed"><b style="font:700 17px 'Noto Sans KR',system-ui;color:#1b2228">해</b><span style="font:500 9.5px 'Noto Sans KR',system-ui;letter-spacing:.08em;color:#5c7386">hae</span></span><span style="display:grid;justify-items:center;gap:3px;padding:8px 11px;border-radius:11px;background:#f1f0ed"><b style="font:700 17px 'Noto Sans KR',system-ui;color:#1b2228">요</b><span style="font:500 9.5px 'Noto Sans KR',system-ui;letter-spacing:.08em;color:#5c7386">yo</span></span></div>
+</div>
+<div style="position:absolute;left:20px;right:20px;bottom:22px">
+<span style="min-height:54px;display:grid;place-items:center;border-radius:12px;background:#2f73b9;color:#fff;font:700 15px 'Noto Sans KR',system-ui">Say it again</span>
+</div>
+</div>
+</div>
+</div>
+
+
+<div data-screen-label="07">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">07 · Sound guide (sheet)</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;background:#fcfcfb;color:#1b2228">
+<div style="padding:16px 20px 0;opacity:.32">
+<div style="display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:34px">
+<span style="width:44px;height:34px;display:grid;place-items:center;color:#1b2228;font-size:18px">‹</span>
+<h1 style="margin:0;text-align:center;font:700 17px 'Noto Sans KR',system-ui;letter-spacing:-.025em">Result</h1>
+<span style="width:44px;height:34px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#627585" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4-5.5 4z"/></svg></span>
+</div>
+<div style="margin:16px 0 0;padding:16px;border:1px solid #e0ded9;border-radius:16px;background:#fff"><div style="display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center"><strong style="font:700 60px/1 'Noto Sans KR',system-ui;letter-spacing:-.05em;color:#27735a;font-variant-numeric:tabular-nums">87</strong><span style="display:grid;gap:9px"><span style="display:block;height:5px;border-radius:999px;background:#eeece8;overflow:hidden"><span style="display:block;height:100%;width:90%;background:#27735a"></span></span><span style="display:block;height:5px;border-radius:999px;background:#eeece8;overflow:hidden"><span style="display:block;height:100%;width:85%;background:#27735a"></span></span><span style="display:block;height:5px;border-radius:999px;background:#eeece8;overflow:hidden"><span style="display:block;height:100%;width:88%;background:#27735a"></span></span></span></div></div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;padding:10px 20px 20px;border-radius:22px 22px 0 0;border-top:1px solid #e0ded9;background:#fff">
+<span style="display:block;width:40px;height:4px;margin:0 auto 16px;border-radius:999px;background:#dedcd7"></span>
+<div style="display:flex;align-items:flex-end;gap:14px;padding-bottom:16px;border-bottom:1px solid #e8e6e1">
+<span style="font:700 44px/1 'Noto Sans KR',system-ui;letter-spacing:-.03em">조</span>
+<span style="padding-bottom:6px;font:600 24px 'Noto Sans KR',system-ui;letter-spacing:.1em;color:#5c7386">jo</span>
+<span style="margin-left:auto;display:flex;align-items:center;gap:12px;padding-bottom:4px">
+<span style="width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:#f1f0ed;color:#2f73b9;font-size:12px">▶</span>
+</span>
+</div>
+<div style="display:grid;gap:10px;margin-top:16px"><div style="height:214px;display:grid;place-items:center;border-radius:12px;background:repeating-linear-gradient(135deg,#f0efeb 0 6px,#f6f5f2 6px 12px)"><span style="font:500 10px/1.6 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386;text-align:center">LIPS · FRONT VIEW<br>조</span></div><div style="height:214px;display:grid;place-items:center;border-radius:12px;background:repeating-linear-gradient(135deg,#f0efeb 0 6px,#f6f5f2 6px 12px)"><span style="font:500 10px/1.6 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386;text-align:center">TONGUE · SIDE VIEW<br>조</span></div></div>
+
+</div>
+</div>
+</div>
+</div>
+
+<div data-screen-label="08">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">08 · Review</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;padding:16px 20px 0;background:#fcfcfb;color:#1b2228">
+<h1 style="margin:0;min-height:44px;display:flex;align-items:center;font:700 22px 'Noto Sans KR',system-ui;letter-spacing:-.03em">Review</h1>
+<div style="margin:14px 0 0;padding:16px;border:1px solid #e0ded9;border-radius:16px;background:#fff">
+<div style="font:600 10.5px 'Noto Sans KR',system-ui;letter-spacing:.16em;color:#5c7386;text-transform:uppercase">Your progress · Last 7 tries</div>
+<svg viewBox="0 0 320 118" style="display:block;width:100%;height:112px;margin-top:10px">
+<line x1="24" y1="95" x2="306" y2="95" stroke="#e8e6e1"/><line x1="24" y1="55" x2="306" y2="55" stroke="#efedea"/><line x1="24" y1="18" x2="306" y2="18" stroke="#efedea"/>
+<polyline points="28,87 73,73 116,78 160,57 204,48 248,50 299,27" fill="none" stroke="#2f73b9" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="28" cy="87" r="3" fill="#fcfcfb" stroke="#2f73b9" stroke-width="1.6"/><circle cx="73" cy="73" r="3" fill="#fcfcfb" stroke="#2f73b9" stroke-width="1.6"/><circle cx="116" cy="78" r="3" fill="#fcfcfb" stroke="#2f73b9" stroke-width="1.6"/><circle cx="160" cy="57" r="3" fill="#fcfcfb" stroke="#2f73b9" stroke-width="1.6"/><circle cx="204" cy="48" r="3" fill="#fcfcfb" stroke="#2f73b9" stroke-width="1.6"/><circle cx="248" cy="50" r="3" fill="#fcfcfb" stroke="#2f73b9" stroke-width="1.6"/><circle cx="299" cy="27" r="4.5" fill="#2f73b9" stroke="#2f73b9" stroke-width="1.6"/>
+<text x="299" y="16" text-anchor="end" font-family="'Noto Sans KR',system-ui" font-size="13" font-weight="700" fill="#1b2228">87</text>
+<text x="28" y="110" font-family="'Noto Sans KR',system-ui" font-size="10" fill="#627585">Jul 28</text>
+<text x="299" y="110" text-anchor="end" font-family="'Noto Sans KR',system-ui" font-size="10" fill="#627585">Today</text>
+</svg>
+</div>
+<div style="margin:16px 0 8px;font:600 10.5px 'Noto Sans KR',system-ui;letter-spacing:.16em;color:#5c7386;text-transform:uppercase">Recent history</div>
+<div style="border:1px solid #e0ded9;border-radius:16px;background:#fff;overflow:hidden">
+<div style="display:grid;grid-template-columns:44px 1fr 22px;gap:11px;align-items:center;padding:12px 14px;border-bottom:1px solid #efedea">
+<span style="width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:#eef4f1;color:#27735a;font:700 17px 'Noto Sans KR',system-ui;font-variant-numeric:tabular-nums">87</span>
+<span><span style="display:block;font:700 16px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">저는 커피를 좋아해요.</span><span style="display:block;margin-top:3px;font:500 10.5px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">jeo-neun keo-pi-reul jo-a-hae-yo</span><span style="display:block;margin-top:3px;font:400 11.5px 'Noto Sans KR',system-ui;color:#627585">Today 9:41</span></span>
+<span style="color:#627585;font-size:13px">›</span></div>
+<div style="display:grid;grid-template-columns:44px 1fr 22px;gap:11px;align-items:center;padding:12px 14px;border-bottom:1px solid #efedea">
+<span style="width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:#fdeeee;color:#b94a4a;font:700 17px 'Noto Sans KR',system-ui;font-variant-numeric:tabular-nums">72</span>
+<span><span style="display:block;font:700 16px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">진짜요? 정말 멋져요!</span><span style="display:block;margin-top:3px;font:500 10.5px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">jin-jja-yo jeong-mal meot-jjeo-yo</span><span style="display:block;margin-top:3px;font:400 11.5px 'Noto Sans KR',system-ui;color:#627585">Yesterday 6:15 PM</span></span>
+<span style="color:#627585;font-size:13px">›</span></div>
+<div style="display:grid;grid-template-columns:44px 1fr 22px;gap:11px;align-items:center;padding:12px 14px;">
+<span style="width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:#fdeeee;color:#b94a4a;font:700 17px 'Noto Sans KR',system-ui;font-variant-numeric:tabular-nums">65</span>
+<span><span style="display:block;font:700 16px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">내일 날씨가 어때요?</span><span style="display:block;margin-top:3px;font:500 10.5px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">nae-il nal-ssi-ga eo-ttae-yo</span><span style="display:block;margin-top:3px;font:400 11.5px 'Noto Sans KR',system-ui;color:#627585">Jul 28 8:40 AM</span></span>
+<span style="color:#627585;font-size:13px">›</span></div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:76px;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;border-top:1px solid #e8e6e1;background:#fcfcfb"><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20H4z"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Home</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Practice</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#245f9b"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;background:#edf6fd;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V12M12 20V5M19 20v-6"/></svg></span><span style="font:600 11px 'Noto Sans KR',system-ui">Review</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.7"/><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Profile</span></span></div>
+</div>
+</div>
+</div>
+
+<div data-screen-label="09">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">09 · Profile</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;padding:16px 20px 0;background:#fcfcfb;color:#1b2228">
+<h1 style="margin:0;min-height:34px;font:700 22px 'Noto Sans KR',system-ui;letter-spacing:-.03em">Profile</h1>
+<div style="display:grid;grid-template-columns:58px 1fr;gap:14px;align-items:center;margin:18px 0 0;padding-bottom:20px;border-bottom:1px solid #e8e6e1">
+<span style="width:58px;height:58px;display:grid;place-items:center;border-radius:16px;background:#edf6fd;color:#245f9b;font:700 24px 'Noto Sans KR',system-ui">A</span>
+<span><span style="display:block;font:700 18px 'Noto Sans KR',system-ui;letter-spacing:-.02em">Ana Moreau</span><span style="display:block;margin-top:4px;font:400 12.5px 'Noto Sans KR',system-ui;color:#5c7386">ana.moreau@example.com</span><span style="display:inline-block;margin-top:7px;padding:4px 9px;border-radius:999px;background:#edf6fd;color:#245f9b;font:600 10.5px 'Noto Sans KR',system-ui">Google</span></span>
+</div>
+<div style="margin:22px 0 0">
+<div style="font:600 10.5px 'Noto Sans KR',system-ui;letter-spacing:.16em;color:#5c7386;text-transform:uppercase">Your content</div>
+<div style="display:grid;grid-template-columns:24px 1fr auto 16px;gap:10px;align-items:center;padding:16px 0;border-bottom:1px solid #efedea"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#627585" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4-5.5 4z"/></svg><span style="font:600 14px 'Noto Sans KR',system-ui">Saved sentences</span><span style="font:400 13px 'Noto Sans KR',system-ui;color:#5c7386;font-variant-numeric:tabular-nums">4</span><span style="color:#627585;font-size:13px">›</span></div>
+</div>
+<div style="margin:22px 0 0">
+<div style="font:600 10.5px 'Noto Sans KR',system-ui;letter-spacing:.16em;color:#5c7386;text-transform:uppercase">About</div>
+<div style="display:grid;grid-template-columns:1fr auto 16px;gap:10px;align-items:center;padding:16px 0;border-bottom:1px solid #efedea"><span style="font:600 14px 'Noto Sans KR',system-ui">Audio &amp; privacy</span><span style="font:400 13px 'Noto Sans KR',system-ui;color:#5c7386"></span><span style="color:#627585;font-size:13px">›</span></div>
+<div style="display:grid;grid-template-columns:1fr auto 16px;gap:10px;align-items:center;padding:16px 0;border-bottom:1px solid #efedea"><span style="font:600 14px 'Noto Sans KR',system-ui">About LingKo</span><span style="font:400 13px 'Noto Sans KR',system-ui;color:#5c7386">1.0.0</span><span style="color:#627585;font-size:13px">›</span></div>
+</div>
+<div style="position:absolute;left:20px;right:20px;bottom:96px;display:grid;gap:10px">
+<span style="min-height:54px;display:grid;place-items:center;border:1px solid #d5d3ce;border-radius:12px;font:700 15px 'Noto Sans KR',system-ui">Sign out</span>
+<span style="min-height:54px;display:grid;place-items:center;border:1px solid #dcc3c3;border-radius:12px;color:#b94a4a;font:700 15px 'Noto Sans KR',system-ui">Delete account</span>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:76px;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;border-top:1px solid #e8e6e1;background:#fcfcfb"><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20H4z"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Home</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Practice</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V12M12 20V5M19 20v-6"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Review</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#245f9b"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;background:#edf6fd;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.7"/><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5"/></svg></span><span style="font:600 11px 'Noto Sans KR',system-ui">Profile</span></span></div>
+</div>
+</div>
+</div>
+
+<div data-screen-label="10">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">10 · Sound detail</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;padding:16px 20px 0;background:#fcfcfb;color:#1b2228">
+<div style="display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:34px">
+<span style="width:44px;height:34px;display:grid;place-items:center;color:#1b2228;font-size:18px">‹</span>
+<h1 style="margin:0;text-align:center;font:700 17px 'Noto Sans KR',system-ui;letter-spacing:-.025em">Sound</h1>
+<span></span>
+</div>
+<div style="display:flex;align-items:center;gap:16px;margin:16px 0 0;padding:16px;border:1px solid #e0ded9;border-radius:16px;background:#fff">
+<span style="width:64px;height:64px;flex:none;display:grid;place-items:center;border-radius:16px;background:#fdeeee;color:#b94a4a;font:700 32px 'Noto Sans KR',system-ui">씨</span>
+<span style="flex:1"><span style="display:block;font:600 15px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">ssi</span><span style="display:block;margin-top:6px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">Average <b style="font-weight:700;color:#b94a4a;font-variant-numeric:tabular-nums">62</b> across 8 tries</span></span>
+</div>
+<div style="min-height:54px;display:grid;place-items:center;margin:10px 0 0;border:1px solid #d5d3ce;border-radius:12px;font:700 15px 'Noto Sans KR',system-ui">See mouth guide</div>
+<div style="display:flex;gap:18px;margin:20px 0 0;border-bottom:1px solid #e8e6e1">
+<span style="padding:0 0 9px;border-bottom:2px solid #1b2228;font:600 13px 'Noto Sans KR',system-ui">Practiced</span>
+<span style="padding:0 0 9px;font:400 13px 'Noto Sans KR',system-ui;color:#5c7386">Suggested</span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 44px;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:700 18px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">내일 날<span style="color:#b94a4a">씨</span>가 어때요?</span><span style="display:block;margin-top:4px;font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">nae-il nal-<b style="font-weight:700">ssi</b>-ga eo-ttae-yo</span></span>
+<span style="display:grid;justify-items:end;gap:2px"><b style="font:700 15px 'Noto Sans KR',system-ui;color:#b94a4a;font-variant-numeric:tabular-nums">58</b><span style="font:400 10.5px 'Noto Sans KR',system-ui;color:#627585">Jul 28</span></span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 44px;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:700 18px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">아저<span style="color:#b94a4a">씨</span>, 여기요!</span><span style="display:block;margin-top:4px;font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">a-jeo-<b style="font-weight:700">ssi</b>, yeo-gi-yo</span></span>
+<span style="display:grid;justify-items:end;gap:2px"><b style="font:700 15px 'Noto Sans KR',system-ui;color:#b94a4a;font-variant-numeric:tabular-nums">64</b><span style="font:400 10.5px 'Noto Sans KR',system-ui;color:#627585">Jul 24</span></span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 44px;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:700 18px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em"><span style="color:#b94a4a">씨</span>앗을 심어요.</span><span style="display:block;margin-top:4px;font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386"><b style="font-weight:700">ssi</b>-a-seul si-meo-yo</span></span>
+<span style="display:grid;justify-items:end;gap:2px"><b style="font:700 15px 'Noto Sans KR',system-ui;color:#b94a4a;font-variant-numeric:tabular-nums">71</b><span style="font:400 10.5px 'Noto Sans KR',system-ui;color:#627585">Jul 21</span></span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 44px;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:700 18px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">오늘 날<span style="color:#b94a4a">씨</span>가 좋아요.</span><span style="display:block;margin-top:4px;font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">o-neul nal-<b style="font-weight:700">ssi</b>-ga jo-a-yo</span></span>
+<span style="display:grid;justify-items:end;gap:2px"><b style="font:700 15px 'Noto Sans KR',system-ui;color:#b94a4a;font-variant-numeric:tabular-nums">66</b><span style="font:400 10.5px 'Noto Sans KR',system-ui;color:#627585">Jul 18</span></span>
+</div><div style="position:absolute;left:20px;right:20px;bottom:94px">
+<span style="width:100%;min-height:54px;display:grid;place-items:center;border-radius:12px;background:#2f73b9;color:#fff;font:700 15px 'Noto Sans KR',system-ui">Practice 씨</span>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:76px;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;border-top:1px solid #e8e6e1;background:#fcfcfb"><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#245f9b"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;background:#edf6fd;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20H4z"/></svg></span><span style="font:600 11px 'Noto Sans KR',system-ui">Home</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Practice</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V12M12 20V5M19 20v-6"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Review</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.7"/><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Profile</span></span></div>
+</div>
+</div>
+</div>
+
+<div data-screen-label="11">
+<div style="font:600 11px 'Noto Sans KR',system-ui;letter-spacing:.14em;color:#5c7386;text-transform:uppercase;margin-bottom:10px">11 · Saved sentences</div>
+<div style="width:402px;background:#fcfcfb;border:1px solid rgba(27,34,40,.14);border-radius:34px;overflow:hidden;box-shadow:0 8px 26px rgba(27,34,40,.09)">
+<div style="height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:600 11px 'Noto Sans KR',system-ui;color:#1b2228"><span>9:41</span><span>▮▮ ◉ ▰</span></div>
+<div style="box-sizing:border-box;height:772px;overflow:hidden;position:relative;padding:16px 20px 0;background:#fcfcfb;color:#1b2228">
+<div style="display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:44px">
+<span style="width:44px;height:34px;display:grid;place-items:center;color:#1b2228;font-size:18px">‹</span>
+<h1 style="margin:0;text-align:center;font:700 17px 'Noto Sans KR',system-ui;letter-spacing:-.025em">Saved</h1>
+<span></span>
+</div>
+<div style="margin:4px 0 0;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386;font-variant-numeric:tabular-nums">4 sentences</div>
+<div style="display:flex;gap:18px;margin:12px 0 0;border-bottom:1px solid #e8e6e1">
+<span style="padding:0 0 9px;border-bottom:2px solid #1b2228;font:600 13px 'Noto Sans KR',system-ui">All</span>
+<span style="padding:0 0 9px;font:400 13px 'Noto Sans KR',system-ui;color:#5c7386">Daily</span>
+<span style="padding:0 0 9px;font:400 13px 'Noto Sans KR',system-ui;color:#5c7386">Travel</span>
+<span style="padding:0 0 9px;font:400 13px 'Noto Sans KR',system-ui;color:#5c7386">My own</span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:center;padding:15px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:700 19px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">내일 날<span style="color:#b94a4a">씨</span>가 어때요?</span><span style="display:block;margin-top:4px;font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">nae-il nal-<b style="font-weight:700">ssi</b>-ga eo-ttae-yo</span><span style="display:block;margin-top:4px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">What’s the weather like tomorrow?</span></span>
+<span style="width:44px;height:44px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="19" height="19" fill="#245f9b" stroke="#245f9b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4-5.5 4z"/></svg></span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:center;padding:15px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:700 19px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">저는 커피를 좋아해요.</span><span style="display:block;margin-top:4px;font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">jeo-neun keo-pi-reul jo-a-hae-yo</span><span style="display:block;margin-top:4px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">I like coffee.</span></span>
+<span style="width:44px;height:44px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="19" height="19" fill="#245f9b" stroke="#245f9b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4-5.5 4z"/></svg></span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:center;padding:15px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:700 19px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">아저<span style="color:#b94a4a">씨</span>, 여기요!</span><span style="display:block;margin-top:4px;font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">a-jeo-<b style="font-weight:700">ssi</b>, yeo-gi-yo</span><span style="display:block;margin-top:4px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">Excuse me!</span></span>
+<span style="width:44px;height:44px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="19" height="19" fill="#245f9b" stroke="#245f9b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4-5.5 4z"/></svg></span>
+</div>
+<div style="display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:center;padding:15px 0;border-bottom:1px solid #efedea">
+<span><span style="display:block;font:700 19px/1.35 'Noto Sans KR',system-ui;letter-spacing:-.02em">공항까지 얼마나 걸려요?</span><span style="display:block;margin-top:4px;font:500 11px 'Noto Sans KR',system-ui;letter-spacing:.12em;color:#5c7386">gong-hang-kka-ji eol-ma-na geol-lyeo-yo</span><span style="display:block;margin-top:4px;font:400 12px 'Noto Sans KR',system-ui;color:#5c7386">How long does it take to the airport?</span></span>
+<span style="width:44px;height:44px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="19" height="19" fill="#245f9b" stroke="#245f9b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4h11v16l-5.5-4-5.5 4z"/></svg></span>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:76px;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;border-top:1px solid #e8e6e1;background:#fcfcfb"><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20H4z"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Home</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Practice</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#627585"><span style="width:38px;height:28px;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V12M12 20V5M19 20v-6"/></svg></span><span style="font:400 11px 'Noto Sans KR',system-ui">Review</span></span><span style="display:grid;justify-items:center;align-content:center;gap:4px;color:#245f9b"><span style="width:38px;height:28px;display:grid;place-items:center;border-radius:999px;background:#edf6fd"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.7"/><path d="M5 20c1.4-3.4 4-5 7-5s5.6 1.6 7 5"/></svg></span><span style="font:600 11px 'Noto Sans KR',system-ui">Profile</span></span></div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

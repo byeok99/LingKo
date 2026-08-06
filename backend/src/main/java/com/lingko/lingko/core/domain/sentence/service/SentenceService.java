@@ -48,6 +48,16 @@ public class SentenceService {
         return toResponse(sentence);
     }
 
+    /**
+     * 추천 문장을 화면용 응답으로 변환한다.
+     *
+     * 저장 목록도 같은 형태를 보여줘야 해서 변환 규칙을 한곳에 두고 다른 서비스가 재사용한다.
+     * 각자 변환하면 표준 발음·로마자 생성 규칙이 갈라진다.
+     */
+    public PracticeSentenceResponse toPracticeSentenceResponse(RecommendedSentence sentence) {
+        return toResponse(sentence);
+    }
+
     private PracticeSentenceResponse toResponse(RecommendedSentence sentence) {
         String originalText = PracticeSentenceNormalizer.normalize(sentence.getOriginalText());
         String standardPronunciation =

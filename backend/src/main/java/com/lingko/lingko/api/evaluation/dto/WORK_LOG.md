@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 로마자와 취약 어절 응답 추가
+
+- 변경 파일: `GuideCharacterResponse.java`, `PracticeWordResultResponse.java`, `PracticeHistoryWordResponse.java`, `PracticeHistoryCharacterResponse.java`, `WeakWordResponse.java`, `WeakWordListResponse.java`, `WordDetailResponse.java`
+- 내용: 어절·음절 응답에 로마자를 넣고, 취약 어절 목록과 어절 상세 화면용 응답을 추가했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 취약 목록은 어절 단위다. 디자인의 음절 단위 표기는 화면에서 함께 조정해야 함
+
 ## 2026-08-05 - 평가 응답 로마자 계약 추가
 
 - 변경 파일: `PronunciationPrepareResponse.java`, `PracticeHistoryItemResponse.java`, `WORK_LOG.md`

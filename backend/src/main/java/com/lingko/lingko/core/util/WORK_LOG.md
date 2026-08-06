@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 어절·음절 로마자 변환 공개
+
+- 변경 파일: `KoreanRomanizationUtil.java`
+- 내용: 화면이 어절·음절마다 로마자를 병기하므로 문장 결과를 잘라 쓰지 않고 같은 규칙을 적용하는 romanizeSegment를 공개했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 취약 목록은 어절 단위다. 디자인의 음절 단위 표기는 화면에서 함께 조정해야 함
+
 ## 2026-08-05 - 학습자용 로마자 변환기 추가
 
 - 변경 파일: `KoreanRomanizationUtil.java`, `WORK_LOG.md`

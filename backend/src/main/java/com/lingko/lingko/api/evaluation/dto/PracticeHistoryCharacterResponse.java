@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 public class PracticeHistoryCharacterResponse {
     private int position;
     private String text;
+    private String romanization;
     private Integer score;
     private String feedback;
     private String mouthGuideUrl;

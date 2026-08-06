@@ -21,6 +21,7 @@ import java.util.List;
 public class PracticeHistoryWordResponse {
     private int position;
     private String text;
+    private String romanization;
     private Integer score;
     private ScoreStatus scoreStatus;
     private List<PracticeHistoryCharacterResponse> syllables;

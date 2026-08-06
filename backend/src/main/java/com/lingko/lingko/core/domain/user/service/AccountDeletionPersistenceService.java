@@ -7,6 +7,7 @@ import com.lingko.lingko.core.domain.evaluation.repository.EvaluationLogReposito
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationSyllableRepository;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationWordRepository;
 import com.lingko.lingko.core.domain.quota.repository.DailyPracticeQuotaRepository;
+import com.lingko.lingko.core.domain.sentence.repository.SavedSentenceRepository;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class AccountDeletionPersistenceService {
     private final EvaluationSyllableRepository evaluationSyllableRepository;
     private final EvaluationWordRepository evaluationWordRepository;
     private final DailyPracticeQuotaRepository quotaRepository;
+    private final SavedSentenceRepository savedSentenceRepository;
 
     /**
      * 공유 음절 기준 정보는 보존하고 사용자·세션·작업·결과·쿼터만 삭제한다.
@@ -40,6 +42,7 @@ public class AccountDeletionPersistenceService {
         evaluationSyllableRepository.deleteAllByUserId(userId);
         evaluationWordRepository.deleteAllByUserId(userId);
         evaluationLogRepository.deleteAllByUserId(userId);
+        savedSentenceRepository.deleteAllByUserId(userId);
         quotaRepository.deleteAllByUserId(userId);
         if (userRepository.deleteAccountById(userId) != 1) {
             throw new AuthException("User not found");

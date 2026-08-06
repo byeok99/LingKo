@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 저장 토글 서비스 추가
+
+- 변경 파일: `SavedSentenceService.java`, `SentenceService.java`
+- 내용: 서버의 실제 상태를 뒤집는 방식으로 저장을 토글해 두 기기에서 동시에 눌러도 결과가 예측 가능하게 했다. 문장 응답 변환 규칙을 재사용하도록 공개 메서드를 열었다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 취약 목록은 어절 단위다. 디자인의 음절 단위 표기는 화면에서 함께 조정해야 함
+
 ## 2026-08-05 - 추천 문장 로마자 가이드 제공
 
 - 변경 파일: `SentenceService.java`, `WORK_LOG.md`

@@ -20,6 +20,9 @@ public class GuideCharacterResponse {
     private int position;
     private String text;
     private String pronunciationText;
+
+    /** 음절 하나의 로마자다. 어절 로마자를 잘라 쓰지 않고 같은 규칙으로 따로 만든다. */
+    private String romanization;
     private Integer score;
     private ScoreStatus scoreStatus;
     private List<String> phonemes;

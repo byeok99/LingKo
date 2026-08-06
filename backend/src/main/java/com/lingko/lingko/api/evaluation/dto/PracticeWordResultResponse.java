@@ -24,6 +24,9 @@ import java.util.List;
 public class PracticeWordResultResponse {
     private int position;
     private String text;
+
+    /** 어절의 로마자 표기다. 한글을 못 읽는 학습자가 대상이라 화면마다 병기한다. */
+    private String romanization;
     private Integer score;
     private ScoreStatus scoreStatus;
     private List<GuideCharacterResponse> syllables;

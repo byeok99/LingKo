@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 어절 집계 서비스 추가
+
+- 변경 파일: `WeakWordService.java`, `EvaluationService.java`, `EvaluationHistoryService.java`
+- 내용: 반복해서 틀리는 어절을 평균 점수 오름차순으로 집계하고, 어절 하나의 과거 시도와 다음 후보를 한 응답으로 제공한다. 음절이 아니라 어절 단위인 이유는 신뢰할 수 있는 점수의 최소 단위가 어절이기 때문이다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 취약 목록은 어절 단위다. 디자인의 음절 단위 표기는 화면에서 함께 조정해야 함
+
 ## 2026-08-05 - 준비·기록 응답 로마자 파생
 
 - 변경 파일: `EvaluationService.java`, `EvaluationHistoryService.java`, `WORK_LOG.md`

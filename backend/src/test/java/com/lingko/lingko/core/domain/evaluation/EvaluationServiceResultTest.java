@@ -162,6 +162,11 @@ class EvaluationServiceResultTest {
         );
 
         assertThat(response.getWordScoreStatus()).isEqualTo(ScoreStatus.AVAILABLE);
+        // 화면이 어절·음절마다 로마자를 병기하므로 응답에 함께 실려야 한다.
+        assertThat(response.getWords())
+                .allSatisfy(word -> assertThat(word.getRomanization()).isNotBlank());
+        assertThat(response.getCharacters())
+                .allSatisfy(character -> assertThat(character.getRomanization()).isNotBlank());
         assertThat(response.getWords()).extracting("text").containsExactly("김치찌개", "하나", "주세요");
         assertThat(response.getWords()).extracting("score").containsExactly(82, 91, 77);
         assertThat(response.getWords()).extracting(word -> word.getSyllables().size())
