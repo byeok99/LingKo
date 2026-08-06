@@ -24,7 +24,8 @@ class FrameInterpolationVideoGeneratorTest {
                 mock(ReplicateApiClient.class),
                 mock(VideoMerger.class),
                 mock(S3Uploader.class),
-                mock(ExternalMediaUrlValidator.class)
+                mock(ExternalMediaUrlValidator.class),
+                mock(VideoPlaybackNormalizer.class)
         );
 
         assertThatThrownBy(() -> generator.generate(null, "가", VideoType.MOUTH))
