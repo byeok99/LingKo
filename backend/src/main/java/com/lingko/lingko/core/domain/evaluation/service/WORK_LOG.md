@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `WeakWordService.java` → `WeakSoundService.java`
+- 내용: 어절 점수를 그 어절의 음절들에 귀속시켜 음절별 가중 평균을 만든다. 음절 자체의 측정 점수는 존재하지 않는다(`AzureSpeechEvaluator.characterScoresAvailable(false)`, `evaluation_syllable.score`는 항상 NULL). 시도 횟수로 가중해 표본이 적은 어절이 평균을 끌고 가지 않게 했고, 한 어절 안의 반복 글자는 한 번만 센다. 문자열을 글자로 쪼개 group by 하는 일은 JPQL로 표현되지 않고 DB 함수는 벤더에 묶여 Java에서 집계한다. 입력은 점수 낮은 순 500개 어절로 상한을 뒀다.
+- 검증: `./gradlew test`, `./gradlew integrationTest` 통과
+- 리스크: 음절 점수는 측정값이 아닌 통계적 추정이다. 어절 안에서 실제로 틀린 음절이 아닌 이웃 음절도 같은 점수를 받으므로, 표본이 적을 때는 엉뚱한 음절이 상위에 올 수 있다. 최소 2회 조건으로만 완화한 상태
+
 ## 2026-08-06 - 결과 판정 문구 축약
 
 - 변경 파일: `EvaluationService.java`

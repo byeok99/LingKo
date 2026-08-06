@@ -6,7 +6,7 @@ import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationHistoryService;
-import com.lingko.lingko.core.domain.evaluation.service.WeakWordService;
+import com.lingko.lingko.core.domain.evaluation.service.WeakSoundService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ class EvaluationHistoryControllerTest {
     private EvaluationHistoryService historyService;
 
     @MockitoBean
-    private WeakWordService weakWordService;
+    private WeakSoundService weakSoundService;
 
     @MockitoBean
     private ActiveSessionAuthenticator activeSessionAuthenticator;

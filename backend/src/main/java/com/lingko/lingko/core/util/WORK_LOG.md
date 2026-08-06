@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `KoreanRomanizationUtil.java`
+- 내용: `isHangulSyllable`을 public으로 올렸다. 취약 음절 집계도 문자열을 글자 단위로 쪼갤 때 같은 기준이 필요해, 판별 규칙이 두 곳에 갈라지지 않게 했다.
+- 검증: `./gradlew test` 통과
+- 리스크: 없음
+
 ## 2026-08-06 - 어절·음절 로마자 변환 공개
 
 - 변경 파일: `KoreanRomanizationUtil.java`

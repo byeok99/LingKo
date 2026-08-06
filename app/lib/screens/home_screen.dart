@@ -7,7 +7,7 @@ import '../app/app_palette.dart';
 import '../models/evaluation_progress.dart';
 import '../models/practice_quota.dart';
 import '../models/practice_sentence.dart';
-import '../models/weak_word.dart';
+import '../models/weak_sound.dart';
 import '../widgets/progress_panel.dart';
 import '../widgets/sentence_card.dart';
 import '../widgets/shared_widgets.dart';
@@ -46,8 +46,8 @@ class HomeScreen extends StatefulWidget {
     required this.onRetry,
     required this.onRetryQuota,
     required this.onSelect,
-    this.weakWords = const [],
-    this.onSelectWeakWord,
+    this.weakSounds = const [],
+    this.onSelectWeakSound,
     this.savedSentenceIds = const {},
     this.onToggleSaved,
     required this.onOpenPractice,
@@ -68,8 +68,9 @@ class HomeScreen extends StatefulWidget {
   final ValueChanged<PracticeSentence> onSelect;
 
   /// 반복해서 틀리는 어절이다. 비어 있으면 타일 영역을 그리지 않는다.
-  final List<WeakWord> weakWords;
-  final ValueChanged<WeakWord>? onSelectWeakWord;
+  /// 반복해서 틀리는 음절이다. 비어 있으면 이 블록 자체를 그리지 않는다.
+  final List<WeakSound> weakSounds;
+  final ValueChanged<WeakSound>? onSelectWeakSound;
 
   /// 저장한 문장의 식별자다. 행마다 서버에 묻지 않도록 shell이 한 번에 내려준다.
   final Set<int> savedSentenceIds;
@@ -165,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 : 'What will you\nsay today, ${widget.displayName!.trim()}?',
             style: Theme.of(context).textTheme.headlineLarge,
           ),
-          if (widget.weakWords.isNotEmpty) ...[
+          if (widget.weakSounds.isNotEmpty) ...[
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -178,21 +179,21 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const EyebrowLabel('Your weakest words · tap for detail'),
+                  const EyebrowLabel('Sounds to fix · tap for detail'),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      for (var index = 0; index < widget.weakWords.length; index++) ...[
+                      for (var index = 0; index < widget.weakSounds.length; index++) ...[
                         if (index > 0) const SizedBox(width: 9),
                         Expanded(
-                          child: _WeakWordTile(
+                          child: _WeakSoundTile(
                             key: ValueKey(
-                              'home-weak-word-${widget.weakWords[index].text}',
+                              'home-weak-sound-${widget.weakSounds[index].text}',
                             ),
-                            word: widget.weakWords[index],
+                            sound: widget.weakSounds[index],
                             onTap:
-                                () => widget.onSelectWeakWord?.call(
-                                  widget.weakWords[index],
+                                () => widget.onSelectWeakSound?.call(
+                                  widget.weakSounds[index],
                                 ),
                           ),
                         ),
@@ -341,17 +342,23 @@ class _HomeScreenState extends State<HomeScreen> {
 ///
 /// 음절이 아니라 어절인 이유는 신뢰할 수 있는 점수의 최소 단위가 어절이기 때문이다.
 /// 없는 점수를 만들어 보여주지 않는다.
-class _WeakWordTile extends StatelessWidget {
-  const _WeakWordTile({super.key, required this.word, required this.onTap});
+/// 취약 음절 하나를 여는 타일이다.
+///
+/// 점수를 "이 음절이 든 연습들의 평균"으로 읽히게 로마자와 한 줄에 묶는다. 음절 자체를
+/// 측정한 값이 아니라서 점수만 크게 떼어 놓으면 측정값처럼 보인다.
+class _WeakSoundTile extends StatelessWidget {
+  const _WeakSoundTile({super.key, required this.sound, required this.onTap});
 
-  final WeakWord word;
+  final WeakSound sound;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: '${word.text}, average ${word.averageScore}. Open detail.',
+      label:
+          '${sound.text}, average ${sound.averageScore} '
+          'across ${sound.attemptCount} tries. Open detail.',
       excludeSemantics: true,
       child: Material(
         color: context.palette.errorSoft,
@@ -367,18 +374,21 @@ class _WeakWordTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  word.text,
+                  sound.text,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: context.palette.error,
-                    fontSize: 17,
+                    // 한 글자라 어절보다 크게 둘 수 있다. 타일에서 먼저 읽혀야 할 것이
+                    // 소리 자체이므로 점수보다 무겁게 잡는다.
+                    fontSize: 22,
+                    height: 1.15,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${word.romanization} · ${word.averageScore}',
+                  '${sound.romanization} · ${sound.averageScore}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

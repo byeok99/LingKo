@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `RecommendedSentenceRepository.java`
+- 내용: `findUnpracticedByWord`를 `findUnpracticedByCharacter`로 바꿨다. 이미 `like %:param%`이라 query 자체는 그대로 동작한다. 표준 발음이 아니라 원문으로 찾는 이유(원문에 없는 글자로 문장을 고르면 사용자가 이유를 알 수 없다)를 주석에 명시했다.
+- 검증: `./gradlew test` 통과
+- 리스크: 발음이 바뀌는 음절(좋 → 조)로 진입하면 후보를 놓친다
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `RecommendedSentenceRepository.java`, `WORK_LOG.md`

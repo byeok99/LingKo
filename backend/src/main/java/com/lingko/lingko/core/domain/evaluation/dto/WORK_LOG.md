@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `WeakWordAggregate.java` → `WordScoreAggregate.java`
+- 내용: 이름이 곧 결과였던 record가 이제는 음절 집계의 *입력*이라 의미가 달라져 이름을 바꿨다. DB는 어절까지만 집계하고 음절 분해는 service가 한다는 경계를 주석에 남겼다.
+- 검증: `./gradlew test` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - WordScore position 계약 주석
 
 - 변경 파일: `AssessmentResult.java`

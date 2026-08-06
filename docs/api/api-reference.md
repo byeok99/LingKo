@@ -236,6 +236,62 @@ Authorization: Bearer <access-token>
 
 각 `items[]`는 평가 당시 저장한 `words[]`와 그 하위 `syllables[]`를 반환합니다. `romanizedPronunciation`은 저장된 표준 발음 snapshot에서 조회 시점에 파생합니다. 신규 기록은 단어 점수를 snapshot으로 보존하며, 단어 snapshot이 없는 과거 기록은 표준 발음의 공백과 저장된 음절 순서로 점수 없는 그룹을 복원합니다.
 
+### `GET /api/evaluations/me/weak-sounds`
+
+인증 필요. 반복해서 틀리는 **음절**을 평균 점수가 낮은 순으로 반환합니다.
+
+쿼리:
+
+- `limit`: 기본 3, 범위 1~20
+
+```json
+{
+  "items": [
+    { "text": "씨", "romanization": "ssi", "averageScore": 62, "attemptCount": 8 }
+  ]
+}
+```
+
+`averageScore`는 **해당 음절이 들어간 어절 점수들의 가중 평균**이며, 음절 자체를 측정한 점수가 아닙니다. 공급자가 한국어 음절 점수를 신뢰할 수 있게 제공하지 않아 `evaluation_syllable.score`는 항상 `null`이고, 서버는 측정된 최소 단위인 어절 점수를 그 어절의 음절들에 귀속시켜 집계합니다. 어절마다 시도 횟수가 달라 단순 평균 대신 횟수로 가중합니다. 한 어절 안에서 같은 음절이 반복돼도 시도는 한 번으로 셉니다.
+
+`attemptCount`는 그 음절이 들어간 어절을 연습한 총 횟수이며, 2회 미만인 음절은 표본이 부족해 목록에서 제외합니다. 한글 완성형 음절이 아닌 문자(자모·구두점·공백·영문)는 집계하지 않습니다.
+
+### `GET /api/evaluations/me/sounds/{character}`
+
+인증 필요. 음절 하나의 누적 성적과 과거 시도·다음 후보를 한 응답으로 반환합니다. 세 자료를 따로 조회하면 시점이 어긋나 머리말의 평균·횟수와 아래 목록이 맞지 않게 보입니다.
+
+```json
+{
+  "text": "씨",
+  "romanization": "ssi",
+  "averageScore": 62,
+  "attemptCount": 8,
+  "practiced": [
+    {
+      "evaluationLogId": 10,
+      "originalText": "날씨가 좋아요.",
+      "standardPronunciation": "날씨가 조아요.",
+      "romanization": "nal-ssi-ga jo-a-yo",
+      "score": 58,
+      "createdAt": "2026-06-26T09:30:00"
+    }
+  ],
+  "suggested": [
+    {
+      "sentenceId": 12,
+      "originalText": "씨앗을 심어요.",
+      "standardPronunciation": "씨아츨 시머요.",
+      "romanization": "ssi-a-cheul si-meo-yo",
+      "translation": "I plant a seed."
+    }
+  ]
+}
+```
+
+`practiced[].score`는 음절이 아니라 그 음절이 속한 어절의 점수입니다. `null`이면 해당 어절에 신뢰할 수 있는 점수가 없었다는 뜻이며 0점과 구분합니다. 아직 연습한 적이 없으면 `averageScore`와 `attemptCount`는 0이고 `practiced`는 비지만, `suggested`는 채워 진입 즉시 다음 행동을 고를 수 있게 합니다.
+
+`suggested`는 추천 문장 **원문**에 해당 음절이 들어있고 아직 연습하지 않은 것만 고릅니다. 표준 발음으로 찾으면 원문에 없는 글자로 문장을 고르게 되어 사용자가 왜 이 문장이 나왔는지 알 수 없습니다.
+
 ## 발음 평가 기회
 
 ### `GET /api/quota/today`

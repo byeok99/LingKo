@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `home_screen.dart`, `word_detail_screen.dart` → `sound_detail_screen.dart`
+- 내용: Home 타일이 어절 대신 음절 하나를 보여준다. 라벨을 'Sounds to fix · tap for detail'로 바꾸고 한 글자라 글자 크기를 22px로 키웠다. 점수는 로마자와 한 줄에 묶어 음절 자체를 측정한 값처럼 보이지 않게 했다. 상세 화면은 제목 'Sound', 키 접두사 `sound-detail-*`로 정리했다.
+- 검증: `flutter analyze`, `flutter test` 87개 통과
+- 리스크: 핸드오프 02는 취약 음절 타일 1개("Sound to fix this week")를 말하는데 현재는 3개다. 개수 조정은 별도 판단
+
 ## 2026-08-06 - Review 상세에서 사라진 재연습 진입점 복구
 
 - 변경 파일: `review_screen.dart`, `result_screen.dart`

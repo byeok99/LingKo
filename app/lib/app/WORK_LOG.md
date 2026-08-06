@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `lingko_app.dart`
+- 내용: shell 상태 `weakWords`/`openWordDetail`을 `weakSounds`/`openSoundDetail`로 바꾸고 `SoundDetailScreen`을 연결했다. 취약 음절 조회 실패는 여전히 보조 정보 취급이라 타일만 비운다.
+- 검증: `flutter analyze`, `flutter test` 87개 통과
+- 리스크: 없음
+
 ## 2026-08-06 - 저장 상태를 shell이 소유
 
 - 변경 파일: `lingko_app.dart`

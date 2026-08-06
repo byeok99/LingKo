@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `practice_content_api.dart`
+- 내용: `fetchWeakWords`/`fetchWordDetail`을 `fetchWeakSounds`/`fetchSoundDetail`로 바꾸고 경로를 `/me/weak-sounds`, `/me/sounds/{character}`로 옮겼다. 경로에 한글 한 글자가 들어가므로 인코딩을 유지한다.
+- 검증: `flutter analyze`, `flutter test` 87개 통과
+- 리스크: 없음
+
 ## 2026-08-06 - 저장·취약 어절 API client 추가
 
 - 변경 파일: `practice_content_api.dart`

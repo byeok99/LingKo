@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `api-reference.md`
+- 내용: `GET /api/evaluations/me/weak-sounds`와 `GET /api/evaluations/me/sounds/{character}`를 문서화했다. 두 endpoint는 이전(weak-words)에도 문서에 없던 공백이었다. `averageScore`가 측정값이 아니라 어절 점수를 귀속시킨 가중 평균이라는 점, 최소 2회 조건, 한글 음절만 집계한다는 점을 계약으로 적었다.
+- 검증: 코드와 대조. 실행 검증 없음(문서)
+- 리스크: 저장 문장 endpoint(`/me/saved-sentences`)는 여전히 문서에 없다. 이번 변경 범위 밖이라 남겨둠
+
 ## 2026-08-05 - 로마자 발음 API 문서화
 
 - 변경 파일: `api-reference.md`, `WORK_LOG.md`

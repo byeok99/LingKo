@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `WeakWordServiceTest.java` → `WeakSoundServiceTest.java`
+- 내용: 귀속·가중·중복 글자·비한글 제외를 검증하는 테스트를 추가했다. 특히 어절 평균을 단순 평균하면 70, 시도 횟수로 가중하면 60이 나오는 fixture로 가중치가 실제로 적용되는지 고정했다.
+- 검증: `./gradlew test` 통과
+- 리스크: 없음
+
 ## 2026-08-05 - 평가 로마자 파생 테스트
 
 - 변경 파일: `EvaluationServicePrepareTest.java`, `EvaluationHistoryServiceTest.java`, `WORK_LOG.md`

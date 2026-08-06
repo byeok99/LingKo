@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
+
+- 변경 파일: `WeakWordResponse.java` → `WeakSoundResponse.java`, `WeakWordListResponse.java` → `WeakSoundListResponse.java`, `WordDetailResponse.java` → `SoundDetailResponse.java`
+- 내용: 응답 단위를 음절로 바꿨다. `averageScore`가 측정값이 아니라 어절 점수를 귀속시킨 추정이라는 점, `practiced[].score`가 음절이 아니라 어절 점수이고 null이 0점과 다르다는 점을 주석으로 명시했다.
+- 검증: `./gradlew test` 통과
+- 리스크: 없음
+
 ## 2026-08-06 - 로마자와 취약 어절 응답 추가
 
 - 변경 파일: `GuideCharacterResponse.java`, `PracticeWordResultResponse.java`, `PracticeHistoryWordResponse.java`, `PracticeHistoryCharacterResponse.java`, `WeakWordResponse.java`, `WeakWordListResponse.java`, `WordDetailResponse.java`
