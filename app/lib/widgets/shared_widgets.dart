@@ -117,14 +117,9 @@ class AppCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? context.palette.card,
         borderRadius: BorderRadius.circular(AppSizes.radius),
+        // 그림자를 쓰지 않는다. 면을 띄우는 대신 1px 선으로만 구분해
+        // 화면에서 떠 있는 요소가 하나도 없게 한다.
         border: Border.all(color: context.palette.border),
-        boxShadow: [
-          BoxShadow(
-            color: context.palette.shadow,
-            blurRadius: 20,
-            offset: Offset(0, 6),
-          ),
-        ],
       ),
       child: child,
     );
@@ -153,7 +148,7 @@ class PrimaryButton extends StatelessWidget {
               dimension: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: context.palette.card,
+                color: context.palette.onPrimary,
               ),
             )
             : Row(
@@ -167,36 +162,11 @@ class PrimaryButton extends StatelessWidget {
                 Flexible(child: Text(label, textAlign: TextAlign.center)),
               ],
             );
-    final enabled = onPressed != null && !isLoading;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: enabled ? null : context.palette.border,
-        gradient:
-            enabled
-                ? const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF4387CA), Color(0xFF286EAE)],
-                )
-                : null,
-        borderRadius: BorderRadius.circular(AppSizes.radiusControl),
-        boxShadow:
-            enabled
-                ? const [
-                  BoxShadow(
-                    color: Color(0x3B2F73B9),
-                    blurRadius: 18,
-                    offset: Offset(0, 8),
-                  ),
-                ]
-                : null,
-      ),
+    // 그라디언트와 그림자를 쓰지 않는다. 위계는 재질이 아니라 채움으로만 말한다.
+    // 이전에는 primary만 입체였고 나머지는 평면이라 같은 무게의 버튼끼리 재질이 달랐다.
+    return SizedBox(
+      height: AppSizes.buttonHeight,
       child: FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          disabledBackgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-        ),
         onPressed: isLoading ? null : onPressed,
         child: Semantics(
           label: isLoading ? '$label in progress' : label,
@@ -221,13 +191,19 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentIcon = icon;
     return SizedBox(
       height: AppSizes.buttonHeight,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon ?? Icons.arrow_forward, size: 19),
-        label: Text(label),
-      ),
+      child:
+          currentIcon == null
+              // 라벨만 있는 형태가 기본이다. 아이콘을 강제로 붙이면 동등한 선택지
+              // 두 개를 나란히 뒀을 때 한쪽이 더 무거워 보인다.
+              ? OutlinedButton(onPressed: onPressed, child: Text(label))
+              : OutlinedButton.icon(
+                onPressed: onPressed,
+                icon: Icon(currentIcon, size: 19),
+                label: Text(label),
+              ),
     );
   }
 }

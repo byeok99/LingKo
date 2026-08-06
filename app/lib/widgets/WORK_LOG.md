@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 버튼·카드에서 그라디언트와 그림자 제거
+
+- 변경 파일: `shared_widgets.dart`
+- 내용: PrimaryButton이 테마를 우회해 그라디언트와 그림자를 직접 그리고 있어 토큰 교체가 화면에 반영되지 않았다. 평면 채움으로 바꿔 위계를 재질이 아니라 채움으로만 표현한다. SecondaryButton의 기본 화살표 아이콘도 없앴다. 아이콘을 강제하면 동등한 선택지 둘을 나란히 뒀을 때 한쪽이 더 무거워 보인다. AppCard의 그림자도 제거했다.
+- 검증: `flutter analyze`, `./gradlew compileJava` 통과. 화면 확인은 사용자가 직접 수행
+- 리스크: 없음
+
 ## 2026-08-06 - 05 Scoring 이탈 경로 추가
 
 - 변경 파일: `evaluation_progress_panel.dart`
