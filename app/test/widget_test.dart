@@ -2099,6 +2099,45 @@ void main() {
     expect(tester.widgetList<Image>(find.byType(Image)), hasLength(1));
   });
 
+  testWidgets('guide sheet hugs its content at the bottom of the screen', (
+    WidgetTester tester,
+  ) async {
+    const character = CharacterResult(
+      character: '마',
+      score: 0,
+      note: 'Stable vowel shape',
+      kind: 'MOUTH',
+      guideStatus: 'AVAILABLE',
+      mouthGuideUrl: 'https://guides/mouth/vowel-a.png',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder:
+                (context) => TextButton(
+                  onPressed: () => showGuideSheet(context, character),
+                  child: const Text('open guide'),
+                ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open guide'));
+    await tester.pumpAndSettle();
+
+    final screenHeight = tester.view.physicalSize.height /
+        tester.view.devicePixelRatio;
+    final sheet = tester.getRect(find.byType(GuideSheet));
+
+    // 시트는 화면 바닥에 붙는다. 도해가 위로 뜨고 아래에 빈 공간이 남으면
+    // 손이 닿는 자리가 아무것도 없는 여백이 된다.
+    expect(sheet.bottom, closeTo(screenHeight, 0.1));
+    // 높이는 비율로 고정하지 않고 내용에 맞춘다. 상한(90%)에 닿지 않아야 한다.
+    expect(sheet.height, lessThan(screenHeight * 0.9));
+  });
+
   testWidgets('guide sheet renders MP4 URLs as video media', (
     WidgetTester tester,
   ) async {

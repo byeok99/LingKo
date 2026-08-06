@@ -11,28 +11,29 @@ import '../app/app_palette.dart';
 import '../models/practice_sentence.dart';
 import 'guide_painter.dart';
 
-/// 조음 가이드를 화면 대부분을 차지하는 bottom sheet로 연다.
+/// 조음 가이드를 화면 하단에 붙는 bottom sheet로 연다.
 ///
-/// 기본 bottom sheet는 내용 높이에 맞춰 줄어들어 가이드가 작은 상자에 갇힌다. 가이드는
-/// 세부를 봐야 하는 콘텐츠이므로 높이를 먼저 확보하고 그 안을 미디어가 채우게 한다.
+/// 높이를 비율로 고정하지 않고 내용 높이만큼만 차지하게 둔다. 0.9처럼 비율을 강제하면
+/// 도해가 시트 위쪽에 붙고 아래에 빈 공간이 남아, 손이 닿는 자리가 아무것도 없는 여백이
+/// 된다. 내용에 맞추면 시트가 화면 바닥에서 올라온 만큼만 열린다.
+///
+/// 상한만 화면의 90%로 둔다. 작은 화면이나 큰 글자 설정에서 도해 두 장이 넘칠 때
+/// 잘라내는 대신 시트 안에서 스크롤한다. 두 단면 중 하나라도 못 보면 가이드가 성립하지 않는다.
 /// 호출부마다 같은 설정을 반복하지 않도록 진입점을 하나로 모았다.
 Future<void> showGuideSheet(BuildContext context, CharacterResult result) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: context.palette.card,
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * 0.9,
+    ),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(AppSizes.radiusLarge),
       ),
     ),
-    builder:
-        (_) => FractionallySizedBox(
-          heightFactor: 0.9,
-          // 도해 두 장이 세로로 쌓이므로 작은 화면이나 큰 글자 설정에서는 넘칠 수 있다.
-          // 잘라내는 대신 스크롤한다. 두 단면 중 하나라도 못 보면 가이드가 성립하지 않는다.
-          child: SingleChildScrollView(child: GuideSheet(result: result)),
-        ),
+    builder: (_) => SingleChildScrollView(child: GuideSheet(result: result)),
   );
 }
 

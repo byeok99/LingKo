@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - Review 상세에서 사라진 재연습 진입점 복구
+
+- 변경 파일: `review_screen.dart`, `result_screen.dart`
+- 내용: 리디자인 중 Review 상세의 'Practice again' 버튼이 빠져 `onRetryPractice`가 아무 데서도 호출되지 않는 죽은 콜백이 되어 있었다. 기록을 보고 나서 다시 연습할 방법이 없었다. 상세 시트 하단에 되살리고 시트를 먼저 닫은 뒤 Practice로 넘긴다. 상세 시트의 SectionHeader도 결과 화면과 같은 EyebrowLabel 체계로 통일했고, 추이 라벨의 'Last 1 tries' 단수 처리를 했다. Result의 로마자 표기에는 사라졌던 `result-romanized-pronunciation` 키를 복구했다.
+- 검증: `flutter analyze`, `flutter test` 86개 통과
+- 리스크: 없음
+
 ## 2026-08-06 - Result에서 죽은 재생 카드 제거
 
 - 변경 파일: `result_screen.dart`, `practice_screen.dart`, `lingko_app.dart`

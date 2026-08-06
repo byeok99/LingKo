@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 07 Sound guide 시트를 화면 하단에 붙임
+
+- 변경 파일: `guide_sheet.dart`
+- 내용: `FractionallySizedBox(heightFactor: 0.9)`로 높이를 비율 고정하던 것을 걷어내고 내용 높이만큼만 차지하게 했다. 비율을 강제하면 도해가 시트 위쪽에 붙고 아래에 빈 공간이 남아, 손이 닿는 자리가 아무것도 없는 여백이 된다. 상한만 화면의 90%로 두어 작은 화면·큰 글자에서는 시트 안에서 스크롤한다.
+- 검증: `flutter analyze`, `flutter test` 86개 통과
+- 리스크: 없음
+
 ## 2026-08-06 - 07 Sound guide를 세로 스택으로 되돌림
 
 - 변경 파일: `guide_sheet.dart`
