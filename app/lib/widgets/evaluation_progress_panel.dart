@@ -65,18 +65,37 @@ class EvaluationProgressPanel extends StatelessWidget {
             ),
           ),
         Center(
-          child: Container(
-            width: 86,
-            height: 86,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: context.palette.softBlue,
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: Icon(
-              Icons.graphic_eq,
-              size: 34,
-              color: context.palette.primaryDark,
+          child: SizedBox.square(
+            dimension: 140,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox.square(
+                  dimension: 140,
+                  child: CircularProgressIndicator(
+                    // 서버가 백분율을 주지 않으므로 숫자는 표시하지 않고, 실제로 받은
+                    // 네 단계 상태만 ring의 구간으로 매핑한다.
+                    value: ((activeIndex + 1) / steps.length).clamp(0, 1),
+                    backgroundColor: context.palette.blue200,
+                    color: context.palette.primary,
+                    strokeWidth: 10,
+                  ),
+                ),
+                Container(
+                  width: 94,
+                  height: 94,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: context.palette.softBlue,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.graphic_eq,
+                    size: 36,
+                    color: context.palette.primaryDark,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -84,7 +103,7 @@ class EvaluationProgressPanel extends StatelessWidget {
         Text(
           progress.stage == EvaluationProgressStage.failed
               ? 'We could not complete the evaluation'
-              : "We're analyzing your pronunciation",
+              : 'Listening to your pronunciation…',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineMedium,
         ),
@@ -126,24 +145,13 @@ class EvaluationProgressPanel extends StatelessWidget {
         if (progress.stage == EvaluationProgressStage.failed &&
             onRetry != null) ...[
           const SizedBox(height: AppSpacing.lg),
-          PrimaryButton(
-            label: 'Retry with this recording',
-            onPressed: onRetry,
-          ),
+          PrimaryButton(label: 'Retry with this recording', onPressed: onRetry),
         ],
         const SizedBox(height: 14),
-        AppCard(
-          padding: EdgeInsets.all(13),
-          color: context.palette.blue50,
-          child: Row(
-            children: [
-              Icon(Icons.schedule_outlined, color: context.palette.primary, size: 20),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text('You can leave and come back. Nothing is lost.'),
-              ),
-            ],
-          ),
+        Text(
+          'You can leave and come back. Nothing is lost.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
     );
@@ -195,7 +203,11 @@ class _EvaluationStepRow extends StatelessWidget {
               color: context.palette.softBlue,
               borderRadius: BorderRadius.circular(AppSizes.radiusControl),
             ),
-            child: Icon(leadingIcon, color: context.palette.primaryDark, size: 20),
+            child: Icon(
+              leadingIcon,
+              color: context.palette.primaryDark,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -203,12 +215,18 @@ class _EvaluationStepRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           if (state == _StepState.active)
-            SizedBox.square(
-              dimension: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                backgroundColor: context.palette.blue200,
+            Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: context.palette.softBlue,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.more_horiz_rounded,
                 color: context.palette.primary,
+                size: 16,
               ),
             )
           else

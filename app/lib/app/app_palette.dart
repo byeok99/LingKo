@@ -92,7 +92,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// 강조색 자체가 밝아지므로 대비를 유지하려면 어두운 글자를 써야 한다.
   final Color onPrimary;
 
-  /// preview.html에서 확정한 밝은 테마 값이다.
+  /// `docs/design-repair`에서 확정한 파란 카드형 밝은 테마 값이다.
   static const light = AppPalette(
     primaryDark: AppColors.primaryDark,
     primaryMedium: AppColors.primaryMedium,

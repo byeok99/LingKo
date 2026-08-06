@@ -96,7 +96,7 @@ class SectionHeader extends StatelessWidget {
   }
 }
 
-/// 기본 카드의 배경, 테두리와 여백을 한곳에서 유지한다.
+/// 기본 카드의 배경, 테두리, 얕은 깊이감과 여백을 한곳에서 유지한다.
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
@@ -107,6 +107,7 @@ class AppCard extends StatelessWidget {
 
   final Widget child;
   final EdgeInsetsGeometry padding;
+
   /// 지정하지 않으면 현재 테마의 카드 배경을 쓴다.
   final Color? color;
 
@@ -117,9 +118,14 @@ class AppCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? context.palette.card,
         borderRadius: BorderRadius.circular(AppSizes.radius),
-        // 그림자를 쓰지 않는다. 면을 띄우는 대신 1px 선으로만 구분해
-        // 화면에서 떠 있는 요소가 하나도 없게 한다.
         border: Border.all(color: context.palette.border),
+        boxShadow: [
+          BoxShadow(
+            color: context.palette.shadow,
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: child,
     );
@@ -142,13 +148,21 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 채움 여부는 "누를 수 있는가"가 아니라 "동작이 붙어 있는가"로 정한다.
+    // 진행 중에는 누를 수 없지만 버튼은 여전히 살아 있는 상태이므로 채움을 유지한다.
+    // 이 둘을 묶으면 로딩 중에 버튼이 비활성 회색으로 떨어지고, 그 위의 흰 spinner가
+    // 대비 1.12:1이 되어 사용자에게는 빈 회색 버튼으로 보인다.
+    final isFilled = onPressed != null;
+    // 전경색은 실제로 깔린 면을 따라간다. 채움이면 onPrimary, 비활성 채움이면 disabled.
+    final foreground =
+        isFilled ? context.palette.onPrimary : context.palette.disabled;
     final child =
         isLoading
             ? SizedBox.square(
               dimension: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: context.palette.onPrimary,
+                color: foreground,
               ),
             )
             : Row(
@@ -162,15 +176,40 @@ class PrimaryButton extends StatelessWidget {
                 Flexible(child: Text(label, textAlign: TextAlign.center)),
               ],
             );
-    // 그라디언트와 그림자를 쓰지 않는다. 위계는 재질이 아니라 채움으로만 말한다.
-    // 이전에는 primary만 입체였고 나머지는 평면이라 같은 무게의 버튼끼리 재질이 달랐다.
-    return SizedBox(
-      height: AppSizes.buttonHeight,
-      child: FilledButton(
-        onPressed: isLoading ? null : onPressed,
-        child: Semantics(
-          label: isLoading ? '$label in progress' : label,
-          child: child,
+    final gradientColors =
+        Theme.of(context).brightness == Brightness.light
+            ? const [AppColors.ctaGradientStart, AppColors.ctaGradientEnd]
+            : [context.palette.primaryLight, context.palette.primary];
+    return DecoratedBox(
+      key: const ValueKey('primary-button-gradient'),
+      decoration: BoxDecoration(
+        color: isFilled ? null : context.palette.neutralFill,
+        gradient: isFilled ? LinearGradient(colors: gradientColors) : null,
+        borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+        boxShadow:
+            isFilled
+                ? [
+                  BoxShadow(
+                    color: context.palette.primary.withValues(alpha: 0.23),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+                : const [],
+      ),
+      child: SizedBox(
+        height: AppSizes.buttonHeight,
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+          ),
+          onPressed: isLoading ? null : onPressed,
+          child: Semantics(
+            label: isLoading ? '$label in progress' : label,
+            child: child,
+          ),
         ),
       ),
     );
@@ -421,7 +460,7 @@ class CharacterBadge extends StatelessWidget {
 
 /// 제품명 표기다. 화면마다 크기·자간이 갈리지 않도록 한곳에서 정의한다.
 class Wordmark extends StatelessWidget {
-  const Wordmark({super.key, this.fontSize = 24});
+  const Wordmark({super.key, this.fontSize = 25});
 
   final double fontSize;
 
@@ -432,7 +471,7 @@ class Wordmark extends StatelessWidget {
       style: TextStyle(
         color: context.palette.textPrimary,
         fontSize: fontSize,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w900,
         letterSpacing: -fontSize * 0.045,
       ),
     );
@@ -462,7 +501,7 @@ class RomanizationText extends StatelessWidget {
     final base = TextStyle(
       color: context.palette.textSecondary,
       fontSize: fontSize,
-      fontWeight: FontWeight.w500,
+      fontWeight: FontWeight.w900,
       letterSpacing: fontSize * 0.12,
       height: 1.4,
     );
@@ -507,7 +546,7 @@ class EyebrowLabel extends StatelessWidget {
       style: TextStyle(
         color: context.palette.textSecondary,
         fontSize: 10.5,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w900,
         letterSpacing: 1.68,
       ),
     );

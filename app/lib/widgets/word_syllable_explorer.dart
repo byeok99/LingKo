@@ -10,10 +10,10 @@ import 'guide_sheet.dart';
 import 'score_card.dart';
 import 'shared_widgets.dart';
 
-/// 어절 목록을 보여주고, 어절을 누르면 그 아래에 음절 칩을 펼친다.
+/// 문장을 어절 pill로 먼저 훑고, 선택한 한 어절의 음절 guide만 아래에 보여준다.
 ///
-/// 어절과 음절을 동시에 늘어놓지 않는 이유는 화면이 길어지는 것보다, 무엇이 상위이고
-/// 무엇이 그 안에 있는지가 흐려지는 편이 더 나쁘기 때문이다. 한 번에 하나만 펼친다.
+/// API의 신뢰 가능한 점수 단위는 어절이므로 점수는 상단에만 둔다. 음절은 입·혀 guide를
+/// 여는 탐색 단위로만 사용해 측정하지 않은 점수를 만들어 내지 않는다.
 class WordSyllableExplorer extends StatefulWidget {
   const WordSyllableExplorer({super.key, required this.words});
 
@@ -24,16 +24,40 @@ class WordSyllableExplorer extends StatefulWidget {
 }
 
 class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
-  /// 펼친 어절의 위치다. null이면 모두 접힌 상태다.
-  int? expandedIndex;
+  late int selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedIndex = _initialIndex(widget.words);
+  }
 
   @override
   void didUpdateWidget(covariant WordSyllableExplorer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 새 평가 결과가 들어오면 이전 선택이 다른 문장의 어절을 가리키게 되므로 접는다.
+    // 새 평가 결과가 들어오면 가장 도움이 필요한 어절로 선택을 다시 맞춘다.
     if (oldWidget.words != widget.words) {
-      expandedIndex = null;
+      selectedIndex = _initialIndex(widget.words);
     }
+  }
+
+  int _initialIndex(List<PracticeWordResult> words) {
+    if (words.isEmpty) {
+      return 0;
+    }
+    var candidate = 0;
+    int? lowest;
+    for (var index = 0; index < words.length; index++) {
+      final word = words[index];
+      if (!word.scoreStatus.isAvailable || word.score == null) {
+        continue;
+      }
+      if (lowest == null || word.score! < lowest) {
+        lowest = word.score;
+        candidate = index;
+      }
+    }
+    return candidate;
   }
 
   @override
@@ -46,38 +70,71 @@ class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
       );
     }
 
+    final safeIndex = selectedIndex.clamp(0, widget.words.length - 1);
+    final selectedWord = widget.words[safeIndex];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (var index = 0; index < widget.words.length; index++) ...[
-          _WordRow(
-            key: ValueKey('word-score-${widget.words[index].position}'),
-            word: widget.words[index],
-            showDivider: index != widget.words.length - 1,
-            onTap:
-                () => setState(
-                  () => expandedIndex = expandedIndex == index ? null : index,
-                ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var index = 0; index < widget.words.length; index++)
+              _WordChip(
+                key: ValueKey('word-score-${widget.words[index].position}'),
+                word: widget.words[index],
+                selected: safeIndex == index,
+                onTap: () => setState(() => selectedIndex = index),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        AppCard(
+          color: context.palette.blue50,
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    selectedWord.text,
+                    style: TextStyle(
+                      color: context.palette.textPrimary,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: RomanizationText(
+                      selectedWord.romanization,
+                      fontSize: 10.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _SyllableChips(word: selectedWord),
+            ],
           ),
-          if (expandedIndex == index)
-            _SyllableChips(word: widget.words[index]),
-        ],
+        ),
       ],
     );
   }
 }
 
-/// 어절 한 줄이다. [어절 · 로마자 · 점수] 세 정보를 한 줄에 둔다.
-class _WordRow extends StatelessWidget {
-  const _WordRow({
+/// 어절, 로마자, 점수를 한 덩어리로 읽게 하는 선택 pill이다.
+class _WordChip extends StatelessWidget {
+  const _WordChip({
     super.key,
     required this.word,
-    required this.showDivider,
+    required this.selected,
     required this.onTap,
   });
 
   final PracticeWordResult word;
-  final bool showDivider;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
@@ -97,50 +154,63 @@ class _WordRow extends StatelessWidget {
               ? '${word.text}, score $score. Show syllables.'
               : '${word.text}, score unavailable. Show syllables.',
       excludeSemantics: true,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          decoration: BoxDecoration(
-            border:
-                showDivider
-                    ? Border(
-                      bottom: BorderSide(color: context.palette.lineSubtle),
-                    )
-                    : null,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Flexible(
-                child: Text(
-                  word.text,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
+      child: Material(
+        color:
+            selected
+                ? (failing
+                    ? context.palette.errorSoft
+                    : context.palette.softBlue)
+                : context.palette.card,
+        borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color:
+                    selected
+                        ? (failing
+                            ? context.palette.errorBorder
+                            : context.palette.borderStrong)
+                        : context.palette.border,
+              ),
+              borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      word.text,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      available ? '$score' : '—',
+                      style: TextStyle(
+                        color:
+                            available ? textColor : context.palette.textMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: RomanizationText(word.romanization, fontSize: 11),
-              ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 34,
-                child: Text(
-                  available ? '$score' : '—',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    color: available ? textColor : context.palette.textMuted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-            ],
+                if (word.romanization.trim().isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  RomanizationText(word.romanization, fontSize: 9.5),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -175,7 +245,7 @@ class _SyllableChips extends StatelessWidget {
         word.score! < kPassingScore;
 
     return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 10),
+      padding: EdgeInsets.zero,
       child: Wrap(
         spacing: 7,
         runSpacing: 7,
@@ -210,7 +280,9 @@ class _SyllableChip extends StatelessWidget {
       excludeSemantics: true,
       child: Material(
         color:
-            highlighted ? context.palette.errorSoft : context.palette.neutralFill,
+            highlighted
+                ? context.palette.errorSoft
+                : context.palette.neutralFill,
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         child: InkWell(
           onTap: () => showGuideSheet(context, syllable),

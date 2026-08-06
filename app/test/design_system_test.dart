@@ -1,51 +1,51 @@
-// 파일 의도: Direction A 핸드오프에서 확정한 디자인 토큰의 회귀를 방지한다.
-// 기준 문서: docs/design_handoff_lingko_direction_a/README.md
-// 이전 기준이던 docs/design/preview.html은 이 리디자인으로 대체됐다.
+// 파일 의도: design-repair 시안에서 확정한 파란 카드형 디자인 토큰의 회귀를 방지한다.
+// 기준 문서: docs/design-repair/LingKo Blue Merged.dc.html
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingko_app/app/app_palette.dart';
 import 'package:lingko_app/app/app_theme.dart';
+import 'package:lingko_app/widgets/shared_widgets.dart';
 
 void main() {
-  test('Direction A color tokens stay aligned with the Flutter theme', () {
-    // 인터랙티브 계열은 누를 수 있는 것에만 쓰는 색이라 값이 바뀌면 색 규칙 자체가 흔들린다.
+  test('design repair color tokens stay aligned with the Flutter theme', () {
     expect(AppColors.primary, const Color(0xFF2F73B9));
     expect(AppColors.primaryDark, const Color(0xFF245F9B));
+    expect(AppColors.ctaGradientStart, const Color(0xFF4387CA));
+    expect(AppColors.ctaGradientEnd, const Color(0xFF286EAE));
     expect(AppColors.softBlue, const Color(0xFFEDF6FD));
+    expect(AppColors.blue50, const Color(0xFFF7FBFF));
 
-    expect(AppColors.scaffold, const Color(0xFFFCFCFB));
+    expect(AppColors.scaffold, const Color(0xFFFFFFFF));
     expect(AppColors.card, const Color(0xFFFFFFFF));
-    expect(AppColors.textPrimary, const Color(0xFF1B2228));
+    expect(AppColors.textPrimary, const Color(0xFF17324A));
     expect(AppColors.textSecondary, const Color(0xFF5C7386));
     expect(AppColors.textMuted, const Color(0xFF627585));
 
-    expect(AppColors.line, const Color(0xFFE8E6E1));
-    expect(AppColors.lineSubtle, const Color(0xFFEFEDEA));
-    expect(AppColors.border, const Color(0xFFE0DED9));
-    expect(AppColors.borderStrong, const Color(0xFFD5D3CE));
+    expect(AppColors.line, const Color(0xFFDCE7EF));
+    expect(AppColors.lineSubtle, const Color(0xFFDCE7EF));
+    expect(AppColors.border, const Color(0xFFDCE7EF));
+    expect(AppColors.borderStrong, const Color(0xFFA9CAEB));
 
     // 점수는 80 기준 2단계다. 중간 단계를 추가하면 색 규칙이 깨진다.
     expect(AppColors.success, const Color(0xFF27735A));
-    expect(AppColors.error, const Color(0xFFB94A4A));
-    expect(AppColors.recordAccent, const Color(0xFFC0453A));
+    expect(AppColors.error, const Color(0xFFC0392B));
+    expect(AppColors.errorSoft, const Color(0xFFFDF1EF));
   });
 
-  test('shape tokens match the fixed button and card geometry', () {
-    // 버튼 위계를 재질이 아니라 채움으로만 표현하려면 높이와 반경이 고정이어야 한다.
-    expect(AppSizes.buttonHeight, 54);
-    expect(AppSizes.radiusControl, 12);
-    expect(AppSizes.radius, 16);
+  test('shape tokens match the blue card and button geometry', () {
+    expect(AppSizes.buttonHeight, 52);
+    expect(AppSizes.radiusControl, 15);
+    expect(AppSizes.radius, 18);
     expect(AppSizes.navigationHeight, 76);
   });
 
-  test('type scale uses only four weights', () {
-    // 이전 테마는 750~950을 섞어 써서 굵기가 위계를 만들지 못했다.
+  test('type scale restores the heavy blue design hierarchy', () {
     const allowed = {
       FontWeight.w400,
       FontWeight.w500,
-      FontWeight.w600,
       FontWeight.w700,
+      FontWeight.w900,
     };
     final textTheme = AppTheme.light().textTheme;
     final styles = [
@@ -66,15 +66,74 @@ void main() {
     }
   });
 
-  test('buttons carry no elevation so hierarchy comes from fill only', () {
-    final filled = AppTheme.light().filledButtonTheme.style!;
-
-    expect(filled.elevation?.resolve({}), 0);
-    // 비활성도 형태를 유지하고 채움만 약화한다.
-    expect(
-      filled.backgroundColor?.resolve({WidgetState.disabled}),
-      AppColors.neutralFill,
+  testWidgets('primary buttons and cards restore depth cues', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Column(
+            children: [
+              const AppCard(
+                key: ValueKey('design-repair-card'),
+                child: Text('Card'),
+              ),
+              PrimaryButton(label: 'Continue', onPressed: () {}),
+            ],
+          ),
+        ),
+      ),
     );
+
+    final card = tester.widget<Container>(
+      find
+          .descendant(
+            of: find.byKey(const ValueKey('design-repair-card')),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    final cardDecoration = card.decoration! as BoxDecoration;
+    expect(cardDecoration.boxShadow, isNotEmpty);
+
+    final primaryDecoration = tester.widget<DecoratedBox>(
+      find.byKey(const ValueKey('primary-button-gradient')),
+    );
+    final buttonBox = primaryDecoration.decoration as BoxDecoration;
+    expect(buttonBox.gradient, isA<LinearGradient>());
+    expect(buttonBox.boxShadow, isNotEmpty);
+  });
+
+  testWidgets('a loading primary button keeps its fill so the spinner reads', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: PrimaryButton(
+            label: 'Retry with this recording',
+            isLoading: true,
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    // 진행 중인 CTA는 채움을 유지해야 한다. 비활성 회색으로 떨어뜨리면 흰 spinner가
+    // 밝은 면 위에 놓여 대비 1.12:1이 되고, 사용자에게는 빈 회색 버튼으로 보인다.
+    final decoration =
+        tester
+                .widget<DecoratedBox>(
+                  find.byKey(const ValueKey('primary-button-gradient')),
+                )
+                .decoration
+            as BoxDecoration;
+    expect(decoration.gradient, isA<LinearGradient>());
+
+    final spinner = tester.widget<CircularProgressIndicator>(
+      find.byType(CircularProgressIndicator),
+    );
+    expect(spinner.color, AppPalette.light.onPrimary);
   });
 
   test('both brightness themes carry a palette', () {

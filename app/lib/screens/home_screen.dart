@@ -130,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
         widget.onRetryQuota();
       },
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
         children: [
           Row(
             children: [
@@ -140,8 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: ConstrainedBox(
-                    // 캡슐은 [마이크 3/5 | 42:18 +] 순서라 자연 너비가 약 207px다.
-                    // 좁게 잡으면 충전 버튼이 잘려 눌리지 않으므로 여유를 둔다.
+                    // 수량과 timer를 세로로 두더라도 큰 글자에서는 폭이 늘어난다.
+                    // 충전 버튼이 잘려 눌리지 않도록 header 안에서 충분한 상한을 둔다.
                     constraints: const BoxConstraints(maxWidth: 215),
                     child: MediaQuery.withClampedTextScaling(
                       maxScaleFactor: 1.2,
@@ -159,33 +159,29 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 18),
-          // 인사는 이 화면에서 가장 큰 글자다. 무엇을 할 차례인지 먼저 말한다.
+          // 짧은 인사로 문장 탐색보다 시선을 먼저 빼앗지 않게 한다.
           Text(
             widget.displayName == null || widget.displayName!.trim().isEmpty
-                ? 'What will you\nsay today?'
-                : 'What will you\nsay today, ${widget.displayName!.trim()}?',
-            style: Theme.of(context).textTheme.headlineLarge,
+                ? 'Good morning!'
+                : 'Good morning, ${widget.displayName!.trim()}!',
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
           if (widget.weakSounds.isNotEmpty) ...[
             const SizedBox(height: 24),
-            Container(
-              // 아래를 2px 더 띄운다. 타일 아래 카테고리 탭이 바로 붙어 있어
-              // 위아래 여백이 같으면 이 블록이 탭에 끌려가 보인다.
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 18),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: context.palette.line),
-                  bottom: BorderSide(color: context.palette.line),
-                ),
-              ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const EyebrowLabel('Your weakest sounds · tap for the guide'),
+                  const SectionHeader(title: 'Your weakest sounds'),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      for (var index = 0; index < widget.weakSounds.length; index++) ...[
+                      for (
+                        var index = 0;
+                        index < widget.weakSounds.length;
+                        index++
+                      ) ...[
                         if (index > 0) const SizedBox(width: 9),
                         Expanded(
                           child: _WeakSoundTile(
@@ -261,14 +257,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 칩 대신 밑줄 탭을 쓴다. 칩은 그 자체가 눌리는 덩어리로 보여
-        // 문장 목록과 위계가 경쟁한다.
         SizedBox(
-          height: AppSizes.minimumTouchTarget,
+          height: 38,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _SentenceCategory.values.length,
-            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.lg),
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
             itemBuilder: (context, index) {
               final category = _SentenceCategory.values[index];
               return _CategoryTab(
@@ -288,31 +282,32 @@ class _HomeScreenState extends State<HomeScreen> {
             message: 'Choose another situation or practice your own sentence.',
           )
         else
-          // 카드로 감싸지 않는다. 목록은 여백과 얇은 구분선으로 묶는 편이
-          // 문장 자체를 읽는 데 방해가 적다.
-          Column(
+          AppCard(
             key: const ValueKey('home-sentence-list'),
-            children: [
-              for (var index = 0; index < visibleSentences.length; index++)
-                SentenceCard(
-                  sentence: visibleSentences[index],
-                  onTap: () => widget.onSelect(visibleSentences[index]),
-                  showDivider: index != visibleSentences.length - 1,
-                  // 추천 문장만 저장할 수 있다. 직접 입력한 문장은 서버에 식별자가 없다.
-                  isSaved:
-                      visibleSentences[index].sentenceId == null
-                          ? null
-                          : widget.savedSentenceIds.contains(
-                            visibleSentences[index].sentenceId,
-                          ),
-                  onToggleSaved: () {
-                    final id = visibleSentences[index].sentenceId;
-                    if (id != null) {
-                      widget.onToggleSaved?.call(id);
-                    }
-                  },
-                ),
-            ],
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                for (var index = 0; index < visibleSentences.length; index++)
+                  SentenceCard(
+                    sentence: visibleSentences[index],
+                    onTap: () => widget.onSelect(visibleSentences[index]),
+                    showDivider: index != visibleSentences.length - 1,
+                    // 추천 문장만 저장할 수 있다. 직접 입력한 문장은 서버에 식별자가 없다.
+                    isSaved:
+                        visibleSentences[index].sentenceId == null
+                            ? null
+                            : widget.savedSentenceIds.contains(
+                              visibleSentences[index].sentenceId,
+                            ),
+                    onToggleSaved: () {
+                      final id = visibleSentences[index].sentenceId;
+                      if (id != null) {
+                        widget.onToggleSaved?.call(id);
+                      }
+                    },
+                  ),
+              ],
+            ),
           ),
         const SizedBox(height: AppSpacing.sm),
         // 부수적 이동은 채우지 않고 글자만 쓴다. 화면의 primary는 문장 선택 자체다.
@@ -324,22 +319,21 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text(
               showAllSentences
                   ? 'Show fewer'
-                  : 'Show ${categorySentences.length - _sentencePreviewLimit} more',
+                  : 'Show ${categorySentences.length - _sentencePreviewLimit} more ${categorySentences.length - _sentencePreviewLimit == 1 ? 'sentence' : 'sentences'}',
             ),
           ),
-        TextButton(
+        SecondaryButton(
+          icon: Icons.edit_outlined,
           onPressed: widget.onOpenCustomPractice,
-          child: const Text('Type my own sentence'),
+          label: 'Practice my own sentence',
         ),
       ],
     );
   }
 }
 
-/// 카테고리를 고르는 밑줄 탭이다.
-///
-/// 활성 표시를 배경 채움이 아니라 2px 밑줄로 하는 이유는, 채우면 그 자체가 눌러야 할
-/// 대상처럼 보여 아래 문장 목록과 시선을 나눠 갖기 때문이다.
+/// 카테고리를 고르는 pill이다. 선택 상태는 파란 tint와 테두리를 함께 써 색각과 무관하게
+/// 구분되도록 한다.
 /// 반복해서 틀리는 어절 타일이다.
 ///
 /// 음절이 아니라 어절인 이유는 신뢰할 수 있는 점수의 최소 단위가 어절이기 때문이다.
@@ -363,7 +357,7 @@ class _WeakSoundTile extends StatelessWidget {
           'across ${sound.attemptCount} tries. Open detail.',
       excludeSemantics: true,
       child: Material(
-        color: context.palette.errorSoft,
+        color: context.palette.blue50,
         borderRadius: BorderRadius.circular(AppSizes.radiusTile),
         child: InkWell(
           onTap: onTap,
@@ -372,6 +366,10 @@ class _WeakSoundTile extends StatelessWidget {
             // 가로 여백을 두지 않는다. 세 타일이 같은 폭을 나눠 갖고 내용은 가운데
             // 정렬이라, 안쪽 여백을 주면 좁은 화면에서 로마자가 먼저 잘린다.
             padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: context.palette.blue200),
+              borderRadius: BorderRadius.circular(AppSizes.radiusTile),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
@@ -386,7 +384,7 @@ class _WeakSoundTile extends StatelessWidget {
                     // 소리 자체이므로 점수보다 무겁게 잡는다.
                     fontSize: 26,
                     height: 1.15,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -397,7 +395,7 @@ class _WeakSoundTile extends StatelessWidget {
                   style: TextStyle(
                     color: context.palette.textSecondary,
                     fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     // 로마자는 소리를 끊어 읽는 표기라 자간을 벌려야 음절 경계가 보인다.
                     letterSpacing: 1.32,
                   ),
@@ -430,25 +428,28 @@ class _CategoryTab extends StatelessWidget {
       selected: selected,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSizes.pillRadius),
         child: Container(
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: selected ? context.palette.primary : Colors.transparent,
-                width: 2,
-              ),
+            color: selected ? context.palette.softBlue : context.palette.card,
+            border: Border.all(
+              color:
+                  selected
+                      ? context.palette.borderStrong
+                      : context.palette.border,
             ),
+            borderRadius: BorderRadius.circular(AppSizes.pillRadius),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontSize: 14,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
               color:
                   selected
-                      ? context.palette.textPrimary
+                      ? context.palette.primaryDark
                       : context.palette.textMuted,
             ),
           ),
@@ -563,7 +564,8 @@ class _ActiveEvaluationCard extends StatelessWidget {
                 ),
                 child: Icon(
                   failed ? Icons.error_outline : Icons.graphic_eq,
-                  color: failed ? context.palette.error : context.palette.primary,
+                  color:
+                      failed ? context.palette.error : context.palette.primary,
                   size: 21,
                 ),
               ),

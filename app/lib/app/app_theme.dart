@@ -7,10 +7,10 @@ import 'app_palette.dart';
 
 /// App Colors 앱 전역 구성 책임을 제공한다.
 /// 기능별 화면이 전역 테마·최상위 화면 전환 결정을 중복하지 않도록 중앙화했다.
-/// Direction A 핸드오프에서 확정한 밝은 테마 색이다.
+/// `docs/design-repair` 핸드오프에서 확정한 파란 카드형 밝은 테마 색이다.
 ///
 /// 화면은 이 상수를 직접 참조하지 않고 `AppPalette`를 통해 읽는다. 여기 값은 밝은 테마의
-/// 정의이자 `docs/design_handoff_lingko_direction_a`와 대조하는 기준점이다.
+/// 정의이자 `docs/design-repair`와 대조하는 기준점이다.
 class AppColors {
   const AppColors._();
 
@@ -19,45 +19,48 @@ class AppColors {
   static const primaryDark = Color(0xFF245F9B);
   static const primaryMedium = Color(0xFF245F9B);
   static const primaryLight = Color(0xFF4F91D1);
+  static const ctaGradientStart = Color(0xFF4387CA);
+  static const ctaGradientEnd = Color(0xFF286EAE);
   static const softBlue = Color(0xFFEDF6FD);
   static const blue200 = Color(0xFFD6E8F7);
   static const blue50 = Color(0xFFF7FBFF);
 
   // 면
-  static const scaffold = Color(0xFFFCFCFB);
+  static const scaffold = Color(0xFFFFFFFF);
   static const card = Color(0xFFFFFFFF);
-  static const surface = Color(0xFFF1F0ED);
+  static const surface = Color(0xFFF7FBFF);
 
   // 글자
-  static const textStrong = Color(0xFF1B2228);
-  static const textPrimary = Color(0xFF1B2228);
+  static const textStrong = Color(0xFF17324A);
+  static const textPrimary = Color(0xFF17324A);
   // 본문 12~13px에도 쓰이므로 WCAG AA 본문 기준을 넘는 값만 쓴다. 배경 대비 4.81:1.
   static const textSecondary = Color(0xFF5C7386);
   // 비활성 탭 라벨·메타 정보. 배경 대비 4.65:1.
   static const textMuted = Color(0xFF627585);
 
   // 선 — 카드 테두리와 리스트 구분선을 구분해 위계를 만든다.
-  static const line = Color(0xFFE8E6E1);
-  static const lineSubtle = Color(0xFFEFEDEA);
-  static const border = Color(0xFFE0DED9);
-  static const borderStrong = Color(0xFFD5D3CE);
+  static const line = Color(0xFFDCE7EF);
+  static const lineSubtle = Color(0xFFDCE7EF);
+  static const border = Color(0xFFDCE7EF);
+  static const borderStrong = Color(0xFFA9CAEB);
 
   // 점수 — 80 기준 2단계다. 중간 단계는 두지 않는다.
   static const success = Color(0xFF27735A);
   static const successSoft = Color(0xFFEEF4F1);
-  static const error = Color(0xFFB94A4A);
-  static const errorSoft = Color(0xFFFDEEEE);
-  static const errorBorder = Color(0xFFDCC3C3);
+  static const error = Color(0xFFC0392B);
+  static const errorSoft = Color(0xFFFDF1EF);
+  static const errorBorder = Color(0xFFE8B8B3);
 
   // 상태·기타
   static const warning = Color(0xFF8A5B16);
   static const warningSoft = Color(0xFFFFF6DF);
-  static const neutralFill = Color(0xFFF1F0ED);
+  static const neutralFill = Color(0xFFEEF3F7);
   static const recordAccent = Color(0xFFC0453A);
+
   /// 비활성 버튼 글자다. 핸드오프의 #627585는 채움 위에서 4.19:1로 본문 기준에 못 미쳐
   /// 기준을 넘는 가장 가까운 값으로 낮췄다. 에너지 소진을 알리는 버튼이라 읽혀야 한다.
   static const disabled = Color(0xFF566E82);
-  static const shadow = Color(0x141B2228);
+  static const shadow = Color(0x1317324A);
 
   // 제공자 브랜드 규정을 따르는 예외라 테마와 무관하게 고정한다.
   static const providerButtonForeground = Color(0xFF1F1F1F);
@@ -83,17 +86,22 @@ class AppSizes {
   const AppSizes._();
 
   static const double radiusSmall = 11;
-  /// 버튼 반경. 핸드오프가 모든 버튼을 12px로 고정했다.
-  static const double radiusControl = 12;
+
+  /// 버튼 반경. 파란 CTA가 카드와 같은 부드러운 곡률을 갖게 한다.
+  static const double radiusControl = 15;
+
   /// 카드 반경.
-  static const double radius = 16;
+  static const double radius = 18;
+
   /// 한 덩어리로 읽히는 작은 타일 반경. 취약 음절 타일, Review 점수 배지가 쓴다.
   static const double radiusTile = 14;
+
   /// bottom sheet 상단 반경.
   static const double radiusLarge = 22;
   static const double pillRadius = 999;
+
   /// 모든 버튼 높이를 고정해 위계를 크기가 아니라 채움으로만 표현한다.
-  static const double buttonHeight = 54;
+  static const double buttonHeight = 52;
   static const double minimumTouchTarget = 48;
   static const double navigationHeight = 76;
 }
@@ -144,14 +152,14 @@ class AppTheme {
           minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
           backgroundColor: palette.primary,
           foregroundColor: palette.onPrimary,
-          // 위계는 재질이 아니라 채움으로만 말한다. 그라디언트와 그림자를 쓰지 않는다.
+          // 공통 PrimaryButton이 그라디언트를 그리므로 Material 자체는 투명하게 쓴다.
           elevation: 0,
           disabledBackgroundColor: palette.neutralFill,
           disabledForegroundColor: palette.disabled,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusControl),
           ),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -163,7 +171,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusControl),
           ),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -209,7 +217,10 @@ class AppTheme {
                     ? palette.primaryDark
                     : palette.textMuted,
             fontSize: 10.5,
-            fontWeight: FontWeight.w600,
+            fontWeight:
+                states.contains(WidgetState.selected)
+                    ? FontWeight.w900
+                    : FontWeight.w700,
           ),
         ),
       ),
@@ -221,28 +232,28 @@ class AppTheme {
       textTheme: TextTheme(
         headlineLarge: TextStyle(
           color: palette.textPrimary,
-          fontSize: 26,
-          fontWeight: FontWeight.w700,
+          fontSize: 28,
+          fontWeight: FontWeight.w900,
           height: 1.3,
           letterSpacing: -0.9,
         ),
         headlineMedium: TextStyle(
           color: palette.textPrimary,
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
           height: 1.2,
           letterSpacing: -0.66,
         ),
         titleLarge: TextStyle(
           color: palette.textPrimary,
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
+          fontSize: 16,
+          fontWeight: FontWeight.w900,
           letterSpacing: -0.43,
         ),
         titleMedium: TextStyle(
           color: palette.textPrimary,
           fontSize: 14,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w900,
         ),
         bodyLarge: TextStyle(
           color: palette.textPrimary,

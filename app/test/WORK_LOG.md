@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - LingKo Blue 디자인과 Saved/Recording 회귀 계약 추가
+
+- 변경 파일: `design_system_test.dart`, `widget_test.dart`
+- 내용: 파란 색·형태·굵기·카드 그림자·CTA gradient와 loading spinner 대비를 계약으로 고정했다. Home pill/energy MAX, Result/Review 어절 선택, Recording Restart, Saved category·북마크 해제를 실제 사용자 흐름으로 검증한다.
+- 검증: `flutter analyze`, `flutter test --coverage` 전체 89개 통과, 라인 커버리지 80.64%
+- 리스크: 실제 플랫폼 plugin과 기기별 렌더링은 위젯 테스트 범위 밖임
+
 ## 2026-08-06 - 취약 음절 타일 도안 값 고정
 
 - 변경 파일: `widget_test.dart`

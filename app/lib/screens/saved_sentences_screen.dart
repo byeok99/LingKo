@@ -4,10 +4,37 @@
 import 'package:flutter/material.dart';
 
 import '../api/practice_content_api.dart';
+import '../app/app_palette.dart';
+import '../app/app_theme.dart';
 import '../models/practice_sentence.dart';
 import '../services/app_auth_service.dart';
 import '../widgets/sentence_card.dart';
 import '../widgets/shared_widgets.dart';
+
+/// 저장 문장은 서버 category를 그대로 사용해 별도 분류 데이터를 만들지 않는다.
+enum _SavedFilter {
+  all('All'),
+  daily('Daily'),
+  travel('Travel'),
+  own('My own');
+
+  const _SavedFilter(this.label);
+
+  final String label;
+
+  bool matches(PracticeSentence sentence) {
+    final category = sentence.category.trim().toLowerCase();
+    return switch (this) {
+      _SavedFilter.all => true,
+      _SavedFilter.daily => category == 'daily',
+      _SavedFilter.travel => category == 'travel',
+      _SavedFilter.own =>
+        category == 'my own' ||
+            category == 'custom' ||
+            category == 'free practice',
+    };
+  }
+}
 
 /// 저장한 문장 목록 화면이다.
 class SavedSentencesScreen extends StatefulWidget {
@@ -34,6 +61,7 @@ class _SavedSentencesScreenState extends State<SavedSentencesScreen> {
   List<PracticeSentence> sentences = const [];
   bool isLoading = true;
   String? errorText;
+  _SavedFilter selectedFilter = _SavedFilter.all;
 
   /// 해제 요청을 보낸 문장이다. 서버 응답 전에도 목록에서 빼 손맛을 즉시 준다.
   final Set<int> removingIds = {};
@@ -115,12 +143,15 @@ class _SavedSentencesScreenState extends State<SavedSentencesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final visible = sentences
+    final allVisible = sentences
         .where((item) => !removingIds.contains(item.sentenceId))
+        .toList(growable: false);
+    final visible = allVisible
+        .where(selectedFilter.matches)
         .toList(growable: false);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
       children: [
         TopBar(
           title: 'Saved',
@@ -135,8 +166,28 @@ class _SavedSentencesScreenState extends State<SavedSentencesScreen> {
         const SizedBox(height: 6),
         // 개수는 실제 목록 길이에서 센다. 서버 값을 따로 쓰면 해제 직후 어긋난다.
         Text(
-          visible.length == 1 ? '1 sentence' : '${visible.length} sentences',
+          allVisible.length == 1
+              ? '1 sentence'
+              : '${allVisible.length} sentences',
           style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _SavedFilter.values.length,
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+            itemBuilder: (context, index) {
+              final filter = _SavedFilter.values[index];
+              return _SavedFilterChip(
+                key: ValueKey('saved-filter-${filter.name}'),
+                label: filter.label,
+                selected: filter == selectedFilter,
+                onTap: () => setState(() => selectedFilter = filter),
+              );
+            },
+          ),
         ),
         const SizedBox(height: 14),
         if (isLoading)
@@ -152,28 +203,89 @@ class _SavedSentencesScreenState extends State<SavedSentencesScreen> {
             actionLabel: 'Retry',
             onAction: load,
           )
-        else if (visible.isEmpty)
+        else if (allVisible.isEmpty)
           const StatePanel(
             icon: Icons.bookmark_border,
             title: 'Nothing saved yet',
             message:
                 'Tap the bookmark on a sentence to keep it here for later.',
           )
+        else if (visible.isEmpty)
+          StatePanel(
+            icon: Icons.filter_alt_off_outlined,
+            title: 'No ${selectedFilter.label} sentences',
+            message: 'Choose another category to see your saved sentences.',
+          )
         else
-          Column(
-            children: [
-              for (var index = 0; index < visible.length; index++)
-                SentenceCard(
-                  key: ValueKey('saved-sentence-${visible[index].sentenceId}'),
-                  sentence: visible[index],
-                  onTap: () => widget.onSelect(visible[index]),
-                  showDivider: index != visible.length - 1,
-                  isSaved: true,
-                  onToggleSaved: () => toggleSaved(visible[index]),
-                ),
-            ],
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                for (var index = 0; index < visible.length; index++)
+                  SentenceCard(
+                    key: ValueKey(
+                      'saved-sentence-${visible[index].sentenceId}',
+                    ),
+                    sentence: visible[index],
+                    onTap: () => widget.onSelect(visible[index]),
+                    showDivider: index != visible.length - 1,
+                    isSaved: true,
+                    onToggleSaved: () => toggleSaved(visible[index]),
+                  ),
+              ],
+            ),
           ),
       ],
+    );
+  }
+}
+
+class _SavedFilterChip extends StatelessWidget {
+  const _SavedFilterChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: selected ? context.palette.softBlue : context.palette.card,
+            border: Border.all(
+              color:
+                  selected
+                      ? context.palette.borderStrong
+                      : context.palette.border,
+            ),
+            borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color:
+                  selected
+                      ? context.palette.primaryDark
+                      : context.palette.textMuted,
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
