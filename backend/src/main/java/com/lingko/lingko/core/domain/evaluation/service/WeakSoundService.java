@@ -158,13 +158,20 @@ public class WeakSoundService {
     @Transactional(readOnly = true)
     public SoundDetailResponse findSoundDetail(Long userId, String character) {
         String normalized = character == null ? "" : character.trim();
-        List<EvaluationWord> practiced = normalized.isEmpty()
-                ? List.of()
-                : evaluationWordRepository.findPracticedByCharacter(
+        // 조회 대상이 한글 음절 한 글자가 아니면 아무것도 찾지 않는다.
+        //
+        // 이 값은 like 패턴 한가운데로 들어가므로, 거르지 않으면 '%'나 '_' 같은 wildcard가
+        // 그대로 패턴이 되어 사용자의 모든 어절이 "이 음절의 연습 기록"으로 잡힌다.
+        // 사용자 본인 자료로 범위가 제한돼 노출 문제는 아니지만 화면이 거짓을 말하게 된다.
+        // 이스케이프 대신 형식 검증으로 막는 이유는, 음절이 아닌 입력에는 애초에
+        // 보여줄 결과가 없어 빈 응답이 정확한 답이기 때문이다.
+        List<EvaluationWord> practiced = isSingleHangulSyllable(normalized)
+                ? evaluationWordRepository.findPracticedByCharacter(
                         userId,
                         normalized,
                         PageRequest.of(0, DETAIL_LIST_SIZE)
-                );
+                )
+                : List.of();
 
         List<Integer> scores = practiced.stream()
                 .map(EvaluationWord::getScore)
@@ -179,8 +186,18 @@ public class WeakSoundService {
                         : toDisplayScore(scores.stream().mapToInt(Integer::intValue).average().orElse(0)),
                 scores.size(),
                 practiced.stream().map(this::toPracticedAttempt).toList(),
-                normalized.isEmpty() ? List.of() : findSuggested(userId, normalized)
+                isSingleHangulSyllable(normalized) ? findSuggested(userId, normalized) : List.of()
         );
+    }
+
+    /**
+     * 한글 완성형 음절 정확히 한 글자인지 판별한다.
+     *
+     * 자모(ㄱ), 여러 글자, 영문·기호는 이 화면의 조회 단위가 아니다.
+     */
+    private boolean isSingleHangulSyllable(String value) {
+        return value.codePointCount(0, value.length()) == 1
+                && KoreanRomanizationUtil.isHangulSyllable(value.codePointAt(0));
     }
 
     private List<SoundDetailResponse.SuggestedSentence> findSuggested(Long userId, String character) {

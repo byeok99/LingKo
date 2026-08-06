@@ -156,6 +156,25 @@ class WeakSoundServiceTest {
                 .containsExactly("것", "내");
     }
 
+    @Test
+    @DisplayName("한글 음절 한 글자가 아닌 조회는 빈 결과를 돌려준다")
+    void returnsEmptyDetailForNonSyllableInput() {
+        User user = persistUser("google-weak-9");
+        persistWords(user, entry("가나", 50), entry("가나", 54));
+        entityManager.flush();
+        entityManager.clear();
+
+        // '%'는 like 패턴 한가운데로 들어가므로 거르지 않으면 모든 어절이 잡힌다.
+        // 화면이 "이 음절을 이만큼 연습했다"고 거짓을 말하게 되는 경로다.
+        assertThat(weakSoundService.findSoundDetail(user.getUserIdx(), "%").practiced()).isEmpty();
+        assertThat(weakSoundService.findSoundDetail(user.getUserIdx(), "_").practiced()).isEmpty();
+        // 자모와 여러 글자도 이 화면의 조회 단위가 아니다.
+        assertThat(weakSoundService.findSoundDetail(user.getUserIdx(), "ㄱ").practiced()).isEmpty();
+        assertThat(weakSoundService.findSoundDetail(user.getUserIdx(), "가나").practiced()).isEmpty();
+        // 정상 입력은 그대로 찾는다.
+        assertThat(weakSoundService.findSoundDetail(user.getUserIdx(), "가").practiced()).hasSize(2);
+    }
+
     private record WordEntry(String text, Integer score) {
     }
 
