@@ -9,6 +9,7 @@
 - [제품·범위·용어](overview/product-and-scope.md)
 - [MVP 기능 정의서](requirements/functional-requirements.md)
 - [MVP 비기능 정의서](requirements/non-functional-requirements.md)
+- [MVP 출시 실행 체크리스트](mvp-release-execution-checklist.md)
 - [출시 로드맵](roadmap/release-roadmap.md)
 - [출시·성능 Issue Backlog](roadmap/issue-backlog.md)
 - [성능·확장성 계획](performance/scalability-plan.md)
@@ -53,6 +54,7 @@
 | 재발 가능한 성능·정합성·운영·보안 문제 해결 | `troubleshooting/` |
 | 인증·토큰·개인정보 변경 | `security/` |
 | 출시 우선순위·일정 변경 | `roadmap/` |
+| MVP 출시 작업 상태·완료 증거 변경 | `mvp-release-execution-checklist.md` |
 
 ## 상태 표기
 
