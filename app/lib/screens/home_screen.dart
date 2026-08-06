@@ -120,21 +120,15 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              Text(
-                'LingKo',
-                style: TextStyle(
-                  color: context.palette.textPrimary,
-                  fontSize: 25,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -1.1,
-                ),
-              ),
+              const Wordmark(),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 166),
+                    // 캡슐은 [마이크 3/5 | 42:18 +] 순서라 자연 너비가 약 207px다.
+                    // 좁게 잡으면 충전 버튼이 잘려 눌리지 않으므로 여유를 둔다.
+                    constraints: const BoxConstraints(maxWidth: 215),
                     child: MediaQuery.withClampedTextScaling(
                       maxScaleFactor: 1.2,
                       child: _QuotaSection(
@@ -150,16 +144,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
+          // 인사는 이 화면에서 가장 큰 글자다. 무엇을 할 차례인지 먼저 말한다.
           Text(
             widget.displayName == null || widget.displayName!.trim().isEmpty
-                ? 'Ready to practice Korean? 👋'
-                : 'Welcome back, ${widget.displayName!.trim()} 👋',
-            style: TextStyle(
-              color: context.palette.textPrimary,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-            ),
+                ? 'What will you\nsay today?'
+                : 'What will you\nsay today, ${widget.displayName!.trim()}?',
+            style: Theme.of(context).textTheme.headlineLarge,
           ),
           if (widget.evaluationProgress.isActive ||
               widget.evaluationProgress.stage ==
@@ -213,39 +204,29 @@ class _HomeScreenState extends State<HomeScreen> {
             : categorySentences
                 .take(_sentencePreviewLimit)
                 .toList(growable: false);
-    final countLabel =
-        '${categorySentences.length} ${categorySentences.length == 1 ? 'sentence' : 'sentences'}';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // 칩 대신 밑줄 탭을 쓴다. 칩은 그 자체가 눌리는 덩어리로 보여
+        // 문장 목록과 위계가 경쟁한다.
         SizedBox(
           height: AppSizes.minimumTouchTarget,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _SentenceCategory.values.length,
-            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.lg),
             itemBuilder: (context, index) {
               final category = _SentenceCategory.values[index];
-              return ChoiceChip(
+              return _CategoryTab(
                 key: ValueKey('home-category-${category.name}'),
-                label: Text(category.label),
+                label: category.label,
                 selected: selectedCategory == category,
-                onSelected: (_) => selectCategory(category),
-                showCheckmark: true,
+                onTap: () => selectCategory(category),
               );
             },
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        SectionHeader(
-          title: selectedCategory.title,
-          trailing: Text(
-            countLabel,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
         if (categorySentences.isEmpty)
           StatePanel(
             icon: Icons.inbox_outlined,
@@ -253,38 +234,88 @@ class _HomeScreenState extends State<HomeScreen> {
             message: 'Choose another situation or practice your own sentence.',
           )
         else
-          AppCard(
+          // 카드로 감싸지 않는다. 목록은 여백과 얇은 구분선으로 묶는 편이
+          // 문장 자체를 읽는 데 방해가 적다.
+          Column(
             key: const ValueKey('home-sentence-list'),
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                for (var index = 0; index < visibleSentences.length; index++)
-                  SentenceCard(
-                    sentence: visibleSentences[index],
-                    onTap: () => widget.onSelect(visibleSentences[index]),
-                    showDivider: index != visibleSentences.length - 1,
-                  ),
-              ],
-            ),
+            children: [
+              for (var index = 0; index < visibleSentences.length; index++)
+                SentenceCard(
+                  sentence: visibleSentences[index],
+                  onTap: () => widget.onSelect(visibleSentences[index]),
+                  showDivider: index != visibleSentences.length - 1,
+                ),
+            ],
           ),
-        if (categorySentences.length > _sentencePreviewLimit) ...[
-          const SizedBox(height: AppSpacing.xs),
+        const SizedBox(height: AppSpacing.sm),
+        // 부수적 이동은 채우지 않고 글자만 쓴다. 화면의 primary는 문장 선택 자체다.
+        if (categorySentences.length > _sentencePreviewLimit)
           TextButton(
             key: const ValueKey('home-category-expand'),
             onPressed:
                 () => setState(() => showAllSentences = !showAllSentences),
             child: Text(
-              showAllSentences ? 'Show fewer' : 'View all $countLabel',
+              showAllSentences
+                  ? 'Show fewer'
+                  : 'Show ${categorySentences.length - _sentencePreviewLimit} more',
             ),
           ),
-        ],
-        const SizedBox(height: AppSpacing.sm),
-        SecondaryButton(
-          label: 'Practice my own sentence',
-          icon: Icons.edit_outlined,
+        TextButton(
           onPressed: widget.onOpenCustomPractice,
+          child: const Text('Type my own sentence'),
         ),
       ],
+    );
+  }
+}
+
+/// 카테고리를 고르는 밑줄 탭이다.
+///
+/// 활성 표시를 배경 채움이 아니라 2px 밑줄로 하는 이유는, 채우면 그 자체가 눌러야 할
+/// 대상처럼 보여 아래 문장 목록과 시선을 나눠 갖기 때문이다.
+class _CategoryTab extends StatelessWidget {
+  const _CategoryTab({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? context.palette.primary : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color:
+                  selected
+                      ? context.palette.textPrimary
+                      : context.palette.textMuted,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -461,3 +461,75 @@ class CharacterBadge extends StatelessWidget {
     );
   }
 }
+
+/// 제품명 표기다. 화면마다 크기·자간이 갈리지 않도록 한곳에서 정의한다.
+class Wordmark extends StatelessWidget {
+  const Wordmark({super.key, this.fontSize = 24});
+
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'LingKo',
+      style: TextStyle(
+        color: context.palette.textPrimary,
+        fontSize: fontSize,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -fontSize * 0.045,
+      ),
+    );
+  }
+}
+
+/// 한국어 옆에 붙는 로마자 표기다.
+///
+/// 대상 사용자가 한글을 아직 읽지 못하므로 모든 한국어에 병기한다. 자간을 넓게 두는 이유는
+/// 하이픈으로 이어진 음절 경계를 눈으로 끊어 읽을 수 있게 하기 위해서다.
+class RomanizationText extends StatelessWidget {
+  const RomanizationText(
+    this.text, {
+    super.key,
+    this.fontSize = 12,
+    this.highlight,
+  });
+
+  final String text;
+  final double fontSize;
+
+  /// 이 부분만 강조한다. 취약 어절이 문장 어디에 있는지 짚어줄 때 쓴다.
+  final String? highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = TextStyle(
+      color: context.palette.textSecondary,
+      fontSize: fontSize,
+      fontWeight: FontWeight.w500,
+      letterSpacing: fontSize * 0.12,
+      height: 1.4,
+    );
+    final target = highlight;
+    if (target == null || target.isEmpty || !text.contains(target)) {
+      return Text(text, style: base);
+    }
+
+    final index = text.indexOf(target);
+    return Text.rich(
+      TextSpan(
+        style: base,
+        children: [
+          TextSpan(text: text.substring(0, index)),
+          TextSpan(
+            text: target,
+            style: TextStyle(
+              color: context.palette.error,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          TextSpan(text: text.substring(index + target.length)),
+        ],
+      ),
+    );
+  }
+}

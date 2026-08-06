@@ -610,12 +610,12 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('splash-logo')), findsOneWidget);
-    expect(find.text('Sign in with Google'), findsNothing);
+    expect(find.text('Continue with Google'), findsNothing);
 
     restoreCompleter.complete(null);
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
   });
 
   testWidgets('App requires login before showing Home', (
@@ -634,11 +634,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.byKey(const Key('google-sign-in-logo')), findsOneWidget);
     expect(find.text('Practice by situation'), findsNothing);
 
-    await tester.tap(find.text('Sign in with Google'));
+    await tester.tap(find.text('Continue with Google'));
     await tester.pumpAndSettle();
 
     expect(authService.signInCalled, isTrue);
@@ -666,7 +666,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.text('Practice by situation'), findsNothing);
   });
 
@@ -687,7 +687,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Sign in with Google'));
+    await tester.tap(find.text('Continue with Google'));
     await tester.pumpAndSettle();
 
     expect(
@@ -816,24 +816,24 @@ void main() {
     expect(sentenceApi.lastLimit, 50);
     expect(sentenceApi.lastCategory, isNull);
     expect(find.text('Practice by situation'), findsOneWidget);
-    expect(find.text('Daily Life'), findsOneWidget);
-    expect(find.text('3 sentences'), findsOneWidget);
+    // 카테고리는 밑줄 탭 라벨로만 보인다. 별도 섹션 제목·개수 표기는 두지 않는다.
+    expect(find.text('Daily'), findsOneWidget);
     expect(find.text('천천히 말씀해 주세요.'), findsOneWidget);
     expect(find.text('Start Practice'), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('home-category-food')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Food & Café'), findsOneWidget);
-    expect(find.text('4 sentences'), findsOneWidget);
+    // 카테고리 전환은 탭 라벨과 목록 내용으로 확인한다.
+    expect(find.text('Food'), findsOneWidget);
     expect(find.text('맛있겠다.'), findsOneWidget);
     expect(find.text('물 한 잔 주세요.'), findsOneWidget);
     expect(find.text('커피가 뜨거워요.'), findsNothing);
-    expect(find.text('View all 4 sentences'), findsOneWidget);
+    expect(find.text('Show 1 more'), findsOneWidget);
 
     await tester.drag(_verticalScrollable().first, const Offset(0, -250));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('View all 4 sentences'));
+    await tester.tap(find.text('Show 1 more'));
     await tester.pumpAndSettle();
 
     expect(find.text('커피가 뜨거워요.'), findsOneWidget);
@@ -841,7 +841,7 @@ void main() {
 
     await tester.drag(_verticalScrollable().first, const Offset(0, -400));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Practice my own sentence'));
+    await tester.tap(find.text('Type my own sentence'));
     await tester.pumpAndSettle();
 
     final customSentenceField = tester.widget<TextField>(
@@ -892,7 +892,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(quotaApi.lastAccessToken, 'access.jwt');
-    expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
+    // 하단 탭에도 마이크 아이콘이 있어 캡슐 안으로 범위를 좁힌다.
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('practice-energy-capsule')),
+        matching: find.byIcon(Icons.mic_none_rounded),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('3/5'), findsOneWidget);
     expect(find.text('42:18'), findsOneWidget);
     expect(
@@ -900,8 +907,11 @@ void main() {
       findsOneWidget,
     );
     final capsule = find.byKey(const ValueKey('practice-energy-capsule'));
-    expect(tester.getSize(capsule).height, lessThanOrEqualTo(42));
-    expect(tester.getSize(capsule).width, lessThanOrEqualTo(174));
+    // 충전 버튼의 히트 영역이 44px이라 캡슐 높이는 그보다 작아질 수 없다.
+    expect(tester.getSize(capsule).height, lessThanOrEqualTo(46));
+    // 캡슐이 [마이크 3/5 | 42:18 +]로 늘어나 이전보다 넓다. 헤더의 워드마크를
+    // 밀어내지 않는 선을 상한으로 둔다.
+    expect(tester.getSize(capsule).width, lessThanOrEqualTo(215));
     expect(tester.getTopRight(capsule).dx, closeTo(782, 0.1));
     expect(
       (tester.getCenter(find.text('LingKo')).dy - tester.getCenter(capsule).dy)
@@ -951,7 +961,8 @@ void main() {
       final alignmentFrame = find.byKey(
         const ValueKey('practice-energy-alignment-frame'),
       );
-      expect(tester.getSize(alignmentFrame).width, 166);
+      // 캡슐이 [마이크 3/5 | 42:18 +]로 늘어나 헤더가 내주는 폭도 함께 넓혔다.
+      expect(tester.getSize(alignmentFrame).width, 215);
       final refillWidth = tester.getSize(capsule).width;
 
       quotaApi.quota = const PracticeQuota(
@@ -966,14 +977,16 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
+      // 최대치에서는 남은 수량만 보여준다. 5/5 자체가 최대라는 뜻이라
+      // 별도 라벨을 더하면 캡슐이 길어지기만 한다.
       expect(find.text('5/5'), findsOneWidget);
-      expect(find.text('MAX'), findsOneWidget);
+      expect(find.text('MAX'), findsNothing);
       expect(
         find.byKey(const ValueKey('practice-energy-ad-button')),
         findsNothing,
       );
       expect(tester.getSize(capsule).width, lessThan(refillWidth));
-      expect(tester.getSize(capsule).width, lessThanOrEqualTo(115));
+      expect(tester.getSize(capsule).width, lessThanOrEqualTo(120));
       expect(tester.getTopRight(capsule).dx, closeTo(782, 0.1));
       expect(
         tester.getTopRight(capsule).dx,
@@ -1801,7 +1814,7 @@ void main() {
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.text('Practice by situation'), findsNothing);
   });
 
@@ -1839,7 +1852,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(authService.deleteAccountCalled, isTrue);
-    expect(find.text('Sign in with Google'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
   });
 
   testWidgets('Profile has no language settings section', (
@@ -2546,7 +2559,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_navigationLabel('Home'), findsOneWidget);
-    expect(find.textContaining('Welcome back'), findsOneWidget);
+    expect(find.textContaining('What will you'), findsOneWidget);
 
     await tester.tap(_navigationLabel('Practice'));
     await tester.pumpAndSettle();

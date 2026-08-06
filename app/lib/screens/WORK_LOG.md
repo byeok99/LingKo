@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 01 Sign in · 02 Home 리디자인
+
+- 변경 파일: `auth_gate_screen.dart`, `home_screen.dart`
+- 내용: Sign in을 카드 없는 전체 화면으로 바꾸고 헤드라인·안녕하세요 샘플·Google/Apple 버튼·각주로 재구성했다. Home은 워드마크와 에너지 캡슐 헤더, 인사 h1 26px, 카테고리 밑줄 탭, 구분선 기반 문장 목록, 하단 텍스트 버튼 2개로 바꿨다. 카테고리 칩을 밑줄 탭으로 바꾼 이유는 칩이 그 자체로 눌리는 덩어리처럼 보여 문장 목록과 시선을 나눠 갖기 때문이다.
+- 검증: `flutter analyze`, `flutter test` 84개 통과
+- 리스크: 06 Result·03 Practice·09 Profile 리디자인과 신규 화면(10·11)은 후속 작업
+
 ## 2026-08-05 - 로마자 발음 가이드 화면 연결
 
 - 변경 파일: `practice_screen.dart`, `result_screen.dart`, `review_screen.dart`, `WORK_LOG.md`

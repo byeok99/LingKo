@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 문장 모델에 로마자 추가
+
+- 변경 파일: `practice_sentence.dart`
+- 내용: 서버의 romanizedPronunciation을 받아 목록·결과 어디서나 병기할 수 있게 했다.
+- 검증: `flutter analyze`, `flutter test` 84개 통과
+- 리스크: 06 Result·03 Practice·09 Profile 리디자인과 신규 화면(10·11)은 후속 작업
+
 ## 2026-08-05 - 로마자 발음 모델 계약 추가
 
 - 변경 파일: `practice_sentence.dart`, `practice_history.dart`, `WORK_LOG.md`

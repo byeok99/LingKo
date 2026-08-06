@@ -14,6 +14,7 @@ class PracticeSentence {
     this.source = 'CUSTOM',
     required this.text,
     required this.pronunciation,
+    this.romanization = '',
     this.romanizedPronunciation = '',
     required this.translation,
     required this.level,
@@ -47,6 +48,7 @@ class PracticeSentence {
       pronunciation: normalizePracticeSentenceText(
         _stringValue(sentence['standardPronunciation']),
       ),
+      romanization: _stringValue(sentence['romanizedPronunciation']),
       romanizedPronunciation:
           _stringValue(sentence['romanizedPronunciation']).trim(),
       translation: _stringValue(sentence['translation']),
@@ -75,6 +77,7 @@ class PracticeSentence {
       pronunciation: normalizePracticeSentenceText(
         _stringValue(json['standardPronunciation']),
       ),
+      romanization: _stringValue(json['romanizedPronunciation']),
       romanizedPronunciation:
           _stringValue(json['romanizedPronunciation']).trim(),
       translation: _stringValue(json['translation']),
@@ -116,6 +119,7 @@ class PracticeSentence {
       source: source,
       text: normalizedText,
       pronunciation: normalizedPronunciation,
+      romanization: romanization,
       romanizedPronunciation: romanizedPronunciation.trim(),
       translation: translation,
       level: level,
@@ -135,6 +139,9 @@ class PracticeSentence {
   final String source;
   final String text;
   final String pronunciation;
+
+  /// 표준 발음의 로마자다. 대상 사용자가 한글을 읽지 못해 목록·결과 어디서나 병기한다.
+  final String romanization;
 
   /// 서버가 표준 발음에서 파생한 음절 단위 학습자용 로마자 읽기 가이드다.
   final String romanizedPronunciation;

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 리디자인 반영 테스트 갱신
+
+- 변경 파일: `widget_test.dart`
+- 내용: 버튼 문구와 카테고리 표기 변경, 캡슐 크기 기준을 새 레이아웃에 맞췄다. 최대치에서 MAX 라벨을 없앤 것도 계약으로 고정했다.
+- 검증: `flutter analyze`, `flutter test` 84개 통과
+- 리스크: 06 Result·03 Practice·09 Profile 리디자인과 신규 화면(10·11)은 후속 작업
+
 ## 2026-08-06 - 디자인 토큰 회귀 테스트 갱신
 
 - 변경 파일: `design_system_test.dart`, `widget_test.dart`

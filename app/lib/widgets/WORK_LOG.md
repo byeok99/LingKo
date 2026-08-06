@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-06 - 문장 행·에너지 캡슐·공용 위젯
+
+- 변경 파일: `sentence_card.dart`, `progress_panel.dart`, `shared_widgets.dart`
+- 내용: 문장 행을 [한국어 → 로마자 → 번역] 세로 구조로 바꾸고 북마크 토글과 취약 어절 강조를 넣었다. 재생 버튼은 제거했다(소리는 Practice에서만). 에너지 캡슐을 선으로만 묶은 pill로 바꾸고 좁은 화면에서는 내용을 숨기는 대신 통째로 축소하게 했다. Wordmark와 RomanizationText를 공용 위젯으로 뽑았다.
+- 검증: `flutter analyze`, `flutter test` 84개 통과
+- 리스크: 06 Result·03 Practice·09 Profile 리디자인과 신규 화면(10·11)은 후속 작업
+
 ## 2026-08-05 - 공용 로마자 발음 위젯 추가
 
 - 변경 파일: `romanized_pronunciation.dart`, `WORK_LOG.md`
