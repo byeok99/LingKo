@@ -173,7 +173,10 @@ class _ReviewSummary extends StatelessWidget {
                   Text(
                     '${latestScore ?? '—'}',
                     style: TextStyle(
-                      color: context.palette.primaryDark,
+                      color:
+                          latestScore == null
+                              ? context.palette.textMuted
+                              : scoreColor(context, latestScore),
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
                     ),
@@ -253,11 +256,10 @@ class _ReviewHistoryCard extends StatelessWidget {
                 height: 46,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color:
-                      item.overallScore >= kPassingScore
-                          ? context.palette.successSoft
-                          : context.palette.errorSoft,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusTile),
+                  color: scoreSoftColor(context, item.overallScore),
+                  // 도안은 정사각 46px에 border-radius:50%다. 원형으로 두면
+                  // 숫자만 세로로 훑을 때 시선이 모서리에 걸리지 않는다.
+                  shape: BoxShape.circle,
                 ),
                 child: Text(
                   '${item.overallScore}',
@@ -486,13 +488,13 @@ class _HistoryDetailSheet extends StatelessWidget {
                   height: 58,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: context.palette.softBlue,
+                    color: scoreSoftColor(context, item.overallScore),
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     '${item.overallScore}',
                     style: TextStyle(
-                      color: context.palette.primaryDark,
+                      color: scoreColor(context, item.overallScore),
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                     ),
@@ -616,7 +618,7 @@ class _HistoryScoreMetric extends StatelessWidget {
           Text(
             '$score',
             style: TextStyle(
-              color: context.palette.primaryDark,
+              color: scoreColor(context, score),
               fontSize: 17,
               fontWeight: FontWeight.w900,
             ),

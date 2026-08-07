@@ -257,6 +257,8 @@ class _SettingsLinkRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
+        // 부모 카드는 divider를 끝까지 긋기 위해 padding이 없으므로 행에서 도안 여백을 둔다.
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         constraints: const BoxConstraints(minHeight: 52),
         decoration: BoxDecoration(
           border:

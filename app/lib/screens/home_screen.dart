@@ -9,6 +9,7 @@ import '../models/practice_quota.dart';
 import '../models/practice_sentence.dart';
 import '../models/weak_sound.dart';
 import '../widgets/progress_panel.dart';
+import '../widgets/score_card.dart';
 import '../widgets/sentence_card.dart';
 import '../widgets/shared_widgets.dart';
 
@@ -182,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         index < widget.weakSounds.length;
                         index++
                       ) ...[
-                        if (index > 0) const SizedBox(width: 9),
+                        if (index > 0) const SizedBox(width: 8),
                         Expanded(
                           child: _WeakSoundTile(
                             key: ValueKey(
@@ -350,6 +351,7 @@ class _WeakSoundTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final score = sound.averageScore;
     return Semantics(
       button: true,
       label:
@@ -357,18 +359,18 @@ class _WeakSoundTile extends StatelessWidget {
           'across ${sound.attemptCount} tries. Open detail.',
       excludeSemantics: true,
       child: Material(
-        color: context.palette.blue50,
-        borderRadius: BorderRadius.circular(AppSizes.radiusTile),
+        color: scoreSoftColor(context, score),
+        borderRadius: BorderRadius.circular(AppSizes.radiusControl),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSizes.radiusTile),
+          borderRadius: BorderRadius.circular(AppSizes.radiusControl),
           child: Container(
             // 가로 여백을 두지 않는다. 세 타일이 같은 폭을 나눠 갖고 내용은 가운데
             // 정렬이라, 안쪽 여백을 주면 좁은 화면에서 로마자가 먼저 잘린다.
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 11),
             decoration: BoxDecoration(
-              border: Border.all(color: context.palette.blue200),
-              borderRadius: BorderRadius.circular(AppSizes.radiusTile),
+              border: Border.all(color: scoreBorderColor(context, score)),
+              borderRadius: BorderRadius.circular(AppSizes.radiusControl),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -379,7 +381,7 @@ class _WeakSoundTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: context.palette.error,
+                    color: scoreColor(context, score),
                     // 한 글자라 어절보다 크게 둘 수 있다. 타일에서 먼저 읽혀야 할 것이
                     // 소리 자체이므로 점수보다 무겁게 잡는다.
                     fontSize: 26,
@@ -395,9 +397,9 @@ class _WeakSoundTile extends StatelessWidget {
                   style: TextStyle(
                     color: context.palette.textSecondary,
                     fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w900,
                     // 로마자는 소리를 끊어 읽는 표기라 자간을 벌려야 음절 경계가 보인다.
-                    letterSpacing: 1.32,
+                    letterSpacing: 1.1,
                   ),
                 ),
               ],

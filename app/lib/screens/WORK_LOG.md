@@ -1,5 +1,33 @@
 # 작업 이력
 
+## 2026-08-07 - 새 06 Result 디자인과 3단계 점수색 적용
+
+- 변경 파일: `result_screen.dart`, `home_screen.dart`, `review_screen.dart`, `sound_detail_screen.dart`
+- 내용: Result를 compact standard pronunciation 카드, 세로 어절 목록, 하단 고정 재연습 CTA로 재구성했다. 80점 이상 파랑·60점 이상 주황·60점 미만 빨강 규칙을 Home 취약음, Review 배지·상세, Sound 평균·기록에도 동일하게 적용했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 90개 통과(라인 80.40%), 좁은 화면·큰 글자 Result 테스트 통과
+- 리스크: 실제 기기에서 Result 한 화면의 밀도와 하단 CTA 위치를 수동 확인해야 함
+
+## 2026-08-07 - Home 취약 발음 타일을 붉은 tint로 변경
+
+- 변경 파일: `home_screen.dart`
+- 내용: 취약 음절 tile의 파란 면·파란 테두리를 제거하고 첨부 시안의 연한 붉은 면과 저채도 붉은 음절로 바꿨다. 로마자·점수는 읽기 대비를 유지한 청회색으로 표시한다.
+- 검증: `flutter analyze`, `flutter test --coverage` 89개 통과(라인 80.49%)
+- 리스크: 실제 기기 렌더링은 수동 확인 필요
+
+## 2026-08-07 - Profile 그룹 카드의 내부 여백 복구
+
+- 변경 파일: `profile_screen.dart`
+- 내용: `padding: EdgeInsets.zero`인 그룹 카드 안의 설정 행이 테두리에 붙어 보였다. 구분선은 카드 폭 전체를 유지하면서 행 내용만 시안대로 좌우 14px 안쪽에 배치했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 89개 통과(라인 80.63%)
+- 리스크: 없음
+
+## 2026-08-07 - 도안에 없는 반경·자간 값 정리
+
+- 변경 파일: `home_screen.dart`, `review_screen.dart`
+- 내용: Direction A 시절 값이 남아 있었다. 취약 음절 타일의 반경 14→15, 타일 간격 9→8, 세로 여백 12→11, 로마자 굵기 w700→900, 자간 1.32→1.1로 도안에 맞췄다. Review 점수 배지는 도안이 `border-radius:50%`인데 반경 14의 둥근 사각형이라 원형으로 바꿨다. 도안의 반경은 999·18·15·12뿐이고 14는 존재하지 않는다.
+- 검증: `flutter analyze`, `flutter test` 89개 통과
+- 리스크: Review 점수 배지 색이 도안은 단색(softBlue/primaryDark)인데 구현은 점수별 초록·빨강이다. 정보량이 더 많은 쪽이라 판단 보류하고 그대로 뒀다
+
 ## 2026-08-06 - design-repair 11개 화면의 파란 카드형 UI 적용
 
 - 변경 파일: `auth_gate_screen.dart`, `home_screen.dart`, `practice_screen.dart`, `profile_screen.dart`, `result_screen.dart`, `review_screen.dart`, `saved_sentences_screen.dart`, `sound_detail_screen.dart`

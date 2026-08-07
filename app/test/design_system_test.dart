@@ -27,10 +27,13 @@ void main() {
     expect(AppColors.border, const Color(0xFFDCE7EF));
     expect(AppColors.borderStrong, const Color(0xFFA9CAEB));
 
-    // 점수는 80 기준 2단계다. 중간 단계를 추가하면 색 규칙이 깨진다.
+    // 점수는 80/60 기준 세 단계다. 결과 화면마다 다른 주황색을 쓰지 않게 고정한다.
     expect(AppColors.success, const Color(0xFF27735A));
     expect(AppColors.error, const Color(0xFFC0392B));
     expect(AppColors.errorSoft, const Color(0xFFFDF1EF));
+    expect(AppColors.scoreMedium, const Color(0xFF96590C));
+    expect(AppColors.scoreMediumSoft, const Color(0xFFFDF5EA));
+    expect(AppColors.scoreMediumBorder, const Color(0xFFE3C9A0));
   });
 
   test('shape tokens match the blue card and button geometry', () {

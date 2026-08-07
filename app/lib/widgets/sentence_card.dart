@@ -11,7 +11,8 @@ import 'shared_widgets.dart';
 ///
 /// 세로로 [한국어 → 로마자 → 영어 번역] 순으로 쌓는다. 대상 사용자가 한글을 읽지 못하므로
 /// 한국어만으로는 무엇을 고르는지 알 수 없고, 로마자와 번역이 함께 있어야 선택이 가능하다.
-/// 재생 버튼은 두지 않는다. 소리는 문장을 고른 뒤 Practice에서 듣는다.
+/// 재생 버튼은 두지 않는다. 소리는 문장을 고른 뒤 Practice에서 듣는다. 여러 행을 한 카드로
+/// 묶을 때도 글자가 테두리에 붙지 않도록 행 자체가 핸드오프의 좌우 여백을 책임진다.
 class SentenceCard extends StatelessWidget {
   const SentenceCard({
     super.key,
@@ -44,7 +45,10 @@ class SentenceCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: 14,
+          ),
           decoration: BoxDecoration(
             border:
                 showDivider

@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-08-07 - 점수 카드와 어절 탐색을 새 Result 시안에 맞춤
+
+- 변경 파일: `score_card.dart`, `word_syllable_explorer.dart`
+- 내용: 점수 구간을 low(<60)·medium(60~79)·high(80+)로 중앙화하고 전경·면·테두리·gauge 색 함수를 제공한다. 점수 카드의 padding·막대·숫자·summary 위계를 06 시안에 맞췄고, 어절 pill과 별도 상세 카드를 하나의 세로 목록·선택 행 확장 구조로 합쳤다.
+- 검증: `flutter analyze`, `flutter test --coverage` 90개 통과(라인 80.40%)
+- 리스크: 음절 점수는 API가 제공하지 않아 선택 어절의 구간색만 상속하며 개별 음절 점수를 만들지 않음
+
+## 2026-08-07 - 문장 카드의 내부 여백 복구
+
+- 변경 파일: `sentence_card.dart`
+- 내용: 여러 문장 행을 감싼 카드가 바깥 padding을 제거하면서 텍스트도 테두리에 붙었다. 행 자체에 시안의 좌우 12px 여백을 주어 Home·Saved·Sound detail 추천 목록을 함께 바로잡았다.
+- 검증: `flutter analyze`, `flutter test --coverage` 89개 통과(라인 80.63%)
+- 리스크: 없음
+
+## 2026-08-07 - 진행 중 CTA가 회색으로 떨어지던 문제 수정
+
+- 변경 파일: `shared_widgets.dart`
+- 내용: `PrimaryButton`이 채움 여부를 `!isLoading && onPressed != null`로 판단해, 로딩 중에 비활성 회색(neutralFill)으로 떨어졌다. 그 위에 흰 spinner를 그려 대비가 1.12:1이 되고 사용자에게는 빈 회색 버튼으로 보였다. 채움은 "동작이 붙어 있는가"(`onPressed != null`)로만 정하고 전경색이 실제 깔린 면을 따라가게 했다. Practice의 'Retry with this recording'이 실제 노출 경로였다.
+- 검증: `flutter analyze`, `flutter test` 89개 통과. 대비 1.12:1 → 3.78~5.34:1
+- 리스크: 라이트 모드 CTA의 흰 글자가 그라디언트 밝은 끝(#4387CA)에서 3.78:1로 WCAG AA 본문 기준(4.5:1) 미달. 도안이 정한 브랜드 색이라 임의로 바꾸지 않았다
+
 ## 2026-08-06 - 파란 카드형 공통 위젯과 어절·음절 탐색 적용
 
 - 변경 파일: `shared_widgets.dart`, `progress_panel.dart`, `score_card.dart`, `evaluation_progress_panel.dart`, `word_syllable_explorer.dart`

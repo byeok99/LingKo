@@ -10,6 +10,7 @@
 - 화면 좌우 여백은 18px로 통일한다.
 - 제목과 핵심 값은 900 굵기까지 사용하고, 로마자는 음절 경계를 읽을 수 있도록 굵기와 자간을 유지한다.
 - 카테고리와 상태 선택은 밑줄 대신 파란 tint pill로 표현한다.
+- 평가 점수는 80점 이상 파랑, 60점 이상 80점 미만 주황, 60점 미만 빨강으로 표시한다. 숫자·막대·점수에 종속된 강조 면은 같은 구간 의미를 공유한다.
 
 ## 화면별 적용 내용
 
@@ -20,7 +21,7 @@
 | Practice | 문장 입력 카드, 파란 표준 발음 카드, Normal/Slow, gradient Record CTA |
 | Recording | 파란 문장 카드, 실제 녹음 시간 ring·waveform, Cancel/Stop/Restart |
 | Scoring | 실제 서버 단계 기반 ring과 단계 카드; 가짜 백분율 숫자는 표시하지 않음 |
-| Result | 그림자 점수 카드, pronunciation guide 카드, 어절 pill과 선택 음절 guide |
+| Result | 3단계 점수 카드, compact standard pronunciation 카드, 세로 어절 목록과 선택 행의 음절 guide, 하단 고정 재연습 CTA |
 | Sound guide | 입·혀 media를 세로로 함께 표시하는 bottom sheet |
 | Review | progress chart 카드, 하나로 묶은 최근 기록, Result와 같은 어절·음절 탐색 |
 | Profile | account 카드, Your content/About 그룹 카드, 계정 동작 |

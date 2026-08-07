@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-08-07 - 평가 점수 중간 구간 토큰과 Result 연결 정리
+
+- 변경 파일: `app_theme.dart`, `app_palette.dart`, `lingko_app.dart`
+- 내용: 60~79점용 주황 전경·면·테두리 토큰을 light/dark palette에 추가했다. 이전 Home 전용 붉은 토큰은 공용 3단계 점수 의미로 교체하고, 새 Result에서 제거된 Review 바로가기 callback 연결을 정리했다(Review 탭은 유지).
+- 검증: `flutter analyze`, `flutter test --coverage` 90개 통과(라인 80.40%)
+- 리스크: 실제 기기 dark mode의 주황색 색감은 수동 확인 필요
+
+## 2026-08-07 - 취약 발음 전용 색상 토큰 추가
+
+- 변경 파일: `app_theme.dart`, `app_palette.dart`
+- 내용: Home 취약 발음 타일을 일반 오류 UI와 분리하기 위해 저채도 붉은 배경·음절·보조 글자 토큰을 추가하고 light/dark palette, copyWith, lerp에 연결했다. 보조 글자는 첨부 색에서 미세 조정해 11px 본문 대비 4.55:1을 확보했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 89개 통과(라인 80.49%)
+- 리스크: 실제 기기 dark mode 색감은 수동 확인 필요
+
+## 2026-08-07 - radiusTile 토큰 제거
+
+- 변경 파일: `app_theme.dart`
+- 내용: Direction A에서 추가했던 반경 14 토큰을 없앴다. LingKo Blue 도안의 반경은 999·18·15·12뿐이라 14를 쓸 자리가 없다. 쓰던 두 곳은 각각 `radiusControl`(15)과 원형으로 옮겼다.
+- 검증: `flutter analyze`, `flutter test` 89개 통과
+- 리스크: 없음
+
 ## 2026-08-06 - LingKo Blue 공통 디자인 토큰 복구
 
 - 변경 파일: `app_theme.dart`, `app_palette.dart`
