@@ -2,6 +2,62 @@
 
 기본 주소는 로컬 기준 `http://localhost:8080`입니다. JSON 응답은 UTF-8을 사용하며 인증 API는 `Authorization: Bearer <access-token>` 헤더를 사용합니다.
 
+## 법무 문서 (인증 불필요)
+
+### `GET /legal/{document}`
+
+약관과 개인정보 처리방침을 브라우저에서 읽을 수 있는 HTML로 반환합니다. **인증이 필요 없습니다.** 아직 계정이 없는 가입 화면 사용자와 스토어 심사자가 같은 문서를 열 수 있어야 하기 때문입니다.
+
+| 항목 | 값 |
+|---|---|
+| `document` | `terms` 또는 `privacy`. 그 밖의 값은 `404` |
+| `lang` (선택) | `ko` 또는 `en`. 생략하거나 지원하지 않는 값이면 `ko`로 되돌립니다. 잘못된 언어 때문에 약관을 못 읽는 상황을 막기 위해 `400`을 반환하지 않습니다 |
+
+응답은 `text/html; charset=UTF-8`이며 `Cache-Control: public, max-age=300`, `X-Content-Type-Options: nosniff`, 외부 자원을 차단하는 `Content-Security-Policy`를 함께 반환합니다.
+
+문서 원본은 `docs/legal/*.md`이고 `backend/src/main/resources/legal/`의 사본을 서빙 시점에 HTML로 변환합니다. 두 벌이 어긋나면 `LegalDocumentSourceSyncTest`가 실패합니다. **`docs/legal/`의 문서를 고치면 리소스로 복사해야 합니다.**
+
+예: `GET /legal/privacy?lang=en`
+
+## 법무 동의 (인증 필요)
+
+법무 문서의 공개 열람 URL과 달리 동의 상태는 사용자별 개인정보이므로 모든 endpoint가
+`Authorization: Bearer <access-token>`을 요구합니다. 사용자 ID는 요청 body나 query로 받지 않고
+Access Token의 subject에서만 결정합니다.
+
+### `GET /api/legal/consent`
+
+현재 서버 문서 버전에 대한 로그인 사용자의 동의 필요 여부를 반환합니다.
+
+```json
+{
+  "required": true,
+  "documentVersion": "2026-08-07"
+}
+```
+
+앱은 세션 복원 직후 이 값을 확인하며, `required=true`이거나 상태를 확인할 수 없으면 Home을
+표시하지 않고 동의 화면을 유지합니다.
+
+### `POST /api/legal/consent`
+
+현재 문서 버전의 필수 동의와 선택 마케팅 수신 값을 기록합니다.
+
+```json
+{
+  "termsAgreed": true,
+  "privacyAcknowledged": true,
+  "marketingOptIn": false,
+  "documentVersion": "2026-08-07",
+  "agreedAt": "2026-08-07T01:02:03Z"
+}
+```
+
+`termsAgreed`와 `privacyAcknowledged`는 반드시 `true`여야 하며, `documentVersion`은 서버의 현재
+버전과 정확히 같아야 합니다. `agreedAt`은 기기 시각 참고값이고 감사 기준 시각은 서버가 별도로
+기록합니다. 같은 사용자·버전의 재시도는 새 행을 만들지 않는 idempotent 요청입니다. 성공 응답은
+같은 상태 구조에서 `required=false`를 반환합니다.
+
 ## 인증
 
 ### `POST /api/auth/oauth/login`

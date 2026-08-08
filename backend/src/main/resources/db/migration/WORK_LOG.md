@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-07 - 법무 동의 이력 테이블 추가
+
+- 변경 파일: `V18__add_legal_consents.sql`
+- 내용: 사용자·문서 버전 유일 제약, 서버 기록 시각, 사용자 삭제 cascade와 이력 조회 index를 포함한 `legal_consents`를 추가했다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 실제 MySQL 운영 적용 전 backup과 migration 권한 확인 필요
+
 ## 2026-08-06 - 저장 문장 테이블 추가
 
 - 변경 파일: `V17__add_saved_sentences.sql`
