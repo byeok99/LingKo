@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-08-07 - 재동의 gate 오류·진행 상태 추가
+
+- 변경 파일: `consent_screen.dart`
+- 내용: 신규 가입뿐 아니라 복원 세션 재동의에도 화면을 재사용하고 서버 문서 버전, 안전한 오류, 중복 제출 방지 loading을 표시한다.
+- 검증: `flutter analyze`, `flutter test --coverage` 113개 통과(라인 81.26%)
+- 리스크: 실제 기기에서 외부 문서 열람 후 복귀 UX 수동 확인 필요
+
+## 2026-08-07 - Profile에 약관·처리방침 등 설정 항목 추가
+
+- 변경 파일: `profile_screen.dart`
+- 내용: `Legal & privacy` 섹션을 만들고 Terms of Service, Privacy Policy, Ad privacy settings, Contact us 행을 넣었다. 가입할 때 동의한 문서를 나중에 다시 읽을 수 없으면 동의가 형식 절차가 되므로 동의 화면과 같은 `onOpenDocument` 처리로 연결했다. 동작하지 않던 `Audio & privacy` 행은 실제 Privacy Policy 행으로 대체했고 About은 버전 행만 남겼다. 광고·문의는 기능 자체가 없어 기존 규칙대로 눌리지 않게 두었다.
+- 검증: `flutter analyze`, `flutter test --coverage` 102개 통과(라인 81.27%)
+- 리스크: 문서 열람 경로가 없어 두 행 모두 미공개 안내만 띄운다. 회원 탈퇴는 기존 버튼을 유지했다
+
+## 2026-08-07 - 회원가입 동의 화면 추가
+
+- 변경 파일: `consent_screen.dart`
+- 내용: 로그인 수단을 고르기 전에 필수 2건(이용약관 동의, 개인정보 처리 관련 확인)과 선택 1건(마케팅 수신)을 받는 화면을 추가했다. 계정 생성 전에 동의를 받아 "거부한 사용자의 계정이 이미 만들어진" 상태를 만들지 않는다. 필수를 채우기 전에는 계속하기를 비활성으로 두고, 선택 거부에 불이익이 없다는 문구와 16세 이상 안내를 함께 노출한다. 전체 동의는 선택 항목까지 포함할 때만 켜진 것으로 표시한다.
+- 검증: `flutter analyze`, `flutter test --coverage` 99개 통과(라인 81.10%)
+- 리스크: 약관·처리방침 전문을 열 경로가 없어 `onOpenDocument`가 미공개 안내만 띄운다. 읽지 못한 채 동의하게 되므로 문서 배포 전에는 출시할 수 없다. 연령 안내는 고지일 뿐 실제 차단 수단이 아니다
+
 ## 2026-08-07 - 새 06 Result 디자인과 3단계 점수색 적용
 
 - 변경 파일: `result_screen.dart`, `home_screen.dart`, `review_screen.dart`, `sound_detail_screen.dart`

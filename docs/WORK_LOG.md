@@ -1,3 +1,17 @@
+## 2026-08-07 - 법무 문서에 일본 APPI 세트 추가
+
+- 변경 파일: `legal/jp/` 신설 (상세는 `legal/jp/WORK_LOG.md`)
+- 내용: 한국·EU에 이어 일본어 프라이버시 정책과 이용약관 2종을 추가해 3개 관할 세트를 갖췄다. 미국은 CCPA 적용 기준 미달로 생성하지 않았고 판단 근거를 `legal/README.md`에 남겼다.
+- 검증: 하위 폴더 WORK_LOG 기록, 4개 관할 문서 간 상호링크 확인
+- 리스크: 전부 초안이며 일본 변호사 검토 전이다
+
+## 2026-08-07 - 법무 문서 폴더 신설
+
+- 변경 파일: `legal/` 신설 (하위 상세는 `legal/WORK_LOG.md`, `legal/eu/WORK_LOG.md`)
+- 내용: 한국(PIPA)·EU(GDPR) 병기 처리방침·이용약관 초안 4종과 미확정 항목 체크리스트를 `docs/legal/` 아래에 두었다. 문서 사실관계는 `security/security-and-privacy.md`를 근거로 삼았으므로 보안 정책이 바뀌면 두 세트를 함께 갱신한다.
+- 검증: 하위 폴더 WORK_LOG 기록, 상대 링크 확인
+- 리스크: 전부 초안이며 법률 검토 전이다. `docs/security/security-and-privacy.md`의 "운영 전에 처리방침과 약관에 반영해야 한다"는 항목은 초안 작성까지만 진행된 상태
+
 ## 2026-08-06 - LingKo Blue 디자인 기준 연결
 
 - 변경 파일: `README.md`, `design-repair/README.md`, `design-repair/LingKo Blue Merged.dc.html`

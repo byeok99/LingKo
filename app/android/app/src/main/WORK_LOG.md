@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-07 - 브라우저 열기를 막던 package visibility 선언 추가
+
+- 변경 파일: `AndroidManifest.xml`
+- 내용: `<queries>`에 http/https `VIEW` intent를 추가했다. Android 11(API 30)부터는 선언한 intent에 응답하는 앱만 조회할 수 있어, 선언이 없으면 설치된 브라우저를 찾지 못해 약관·처리방침 열기가 실패한다. 기존에는 TTS와 PROCESS_TEXT만 선언되어 있었다.
+- 검증: `flutter analyze`, `flutter test` 통과. 실기기에서 Profile > Terms of Service 열기는 사용자 확인 필요
+- 리스크: 실기기 확인 전이다
+
 ## 2026-07-28 - Android 앱 이름·아이콘 적용
 
 - 변경 파일: `AndroidManifest.xml`, `res/mipmap-*/ic_launcher.png`, `WORK_LOG.md`

@@ -57,6 +57,11 @@ dependencies {
 	implementation 'software.amazon.awssdk:s3'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
+	// 약관·처리방침을 Markdown 원본 그대로 두고 서빙 시점에 HTML로 변환한다.
+	// HTML 사본을 따로 관리하면 docs/legal 원본과 어긋나기 쉬워 변환을 택했다.
+	// 문서에 표가 많아 GFM table 확장을 함께 쓴다.
+	implementation 'org.commonmark:commonmark:0.24.0'
+	implementation 'org.commonmark:commonmark-ext-gfm-tables:0.24.0'
 }
 
 tasks.named('test') {

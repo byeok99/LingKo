@@ -24,6 +24,9 @@ import 'package:lingko_app/models/weak_sound.dart';
 import 'package:lingko_app/screens/result_screen.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
+import 'package:lingko_app/models/consent_selection.dart';
+import 'package:lingko_app/models/legal_consent_status.dart';
+import 'package:lingko_app/services/legal_document_launcher.dart';
 import 'package:lingko_app/services/sentence_speech_service.dart';
 import 'package:lingko_app/widgets/guide_sheet.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
@@ -322,6 +325,22 @@ class FakePracticeQuotaApi implements PracticeQuotaApi {
 
 /// 테스트에서 Fake Audio Recorder 서비스 의존성을 결정적으로 대체한다.
 /// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
+/// 실제 브라우저를 띄우지 않고 어떤 문서를 요청했는지만 기록한다.
+class FakeLegalDocumentLauncher implements LegalDocumentLauncher {
+  FakeLegalDocumentLauncher({this.succeeds = true});
+
+  /// 브라우저를 열 수 없는 기기를 흉내 낸다.
+  final bool succeeds;
+
+  final List<ConsentDocument> opened = [];
+
+  @override
+  Future<bool> open(ConsentDocument document, {String language = 'en'}) async {
+    opened.add(document);
+    return succeeds;
+  }
+}
+
 class FakeAudioRecorderService implements AudioRecorderService {
   FakeAudioRecorderService({
     List<bool> permissions = const [true],
@@ -416,12 +435,20 @@ class FakeAppAuthService implements AppAuthService {
     this.restoreExistingSession = false,
     this.restoreCompleter,
     this.expireAuthenticatedRequests = false,
+    this.legalConsentRequired = false,
+    this.legalConsentStatusError,
+    this.legalConsentRecordError,
   });
 
   final bool restoreExistingSession;
   final Completer<AuthSession?>? restoreCompleter;
   final bool expireAuthenticatedRequests;
+  final bool legalConsentRequired;
+  final Object? legalConsentStatusError;
+  final Object? legalConsentRecordError;
   bool signInCalled = false;
+  int legalConsentRecordCount = 0;
+  ConsentSelection? recordedConsent;
   bool deleteAccountCalled = false;
   Object? deleteAccountError;
   Object? error;
@@ -470,6 +497,32 @@ class FakeAppAuthService implements AppAuthService {
       throw const AuthSessionExpiredException();
     }
     return request(currentSession.accessToken);
+  }
+
+  @override
+  Future<LegalConsentStatus> fetchLegalConsentStatus() async {
+    if (legalConsentStatusError != null) {
+      throw legalConsentStatusError!;
+    }
+    return LegalConsentStatus(
+      required: legalConsentRequired && recordedConsent == null,
+      documentVersion: consentDocumentVersion,
+    );
+  }
+
+  @override
+  Future<LegalConsentStatus> recordLegalConsent(
+    ConsentSelection selection,
+  ) async {
+    legalConsentRecordCount++;
+    if (legalConsentRecordError != null) {
+      throw legalConsentRecordError!;
+    }
+    recordedConsent = selection;
+    return const LegalConsentStatus(
+      required: false,
+      documentVersion: consentDocumentVersion,
+    );
   }
 
   @override
@@ -654,6 +707,18 @@ Finder _verticalScrollable() {
   );
 }
 
+/// 로그인 수단을 누른 뒤 나타나는 동의 화면에서 필수 항목만 채우고 진행한다.
+///
+/// 선택 항목(마케팅)은 켜지 않는다. 인증 gate를 검증하는 테스트가 선택 동의 여부에
+/// 영향을 받지 않아야 한다.
+Future<void> agreeToConsent(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('consent-terms')));
+  await tester.tap(find.byKey(const Key('consent-privacy')));
+  await tester.pump();
+  await tester.tap(find.byKey(const Key('consent-continue')));
+  await tester.pumpAndSettle();
+}
+
 // 앱 workflow의 인증 gate와 갱신 토큰 만료 동작을 검증한다.
 void main() {
   testWidgets('App shows logo splash while restoring session', (
@@ -704,11 +769,130 @@ void main() {
     await tester.tap(find.text('Continue with Google'));
     await tester.pumpAndSettle();
 
+    // 로그인 수단을 눌러도 곧바로 인증하지 않는다. 계정이 만들어지기 전에
+    // 필수 동의를 먼저 받는다.
+    expect(authService.signInCalled, isFalse);
+    await agreeToConsent(tester);
+
     expect(authService.signInCalled, isTrue);
+    expect(authService.legalConsentRecordCount, 1);
     await tester.drag(find.byType(ListView).first, const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('Practice by situation'), findsOneWidget);
     expect(find.text('LingKo User'), findsNothing);
+  });
+
+  testWidgets('Restored session without current consent shows agreement gate', (
+    WidgetTester tester,
+  ) async {
+    final authService = FakeAppAuthService(
+      restoreExistingSession: true,
+      legalConsentRequired: true,
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Before you start'), findsOneWidget);
+    expect(find.text('Practice by situation'), findsNothing);
+    expect(authService.signInCalled, isFalse);
+
+    await agreeToConsent(tester);
+
+    expect(authService.signInCalled, isFalse);
+    expect(authService.legalConsentRecordCount, 1);
+    expect(find.text('Practice by situation'), findsOneWidget);
+  });
+
+  testWidgets('Consent save failure keeps restored session behind the gate', (
+    WidgetTester tester,
+  ) async {
+    final authService = FakeAppAuthService(
+      restoreExistingSession: true,
+      legalConsentRequired: true,
+      legalConsentRecordError: StateError('offline'),
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await agreeToConsent(tester);
+
+    expect(find.text('Before you start'), findsOneWidget);
+    expect(
+      find.text('Could not save your agreement. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('Practice by situation'), findsNothing);
+  });
+
+  testWidgets('Consent status failure fails closed before Home', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(
+          restoreExistingSession: true,
+          legalConsentStatusError: StateError('offline'),
+        ),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Before you start'), findsOneWidget);
+    expect(
+      find.text('Could not verify your agreement. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('Practice by situation'), findsNothing);
+  });
+
+  testWidgets('Expired session while saving consent returns to login', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(
+          restoreExistingSession: true,
+          legalConsentRequired: true,
+          legalConsentRecordError: const AuthSessionExpiredException(),
+        ),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await agreeToConsent(tester);
+
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(
+      find.text('Your session expired. Please sign in again.'),
+      findsOneWidget,
+    );
+    expect(find.text('Practice by situation'), findsNothing);
   });
 
   testWidgets('Expired refresh session returns the app to login', (
@@ -777,6 +961,7 @@ void main() {
 
     await tester.tap(find.text('Continue with Google'));
     await tester.pumpAndSettle();
+    await agreeToConsent(tester);
 
     expect(
       find.text('Unable to sign in with Google. Please try again.'),
@@ -2138,6 +2323,120 @@ void main() {
     // 계정 정보와 세션 조작은 그대로 남아야 한다.
     expect(find.text('Sign out'), findsOneWidget);
     expect(find.text('Delete account'), findsOneWidget);
+  });
+
+  testWidgets(
+    'Profile always exposes the legal documents and account deletion',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        LingKoApp(
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: FakeEvaluationApi(),
+          authService: FakeAppAuthService(restoreExistingSession: true),
+          audioRecorderService: FakeAudioRecorderService(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(_navigationLabel('Profile'));
+      await tester.pumpAndSettle();
+
+      // 가입할 때 동의한 문서를 나중에 다시 읽을 수 없으면 동의가 형식 절차가 된다.
+      // 스토어 심사도 앱 안에서 정책에 닿을 수 있는지를 본다.
+      expect(find.byKey(const ValueKey('profile-terms')), findsOneWidget);
+      expect(find.byKey(const ValueKey('profile-privacy')), findsOneWidget);
+      expect(find.byKey(const ValueKey('profile-ad-privacy')), findsOneWidget);
+      expect(find.byKey(const ValueKey('profile-contact')), findsOneWidget);
+      expect(find.text('Delete account'), findsOneWidget);
+    },
+  );
+
+  testWidgets('Profile opens each legal document from its own row', (
+    WidgetTester tester,
+  ) async {
+    final launcher = FakeLegalDocumentLauncher();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+        legalDocumentLauncher: launcher,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(_navigationLabel('Profile'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('profile-terms')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('profile-privacy')));
+    await tester.pumpAndSettle();
+
+    // 각 행이 자기 문서를 연다. 두 행이 같은 문서를 열면 사용자가 동의한 내용과
+    // 다른 문서를 읽게 된다.
+    expect(launcher.opened, [
+      ConsentDocument.termsOfService,
+      ConsentDocument.privacyPolicy,
+    ]);
+  });
+
+  testWidgets('Profile reports when the document cannot be opened', (
+    WidgetTester tester,
+  ) async {
+    final launcher = FakeLegalDocumentLauncher(succeeds: false);
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+        legalDocumentLauncher: launcher,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(_navigationLabel('Profile'));
+    await tester.pumpAndSettle();
+
+    // 브라우저를 열 수 없는 기기가 있다. 아무 반응이 없으면 버튼이 고장난 것으로 보인다.
+    await tester.tap(find.byKey(const ValueKey('profile-terms')));
+    await tester.pump();
+    expect(find.text('Could not open the document.'), findsOneWidget);
+  });
+
+  testWidgets('Profile keeps unconnected settings rows untappable', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(_navigationLabel('Profile'));
+    await tester.pumpAndSettle();
+
+    // 광고 SDK와 문의 창구는 아직 붙지 않았다. 눌리는 행을 두면 눌러도 아무 일이 없어
+    // 고장으로 보이므로, 연결되기 전에는 비활성이어야 한다.
+    for (final key in const [
+      ValueKey('profile-ad-privacy'),
+      ValueKey('profile-contact'),
+    ]) {
+      final row = tester.widget<InkWell>(
+        find.descendant(of: find.byKey(key), matching: find.byType(InkWell)),
+      );
+      expect(row.onTap, isNull, reason: '$key should stay untappable');
+    }
   });
 
   testWidgets('leaving Practice tab deletes a stopped temporary recording', (

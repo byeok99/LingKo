@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-07 - 법무 동의 보안 경계 문서화
+
+- 변경 파일: `security-and-privacy.md`
+- 내용: Bearer Token 사용자 귀속, 서버 기록 시각, 버전별 이력, fail-closed gate와 탈퇴 cascade를 기록했다.
+- 검증: migration·service·Flutter shell과 대조
+- 리스크: 인증 endpoint 공통 rate limit은 운영 전 과제
+
+## 2026-08-07 - 외부 서비스 데이터 전달 항목의 처리방침 반영 상태 갱신
+
+- 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`
+- 내용: "운영 전에 처리방침·약관에 반영해야 한다"고만 적혀 있던 항목을 `docs/legal/` 초안 반영 완료로 바꾸고, 초안 상태에서 남은 확인 항목(리전 확정, Azure 학습 이용 여부, DPA 체결, EU Representative, 변호사 검토)을 분리해 기록했다.
+- 검증: `docs/legal/` 4개 문서 내용과 대조, 상대 링크 확인
+- 리스크: 음성 학습 미사용은 아직 계약·설정으로 확인되지 않았고 문서에는 단언으로 기재되어 있다
+
 ## 2026-07-29 - 음성 1일 보존·회원 탈퇴 정책 확정
 
 - 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`

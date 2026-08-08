@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-08-07 - 인증 갱신 경계에 법무 동의 요청 연결
+
+- 변경 파일: `app_auth_service.dart`
+- 내용: 동의 상태 조회·제출도 기존 401 refresh와 1회 재시도 경계를 사용하도록 연결했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 113개 통과(라인 81.26%)
+- 리스크: 없음
+
+## 2026-08-07 - 문서 열기 실패 원인을 개발 빌드에서 확인 가능하게 수정
+
+- 변경 파일: `legal_document_launcher.dart`
+- 내용: 실패를 bool로만 돌려주고 예외를 통째로 삼켜 원인을 알 수 없었다. 개발 빌드에서만 대상 URL과 가장 흔한 원인(Android `<queries>`, iOS `LSApplicationQueriesSchemes`)을 함께 남기도록 했다. 호출자에게 주는 계약(bool)은 바꾸지 않았다.
+- 검증: `flutter analyze`, `flutter test` 106개 통과
+- 리스크: 없음
+
+## 2026-08-07 - 법무 문서 열기 서비스 추가
+
+- 변경 파일: `legal_document_launcher.dart`
+- 내용: 백엔드가 서빙하는 공개 URL을 외부 브라우저로 여는 경계를 추가했다. 앱 안에서 문서를 렌더링하지 않는 이유는 약관 개정 시 앱 업데이트를 기다리지 않고 최신본이 보여야 하기 때문이고, 같은 URL이 스토어 심사용 공개 주소로도 쓰인다. 브라우저가 없는 기기를 앱 오류로 다루지 않고 false를 돌려줘 호출자가 대체 안내를 하게 했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 106개 통과(라인 81.22%)
+- 리스크: 문서 경로 구간이 백엔드 `LegalDocument`의 path와 문자열로만 맞춰져 있다. 어긋나면 404가 되므로 테스트로 고정했다
+
 ## 2026-08-04 - 마이크 입력 레벨 스트림 노출
 
 - 변경 파일: `audio_recorder_service.dart`

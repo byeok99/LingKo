@@ -3,7 +3,10 @@
 
 import '../api/auth_api.dart';
 import '../api/api_client.dart';
+import '../api/legal_consent_api.dart';
 import '../models/auth_session.dart';
+import '../models/consent_selection.dart';
+import '../models/legal_consent_status.dart';
 import 'auth_session_store.dart';
 import 'google_identity_service.dart';
 
@@ -12,6 +15,12 @@ abstract class AppAuthService {
   Future<AuthSession?> restoreSession();
 
   Future<AuthSession> signInWithGoogle();
+
+  /// 현재 로그인 사용자가 최신 문서 버전에 동의했는지 서버에서 확인한다.
+  Future<LegalConsentStatus> fetchLegalConsentStatus();
+
+  /// 화면에서 받은 선택을 현재 Bearer token 사용자에게 귀속해 서버에 기록한다.
+  Future<LegalConsentStatus> recordLegalConsent(ConsentSelection selection);
 
   /// 보호 요청을 실행하고 401이면 갱신와 재시도를 최대 한 번 수행한다.
   Future<T> runAuthenticated<T>(Future<T> Function(String accessToken) request);
@@ -27,14 +36,17 @@ abstract class AppAuthService {
 class DefaultAppAuthService implements AppAuthService {
   DefaultAppAuthService({
     AuthApi? authApi,
+    LegalConsentApi? legalConsentApi,
     GoogleIdentityService? googleIdentityService,
     AuthSessionStore? sessionStore,
   }) : _authApi = authApi ?? DartIoAuthApi(),
+       _legalConsentApi = legalConsentApi ?? DartIoLegalConsentApi(),
        _googleIdentityService =
            googleIdentityService ?? GoogleSignInIdentityService(),
        _sessionStore = sessionStore ?? AuthSessionStore();
 
   final AuthApi _authApi;
+  final LegalConsentApi _legalConsentApi;
   final GoogleIdentityService _googleIdentityService;
   final AuthSessionStore _sessionStore;
   // 동시 401 응답이 한 번만 회전하도록 모든 호출자가 같은 Future를 공유한다.
@@ -58,6 +70,23 @@ class DefaultAppAuthService implements AppAuthService {
     await _sessionStore.save(session);
 
     return session;
+  }
+
+  @override
+  Future<LegalConsentStatus> fetchLegalConsentStatus() {
+    return runAuthenticated(
+      (accessToken) => _legalConsentApi.fetchStatus(accessToken: accessToken),
+    );
+  }
+
+  @override
+  Future<LegalConsentStatus> recordLegalConsent(ConsentSelection selection) {
+    return runAuthenticated(
+      (accessToken) => _legalConsentApi.record(
+        accessToken: accessToken,
+        selection: selection,
+      ),
+    );
   }
 
   @override

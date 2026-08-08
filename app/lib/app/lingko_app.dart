@@ -16,6 +16,7 @@ import '../api/practice_quota_api.dart';
 import '../api/pronunciation_api.dart';
 import '../api/sentence_api.dart';
 import '../models/auth_session.dart';
+import '../models/consent_selection.dart';
 import '../models/evaluation_job.dart';
 import '../models/evaluation_progress.dart';
 import '../models/practice_quota.dart';
@@ -23,6 +24,7 @@ import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../models/weak_sound.dart';
 import '../screens/auth_gate_screen.dart';
+import '../screens/consent_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/practice_screen.dart';
 import '../screens/profile_screen.dart';
@@ -31,6 +33,7 @@ import '../screens/saved_sentences_screen.dart';
 import '../screens/sound_detail_screen.dart';
 import '../screens/result_screen.dart';
 import '../services/audio_recorder_service.dart';
+import '../services/legal_document_launcher.dart';
 import '../services/app_auth_service.dart';
 import '../services/sentence_speech_service.dart';
 import 'app_theme.dart';
@@ -50,6 +53,7 @@ class LingKoApp extends StatelessWidget {
     this.authService,
     this.audioRecorderService,
     this.sentenceSpeechService,
+    this.legalDocumentLauncher,
     this.onRequestPracticeReward,
   });
 
@@ -61,6 +65,7 @@ class LingKoApp extends StatelessWidget {
   final AppAuthService? authService;
   final AudioRecorderService? audioRecorderService;
   final SentenceSpeechService? sentenceSpeechService;
+  final LegalDocumentLauncher? legalDocumentLauncher;
   final Future<void> Function()? onRequestPracticeReward;
 
   @override
@@ -85,6 +90,8 @@ class LingKoApp extends StatelessWidget {
             audioRecorderService ?? RecordAudioRecorderService(),
         sentenceSpeechService:
             sentenceSpeechService ?? FlutterTtsSentenceSpeechService(),
+        legalDocumentLauncher:
+            legalDocumentLauncher ?? UrlLauncherLegalDocumentLauncher(),
         onRequestPracticeReward: onRequestPracticeReward,
       ),
     );
@@ -104,6 +111,7 @@ class LingKoShell extends StatefulWidget {
     required this.authService,
     required this.audioRecorderService,
     required this.sentenceSpeechService,
+    required this.legalDocumentLauncher,
     this.onRequestPracticeReward,
   });
 
@@ -115,6 +123,7 @@ class LingKoShell extends StatefulWidget {
   final AppAuthService authService;
   final AudioRecorderService audioRecorderService;
   final SentenceSpeechService sentenceSpeechService;
+  final LegalDocumentLauncher legalDocumentLauncher;
   final Future<void> Function()? onRequestPracticeReward;
 
   @override
@@ -140,6 +149,24 @@ class _LingKoShellState extends State<LingKoShell> {
   bool isRestoringSession = true;
   bool isSigningIn = false;
   String? authErrorText;
+
+  /// 로그인 수단을 고르기 전에 동의 화면을 띄우고 있는지 여부다.
+  bool isConsentOpen = false;
+
+  /// 동의 상태 확인·로그인·서버 기록 중 중복 제출을 막는다.
+  bool isSubmittingConsent = false;
+
+  /// 동의 gate를 통과시키지 않은 채 사용자에게 재시도 이유만 알려준다.
+  String? consentErrorText;
+
+  /// 복원 세션은 서버가 알려준 최신 버전을 사용하고, 로그인 전에는 앱 내 버전을 사용한다.
+  String consentGateDocumentVersion = consentDocumentVersion;
+
+  /// 동의 화면에서 받은 선택이다. 로그인 성공 후 서버에 전달할 때까지 들고 있는다.
+  ///
+  /// null이면 아직 이번 가입 흐름에서 동의를 받지 않았다는 뜻이다. 로그인에 실패하면
+  /// 값을 비워 다음 시도에서 동의를 다시 받는다. 동의만 남고 계정이 없는 상태를 만들지 않는다.
+  ConsentSelection? pendingConsent;
   PracticeQuota? practiceQuota;
   bool isLoadingPracticeQuota = false;
   String? practiceQuotaError;
@@ -221,9 +248,8 @@ class _LingKoShellState extends State<LingKoShell> {
     }
     try {
       final sounds = await widget.authService.runAuthenticated(
-        (accessToken) => widget.practiceContentApi.fetchWeakSounds(
-          accessToken: accessToken,
-        ),
+        (accessToken) =>
+            widget.practiceContentApi.fetchWeakSounds(accessToken: accessToken),
       );
       if (mounted) {
         setState(() => weakSounds = sounds);
@@ -333,12 +359,38 @@ class _LingKoShellState extends State<LingKoShell> {
         authErrorText = null;
       });
       if (restoredSession != null) {
-        // 문장과 할당량는 서로 의존하지 않으므로 동시에 조회해 인증 후 대기 시간을 줄인다.
-        await Future.wait([
-          loadRecommendedSentences(),
-          loadPracticeQuota(restoredSession),
-        ]);
-        await Future.wait([loadWeakSounds(), loadSavedSentenceIds()]);
+        try {
+          // 토큰 존재만으로 Home을 열면 이전 버전 사용자가 동의 gate를 우회한다.
+          // 보호 API가 현재 사용자·현재 문서 버전을 판정한 뒤에만 앱 데이터를 노출한다.
+          final consentStatus =
+              await widget.authService.fetchLegalConsentStatus();
+          if (!mounted) {
+            return;
+          }
+          if (consentStatus.required) {
+            setState(() {
+              isConsentOpen = true;
+              consentGateDocumentVersion = consentStatus.documentVersion;
+              consentErrorText = null;
+            });
+            return;
+          }
+          await loadAuthenticatedData(restoredSession);
+        } on AuthSessionExpiredException {
+          rethrow;
+        } catch (_) {
+          if (!mounted) {
+            return;
+          }
+          // 상태 조회 실패를 동의 완료로 간주하면 장애 순간에 gate가 열린다.
+          // 서버가 복구되면 같은 화면에서 제출해 재확인할 수 있도록 fail-closed 한다.
+          setState(() {
+            isConsentOpen = true;
+            consentGateDocumentVersion = consentDocumentVersion;
+            consentErrorText =
+                'Could not verify your agreement. Please try again.';
+          });
+        }
       }
     } catch (_) {
       if (!mounted) {
@@ -358,41 +410,163 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
-  Future<void> signInWithGoogle() async {
+  /// 로그인 수단을 누르면 곧바로 인증하지 않고 동의 화면을 먼저 연다.
+  ///
+  /// 계정이 만들어진 뒤에 동의를 받으면, 거부한 사용자의 개인정보가 이미 서버에 생긴
+  /// 상태가 되어 즉시 삭제하는 경로를 따로 만들어야 한다. 계정 생성 전에 받으면 그 경로가 없어도 된다.
+  void openConsent() {
     setState(() {
-      isSigningIn = true;
+      isConsentOpen = true;
+      consentGateDocumentVersion = consentDocumentVersion;
+      consentErrorText = null;
       authErrorText = null;
     });
+  }
+
+  /// 동의 화면에서 필수 항목을 채우고 계속하기를 누른 뒤의 흐름이다.
+  Future<void> acceptConsentAndSignIn(ConsentSelection selection) async {
+    if (isSubmittingConsent) {
+      return;
+    }
+    setState(() {
+      pendingConsent = selection;
+      isSubmittingConsent = true;
+      consentErrorText = null;
+    });
+
+    AuthSession? activeSession = session;
+    if (activeSession == null) {
+      setState(() {
+        isSigningIn = true;
+      });
+      try {
+        activeSession = await widget.authService.signInWithGoogle();
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          session = activeSession;
+        });
+      } catch (_) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          pendingConsent = null;
+          isConsentOpen = false;
+          isSubmittingConsent = false;
+          authErrorText = 'Unable to sign in with Google. Please try again.';
+        });
+        return;
+      } finally {
+        if (mounted) {
+          setState(() {
+            isSigningIn = false;
+          });
+        }
+      }
+    }
 
     try {
-      final nextSession = await widget.authService.signInWithGoogle();
-
+      final status = await widget.authService.recordLegalConsent(selection);
       if (!mounted) {
         return;
       }
-
+      if (status.required) {
+        throw StateError('Server did not accept current consent');
+      }
       setState(() {
-        session = nextSession;
+        isConsentOpen = false;
+        pendingConsent = null;
+        consentErrorText = null;
       });
-      await Future.wait([
-        loadRecommendedSentences(),
-        loadPracticeQuota(nextSession),
-      ]);
+      await loadAuthenticatedData(activeSession);
+    } on AuthSessionExpiredException {
+      if (!mounted) {
+        return;
+      }
+      await handleSessionChanged(null);
+      if (mounted) {
+        setState(() {
+          authErrorText = 'Your session expired. Please sign in again.';
+        });
+      }
     } catch (_) {
       if (!mounted) {
         return;
       }
-
+      // 앱보다 서버 문서 버전이 먼저 올라간 배포 순서에서도 다음 재시도가 같은
+      // 구버전 body를 반복하지 않게 현재 상태를 다시 읽는다.
+      String nextDocumentVersion = consentGateDocumentVersion;
+      try {
+        final latestStatus = await widget.authService.fetchLegalConsentStatus();
+        if (latestStatus.required) {
+          nextDocumentVersion = latestStatus.documentVersion;
+        }
+      } catch (_) {
+        // 원래 저장 실패 안내가 우선이다. 보조 조회 실패로 원인을 덮지 않는다.
+      }
+      if (!mounted) {
+        return;
+      }
+      // 인증은 성공했지만 동의 기록이 실패한 경우 Home으로 보내지 않는다.
+      // 저장된 세션으로 같은 제출을 재시도할 수 있게 gate와 선택 화면을 유지한다.
       setState(() {
-        authErrorText = 'Unable to sign in with Google. Please try again.';
+        isConsentOpen = true;
+        consentGateDocumentVersion = nextDocumentVersion;
+        consentErrorText = 'Could not save your agreement. Please try again.';
       });
     } finally {
       if (mounted) {
         setState(() {
-          isSigningIn = false;
+          isSubmittingConsent = false;
         });
       }
     }
+  }
+
+  /// 동의 gate가 열린 복원 세션에서 뒤로 가면 서비스 대신 로그아웃 화면으로 돌아간다.
+  Future<void> cancelConsent() async {
+    if (session == null) {
+      setState(() {
+        isConsentOpen = false;
+        pendingConsent = null;
+        consentErrorText = null;
+      });
+      return;
+    }
+    try {
+      await widget.authService.signOut();
+    } finally {
+      if (mounted) {
+        await handleSessionChanged(null);
+      }
+    }
+  }
+
+  /// 동의가 확인된 사용자에게만 필요한 초기 데이터를 병렬로 불러온다.
+  Future<void> loadAuthenticatedData(AuthSession authSession) async {
+    await Future.wait([
+      loadRecommendedSentences(),
+      loadPracticeQuota(authSession),
+    ]);
+    await Future.wait([loadWeakSounds(), loadSavedSentenceIds()]);
+  }
+
+  /// 약관·처리방침 전문 열기 요청을 처리한다. 가입 동의 화면과 Profile 설정이 함께 쓴다.
+  ///
+  /// 백엔드가 서빙하는 공개 URL을 브라우저로 연다. 두 화면이 같은 경로를 쓰므로
+  /// 문서 위치가 바뀌어도 여기만 고치면 된다.
+  Future<void> openLegalDocument(ConsentDocument document) async {
+    final opened = await widget.legalDocumentLauncher.open(document);
+    if (opened || !mounted) {
+      return;
+    }
+    // 브라우저를 열 수 없는 기기가 있다. 아무 반응이 없으면 버튼이 고장난 것으로 보이므로
+    // 실패를 알리고 문의 경로가 생기면 그쪽으로 안내한다.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open the document.')),
+    );
   }
 
   Future<void> handleSessionChanged(AuthSession? nextSession) async {
@@ -406,6 +580,11 @@ class _LingKoShellState extends State<LingKoShell> {
         hasResult = false;
         isPracticeImmersive = false;
         authErrorText = null;
+        isConsentOpen = false;
+        isSubmittingConsent = false;
+        consentErrorText = null;
+        consentGateDocumentVersion = consentDocumentVersion;
+        pendingConsent = null;
         practiceQuota = null;
         practiceQuotaError = null;
         evaluationProgress = const EvaluationProgress();
@@ -699,11 +878,22 @@ class _LingKoShellState extends State<LingKoShell> {
       return const SplashScreen();
     }
 
+    if (isConsentOpen) {
+      return ConsentScreen(
+        documentVersion: consentGateDocumentVersion,
+        errorText: consentErrorText,
+        isLoading: isSubmittingConsent,
+        onAgree: (selection) => unawaited(acceptConsentAndSignIn(selection)),
+        onOpenDocument: (document) => unawaited(openLegalDocument(document)),
+        onCancel: () => unawaited(cancelConsent()),
+      );
+    }
+
     if (session == null) {
       return LoginScreen(
         isLoading: isSigningIn,
         errorText: authErrorText,
-        onSignIn: signInWithGoogle,
+        onSignIn: openConsent,
       );
     }
 
@@ -788,8 +978,12 @@ class _LingKoShellState extends State<LingKoShell> {
         session: session!,
         onSessionChanged: handleSessionChanged,
         onOpenReview: () => setState(() => selectedTab = 2),
-        onOpenSavedSentences:
-            () => setState(() => isSavedSentencesOpen = true),
+        onOpenDocument: (document) => unawaited(openLegalDocument(document)),
+        onOpenSavedSentences: () => setState(() => isSavedSentencesOpen = true),
+        // 광고 SDK와 문의 창구가 아직 붙지 않아 열 화면이 없다. null로 두면
+        // Profile이 해당 행을 눌리지 않게 표시한다. 연결되면 여기서 화면을 넘긴다.
+        onOpenAdPrivacy: null,
+        onOpenContact: null,
       ),
     ];
 
@@ -836,7 +1030,9 @@ class _LingKoShellState extends State<LingKoShell> {
               ? null
               : Container(
                 decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: context.palette.border)),
+                  border: Border(
+                    top: BorderSide(color: context.palette.border),
+                  ),
                 ),
                 child: NavigationBar(
                   selectedIndex: selectedTab,

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-07 - 법무 동의 API client 추가
+
+- 변경 파일: `legal_consent_api.dart`
+- 내용: Bearer Token으로 현재 동의 상태를 조회하고 사용자 ID 없이 동의 선택을 제출하는 계약을 추가했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 113개 통과(라인 81.26%)
+- 리스크: 없음
+
 ## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
 
 - 변경 파일: `practice_content_api.dart`

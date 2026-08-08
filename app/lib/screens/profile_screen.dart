@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../app/app_theme.dart';
 import '../app/app_palette.dart';
 import '../models/auth_session.dart';
+import '../models/consent_selection.dart';
 import '../services/app_auth_service.dart';
 import '../widgets/shared_widgets.dart';
 
@@ -15,14 +16,31 @@ class ProfileScreen extends StatefulWidget {
     required this.session,
     required this.onSessionChanged,
     required this.onOpenReview,
+    required this.onOpenDocument,
     this.onOpenSavedSentences,
+    this.onOpenAdPrivacy,
+    this.onOpenContact,
   });
 
   final AppAuthService authService;
   final AuthSession session;
   final ValueChanged<AuthSession?> onSessionChanged;
   final VoidCallback onOpenReview;
+
+  /// 약관·처리방침 전문을 여는 요청이다. 동의 화면과 같은 처리로 이어진다.
+  ///
+  /// 가입할 때 동의한 문서를 나중에 다시 읽을 수 없으면 동의 자체가 형식적인 절차가 된다.
+  /// 그래서 가입 화면과 설정 화면 양쪽에서 같은 문서로 갈 수 있게 둔다.
+  final void Function(ConsentDocument document) onOpenDocument;
+
   final VoidCallback? onOpenSavedSentences;
+
+  /// 개인 맞춤 광고 사용 여부를 바꾸는 화면을 여는 요청이다.
+  /// null이면 광고 기능이 아직 없다는 뜻이며 행을 눌리지 않게 표시한다.
+  final VoidCallback? onOpenAdPrivacy;
+
+  /// 문의 창구를 여는 요청이다. null이면 연결된 창구가 없어 행을 눌리지 않게 표시한다.
+  final VoidCallback? onOpenContact;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -110,24 +128,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const SectionHeader(title: 'About'),
+          const SectionHeader(title: 'Legal & privacy'),
           const SizedBox(height: 10),
           AppCard(
             padding: EdgeInsets.zero,
             child: Column(
               children: [
                 _SettingsLinkRow(
-                  icon: Icons.mic_none_rounded,
-                  label: 'Audio & privacy',
-                  onTap: null,
+                  key: const ValueKey('profile-terms'),
+                  icon: Icons.description_outlined,
+                  label: 'Terms of Service',
+                  onTap:
+                      () => widget.onOpenDocument(
+                        ConsentDocument.termsOfService,
+                      ),
                 ),
                 _SettingsLinkRow(
-                  icon: Icons.info_outline_rounded,
-                  label: 'About LingKo 1.0.0',
-                  onTap: null,
+                  key: const ValueKey('profile-privacy'),
+                  icon: Icons.privacy_tip_outlined,
+                  label: 'Privacy Policy',
+                  onTap:
+                      () =>
+                          widget.onOpenDocument(ConsentDocument.privacyPolicy),
+                ),
+                // 광고와 문의는 문서와 사정이 다르다. 문서는 이미 존재하고 게시만 남았지만
+                // 광고 SDK와 문의 창구는 아직 붙지 않았다. 없는 기능에 눌리는 행을 두면
+                // 눌러도 아무 일이 없어 고장으로 보이므로 연결 전까지 흐리게 둔다.
+                _SettingsLinkRow(
+                  key: const ValueKey('profile-ad-privacy'),
+                  icon: Icons.ads_click_outlined,
+                  label: 'Ad privacy settings',
+                  onTap: widget.onOpenAdPrivacy,
+                ),
+                _SettingsLinkRow(
+                  key: const ValueKey('profile-contact'),
+                  icon: Icons.mail_outline_rounded,
+                  label: 'Contact us',
+                  onTap: widget.onOpenContact,
                   showDivider: false,
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const SectionHeader(title: 'About'),
+          const SizedBox(height: 10),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: _SettingsLinkRow(
+              icon: Icons.info_outline_rounded,
+              label: 'About LingKo 1.0.0',
+              onTap: null,
+              showDivider: false,
             ),
           ),
           const SizedBox(height: 28),
