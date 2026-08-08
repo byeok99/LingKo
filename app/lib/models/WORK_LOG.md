@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-07 - 서버 법무 동의 상태 모델 추가
+
+- 변경 파일: `legal_consent_status.dart`
+- 내용: 서버가 판정한 현재 문서 버전과 재동의 필요 여부를 엄격하게 파싱하는 불변 모델을 추가했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 113개 통과(라인 81.26%)
+- 리스크: 없음
+
+## 2026-08-07 - 동의 선택 값 모델 추가
+
+- 변경 파일: `consent_selection.dart`
+- 내용: 동의 항목 3건과 문서 버전·동의 시각을 담는 불변 값 `ConsentSelection`과 문서 종류 enum `ConsentDocument`를 추가했다. 약관 개정 시 재동의 대상을 가리려면 동의 사실만으로 부족해 문서 버전을 함께 남긴다. 기기 시각은 변경 가능하므로 단독 증거로 쓰지 않는다는 점을 주석에 적었다. `consentDocumentVersion`은 `docs/legal/` 문서의 시행일과 같은 값을 유지한다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 동의 저장 API가 없어 값이 서버로 전송되지 않는다
+
 ## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
 
 - 변경 파일: `weak_word.dart` → `weak_sound.dart`

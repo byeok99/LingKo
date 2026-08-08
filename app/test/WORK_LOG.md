@@ -1,5 +1,33 @@
 # 작업 이력
 
+## 2026-08-07 - 로그인·복원 세션 동의 gate 회귀 테스트
+
+- 변경 파일: `legal_consent_api_test.dart`, `widget_test.dart`
+- 내용: 인증 헤더·body 매핑, 신규 로그인 기록, 복원 세션 미동의 차단, 상태 조회·저장 실패의 fail-closed 동작을 검증한다.
+- 검증: `flutter test --coverage` 113개 통과(라인 81.26%)
+- 리스크: 실제 OAuth·운영 DB E2E는 미실행
+
+## 2026-08-07 - 문서 열기 URL과 Profile 연결 회귀 테스트
+
+- 변경 파일: `legal_document_launcher_test.dart`, `widget_test.dart`
+- 내용: 공개 URL의 경로 구간이 백엔드 정의와 일치하는지, base URL에 하위 경로가 있어도 문서를 루트에서 여는지, 기본 언어가 영어인지를 고정했다. `widget_test.dart`에는 브라우저를 띄우지 않는 `FakeLegalDocumentLauncher`를 넣어 Profile의 각 행이 자기 문서를 여는지와 열기 실패 시 안내가 뜨는지를 검증한다.
+- 검증: `flutter analyze`, `flutter test --coverage` 106개 통과(라인 81.22%)
+- 리스크: 없음
+
+## 2026-08-07 - Profile 설정 항목 회귀 테스트 추가
+
+- 변경 파일: `widget_test.dart`
+- 내용: Profile이 약관·처리방침·광고 설정·문의 행과 회원 탈퇴를 항상 노출하는지, 각 문서 행이 자기 문서로 연결되는지, 연결되지 않은 광고·문의 행이 눌리지 않는지를 고정했다. SnackBar는 큐로 쌓여 한 테스트에서 연달아 누르면 두 번째가 대기열에 머물러 화면에 없다. 그래서 문서 행 검증은 행마다 테스트를 나눴다.
+- 검증: `flutter analyze`, `flutter test --coverage` 102개 통과(라인 81.27%)
+- 리스크: 없음
+
+## 2026-08-07 - 동의 화면 회귀 테스트와 로그인 흐름 갱신
+
+- 변경 파일: `consent_screen_test.dart`, `widget_test.dart`
+- 내용: 필수 미충족 시 진행 차단, 선택 거부로도 진행 가능, 선택만으로는 진행 불가, 전체 동의의 범위와 해제, 전문 보기가 필수 항목에만 있고 해당 문서를 상위로 알리는지, 상위로 올라가는 값의 정확성을 고정했다. 로그인 수단을 눌러도 인증이 바로 호출되지 않는다는 점을 `widget_test.dart`에서 함께 검증하고, 동의를 통과하는 `agreeToConsent` 헬퍼를 추가했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 99개 통과(라인 81.10%)
+- 리스크: 없음
+
 ## 2026-08-07 - 새 Result 구조와 3단계 점수 경계 회귀 테스트
 
 - 변경 파일: `score_card_test.dart`, `widget_test.dart`, `design_system_test.dart`

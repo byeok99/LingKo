@@ -1,3 +1,10 @@
+## 2026-08-07 - 브라우저 열기 의존성 추가
+
+- 변경 파일: `pubspec.yaml`
+- 내용: 약관·처리방침 공개 URL을 외부 브라우저로 열기 위해 `url_launcher`를 추가했다.
+- 검증: `flutter pub get`, `flutter analyze`, `flutter test --coverage` 106개 통과
+- 리스크: iOS는 `LSApplicationQueriesSchemes`, Android는 `<queries>` 설정이 필요할 수 있어 실기기 확인이 남아 있다
+
 ## 2026-07-30 - 모든 평가 음절 영상 계약 반영
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

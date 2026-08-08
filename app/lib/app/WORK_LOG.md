@@ -1,5 +1,33 @@
 # 작업 이력
 
+## 2026-08-07 - 복원 세션의 법무 동의 gate 강제
+
+- 변경 파일: `lingko_app.dart`
+- 내용: 세션 복원 직후 서버의 현재 동의 상태를 확인한 뒤에만 Home을 열고, 미동의·조회 실패·저장 실패 시 동의 화면을 유지한다. 신규 로그인 선택도 인증 직후 서버에 기록한다.
+- 검증: `flutter analyze`, `flutter test --coverage` 113개 통과(라인 81.26%)
+- 리스크: 운영 Backend에 V18 migration과 앱보다 먼저 호환 endpoint를 배포해야 함
+
+## 2026-08-07 - 문서 열기를 실제 공개 URL로 연결
+
+- 변경 파일: `lingko_app.dart`
+- 내용: 미공개 안내만 띄우던 `openLegalDocument`를 `LegalDocumentLauncher` 호출로 바꾸고, 서비스를 주입 가능한 의존성으로 추가했다. 열기에 실패하면 안내를 띄운다.
+- 검증: `flutter analyze`, `flutter test --coverage` 106개 통과(라인 81.22%)
+- 리스크: 없음
+
+## 2026-08-07 - 문서 열기 처리를 동의 화면과 Profile이 공유하도록 정리
+
+- 변경 파일: `lingko_app.dart`
+- 내용: `openConsentDocument`를 `openLegalDocument`로 바꾸고 ProfileScreen에도 같은 함수를 넘겼다. 문서를 게시하면 두 화면을 고치지 않고 이 한 곳만 열람 화면이나 브라우저로 바꾸면 된다. 광고·문의 callback은 기능이 없어 null로 넘겨 Profile이 해당 행을 비활성으로 그리게 했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 102개 통과(라인 81.27%)
+- 리스크: 문서 게시 전까지 두 화면 모두 미공개 안내만 보여준다
+
+## 2026-08-07 - 로그인 전 동의 단계 연결
+
+- 변경 파일: `lingko_app.dart`
+- 내용: `LoginScreen.onSignIn`을 동의 화면 열기로 바꾸고, 동의를 마친 뒤에만 Google 인증을 호출하도록 흐름을 나눴다. 로그인에 실패하면 보관 중이던 동의를 비워 "동의만 있고 계정은 없는" 상태를 만들지 않는다.
+- 검증: `flutter analyze`, `flutter test --coverage` 99개 통과(라인 81.10%)
+- 리스크: `pendingConsent`를 서버로 보내는 API가 없어 세션 동안만 들고 있다. 문서 열기는 미공개 안내로 대체되어 있다
+
 ## 2026-08-07 - 평가 점수 중간 구간 토큰과 Result 연결 정리
 
 - 변경 파일: `app_theme.dart`, `app_palette.dart`, `lingko_app.dart`

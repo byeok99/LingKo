@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-07 - URL scheme 조회 선언 추가
+
+- 변경 파일: `Info.plist`
+- 내용: `LSApplicationQueriesSchemes`에 https/http를 추가했다. 선언하지 않으면 `canLaunchUrl`이 항상 false를 돌려줘 약관·처리방침 열기가 실패한다.
+- 검증: `flutter analyze`, `flutter test` 통과. 실기기 확인 필요
+- 리스크: 실기기 확인 전이다
+
 ## 2026-07-28 - iOS 앱 이름·아이콘 적용
 
 - 변경 파일: `Info.plist`, `Assets.xcassets/AppIcon.appiconset/*.png`, `WORK_LOG.md`

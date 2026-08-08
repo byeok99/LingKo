@@ -41,6 +41,13 @@
 	<string>LingKo records your pronunciation so it can score your Korean speaking practice.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- 약관·개인정보 처리방침을 브라우저로 열기 위해 조회할 URL scheme이다.
+	     선언하지 않으면 canLaunchUrl이 항상 false를 돌려줘 열기 요청이 실패한다. -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
