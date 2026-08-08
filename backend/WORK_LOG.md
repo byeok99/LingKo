@@ -1,3 +1,10 @@
+## 2026-08-07 - 법무 문서 서빙을 위한 Markdown 변환 의존성 추가
+
+- 변경 파일: `build.gradle`
+- 내용: 약관·처리방침을 Markdown 원본 그대로 두고 서빙 시점에 HTML로 변환하기 위해 `commonmark`와 GFM table 확장을 추가했다. HTML 사본을 저장소에 따로 두면 `docs/legal` 원본과 어긋나기 쉬워 변환을 택했다.
+- 검증: `./gradlew compileJava`, `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-03 - Replicate 안정화와 출시 전 가이드 seed 운영
 
 - 변경 파일: `.env.example`, `application.example.yaml`, `README.md`, `WORK_LOG.md`
