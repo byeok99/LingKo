@@ -51,6 +51,11 @@ class AppColors {
   static const errorSoft = Color(0xFFFDF1EF);
   static const errorBorder = Color(0xFFE8B8B3);
 
+  // 점수 중간 구간 — 경고 UI와 의미가 달라 Result·Review·Sound에서만 사용한다.
+  static const scoreMedium = Color(0xFF96590C);
+  static const scoreMediumSoft = Color(0xFFFDF5EA);
+  static const scoreMediumBorder = Color(0xFFE3C9A0);
+
   // 상태·기타
   static const warning = Color(0xFF8A5B16);
   static const warningSoft = Color(0xFFFFF6DF);
@@ -92,9 +97,6 @@ class AppSizes {
 
   /// 카드 반경.
   static const double radius = 18;
-
-  /// 한 덩어리로 읽히는 작은 타일 반경. 취약 음절 타일, Review 점수 배지가 쓴다.
-  static const double radiusTile = 14;
 
   /// bottom sheet 상단 반경.
   static const double radiusLarge = 22;

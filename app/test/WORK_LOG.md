@@ -1,5 +1,33 @@
 # 작업 이력
 
+## 2026-08-07 - 새 Result 구조와 3단계 점수 경계 회귀 테스트
+
+- 변경 파일: `score_card_test.dart`, `widget_test.dart`, `design_system_test.dart`
+- 내용: 59/60/79/80 경계의 빨강·주황·파랑, 관련 면·테두리·gauge 색을 고정했다. Home 62점 주황 tile과 Result compact 발음 카드·세로 어절 목록·파랑 총점·주황 어절을 사용자 화면 기준으로 검증한다. 구현 전 기존 2단계 색과 pill 구조로 실패하는 것을 확인했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 90개 통과(라인 80.40%)
+- 리스크: 없음
+
+## 2026-08-07 - Home 취약 발음 색상 회귀 테스트 추가
+
+- 변경 파일: `widget_test.dart`, `design_system_test.dart`
+- 내용: 취약 발음 tile의 배경·음절·보조 글자 색과 테두리 부재를 사용자 화면에서 확인하고, 세 의미 색 토큰 값을 별도로 고정했다. 수정 전 기존 파란 면과 테두리 때문에 테스트가 실패하는 것을 확인했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 89개 통과(라인 80.49%)
+- 리스크: 없음
+
+## 2026-08-07 - 카드 행 내부 여백 회귀 테스트 추가
+
+- 변경 파일: `widget_test.dart`
+- 내용: Home 문장 행의 좌측 여백 12px과 Profile 설정 행의 좌측 여백 14px을 좌표로 고정했다. 수정 전 두 값이 모두 0px이라 테스트가 실패하는 것을 확인했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 89개 통과(라인 80.63%)
+- 리스크: 없음
+
+## 2026-08-07 - 진행 중 CTA 회귀 테스트 추가
+
+- 변경 파일: `design_system_test.dart`
+- 내용: 로딩 중 `PrimaryButton`이 채움과 그라디언트를 유지하고 spinner가 `onPrimary`인지 고정했다. 이 결함은 예외 없이 조용히 나타나고 정적 분석으로도 잡히지 않아, 테스트가 없으면 다음 디자인 변경에서 다시 들어온다.
+- 검증: `flutter test` 89개 통과 (수정 전 이 테스트만 실패하는 것 확인)
+- 리스크: 없음
+
 ## 2026-08-06 - LingKo Blue 디자인과 Saved/Recording 회귀 계약 추가
 
 - 변경 파일: `design_system_test.dart`, `widget_test.dart`

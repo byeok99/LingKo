@@ -41,6 +41,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.warningSoft,
     required this.error,
     required this.errorSoft,
+    required this.scoreMedium,
+    required this.scoreMediumSoft,
+    required this.scoreMediumBorder,
     required this.disabled,
     required this.shadow,
     required this.onPrimary,
@@ -85,6 +88,12 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color warningSoft;
   final Color error;
   final Color errorSoft;
+
+  /// 60점 이상 80점 미만을 나타내는 점수 전용 주황색 조합이다.
+  /// 일반 경고와 평가 결과는 의미가 달라 서로의 색을 공유하지 않는다.
+  final Color scoreMedium;
+  final Color scoreMediumSoft;
+  final Color scoreMediumBorder;
   final Color disabled;
   final Color shadow;
 
@@ -121,6 +130,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     warningSoft: AppColors.warningSoft,
     error: AppColors.error,
     errorSoft: AppColors.errorSoft,
+    scoreMedium: AppColors.scoreMedium,
+    scoreMediumSoft: AppColors.scoreMediumSoft,
+    scoreMediumBorder: AppColors.scoreMediumBorder,
     disabled: AppColors.disabled,
     shadow: AppColors.shadow,
     onPrimary: Colors.white,
@@ -160,6 +172,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     warningSoft: Color(0xFF322715),
     error: Color(0xFFF08C8C),
     errorSoft: Color(0xFF33191C),
+    scoreMedium: Color(0xFFF0B35F),
+    scoreMediumSoft: Color(0xFF322715),
+    scoreMediumBorder: Color(0xFF684B24),
     // 어두운 채움(neutralFill) 위에서 본문 기준을 넘도록 밝힌 값이다.
     // 비활성 버튼도 '왜 못 누르는지'를 알려주므로 읽혀야 한다.
     disabled: Color(0xFF93A2AE),
@@ -197,6 +212,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? warningSoft,
     Color? error,
     Color? errorSoft,
+    Color? scoreMedium,
+    Color? scoreMediumSoft,
+    Color? scoreMediumBorder,
     Color? disabled,
     Color? shadow,
     Color? onPrimary,
@@ -230,6 +248,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       warningSoft: warningSoft ?? this.warningSoft,
       error: error ?? this.error,
       errorSoft: errorSoft ?? this.errorSoft,
+      scoreMedium: scoreMedium ?? this.scoreMedium,
+      scoreMediumSoft: scoreMediumSoft ?? this.scoreMediumSoft,
+      scoreMediumBorder: scoreMediumBorder ?? this.scoreMediumBorder,
       disabled: disabled ?? this.disabled,
       shadow: shadow ?? this.shadow,
       onPrimary: onPrimary ?? this.onPrimary,
@@ -271,6 +292,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       warningSoft: mix(warningSoft, other.warningSoft),
       error: mix(error, other.error),
       errorSoft: mix(errorSoft, other.errorSoft),
+      scoreMedium: mix(scoreMedium, other.scoreMedium),
+      scoreMediumSoft: mix(scoreMediumSoft, other.scoreMediumSoft),
+      scoreMediumBorder: mix(scoreMediumBorder, other.scoreMediumBorder),
       disabled: mix(disabled, other.disabled),
       shadow: mix(shadow, other.shadow),
       onPrimary: mix(onPrimary, other.onPrimary),

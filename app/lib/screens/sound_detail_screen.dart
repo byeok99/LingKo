@@ -154,6 +154,7 @@ class _SoundHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasScore = detail.attemptCount > 0;
+    final score = detail.averageScore;
     return AppCard(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -161,13 +162,19 @@ class _SoundHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: context.palette.errorSoft,
+              color:
+                  hasScore
+                      ? scoreSoftColor(context, score)
+                      : context.palette.neutralFill,
               borderRadius: BorderRadius.circular(AppSizes.radius),
             ),
             child: Text(
               detail.text,
               style: TextStyle(
-                color: context.palette.error,
+                color:
+                    hasScore
+                        ? scoreColor(context, score)
+                        : context.palette.textPrimary,
                 fontSize: 26,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.5,
@@ -181,19 +188,40 @@ class _SoundHeader extends StatelessWidget {
               children: [
                 RomanizationText(detail.romanization, fontSize: 13),
                 const SizedBox(height: 6),
-                Text(
-                  // 시도가 없으면 평균을 0으로 보여주지 않는다. 측정하지 않은 값을
-                  // 점수처럼 보여주면 사용자가 자기 실력으로 오해한다.
-                  hasScore
-                      ? 'Average ${detail.averageScore} across '
-                          '${detail.attemptCount} '
-                          '${detail.attemptCount == 1 ? 'try' : 'tries'}'
-                      : 'Not practised yet',
-                  style: TextStyle(
-                    color: context.palette.textSecondary,
-                    fontSize: 12.5,
+                if (hasScore)
+                  Text.rich(
+                    TextSpan(
+                      style: TextStyle(
+                        color: context.palette.textSecondary,
+                        fontSize: 12.5,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Average '),
+                        TextSpan(
+                          text: '$score',
+                          style: TextStyle(
+                            color: scoreColor(context, score),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        TextSpan(
+                          text:
+                              ' across ${detail.attemptCount} '
+                              '${detail.attemptCount == 1 ? 'try' : 'tries'}',
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Text(
+                    // 시도가 없으면 평균을 0으로 보여주지 않는다. 측정하지 않은 값을
+                    // 점수처럼 보여주면 사용자가 자기 실력으로 오해한다.
+                    'Not practised yet',
+                    style: TextStyle(
+                      color: context.palette.textSecondary,
+                      fontSize: 12.5,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

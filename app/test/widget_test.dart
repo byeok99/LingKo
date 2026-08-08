@@ -27,6 +27,7 @@ import 'package:lingko_app/services/app_auth_service.dart';
 import 'package:lingko_app/services/sentence_speech_service.dart';
 import 'package:lingko_app/widgets/guide_sheet.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
+import 'package:lingko_app/widgets/sentence_card.dart';
 import 'package:lingko_app/widgets/shared_widgets.dart';
 
 /// 화면 아래쪽 컨트롤을 누르기 전에 보이는 위치로 스크롤한다.
@@ -854,7 +855,9 @@ void main() {
     // 점수와 같은 말을 두 번 하는 것이라 다음 행동을 알려주지 않는다.
     expect(find.text('Clear pronunciation.'), findsOneWidget);
     expect(find.text('91'), findsOneWidget);
-    expect(find.text('Pronunciation guide'), findsOneWidget);
+    // 새 06 Result는 별도 섹션 제목 없이 카드 안 label로 표준 발음을 설명한다.
+    expect(find.text('Pronunciation guide'), findsNothing);
+    expect(find.text('Standard pronunciation'), findsOneWidget);
     expect(find.text('Recognized speech'), findsNothing);
     expect(find.text('사용자 발음'), findsNothing);
     expect(find.text('마싣껟따'), findsOneWidget);
@@ -925,13 +928,26 @@ void main() {
       ),
     );
     expect(syllable.style?.fontSize, 26);
-    final tileColumn = tester.widget<Column>(
+    expect(syllable.style?.color, const Color(0xFF96590C));
+    final weakSoundTile = find.byKey(const ValueKey('home-weak-sound-씨'));
+    final tileMaterial = tester.widget<Material>(
+      find.descendant(of: weakSoundTile, matching: find.byType(Material)).first,
+    );
+    expect(tileMaterial.color, const Color(0xFFFDF5EA));
+    final tileContainer = tester.widget<Container>(
       find
-          .descendant(
-            of: find.byKey(const ValueKey('home-weak-sound-씨')),
-            matching: find.byType(Column),
-          )
+          .descendant(of: weakSoundTile, matching: find.byType(Container))
           .first,
+    );
+    final tileDecoration = tileContainer.decoration! as BoxDecoration;
+    expect(
+      (tileDecoration.border! as Border).top.color,
+      const Color(0xFFE3C9A0),
+    );
+    final scoreLabel = tester.widget<Text>(find.text('ssi · 62'));
+    expect(scoreLabel.style?.color, const Color(0xFF5C7386));
+    final tileColumn = tester.widget<Column>(
+      find.descendant(of: weakSoundTile, matching: find.byType(Column)).first,
     );
     expect(tileColumn.crossAxisAlignment, CrossAxisAlignment.center);
 
@@ -966,6 +982,11 @@ void main() {
     expect(find.text('Daily'), findsOneWidget);
     expect(find.text('천천히 말씀해 주세요.'), findsOneWidget);
     expect(find.text('Start Practice'), findsNothing);
+    // 핸드오프의 문장 행은 카드 테두리에서 좌우 12px 안쪽에 놓인다.
+    final sentenceRowLeft =
+        tester.getTopLeft(find.byType(SentenceCard).first).dx;
+    final sentenceTextLeft = tester.getTopLeft(find.text('천천히 말씀해 주세요.')).dx;
+    expect(sentenceTextLeft - sentenceRowLeft, closeTo(12, 0.1));
 
     await tester.tap(find.byKey(const ValueKey('home-category-food')));
     await tester.pumpAndSettle();
@@ -1968,6 +1989,16 @@ void main() {
 
     expect(find.text('LingKo User'), findsOneWidget);
     expect(find.text('user@example.com'), findsOneWidget);
+    // 핸드오프의 설정 행은 첫 아이콘부터 카드 테두리 안쪽 14px에서 시작한다.
+    final savedRow = find.byKey(const ValueKey('profile-saved-sentences'));
+    final savedIcon = find.descendant(
+      of: savedRow,
+      matching: find.byIcon(Icons.bookmark_border),
+    );
+    expect(
+      tester.getTopLeft(savedIcon).dx - tester.getTopLeft(savedRow).dx,
+      closeTo(14, 0.1),
+    );
     await tester.scrollUntilVisible(find.text('Sign out'), 300);
     expect(find.text('Sign out'), findsOneWidget);
 
@@ -2701,6 +2732,10 @@ void main() {
     );
 
     expect(find.text('Pronunciation by word'), findsOneWidget);
+    expect(find.text('Pronunciation guide'), findsNothing);
+    expect(find.text('Standard pronunciation'), findsOneWidget);
+    final overallScore = tester.widget<Text>(find.text('87'));
+    expect(overallScore.style?.color, const Color(0xFF245F9B));
     expect(find.text('저는'), findsWidgets);
     expect(find.text('커피를'), findsWidgets);
     expect(
@@ -2710,6 +2745,28 @@ void main() {
       ),
       findsOneWidget,
     );
+    final highScore = tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(const ValueKey('word-score-0')),
+        matching: find.text('94'),
+      ),
+    );
+    final mediumScore = tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(const ValueKey('word-score-1')),
+        matching: find.text('62'),
+      ),
+    );
+    expect(highScore.style?.color, const Color(0xFF245F9B));
+    expect(mediumScore.style?.color, const Color(0xFF96590C));
+    final firstWordTopLeft = tester.getTopLeft(
+      find.byKey(const ValueKey('word-score-0')),
+    );
+    final secondWordTopLeft = tester.getTopLeft(
+      find.byKey(const ValueKey('word-score-1')),
+    );
+    expect(secondWordTopLeft.dx, closeTo(firstWordTopLeft.dx, 0.1));
+    expect(secondWordTopLeft.dy, greaterThan(firstWordTopLeft.dy));
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('word-score-1')),

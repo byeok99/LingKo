@@ -10,7 +10,7 @@ import 'guide_sheet.dart';
 import 'score_card.dart';
 import 'shared_widgets.dart';
 
-/// 문장을 어절 pill로 먼저 훑고, 선택한 한 어절의 음절 guide만 아래에 보여준다.
+/// 문장을 세로 어절 목록으로 훑고, 선택한 한 어절 행의 음절 guide만 펼쳐 보여준다.
 ///
 /// API의 신뢰 가능한 점수 단위는 어절이므로 점수는 상단에만 둔다. 음절은 입·혀 guide를
 /// 여는 탐색 단위로만 사용해 측정하지 않은 점수를 만들어 내지 않는다.
@@ -71,143 +71,120 @@ class _WordSyllableExplorerState extends State<WordSyllableExplorer> {
     }
 
     final safeIndex = selectedIndex.clamp(0, widget.words.length - 1);
-    final selectedWord = widget.words[safeIndex];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+    return AppCard(
+      padding: EdgeInsets.zero,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSizes.radius),
+        child: Column(
           children: [
             for (var index = 0; index < widget.words.length; index++)
-              _WordChip(
+              _WordRow(
                 key: ValueKey('word-score-${widget.words[index].position}'),
                 word: widget.words[index],
                 selected: safeIndex == index,
+                showDivider: index != widget.words.length - 1,
                 onTap: () => setState(() => selectedIndex = index),
               ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
-        AppCard(
-          color: context.palette.blue50,
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    selectedWord.text,
-                    style: TextStyle(
-                      color: context.palette.textPrimary,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: RomanizationText(
-                      selectedWord.romanization,
-                      fontSize: 10.5,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              _SyllableChips(word: selectedWord),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
 
-/// 어절, 로마자, 점수를 한 덩어리로 읽게 하는 선택 pill이다.
-class _WordChip extends StatelessWidget {
-  const _WordChip({
+/// 어절, 로마자, 점수를 한 줄로 훑고 선택한 행에서만 음절 guide를 펼친다.
+class _WordRow extends StatelessWidget {
+  const _WordRow({
     super.key,
     required this.word,
     required this.selected,
+    required this.showDivider,
     required this.onTap,
   });
 
   final PracticeWordResult word;
   final bool selected;
+  final bool showDivider;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final available = word.scoreStatus.isAvailable && word.score != null;
     final score = word.score;
-    // 점수가 낮은 어절은 숫자와 어절 텍스트를 같은 붉은색으로 칠해
-    // 어디를 고쳐야 하는지 한 번에 보이게 한다.
-    final failing = available && score! < kPassingScore;
+    // 80점 미만 어절은 숫자와 어절을 같은 구간색으로 묶어 개선 대상을 바로 찾게 한다.
+    final needsWork = available && score! < kPassingScore;
     final textColor =
-        failing ? context.palette.error : context.palette.textPrimary;
+        needsWork ? scoreColor(context, score) : context.palette.textPrimary;
 
     return Semantics(
       button: true,
+      selected: selected,
       label:
           available
               ? '${word.text}, score $score. Show syllables.'
               : '${word.text}, score unavailable. Show syllables.',
       excludeSemantics: true,
       child: Material(
-        color:
-            selected
-                ? (failing
-                    ? context.palette.errorSoft
-                    : context.palette.softBlue)
-                : context.palette.card,
-        borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+        color: selected ? context.palette.blue50 : context.palette.card,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSizes.radiusControl),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
             decoration: BoxDecoration(
-              border: Border.all(
-                color:
-                    selected
-                        ? (failing
-                            ? context.palette.errorBorder
-                            : context.palette.borderStrong)
-                        : context.palette.border,
-              ),
-              borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+              border:
+                  showDivider
+                      ? Border(
+                        bottom: BorderSide(color: context.palette.lineSubtle),
+                      )
+                      : null,
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      word.text,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
+                    Expanded(
+                      child: Text(
+                        word.text,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 7),
-                    Text(
-                      available ? '$score' : '—',
-                      style: TextStyle(
-                        color:
-                            available ? textColor : context.palette.textMuted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                    if (word.romanization.trim().isNotEmpty) ...[
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: RomanizationText(
+                          word.romanization,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        available ? '$score' : '—',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          color:
+                              available
+                                  ? scoreColor(context, score!)
+                                  : context.palette.textMuted,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
                       ),
                     ),
                   ],
                 ),
-                if (word.romanization.trim().isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  RomanizationText(word.romanization, fontSize: 9.5),
+                if (selected) ...[
+                  const SizedBox(height: 9),
+                  _SyllableChips(word: word),
                 ],
               ],
             ),
@@ -239,10 +216,8 @@ class _SyllableChips extends StatelessWidget {
       );
     }
 
-    final failing =
-        word.scoreStatus.isAvailable &&
-        word.score != null &&
-        word.score! < kPassingScore;
+    final score =
+        word.scoreStatus.isAvailable && word.score != null ? word.score : null;
 
     return Padding(
       padding: EdgeInsets.zero,
@@ -254,7 +229,7 @@ class _SyllableChips extends StatelessWidget {
             _SyllableChip(
               key: ValueKey('syllable-guide-${word.position}-$index'),
               syllable: word.syllables[index],
-              highlighted: failing,
+              score: score,
             ),
         ],
       ),
@@ -263,26 +238,20 @@ class _SyllableChips extends StatelessWidget {
 }
 
 class _SyllableChip extends StatelessWidget {
-  const _SyllableChip({
-    super.key,
-    required this.syllable,
-    required this.highlighted,
-  });
+  const _SyllableChip({super.key, required this.syllable, required this.score});
 
   final CharacterResult syllable;
-  final bool highlighted;
+  final int? score;
 
   @override
   Widget build(BuildContext context) {
+    final highlighted = score != null && score! < kPassingScore;
     return Semantics(
       button: true,
       label: '${syllable.character}. Open pronunciation guide.',
       excludeSemantics: true,
       child: Material(
-        color:
-            highlighted
-                ? context.palette.errorSoft
-                : context.palette.neutralFill,
+        color: context.palette.card,
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
         child: InkWell(
           onTap: () => showGuideSheet(context, syllable),
@@ -290,6 +259,15 @@ class _SyllableChip extends StatelessWidget {
           child: Container(
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color:
+                    highlighted
+                        ? scoreBorderColor(context, score!)
+                        : context.palette.border,
+              ),
+              borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -302,7 +280,7 @@ class _SyllableChip extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     color:
                         highlighted
-                            ? context.palette.error
+                            ? scoreColor(context, score!)
                             : context.palette.textPrimary,
                   ),
                 ),

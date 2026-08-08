@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-07 - 새 06 Result 구현 계약 동기화
+
+- 변경 파일: `README.md`
+- 내용: 사용자가 갱신한 `LingKo Blue Merged.dc.html`을 원본 그대로 유지하고, 활성 구현 기준에 80+/60+/60 미만 점수색과 compact 발음 카드·세로 어절 목록·하단 고정 CTA를 기록했다.
+- 검증: HTML과 Flutter Result 구조 대조, `flutter analyze`, `flutter test --coverage` 90개 통과(라인 80.40%)
+- 리스크: 브라우저 시안과 실제 기기 렌더링의 최종 육안 비교 필요
+
+## 2026-08-07 - Home 취약 발음 타일 색상 기준 변경
+
+- 변경 파일: `LingKo Blue Merged.dc.html`, `README.md`
+- 내용: 첨부 시안을 새 기준으로 삼아 Home 취약 음절 tile을 테두리 없는 연한 붉은 면과 저채도 붉은 음절로 갱신했다. 작은 보조 글자는 시안과 가까운 범위에서 접근성 대비를 확보한 값으로 기록했다.
+- 검증: HTML의 기존 Home 파란 tile 색상 잔존 여부 검색, `flutter analyze`, `flutter test --coverage` 89개 통과(라인 80.49%)
+- 리스크: 브라우저·실기기 색상 프로필에 따른 미세한 차이는 수동 확인 필요
+
 ## 2026-08-06 - LingKo Blue 시안 분석과 구현 기준 정리
 
 - 변경 파일: `LingKo Blue Merged.dc.html`, `README.md`, `WORK_LOG.md`

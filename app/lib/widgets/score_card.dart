@@ -5,21 +5,57 @@ import 'package:flutter/material.dart';
 import '../app/app_palette.dart';
 import '../app/app_theme.dart';
 
-/// 점수를 신뢰 구간이 아니라 두 단계로만 말한다.
-///
-/// 중간(노랑) 단계를 두지 않는 이유는 "애매함"이 사용자에게 다음 행동을 알려주지 않기
-/// 때문이다. 다시 연습할지 넘어갈지만 판단하면 되므로 기준은 하나면 충분하다.
+/// 점수 색상 구간이다. API의 0~100 점수를 모든 화면에서 같은 의미로 읽게 한다.
+enum ScoreBand { low, medium, high }
+
+const int kMediumScore = 60;
 const int kPassingScore = 80;
 
+ScoreBand scoreBand(int score) {
+  if (score >= kPassingScore) {
+    return ScoreBand.high;
+  }
+  if (score >= kMediumScore) {
+    return ScoreBand.medium;
+  }
+  return ScoreBand.low;
+}
+
 Color scoreColor(BuildContext context, int score) {
-  return score >= kPassingScore
-      ? context.palette.success
-      : context.palette.error;
+  return switch (scoreBand(score)) {
+    ScoreBand.high => context.palette.primaryDark,
+    ScoreBand.medium => context.palette.scoreMedium,
+    ScoreBand.low => context.palette.error,
+  };
+}
+
+Color scoreSoftColor(BuildContext context, int score) {
+  return switch (scoreBand(score)) {
+    ScoreBand.high => context.palette.softBlue,
+    ScoreBand.medium => context.palette.scoreMediumSoft,
+    ScoreBand.low => context.palette.errorSoft,
+  };
+}
+
+Color scoreBorderColor(BuildContext context, int score) {
+  return switch (scoreBand(score)) {
+    ScoreBand.high => context.palette.borderStrong,
+    ScoreBand.medium => context.palette.scoreMediumBorder,
+    ScoreBand.low => context.palette.errorBorder,
+  };
+}
+
+Color scoreGaugeColor(BuildContext context, int score) {
+  return switch (scoreBand(score)) {
+    ScoreBand.high => context.palette.primary,
+    ScoreBand.medium => context.palette.scoreMedium,
+    ScoreBand.low => context.palette.error,
+  };
 }
 
 /// 총점과 세부 점수 세 개를 담는 결과 카드다.
 ///
-/// 총점을 60px로 크게 두고 세부 점수를 오른쪽에 묶는 이유는, 사용자가 먼저 알고 싶은 것이
+/// 총점을 62px로 크게 두고 세부 점수를 오른쪽에 묶는 이유는, 사용자가 먼저 알고 싶은 것이
 /// "잘했나"이고 그다음이 "무엇이 부족했나"이기 때문이다. 같은 크기로 늘어놓으면 읽는
 /// 순서가 생기지 않는다.
 class ScoreCard extends StatelessWidget {
@@ -42,7 +78,7 @@ class ScoreCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = scoreColor(context, overallScore);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: context.palette.card,
         borderRadius: BorderRadius.circular(AppSizes.radius),
@@ -73,14 +109,14 @@ class ScoreCard extends StatelessWidget {
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-              const SizedBox(width: 22),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   children: [
                     _ScoreGauge(label: 'Accuracy', score: accuracy),
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 11),
                     _ScoreGauge(label: 'Fluency', score: fluency),
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 11),
                     _ScoreGauge(label: 'Full sentence', score: completeness),
                   ],
                 ),
@@ -88,9 +124,9 @@ class ScoreCard extends StatelessWidget {
             ],
           ),
           if (summary.trim().isNotEmpty) ...[
-            const SizedBox(height: 13),
+            const SizedBox(height: 15),
             Container(
-              padding: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.only(top: 13),
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(color: context.palette.lineSubtle),
@@ -100,8 +136,8 @@ class ScoreCard extends StatelessWidget {
                 summary,
                 style: TextStyle(
                   color: color,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),
@@ -136,33 +172,33 @@ class _ScoreGauge extends StatelessWidget {
                   label,
                   style: TextStyle(
                     color: context.palette.textSecondary,
-                    fontSize: 11,
+                    fontSize: 12.5,
                     height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(AppSizes.pillRadius),
                   child: LinearProgressIndicator(
                     value: safeScore / 100,
-                    minHeight: 5,
+                    minHeight: 7,
                     backgroundColor: context.palette.line,
-                    color: scoreColor(context, safeScore),
+                    color: scoreGaugeColor(context, safeScore),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 9),
+          const SizedBox(width: 12),
           SizedBox(
-            width: 26,
+            width: 34,
             child: Text(
               '$safeScore',
               textAlign: TextAlign.right,
               style: TextStyle(
                 color: context.palette.textPrimary,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),

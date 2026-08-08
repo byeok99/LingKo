@@ -757,7 +757,6 @@ class _LingKoShellState extends State<LingKoShell> {
                 selectedTab = 1;
               });
             },
-            onOpenReview: () => setState(() => selectedTab = 2),
           )
           : PracticeScreen(
             sentence: selectedSentence,
