@@ -5,6 +5,8 @@ import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.quota.entity.DailyPracticeQuota;
 import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
 import com.lingko.lingko.core.domain.quota.repository.DailyPracticeQuotaRepository;
+import com.lingko.lingko.core.domain.quota.entity.AdRewardReceipt;
+import com.lingko.lingko.core.domain.quota.repository.AdRewardReceiptRepository;
 import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
 import org.springframework.beans.factory.ObjectProvider;
@@ -34,15 +36,18 @@ public class PracticeQuotaService {
 
     private final DailyPracticeQuotaRepository quotaRepository;
     private final UserRepository userRepository;
+    private final AdRewardReceiptRepository adRewardReceiptRepository;
     private final Clock clock;
 
     public PracticeQuotaService(
             DailyPracticeQuotaRepository quotaRepository,
             UserRepository userRepository,
+            AdRewardReceiptRepository adRewardReceiptRepository,
             ObjectProvider<Clock> clockProvider
     ) {
         this.quotaRepository = quotaRepository;
         this.userRepository = userRepository;
+        this.adRewardReceiptRepository = adRewardReceiptRepository;
         this.clock = clockProvider.getIfAvailable(() -> Clock.system(SERVICE_ZONE));
     }
 
@@ -56,6 +61,27 @@ public class PracticeQuotaService {
         PracticeQuotaReservation reservation = reservePractice(userId);
         confirmPractice(reservation);
         return toResponse(findCurrentQuota(userId));
+    }
+
+    /**
+     * 광고 SDK가 획득을 확정한 event 하나를 평가 기회 1회로 바꾼다.
+     *
+     * <p>quota 행을 먼저 잠가 같은 사용자의 병렬 지급을 직렬화한 뒤 event 기록을 확인한다.
+     * 동일 event 재전송은 현재 상태만 반환하며, 자연 충전 timer는 수정하지 않는다.</p>
+     */
+    @Transactional
+    public PracticeQuotaResponse grantAdReward(Long userId, String rewardEventId) {
+        DailyPracticeQuota quota = findOrCreateCurrentQuota(userId);
+        if (adRewardReceiptRepository.existsByUserIdAndRewardEventId(userId, rewardEventId)) {
+            return toResponse(quota);
+        }
+
+        adRewardReceiptRepository.save(AdRewardReceipt.create(userId, rewardEventId));
+        // 버튼을 누른 뒤 자연 충전으로 이미 5회가 된 경쟁 상황에서도 최대치를 넘기지 않는다.
+        if (quota.remainingPractices() < MAX_NATURAL_PRACTICES) {
+            quota.addRewardedPractices(1);
+        }
+        return toResponse(quota);
     }
 
     @Transactional

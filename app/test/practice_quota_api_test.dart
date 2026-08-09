@@ -45,4 +45,49 @@ void main() {
     expect(quota.nextRefillAt, DateTime.parse('2026-06-17T13:00:00+09:00'));
     expect(quota.serverTime, DateTime.parse('2026-06-17T12:17:42+09:00'));
   });
+
+  test(
+    'claimAdReward sends authenticated event ID and maps updated quota',
+    () async {
+      Uri? requestedUri;
+      Map<String, Object?>? requestedBody;
+      Map<String, String>? requestedHeaders;
+      final api = DartIoPracticeQuotaApi(
+        client: ApiClient(
+          baseUrl: 'http://localhost:8080',
+          postJsonWithHeadersTransport: (uri, body, timeout, headers) async {
+            requestedUri = uri;
+            requestedBody = body;
+            requestedHeaders = headers;
+            return ApiResponse(
+              statusCode: 200,
+              body: jsonEncode({
+                'date': '2026-06-17',
+                'freeLimit': 5,
+                'freeUsed': 3,
+                'rewardedAvailable': 1,
+                'remainingPractices': 3,
+                'nextRefillAt': '2026-06-17T13:00:00+09:00',
+                'serverTime': '2026-06-17T12:17:42+09:00',
+              }),
+            );
+          },
+        ),
+      );
+
+      final quota = await api.claimAdReward(
+        accessToken: ' access.jwt ',
+        rewardEventId: 'reward-event-123',
+      );
+
+      expect(
+        requestedUri.toString(),
+        'http://localhost:8080/api/quota/ad-rewards',
+      );
+      expect(requestedHeaders, {'Authorization': 'Bearer access.jwt'});
+      expect(requestedBody, {'rewardEventId': 'reward-event-123'});
+      expect(quota.rewardedAvailable, 1);
+      expect(quota.remainingPractices, 3);
+    },
+  );
 }

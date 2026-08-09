@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 보상 quota API 계약 추가
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: 인증, event ID validation, +1/cap 5, 멱등성, 자연 충전 timer 보존 응답을 문서화했다.
+- 검증: controller/service 테스트와 예시 계약 대조
+- 리스크: 현재 client event ID 계약은 테스트 단계이며 운영 전 SSV transaction 계약으로 강화해야 한다
+
 ## 2026-08-07 - 법무 동의 API 계약 문서화
 
 - 변경 파일: `api-reference.md`

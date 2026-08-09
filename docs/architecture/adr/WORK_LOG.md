@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - practice quota ADR에 광고 보상 전이 추가
+
+- 변경 파일: `0006-atomic-practice-quota-transitions.md`, `WORK_LOG.md`
+- 내용: client reward callback, 인증된 멱등 claim, +1/cap 5, 자연 충전 timer 불변 조건과 SSV 후속 경계를 반영했다.
+- 검증: service unit test와 ADR invariant 대조
+- 리스크: production trust source는 아직 client callback이다
+
 ## 2026-07-29 - 독립 DB Worker 결정으로 SQS ADR 대체
 
 - 변경 파일: `0007-s3-direct-upload-and-db-evaluation-worker.md`, `0008-sqs-independent-evaluation-workers.md`, `0009-independent-db-evaluation-worker.md`, `README.md`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - iOS AdMob 테스트 App ID 등록
+
+- 변경 파일: `Info.plist`, `WORK_LOG.md`
+- 내용: Google 공식 sample App ID와 Google SKAdNetwork identifier를 등록했다.
+- 검증: `plutil -lint Info.plist`, iOS simulator debug build 성공
+- 리스크: 배포 전 실제 App ID와 필요한 전체 SKAdNetwork 목록을 확정해야 한다
+
 ## 2026-08-07 - URL scheme 조회 선언 추가
 
 - 변경 파일: `Info.plist`

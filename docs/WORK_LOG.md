@@ -1,3 +1,10 @@
+## 2026-08-08 - 보상형 광고 MVP 상태 문서 동기화
+
+- 변경 파일: `technical-debt.md`, `mvp-release-execution-checklist.md`, `WORK_LOG.md`
+- 내용: 테스트 AdMob reward flow 구현을 완료 상태로 반영하고 운영 출시 전 Google SSV 검증을 별도 필수 후속 작업으로 구분했다.
+- 검증: 구현·API·보안·ADR 문서 간 상태 문구 대조, `git diff --check`
+- 리스크: 운영 광고 ID와 SSV는 아직 미설정이다
+
 ## 2026-08-07 - 법무 문서에 일본 APPI 세트 추가
 
 - 변경 파일: `legal/jp/` 신설 (상세는 `legal/jp/WORK_LOG.md`)

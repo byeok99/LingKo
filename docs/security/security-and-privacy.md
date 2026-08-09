@@ -105,6 +105,7 @@ Worker 다운로드 후에는 실제 바이트를 기준으로 다음을 다시 
 | 생성 가이드 | 공용 콘텐츠 여부와 수명주기 |
 | 로그 | 개인정보 마스킹과 제한된 보존 기간 |
 | 평가 기회 | 회원 탈퇴 시 삭제 |
+| 광고 보상 event receipt | 중복 지급 방지를 위해 보관하고 회원 탈퇴 시 삭제 |
 | 약관 동의 기록 | 문서 버전·선택값·서버 기록 시각을 보존하고 회원 탈퇴 시 삭제 |
 
 회원 탈퇴는 `evaluation-audio/{userId}/`의 현재 object, 모든 과거 version과 delete marker를 먼저 삭제합니다. S3 삭제가 실패하면 DB와 인증 세션을 보존하고 재시도 가능한 503을 반환하며, S3 삭제가 끝난 경우에만 하나의 DB transaction으로 Refresh 세션, 평가 작업·기록, 쿼터와 사용자 프로필을 삭제합니다. 공유 음절 기준 데이터는 사용자 개인정보가 아니므로 보존합니다. 실제 AWS Lifecycle·Versioning·탈퇴 E2E는 [#71](https://github.com/byeok99/LingKo/issues/71)에서 검증합니다.
@@ -131,6 +132,14 @@ Worker 다운로드 후에는 실제 바이트를 기준으로 다음을 다시 
 ## 권한
 
 현재 가이드 작업 생성·조회 API에는 관리자 인증이 없습니다. 운영 배포 전 최소한 관리자 역할 또는 내부 네트워크·서비스 인증을 적용합니다.
+
+## 광고 보상 신뢰 경계
+
+- 앱은 UMP의 최신 동의 상태에서 `canRequestAds()`가 true일 때만 광고를 요청합니다.
+- SDK의 `onUserEarnedReward`가 오기 전에는 서버 지급 API를 호출하지 않습니다. 광고를 닫기만 한 경우 지급하지 않습니다.
+- 서버는 활성 Bearer session으로 사용자를 식별하고 수량 입력을 받지 않으며 event 하나당 1회만 지급합니다.
+- 사용자별 unique reward receipt와 quota 행 lock으로 동일 event의 재전송·동시 지급을 중복 반영하지 않습니다.
+- 현재 client-generated event ID는 테스트 연동용이라 변조된 앱이 새 ID로 endpoint를 직접 호출하는 것을 증명 수준으로 막지 못합니다. **운영 배포 전 Google SSV 서명 검증과 provider transaction ID idempotency로 교체해야 합니다.**
 
 ## 보안 점검 체크리스트
 

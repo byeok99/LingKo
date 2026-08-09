@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 로컬 실행에 광고 단위 ID 전달 추가
+
+- 변경 파일: `run-local.sh`, `WORK_LOG.md`
+- 내용: Android/iOS Rewarded Ad Unit ID 환경변수를 `--dart-define`으로 전달한다.
+- 검증: `bash -n run-local.sh`
+- 리스크: 환경변수가 비어 있으면 광고 버튼이 숨겨진다
+
 ## 2026-07-27 - iOS CocoaPods UTF-8 실행 환경 고정
 
 - 변경 파일: `run-local.sh`, `WORK_LOG.md`

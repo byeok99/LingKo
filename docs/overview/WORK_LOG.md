@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 보상 구현 범위 갱신
+
+- 변경 파일: `product-and-scope.md`, `WORK_LOG.md`
+- 내용: callback UI만 있던 과거 설명을 AdMob·UMP·인증 멱등 지급 완료와 운영 SSV 미구현 상태로 교체했다.
+- 검증: 앱·Backend 구현 및 광고 관련 활성 문서와 대조
+- 리스크: 운영 광고 활성화 전 Google SSV 검증이 필요하다
+
 ## 2026-08-04 - 구현 범위에서 언어 설정 제거
 
 - 변경 파일: `product-and-scope.md`

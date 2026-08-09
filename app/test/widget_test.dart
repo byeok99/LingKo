@@ -28,6 +28,7 @@ import 'package:lingko_app/models/consent_selection.dart';
 import 'package:lingko_app/models/legal_consent_status.dart';
 import 'package:lingko_app/services/legal_document_launcher.dart';
 import 'package:lingko_app/services/sentence_speech_service.dart';
+import 'package:lingko_app/services/rewarded_ad_service.dart';
 import 'package:lingko_app/widgets/guide_sheet.dart';
 import 'package:lingko_app/widgets/result_tile.dart';
 import 'package:lingko_app/widgets/sentence_card.dart';
@@ -308,8 +309,10 @@ class FakePracticeQuotaApi implements PracticeQuotaApi {
   });
 
   PracticeQuota quota;
+  PracticeQuota? rewardQuota;
   String? lastAccessToken;
   Object? error;
+  String? lastRewardEventId;
 
   @override
   Future<PracticeQuota> fetchTodayQuota({required String accessToken}) async {
@@ -320,6 +323,47 @@ class FakePracticeQuotaApi implements PracticeQuotaApi {
     }
 
     return quota;
+  }
+
+  @override
+  Future<PracticeQuota> claimAdReward({
+    required String accessToken,
+    required String rewardEventId,
+  }) async {
+    lastAccessToken = accessToken;
+    lastRewardEventId = rewardEventId;
+    if (error != null) {
+      throw error!;
+    }
+    quota = rewardQuota ?? quota;
+    return quota;
+  }
+}
+
+/// 실제 Mobile Ads SDK 없이 reward callback의 획득·취소 결과를 shell에 전달한다.
+class FakePracticeRewardAdService implements PracticeRewardAdService {
+  FakePracticeRewardAdService({
+    this.result = RewardedAdResult.earned,
+    this.isConfigured = true,
+  });
+
+  final RewardedAdResult result;
+
+  @override
+  final bool isConfigured;
+
+  int showCount = 0;
+  int privacyOptionsCount = 0;
+
+  @override
+  Future<RewardedAdResult> show() async {
+    showCount++;
+    return result;
+  }
+
+  @override
+  Future<void> showPrivacyOptions() async {
+    privacyOptionsCount++;
   }
 }
 
@@ -1279,6 +1323,83 @@ void main() {
     expect(adRequests, 1);
     expect(find.text('4/5'), findsOneWidget);
     expect(find.text('42:17'), findsOneWidget);
+  });
+
+  testWidgets(
+    'earned AdMob reward is claimed once and updates energy immediately',
+    (WidgetTester tester) async {
+      final quotaApi = FakePracticeQuotaApi(
+          quota: const PracticeQuota(
+            date: '2026-06-17',
+            freeLimit: 5,
+            freeUsed: 2,
+            rewardedAvailable: 0,
+            remainingPractices: 3,
+            nextRefillAt: null,
+            serverTime: null,
+          ),
+        )
+        ..rewardQuota = const PracticeQuota(
+          date: '2026-06-17',
+          freeLimit: 5,
+          freeUsed: 2,
+          rewardedAvailable: 1,
+          remainingPractices: 4,
+          nextRefillAt: null,
+          serverTime: null,
+        );
+      final adService = FakePracticeRewardAdService();
+      await tester.pumpWidget(
+        LingKoApp(
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: FakeEvaluationApi(),
+          practiceQuotaApi: quotaApi,
+          authService: FakeAppAuthService(restoreExistingSession: true),
+          audioRecorderService: FakeAudioRecorderService(),
+          practiceRewardAdService: adService,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('practice-energy-ad-button')));
+      await tester.pumpAndSettle();
+
+      expect(adService.showCount, 1);
+      expect(
+        quotaApi.lastRewardEventId,
+        matches(RegExp(r'^ad-[0-9]+-[0-9]+-[0-9]+$')),
+      );
+      expect(find.text('4/5'), findsOneWidget);
+    },
+  );
+
+  testWidgets('dismissed rewarded ad does not call the quota reward endpoint', (
+    WidgetTester tester,
+  ) async {
+    final quotaApi = FakePracticeQuotaApi();
+    final adService = FakePracticeRewardAdService(
+      result: RewardedAdResult.dismissed,
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: quotaApi,
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+        practiceRewardAdService: adService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('practice-energy-ad-button')));
+    await tester.pumpAndSettle();
+
+    expect(adService.showCount, 1);
+    expect(quotaApi.lastRewardEventId, isNull);
+    expect(find.text('3/5'), findsOneWidget);
   });
 
   testWidgets(
@@ -2384,6 +2505,30 @@ void main() {
     ]);
   });
 
+  testWidgets('Profile opens UMP ad privacy options when ads are configured', (
+    WidgetTester tester,
+  ) async {
+    final adService = FakePracticeRewardAdService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+        practiceRewardAdService: adService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(_navigationLabel('Profile'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('profile-ad-privacy')));
+    await tester.pumpAndSettle();
+
+    expect(adService.privacyOptionsCount, 1);
+  });
+
   testWidgets('Profile reports when the document cannot be opened', (
     WidgetTester tester,
   ) async {
@@ -2426,8 +2571,8 @@ void main() {
     await tester.tap(_navigationLabel('Profile'));
     await tester.pumpAndSettle();
 
-    // 광고 SDK와 문의 창구는 아직 붙지 않았다. 눌리는 행을 두면 눌러도 아무 일이 없어
-    // 고장으로 보이므로, 연결되기 전에는 비활성이어야 한다.
+    // 기본 test build에는 광고 ID와 문의 callback이 없다. 눌러도 아무 일이 없는 행은
+    // 고장으로 보이므로, 설정이 제공되기 전에는 비활성이어야 한다.
     for (final key in const [
       ValueKey('profile-ad-privacy'),
       ValueKey('profile-contact'),

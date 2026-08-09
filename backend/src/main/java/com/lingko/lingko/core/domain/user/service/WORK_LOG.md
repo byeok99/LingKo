@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 계정 삭제에 광고 receipt 정리 연결
+
+- 변경 파일: `AccountDeletionPersistenceService.java`, `WORK_LOG.md`
+- 내용: 계정 삭제 transaction에서 사용자 광고 보상 receipt도 함께 삭제한다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 없음
+
 ## 2026-08-04 - preferences 서비스 삭제
 
 - 변경 파일: `UserPreferencesService.java` (삭제)

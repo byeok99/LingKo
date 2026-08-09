@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 인증 광고 보상 청구 endpoint 추가
+
+- 변경 파일: `PracticeQuotaController.java`, `WORK_LOG.md`
+- 내용: 로그인 사용자의 광고 reward event를 서버 quota 서비스에 위임하는 `POST /api/quota/ad-rewards`를 추가했다.
+- 검증: `./gradlew test integrationTest` 266개 통과
+- 리스크: 운영 전 Google SSV 검증 endpoint로 신뢰 경계를 강화해야 한다
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `PracticeQuotaController.java`, `WORK_LOG.md`

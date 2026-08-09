@@ -36,6 +36,7 @@ import '../services/audio_recorder_service.dart';
 import '../services/legal_document_launcher.dart';
 import '../services/app_auth_service.dart';
 import '../services/sentence_speech_service.dart';
+import '../services/rewarded_ad_service.dart';
 import 'app_theme.dart';
 
 // 앱 전체 설정을 담당하는 최상위 위젯입니다.
@@ -54,6 +55,7 @@ class LingKoApp extends StatelessWidget {
     this.audioRecorderService,
     this.sentenceSpeechService,
     this.legalDocumentLauncher,
+    this.practiceRewardAdService,
     this.onRequestPracticeReward,
   });
 
@@ -66,6 +68,9 @@ class LingKoApp extends StatelessWidget {
   final AudioRecorderService? audioRecorderService;
   final SentenceSpeechService? sentenceSpeechService;
   final LegalDocumentLauncher? legalDocumentLauncher;
+  final PracticeRewardAdService? practiceRewardAdService;
+
+  /// 테스트·호스트 앱이 광고 지급 흐름 전체를 대체할 때만 사용하는 override다.
   final Future<void> Function()? onRequestPracticeReward;
 
   @override
@@ -92,6 +97,8 @@ class LingKoApp extends StatelessWidget {
             sentenceSpeechService ?? FlutterTtsSentenceSpeechService(),
         legalDocumentLauncher:
             legalDocumentLauncher ?? UrlLauncherLegalDocumentLauncher(),
+        practiceRewardAdService:
+            practiceRewardAdService ?? GooglePracticeRewardAdService(),
         onRequestPracticeReward: onRequestPracticeReward,
       ),
     );
@@ -112,6 +119,7 @@ class LingKoShell extends StatefulWidget {
     required this.audioRecorderService,
     required this.sentenceSpeechService,
     required this.legalDocumentLauncher,
+    required this.practiceRewardAdService,
     this.onRequestPracticeReward,
   });
 
@@ -124,6 +132,7 @@ class LingKoShell extends StatefulWidget {
   final AudioRecorderService audioRecorderService;
   final SentenceSpeechService sentenceSpeechService;
   final LegalDocumentLauncher legalDocumentLauncher;
+  final PracticeRewardAdService practiceRewardAdService;
   final Future<void> Function()? onRequestPracticeReward;
 
   @override
@@ -660,17 +669,38 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
-  /// 광고 adapter가 실제 보상을 완료한 뒤에만 서버 quota를 다시 조회한다.
+  /// 광고 SDK가 실제 reward callback을 전달한 경우에만 서버에 1회 지급을 요청한다.
   Future<void> requestPracticeReward() async {
-    final requestReward = widget.onRequestPracticeReward;
-    if (requestReward == null || isRequestingPracticeReward) {
+    if (isRequestingPracticeReward) {
       return;
     }
     setState(() => isRequestingPracticeReward = true);
     try {
-      await requestReward();
+      final override = widget.onRequestPracticeReward;
+      if (override != null) {
+        await override();
+        if (mounted) {
+          await loadPracticeQuota();
+        }
+        return;
+      }
+
+      final result = await widget.practiceRewardAdService.show();
+      if (result != RewardedAdResult.earned) {
+        return;
+      }
+      final nextQuota = await widget.authService.runAuthenticated(
+        (accessToken) => widget.practiceQuotaApi.claimAdReward(
+          accessToken: accessToken,
+          rewardEventId: _newRewardEventId(),
+        ),
+      );
       if (mounted) {
-        await loadPracticeQuota();
+        setState(() => practiceQuota = nextQuota);
+      }
+    } on AuthSessionExpiredException {
+      if (mounted) {
+        await handleSessionChanged(null);
       }
     } catch (_) {
       if (mounted) {
@@ -681,6 +711,19 @@ class _LingKoShellState extends State<LingKoShell> {
     } finally {
       if (mounted) {
         setState(() => isRequestingPracticeReward = false);
+      }
+    }
+  }
+
+  /// Profile에서 UMP의 광고 개인정보 선택 화면을 다시 연다.
+  Future<void> openAdPrivacyOptions() async {
+    try {
+      await widget.practiceRewardAdService.showPrivacyOptions();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open ad privacy settings.')),
+        );
       }
     }
   }
@@ -861,6 +904,12 @@ class _LingKoShellState extends State<LingKoShell> {
     return 'evaluation-${DateTime.now().microsecondsSinceEpoch}-$random';
   }
 
+  String _newRewardEventId() {
+    final first = Random.secure().nextInt(1 << 32);
+    final second = Random.secure().nextInt(1 << 32);
+    return 'ad-${DateTime.now().microsecondsSinceEpoch}-$first-$second';
+  }
+
   // Practice의 통합 입력에서 표준 발음 준비가 끝난 최신 문장으로 연습 대상을 교체합니다.
   void useCustomSentence(PracticeSentence sentence) {
     final normalizedSentence = sentence.normalizedForPractice();
@@ -919,7 +968,9 @@ class _LingKoShellState extends State<LingKoShell> {
         onOpenPractice: () => setState(() => selectedTab = 1),
         onOpenCustomPractice: openCustomPractice,
         onRequestPracticeReward:
-            widget.onRequestPracticeReward == null || isRequestingPracticeReward
+            (widget.onRequestPracticeReward == null &&
+                        !widget.practiceRewardAdService.isConfigured) ||
+                    isRequestingPracticeReward
                 ? null
                 : requestPracticeReward,
         displayName: session?.user.name,
@@ -980,9 +1031,11 @@ class _LingKoShellState extends State<LingKoShell> {
         onOpenReview: () => setState(() => selectedTab = 2),
         onOpenDocument: (document) => unawaited(openLegalDocument(document)),
         onOpenSavedSentences: () => setState(() => isSavedSentencesOpen = true),
-        // 광고 SDK와 문의 창구가 아직 붙지 않아 열 화면이 없다. null로 두면
-        // Profile이 해당 행을 눌리지 않게 표시한다. 연결되면 여기서 화면을 넘긴다.
-        onOpenAdPrivacy: null,
+        onOpenAdPrivacy:
+            widget.practiceRewardAdService.isConfigured
+                ? () => unawaited(openAdPrivacyOptions())
+                : null,
+        // 문의 창구는 아직 붙지 않아 연결 전까지 행을 비활성으로 둔다.
         onOpenContact: null,
       ),
     ];

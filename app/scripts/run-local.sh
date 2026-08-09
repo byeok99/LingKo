@@ -6,6 +6,8 @@ platform="${1:-}"
 device_id="${DEVICE_ID:-${2:-}}"
 google_server_client_id="${GOOGLE_SERVER_CLIENT_ID:-${GOOGLE_ID:-}}"
 api_url="${LINGKO_API_BASE_URL:-${API_URL:-}}"
+android_rewarded_ad_unit_id="${ADMOB_ANDROID_REWARDED_AD_UNIT_ID:-}"
+ios_rewarded_ad_unit_id="${ADMOB_IOS_REWARDED_AD_UNIT_ID:-}"
 
 usage() {
   cat <<'EOF'
@@ -16,6 +18,8 @@ Usage:
 Optional aliases:
   GOOGLE_ID=<web-client-id>
   API_URL=<backend-url>
+  ADMOB_ANDROID_REWARDED_AD_UNIT_ID=<android-rewarded-ad-unit-id>
+  ADMOB_IOS_REWARDED_AD_UNIT_ID=<ios-rewarded-ad-unit-id>
 
 Defaults:
   ios     -> http://localhost:8080
@@ -53,4 +57,6 @@ echo "Launching LingKo on $platform with API $api_url"
 exec flutter run \
   "${device_args[@]}" \
   --dart-define="GOOGLE_SERVER_CLIENT_ID=$google_server_client_id" \
-  --dart-define="LINGKO_API_BASE_URL=$api_url"
+  --dart-define="LINGKO_API_BASE_URL=$api_url" \
+  --dart-define="ADMOB_ANDROID_REWARDED_AD_UNIT_ID=$android_rewarded_ad_unit_id" \
+  --dart-define="ADMOB_IOS_REWARDED_AD_UNIT_ID=$ios_rewarded_ad_unit_id"

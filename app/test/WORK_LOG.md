@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 보상형 광고와 quota 회귀 테스트 추가
+
+- 변경 파일: `rewarded_ad_service_test.dart`, `practice_quota_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: ID 설정, SDK 초기화 재시도, reward/취소, dispose, 서버 청구, 즉시 UI 갱신, UMP 설정 진입을 검증한다.
+- 검증: `flutter test --coverage` 124개 통과(라인 80.26%)
+- 리스크: 실제 Google test creative 표시는 시뮬레이터·에뮬레이터 수동 확인이 남아 있다
+
 ## 2026-08-07 - 로그인·복원 세션 동의 gate 회귀 테스트
 
 - 변경 파일: `legal_consent_api_test.dart`, `widget_test.dart`

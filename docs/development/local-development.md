@@ -103,6 +103,17 @@ DEVICE_ID=emulator-5554 \
 ./scripts/run-local.sh android
 ```
 
+보상형 광고까지 확인하려면 플랫폼별 test Rewarded Ad Unit ID를 함께 전달합니다. native App ID는 Google 공식 sample 값이 이미 설정되어 있습니다.
+
+```bash
+ADMOB_ANDROID_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/5224354917 \
+ADMOB_IOS_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/1712485313 \
+GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
+./scripts/run-local.sh ios
+```
+
+광고 ID가 없으면 Home의 `+`와 Profile의 광고 개인정보 설정은 비활성입니다. 광고 SDK 변경은 hot reload가 아닌 앱 완전 재빌드가 필요합니다.
+
 `run-local.sh`는 iOS에 `http://localhost:8080`, Android emulator에 `http://10.0.2.2:8080`을 자동 적용합니다. Android 실기기는 `API_URL=http://개발-PC-IP:8080`을 추가합니다.
 
 ## Google OAuth 구성
@@ -127,7 +138,7 @@ Google Cloud의 Android OAuth Client에는 package name `com.byeok.lingko`와 `V
 ### Android
 
 - `RECORD_AUDIO`
-- 현재 최소 SDK 23
+- 현재 최소 SDK 24
 
 ### iOS
 

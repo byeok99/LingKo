@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 보상 중복 방지 receipt entity 추가
+
+- 변경 파일: `AdRewardReceipt.java`, `WORK_LOG.md`
+- 내용: 사용자별 reward event 처리 이력을 저장해 동일 보상을 멱등 처리한다.
+- 검증: quota service test 및 Backend 전체 테스트 통과
+- 리스크: 운영 SSV 전에는 event ID가 클라이언트 생성 값이다
+
 ## 2026-08-04 - next_refill_at nullable 의미 주석
 
 - 변경 파일: `DailyPracticeQuota.java`

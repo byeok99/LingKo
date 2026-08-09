@@ -41,6 +41,8 @@ dependencies:
   flutter_tts: ^4.2.5
   video_player: ^2.9.2
   url_launcher: ^6.3.1
+  # Flutter 3.29/Dart 3.7과 호환되는 Mobile Ads major를 고정한다.
+  google_mobile_ads: ^6.0.0
 
 dev_dependencies:
   flutter_test:

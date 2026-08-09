@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 reward event 입력 계약 추가
+
+- 변경 파일: `AdRewardClaimRequest.java`, `WORK_LOG.md`
+- 내용: reward event ID를 16~80자 영숫자·밑줄·하이픈으로 제한하는 validation DTO를 추가했다.
+- 검증: controller validation test 및 Backend 전체 테스트 통과
+- 리스크: SSV 도입 시 Google transaction ID 계약으로 교체 또는 확장이 필요하다
+
 ## 2026-08-04 - serverTime 동봉 이유 주석
 
 - 변경 파일: `PracticeQuotaResponse.java`

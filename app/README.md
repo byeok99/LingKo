@@ -83,7 +83,7 @@ flowchart TD
 
 `record` 패키지로 WAV를 생성합니다.
 
-- Android: `RECORD_AUDIO` 권한, 최소 SDK 23
+- Android: `RECORD_AUDIO` 권한, 최소 SDK 24
 - iOS: `NSMicrophoneUsageDescription`, CocoaPods 필요
 - 서버 요구 형식: 16-bit mono PCM WAV, 최대 10MiB
 
@@ -123,6 +123,19 @@ DEVICE_ID=emulator-5554 \
 
 `GOOGLE_SERVER_CLIENT_ID`는 백엔드의 `GOOGLE_CLIENT_ID`와 같은 Web application Client ID를 사용합니다.
 스크립트는 iOS에서 `localhost`, Android emulator에서 `10.0.2.2`를 기본 Backend 주소로 사용합니다. 실기기는 `API_URL=http://개발-PC-IP:8080`을 함께 전달합니다.
+
+### AdMob 보상형 광고 테스트
+
+Android/iOS native 설정에는 Google 공식 sample App ID가 들어 있습니다. 아래 Rewarded Ad Unit ID만 환경변수로 전달하면 `+` 버튼, UMP 개인정보 동의, 광고 완료 후 서버의 평가 기회 1회 지급까지 테스트할 수 있습니다.
+
+```bash
+ADMOB_ANDROID_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/5224354917 \
+ADMOB_IOS_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/1712485313 \
+GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
+./scripts/run-local.sh ios
+```
+
+ID가 비어 있으면 동작하지 않는 `+` 버튼과 광고 개인정보 설정 행을 노출하지 않습니다. 운영 빌드 전에는 native sample App ID와 Rewarded Ad Unit ID를 LingKo 운영 값으로 교체하고 Google SSV를 연결해야 합니다.
 
 Android Google 로그인은 Google Cloud의 Android OAuth Client에 `com.byeok.lingko` package name과 현재 Debug SHA-1이 등록되어 있어야 합니다.
 
