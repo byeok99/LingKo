@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - Android 최소 SDK 호환 범위 갱신
+
+- 변경 파일: `build.gradle.kts`, `WORK_LOG.md`
+- 내용: 현재 `flutter_tts` Android 구현 요구사항에 맞춰 minSdk를 24로 갱신했다.
+- 검증: Android debug APK 빌드 성공
+- 리스크: Android 6(API 23) 지원은 중단된다
+
 ## 2026-07-30 - Android TTS service 탐색 허용
 
 - 변경 파일: `src/main/AndroidManifest.xml`, `WORK_LOG.md`

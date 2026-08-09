@@ -12,7 +12,7 @@ android {
     ndkVersion = "27.0.12077973"
 
     compileOptions {
-        // minSdk 23에서도 plugin의 최신 Java API를 사용할 수 있도록 D8 core library desugaring을 활성화한다.
+        // minSdk 24에서도 plugin의 최신 Java API를 사용할 수 있도록 D8 core library desugaring을 활성화한다.
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -25,8 +25,8 @@ android {
     defaultConfig {
         // Google OAuth와 앱 배포에서 동일한 LingKo 설치 단위를 식별하는 정식 패키지명이다.
         applicationId = "com.byeok.lingko"
-        // 사용하는 인증·보안 저장 플러그인의 지원 범위에 맞춰 최소 SDK를 23으로 제한한다.
-        minSdk = 23
+        // flutter_tts의 현재 Android 구현이 사용하는 API에 맞춰 최소 SDK를 24로 제한한다.
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
