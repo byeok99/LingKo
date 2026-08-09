@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 보상 energy 지급 규칙 추가
+
+- 변경 파일: `PracticeQuotaService.java`, `WORK_LOG.md`
+- 내용: 인증 사용자에게 중복 event당 최대 한 번, 총 5개 미만일 때만 +1을 지급하며 자연 충전 시각은 유지한다.
+- 검증: 지급·중복·cap·timer 보존 unit test와 Backend 전체 테스트 통과
+- 리스크: 운영 전 광고 완료 증명을 Google SSV로 검증해야 한다
+
 ## 2026-07-30 - 최종 실패용 비예외 예약 복구
 
 - 변경 파일: `PracticeQuotaService.java`, `WORK_LOG.md`

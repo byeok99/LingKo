@@ -17,6 +17,7 @@ import java.time.ZoneOffset;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -82,5 +83,44 @@ class PracticeQuotaControllerTest {
                         .header("Authorization", "Bearer invalid-token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
+    }
+
+    @Test
+    @DisplayName("POST /api/quota/ad-rewards는 인증 사용자와 event ID로 1회 보상을 지급한다")
+    void claimAdReward() throws Exception {
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
+        when(quotaService.grantAdReward(7L, "reward-event-123")).thenReturn(new PracticeQuotaResponse(
+                LocalDate.of(2026, 6, 29),
+                5,
+                3,
+                1,
+                3,
+                OffsetDateTime.of(2026, 6, 29, 1, 30, 0, 0, ZoneOffset.ofHours(9)),
+                OffsetDateTime.of(2026, 6, 29, 0, 48, 12, 0, ZoneOffset.ofHours(9))
+        ));
+
+        mockMvc.perform(post("/api/quota/ad-rewards")
+                        .header("Authorization", "Bearer valid-access-token")
+                        .contentType("application/json")
+                        .content("{\"rewardEventId\":\"reward-event-123\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rewardedAvailable").value(1))
+                .andExpect(jsonPath("$.remainingPractices").value(3));
+    }
+
+    @Test
+    @DisplayName("광고 보상 event ID는 비어 있거나 너무 길 수 없다")
+    void validatesRewardEventId() throws Exception {
+        mockMvc.perform(post("/api/quota/ad-rewards")
+                        .header("Authorization", "Bearer valid-access-token")
+                        .contentType("application/json")
+                        .content("{\"rewardEventId\":\"\"}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/quota/ad-rewards")
+                        .header("Authorization", "Bearer valid-access-token")
+                        .contentType("application/json")
+                        .content("{\"rewardEventId\":\"" + "x".repeat(81) + "\"}"))
+                .andExpect(status().isBadRequest());
     }
 }

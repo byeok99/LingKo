@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 보상 endpoint 인증·validation 테스트 추가
+
+- 변경 파일: `PracticeQuotaControllerTest.java`, `WORK_LOG.md`
+- 내용: 인증 누락, 유효하지 않은 event ID, 정상 quota 응답 계약을 검증한다.
+- 검증: Backend 전체 test·integrationTest 266개 통과
+- 리스크: 실제 Google SSV callback integration test는 후속 작업이다
+
 ## 2026-07-24 - MockBean 제거 예정 API 교체
 
 - 변경 파일: `PracticeQuotaControllerTest.java`, `WORK_LOG.md`

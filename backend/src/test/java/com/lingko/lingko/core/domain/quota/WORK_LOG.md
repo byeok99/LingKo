@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 energy 지급 규칙 테스트 추가
+
+- 변경 파일: `PracticeQuotaServiceTest.java`, `WORK_LOG.md`
+- 내용: +1 지급, 자연 충전 timer 유지, 동일 event 멱등성, 5개 cap을 고정했다.
+- 검증: Backend 전체 test·integrationTest 266개 통과
+- 리스크: 없음
+
 ## 2026-07-30 - 이미 복구된 예약 판별 테스트
 
 - 변경 파일: `PracticeQuotaServiceTest.java`, `WORK_LOG.md`

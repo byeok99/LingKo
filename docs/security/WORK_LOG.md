@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 보상 신뢰 경계와 데이터 보존 문서화
+
+- 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`
+- 내용: receipt의 수집·삭제 범위와 클라이언트 callback만으로 운영 보상을 신뢰할 수 없는 이유를 기록했다.
+- 검증: entity, account deletion, API validation 구현과 대조
+- 리스크: Google SSV signature·transaction 검증 구현 전 운영 광고 활성화 금지
+
 ## 2026-08-07 - 법무 동의 보안 경계 문서화
 
 - 변경 파일: `security-and-privacy.md`

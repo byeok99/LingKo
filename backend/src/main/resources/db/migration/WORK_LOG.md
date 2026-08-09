@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 보상 receipt migration 추가
+
+- 변경 파일: `V19__add_ad_reward_receipts.sql`, `WORK_LOG.md`
+- 내용: 사용자별 reward event unique 제약, 사용자 FK cascade와 조회 index를 가진 receipt table을 추가했다.
+- 검증: Backend integration test의 Flyway migration 적용 성공
+- 리스크: 기존 실행 중인 로컬 Docker backend는 image 재빌드가 필요하다
+
 ## 2026-08-07 - 법무 동의 이력 테이블 추가
 
 - 변경 파일: `V18__add_legal_consents.sql`

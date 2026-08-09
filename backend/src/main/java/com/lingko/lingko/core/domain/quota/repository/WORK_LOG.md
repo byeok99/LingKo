@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 보상 receipt 저장소 추가
+
+- 변경 파일: `AdRewardReceiptRepository.java`, `WORK_LOG.md`
+- 내용: 사용자·event 중복 조회와 계정 삭제용 일괄 삭제 계약을 추가했다.
+- 검증: quota 및 account deletion 관련 Backend 전체 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-04 - 현재 에너지 조회의 write lock 명시
 
 - 변경 파일: `DailyPracticeQuotaRepository.java`

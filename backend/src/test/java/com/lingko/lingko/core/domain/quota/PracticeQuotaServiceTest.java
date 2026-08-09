@@ -4,6 +4,7 @@ import com.lingko.lingko.api.quota.dto.PracticeQuotaResponse;
 import com.lingko.lingko.core.domain.quota.entity.DailyPracticeQuota;
 import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
 import com.lingko.lingko.core.domain.quota.repository.DailyPracticeQuotaRepository;
+import com.lingko.lingko.core.domain.quota.repository.AdRewardReceiptRepository;
 import com.lingko.lingko.core.domain.quota.service.PracticeQuotaService;
 import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
@@ -45,6 +46,9 @@ class PracticeQuotaServiceTest {
 
     @Autowired
     private DailyPracticeQuotaRepository quotaRepository;
+
+    @Autowired
+    private AdRewardReceiptRepository adRewardReceiptRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -239,6 +243,52 @@ class PracticeQuotaServiceTest {
         assertThat(reservation.source()).isEqualTo(PracticeQuotaService.QuotaSource.REWARDED);
         assertThat(response.rewardedAvailable()).isEqualTo(1);
         assertThat(response.remainingPractices()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("광고 보상은 1회를 추가하되 진행 중인 자연 충전 timer를 바꾸지 않는다")
+    void grantsOneAdRewardWithoutResettingRefillTimer() {
+        User user = saveUser();
+        quotaService.consumePractice(user.getUserIdx());
+        quotaService.consumePractice(user.getUserIdx());
+        Instant originalRefillAt = quotaService.getTodayQuota(user.getUserIdx())
+                .nextRefillAt()
+                .toInstant();
+
+        clock.advance(Duration.ofMinutes(20));
+        PracticeQuotaResponse response = quotaService.grantAdReward(user.getUserIdx(), "reward-event-123");
+
+        assertThat(response.rewardedAvailable()).isEqualTo(1);
+        assertThat(response.remainingPractices()).isEqualTo(4);
+        assertThat(response.nextRefillAt().toInstant()).isEqualTo(originalRefillAt);
+        assertThat(adRewardReceiptRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("같은 광고 reward event는 재요청해도 한 번만 지급한다")
+    void grantsSameRewardEventOnlyOnce() {
+        User user = saveUser();
+        quotaService.consumePractice(user.getUserIdx());
+        quotaService.consumePractice(user.getUserIdx());
+
+        quotaService.grantAdReward(user.getUserIdx(), "reward-event-123");
+        PracticeQuotaResponse repeated = quotaService.grantAdReward(user.getUserIdx(), "reward-event-123");
+
+        assertThat(repeated.rewardedAvailable()).isEqualTo(1);
+        assertThat(repeated.remainingPractices()).isEqualTo(4);
+        assertThat(adRewardReceiptRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("현재 기회가 최대 5회이면 광고 event를 기록하되 추가 지급하지 않는다")
+    void doesNotExceedFivePractices() {
+        User user = saveUser();
+
+        PracticeQuotaResponse response = quotaService.grantAdReward(user.getUserIdx(), "reward-event-at-max");
+
+        assertThat(response.remainingPractices()).isEqualTo(5);
+        assertThat(response.rewardedAvailable()).isZero();
+        assertThat(adRewardReceiptRepository.count()).isEqualTo(1);
     }
 
     private User saveUser() {
