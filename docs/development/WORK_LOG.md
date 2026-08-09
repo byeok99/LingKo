@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 로컬 AdMob 테스트 실행 절차 추가
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: Google 공식 플랫폼별 Rewarded test Ad Unit ID와 native plugin 반영을 위한 full rebuild 절차를 추가하고 Android 최소 SDK 문서를 24로 동기화했다.
+- 검증: 공식 Google sample ID로 Android/iOS debug build 성공
+- 리스크: 운영 ID로 바꿀 때 native App ID도 함께 교체해야 한다
+
 ## 2026-08-03 - 외부 테스트와 가이드 seed 절차 보강
 
 - 변경 파일: `testing-and-troubleshooting.md`, `WORK_LOG.md`

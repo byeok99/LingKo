@@ -8,6 +8,12 @@ import 'api_client.dart';
 /// 화면과 서비스가 HTTP 구현이 아닌 추상 계약에 의존하도록 인터페이스 역할의 추상 클래스를 선택했다.
 abstract class PracticeQuotaApi {
   Future<PracticeQuota> fetchTodayQuota({required String accessToken});
+
+  /// 광고 SDK가 확정한 event 하나를 서버 정책의 평가 기회 1회로 교환한다.
+  Future<PracticeQuota> claimAdReward({
+    required String accessToken,
+    required String rewardEventId,
+  });
 }
 
 /// Dart Io Practice 할당량 Api 백엔드 요청·응답 매핑을 구현한다.
@@ -23,6 +29,19 @@ class DartIoPracticeQuotaApi implements PracticeQuotaApi {
       'Authorization': 'Bearer ${accessToken.trim()}',
     });
 
+    return PracticeQuota.fromJson(json);
+  }
+
+  @override
+  Future<PracticeQuota> claimAdReward({
+    required String accessToken,
+    required String rewardEventId,
+  }) async {
+    final json = await _client.postJsonWithHeaders(
+      '/api/quota/ad-rewards',
+      {'rewardEventId': rewardEventId.trim()},
+      {'Authorization': 'Bearer ${accessToken.trim()}'},
+    );
     return PracticeQuota.fromJson(json);
   }
 }

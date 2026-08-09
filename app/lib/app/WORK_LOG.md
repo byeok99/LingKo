@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 시청과 practice energy 갱신 연결
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: reward callback이 확인된 경우에만 인증 API를 호출하고 서버 응답 quota로 UI를 즉시 갱신한다. ID 미설정 빌드는 광고 버튼을 숨긴다.
+- 검증: 관련 widget test 및 Flutter 전체 테스트 통과
+- 리스크: 광고 완료와 서버 청구 사이의 네트워크 실패를 복구하는 pending claim queue는 아직 없다
+
 ## 2026-08-07 - 복원 세션의 법무 동의 gate 강제
 
 - 변경 파일: `lingko_app.dart`

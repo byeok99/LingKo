@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 보상 quota 청구 API 연동
+
+- 변경 파일: `practice_quota_api.dart`, `WORK_LOG.md`
+- 내용: 인증된 reward event ID를 서버에 보내고 실제 갱신 quota를 매핑하는 API 경계를 추가했다.
+- 검증: `flutter test test/practice_quota_api_test.dart`, Flutter 전체 테스트 통과
+- 리스크: 운영 전 서버가 Google SSV transaction을 검증하도록 계약 강화가 필요하다
+
 ## 2026-08-07 - 법무 동의 API client 추가
 
 - 변경 파일: `legal_consent_api.dart`

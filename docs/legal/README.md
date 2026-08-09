@@ -72,9 +72,9 @@
 | 약관·처리방침 전문 열람 | **구현 완료.** 백엔드가 `GET /legal/terms`, `GET /legal/privacy`로 서빙하고(`?lang=ko\|en`), 앱의 동의 화면과 Profile이 이 URL을 브라우저로 연다. 스토어 심사에 제출할 공개 URL도 이 주소를 쓴다 |
 | 만 16세 이상 | 동의 화면에 안내 문구만 있고 실제 연령 확인 수단이 없다 |
 | Apple 로그인 | `User.SocialType`에 enum만 있고 구현 없음 |
-| Google AdMob 광고 | `pubspec.yaml`에 광고 SDK 없음 |
-| CMP(EEA 사전 동의) · ATT(iOS) | 미구현 |
-| 앱 내 설정 화면 5개 항목 | **행은 모두 배치 완료** (Profile 탭). 이용약관·개인정보처리방침은 실제 공개 URL로 열리고, 회원 탈퇴는 기존 버튼이 동작한다. **광고 개인정보 설정과 문의는 기능이 없어 비활성 상태** |
+| Google AdMob 광고 | **테스트 연동 완료.** Rewarded Ad Unit ID가 있는 빌드에서 광고 완료 후 서버가 평가 기회 1회를 지급한다. 운영 App/Ad Unit ID와 SSV 검증은 미적용 |
+| CMP(EEA 사전 동의) · ATT(iOS) | Google UMP의 consent update·필수 form·privacy options 재진입을 연결했다. ATT prompt는 미구현 |
+| 앱 내 설정 화면 5개 항목 | **행은 모두 배치 완료** (Profile 탭). 이용약관·개인정보처리방침은 공개 URL로 열리고, 광고 개인정보 설정은 광고 ID가 있는 빌드에서 UMP options를 열며, 회원 탈퇴는 동작한다. **문의는 기능이 없어 비활성 상태** |
 | 마케팅 수신 동의의 서버 저장 및 철회 | 가입 시 선택값의 서버 저장은 구현 완료. Profile에서 이후 철회·변경하는 기능은 미구현 |
 | 휴면 전환·사전 통지·자동 삭제 | 백엔드 배치 없음 |
 

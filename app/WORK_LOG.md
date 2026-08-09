@@ -1,3 +1,10 @@
+## 2026-08-08 - AdMob 보상형 광고 의존성과 실행 설정 추가
+
+- 변경 파일: `pubspec.yaml`, `pubspec.lock`, `README.md`, `WORK_LOG.md`
+- 내용: 현재 Flutter/Dart 버전과 호환되는 `google_mobile_ads 6.0.0`을 추가하고 플랫폼별 Rewarded Ad Unit ID만 주입하면 테스트할 수 있는 실행 절차를 문서화했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 124개 통과(라인 80.26%), Android debug APK와 iOS simulator app 빌드 성공
+- 리스크: 운영 전 Google SSV 검증과 실제 App/Ad Unit ID 교체가 필요하다
+
 ## 2026-08-07 - 브라우저 열기 의존성 추가
 
 - 변경 파일: `pubspec.yaml`

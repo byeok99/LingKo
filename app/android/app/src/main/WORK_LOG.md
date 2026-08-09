@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - Android AdMob 테스트 App ID 등록
+
+- 변경 파일: `AndroidManifest.xml`, `WORK_LOG.md`
+- 내용: Google 공식 sample App ID를 Mobile Ads manifest metadata로 등록하고 release build에도 API·광고 network 권한이 포함되게 했다.
+- 검증: Android debug APK 빌드 및 `:app:processReleaseMainManifest` 성공, merged manifest에서 App ID·INTERNET 권한 확인
+- 리스크: 배포 전 실제 AdMob App ID로 교체해야 한다
+
 ## 2026-08-07 - 브라우저 열기를 막던 package visibility 선언 추가
 
 - 변경 파일: `AndroidManifest.xml`

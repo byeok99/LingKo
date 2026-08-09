@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - iOS Mobile Ads pod 잠금 갱신
+
+- 변경 파일: `Podfile.lock`, `WORK_LOG.md`
+- 내용: `google_mobile_ads 6.0.0` 네이티브 의존성을 잠금 파일에 반영했다.
+- 검증: iOS simulator debug build 성공
+- 리스크: 실제 기기 ATT 적용 판단과 광고 표시는 별도 검증이 필요하다
+
 ## 2026-08-02 - iPhone 15 영상 plugin Pod 연결
 
 - 변경 파일: `Podfile.lock`, `WORK_LOG.md`

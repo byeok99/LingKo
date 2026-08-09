@@ -36,7 +36,7 @@ class ProfileScreen extends StatefulWidget {
   final VoidCallback? onOpenSavedSentences;
 
   /// 개인 맞춤 광고 사용 여부를 바꾸는 화면을 여는 요청이다.
-  /// null이면 광고 기능이 아직 없다는 뜻이며 행을 눌리지 않게 표시한다.
+  /// null이면 현재 빌드에 광고 ID가 없다는 뜻이며 행을 눌리지 않게 표시한다.
   final VoidCallback? onOpenAdPrivacy;
 
   /// 문의 창구를 여는 요청이다. null이면 연결된 창구가 없어 행을 눌리지 않게 표시한다.
@@ -139,9 +139,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.description_outlined,
                   label: 'Terms of Service',
                   onTap:
-                      () => widget.onOpenDocument(
-                        ConsentDocument.termsOfService,
-                      ),
+                      () =>
+                          widget.onOpenDocument(ConsentDocument.termsOfService),
                 ),
                 _SettingsLinkRow(
                   key: const ValueKey('profile-privacy'),
@@ -151,9 +150,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       () =>
                           widget.onOpenDocument(ConsentDocument.privacyPolicy),
                 ),
-                // 광고와 문의는 문서와 사정이 다르다. 문서는 이미 존재하고 게시만 남았지만
-                // 광고 SDK와 문의 창구는 아직 붙지 않았다. 없는 기능에 눌리는 행을 두면
-                // 눌러도 아무 일이 없어 고장으로 보이므로 연결 전까지 흐리게 둔다.
+                // 광고 설정은 UMP가, 문의는 향후 문의 창구가 각각 callback을 제공한다.
+                // callback이 없는 빌드에서는 눌러도 아무 일이 없는 행을 만들지 않는다.
                 _SettingsLinkRow(
                   key: const ValueKey('profile-ad-privacy'),
                   icon: Icons.ads_click_outlined,

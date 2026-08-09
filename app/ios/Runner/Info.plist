@@ -37,6 +37,16 @@
 	<string>717500111241-kem934dspf99954d5oalnfj93pucolut.apps.googleusercontent.com</string>
 	<key>GIDServerClientID</key>
 	<string>717500111241-rbs3khdg04duemkftocl1p1ekevjl759.apps.googleusercontent.com</string>
+	<!-- Google 공식 sample App ID다. 운영 배포 전 LingKo AdMob App ID로 교체한다. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>LingKo records your pronunciation so it can score your Korean speaking practice.</string>
 	<key>LSRequiresIPhoneOS</key>

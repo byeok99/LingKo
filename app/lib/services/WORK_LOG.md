@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - AdMob 보상형 광고 서비스 추가
+
+- 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`
+- 내용: 플랫폼별 ID 선택, UMP 동의, SDK 초기화, Rewarded Ad load/show/dispose와 초기화 실패 재시도를 화면에서 분리했다.
+- 검증: `flutter test test/rewarded_ad_service_test.dart`, Flutter 전체 테스트 및 analyze 통과
+- 리스크: 운영 보상 신뢰성은 별도 Google SSV 서버 검증이 필요하다
+
 ## 2026-08-07 - 인증 갱신 경계에 법무 동의 요청 연결
 
 - 변경 파일: `app_auth_service.dart`

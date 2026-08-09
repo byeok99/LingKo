@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-08 - 광고 개인정보 설정 상태 연결
+
+- 변경 파일: `profile_screen.dart`, `WORK_LOG.md`
+- 내용: Profile 광고 개인정보 행의 callback 의미를 UMP 설정 화면 계약에 맞게 갱신했다.
+- 검증: Profile widget test와 Flutter 전체 테스트 통과
+- 리스크: 광고 ID가 없는 빌드에서는 행이 비활성화된다
+
 ## 2026-08-07 - 재동의 gate 오류·진행 상태 추가
 
 - 변경 파일: `consent_screen.dart`
