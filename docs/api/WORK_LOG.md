@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 가이드 작업 내부 API 계약 갱신
+
+- 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`
+- 내용: 기본 비활성화, 내부 Secret header, 입력·URL 제한, 401/403/429와 `Retry-After` 계약을 문서화했다.
+- 검증: Controller·설정·예외 handler와 대조, Backend 전체 단위·통합 테스트 통과
+- 리스크: job 상태는 서버 memory에만 존재
+
 ## 2026-08-08 - 광고 보상 quota API 계약 추가
 
 - 변경 파일: `api-reference.md`, `WORK_LOG.md`

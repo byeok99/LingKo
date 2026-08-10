@@ -2,6 +2,7 @@ package com.lingko.lingko.infra.storage;
 
 import com.lingko.lingko.core.config.AwsSettings;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
+import com.lingko.lingko.core.domain.evaluation.service.GuideSourceUrlPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,7 @@ import java.util.function.Function;
  * scheme·host·내부망 차단 정책을 호출부마다 반복하지 않도록 보안 경계로 분리했다.
  */
 @Component
-public class ExternalMediaUrlValidator {
+public class ExternalMediaUrlValidator implements GuideSourceUrlPolicy {
 
     public static final int CONNECT_TIMEOUT_MS = 5_000;
     public static final int READ_TIMEOUT_MS = 10_000;
@@ -54,6 +55,7 @@ public class ExternalMediaUrlValidator {
         this.connectionFactory = connectionFactory;
     }
 
+    @Override
     public void validate(String rawUrl) {
         URI uri = parse(rawUrl);
         validateScheme(uri);
@@ -73,7 +75,7 @@ public class ExternalMediaUrlValidator {
             connection.setInstanceFollowRedirects(false);
             int responseCode = connection.getResponseCode();
             if (responseCode >= 300 && responseCode < 400) {
-                throw new VideoGenerationException("외부 미디어 URL 리다이렉트는 허용되지 않음: " + rawUrl);
+                throw new VideoGenerationException("외부 미디어 URL 리다이렉트는 허용되지 않음");
             }
             if (responseCode < 200 || responseCode >= 300) {
                 throw new VideoGenerationException("외부 미디어 다운로드 실패: HTTP " + responseCode);
@@ -84,7 +86,7 @@ public class ExternalMediaUrlValidator {
             }
             return connection;
         } catch (IOException e) {
-            throw new VideoGenerationException("외부 미디어 URL 연결 실패: " + rawUrl, e);
+            throw new VideoGenerationException("외부 미디어 URL 연결 실패", e);
         }
     }
 
@@ -95,13 +97,13 @@ public class ExternalMediaUrlValidator {
         try {
             return URI.create(rawUrl);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("유효하지 않은 URL: " + rawUrl, e);
+            throw new IllegalArgumentException("유효하지 않은 외부 미디어 URL", e);
         }
     }
 
     private void validateScheme(URI uri) {
         if (!"https".equalsIgnoreCase(uri.getScheme())) {
-            throw new IllegalArgumentException("HTTPS URL만 허용됨: " + uri);
+            throw new IllegalArgumentException("HTTPS URL만 허용됨");
         }
     }
 
@@ -117,13 +119,13 @@ public class ExternalMediaUrlValidator {
         if (normalizedHost.endsWith(".replicate.delivery")) {
             return;
         }
-        throw new IllegalArgumentException("허용되지 않은 외부 미디어 host: " + host);
+        throw new IllegalArgumentException("허용되지 않은 외부 미디어 host");
     }
 
     private void validateResolvedAddresses(String host) {
         for (InetAddress address : addressResolver.apply(host)) {
             if (isPrivateAddress(address)) {
-                throw new IllegalArgumentException("내부망 외부 미디어 URL은 허용되지 않음: " + host);
+                throw new IllegalArgumentException("내부망 외부 미디어 URL은 허용되지 않음");
             }
         }
     }
@@ -160,7 +162,7 @@ public class ExternalMediaUrlValidator {
         try {
             return InetAddress.getAllByName(host);
         } catch (IOException e) {
-            throw new IllegalArgumentException("URL host를 확인할 수 없음: " + host, e);
+            throw new IllegalArgumentException("외부 미디어 URL host를 확인할 수 없음", e);
         }
     }
 
@@ -168,7 +170,7 @@ public class ExternalMediaUrlValidator {
         try {
             return (HttpURLConnection) url.openConnection();
         } catch (IOException e) {
-            throw new VideoGenerationException("외부 미디어 URL 연결 실패: " + url, e);
+            throw new VideoGenerationException("외부 미디어 URL 연결 실패", e);
         }
     }
 

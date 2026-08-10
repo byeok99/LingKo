@@ -1,3 +1,10 @@
+## 2026-08-09 - 가이드 생성 API 비용 경계 설정
+
+- 변경 파일: `build.gradle`, `.env.example`, `application.example.yaml`, `docker-compose.yml`, `Dockerfile`, `README.md`, `WORK_LOG.md`
+- 내용: guide-jobs를 기본 비활성화하고 내부 Secret, 분당 생성량, 동시 실행 한도를 환경변수로 구성했으며 Micrometer 지원 의존성을 추가했다. ignore된 로컬 설정 대신 추적 중인 예시 설정을 Docker jar에 포함한다.
+- 검증: `./gradlew test integrationTest`, 타깃 보안 테스트, `git diff --check` 통과
+- 리스크: 다중 instance의 전역 한도와 작업 영속화는 #42 후속 범위
+
 ## 2026-08-07 - 법무 문서 서빙을 위한 Markdown 변환 의존성 추가
 
 - 변경 파일: `build.gradle`

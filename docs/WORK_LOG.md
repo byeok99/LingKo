@@ -1,3 +1,10 @@
+## 2026-08-09 - Issue #41 완료 상태 동기화
+
+- 변경 파일: `mvp-release-execution-checklist.md`, `technical-debt.md`, `WORK_LOG.md`
+- 내용: 가이드 생성 HTTP API의 기본 비활성화·내부 service 인증·비용 제한 구현을 완료로 반영하고 영속화 #42를 후속 위험으로 분리했다.
+- 검증: 구현·API·보안 문서 대조, `git diff --check`
+- 리스크: 작업 영속화와 다중 instance 전역 admission은 #42에 남음
+
 ## 2026-08-08 - 보상형 광고 MVP 상태 문서 동기화
 
 - 변경 파일: `technical-debt.md`, `mvp-release-execution-checklist.md`, `WORK_LOG.md`

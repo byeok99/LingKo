@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 가이드 생성 비용 admission 강화
+
+- 변경 파일: `GuideGenerationJobService.java`, `GuideGenerationJobTelemetry.java`, `GuideSourceUrlPolicy.java`, `WORK_LOG.md`
+- 내용: 모든 source URL을 job 등록 전에 검증하고 중복 제거 뒤 최대 동시 실행 슬롯을 원자적으로 예약·해제했다. admission·완료 결과를 관측 인터페이스로 기록한다.
+- 검증: `GuideGenerationJobServiceTest`, Backend 전체 단위·통합 테스트 통과; 변경 서비스 line coverage 83.51%
+- 리스크: job 상태와 슬롯은 process memory에 있어 재시작·다중 instance 정합성은 #42 범위
+
 ## 2026-08-06 - 음절 상세 조회에 형식 검증 추가
 
 - 변경 파일: `WeakSoundService.java`

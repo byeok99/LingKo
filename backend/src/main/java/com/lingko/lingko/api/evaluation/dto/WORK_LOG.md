@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 가이드 생성 입력 상한 강화
+
+- 변경 파일: `GuideGenerationJobRequest.java`, `WORK_LOG.md`
+- 내용: 음절을 한글 1자로 제한하고 각 외부 URL 길이를 최대 2,048자로 제한했다.
+- 검증: `GuideGenerationJobControllerTest`, Backend 전체 단위·통합 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
 
 - 변경 파일: `WeakWordResponse.java` → `WeakSoundResponse.java`, `WeakWordListResponse.java` → `WeakSoundListResponse.java`, `WordDetailResponse.java` → `SoundDetailResponse.java`

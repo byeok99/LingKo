@@ -131,7 +131,16 @@ Worker 다운로드 후에는 실제 바이트를 기준으로 다음을 다시 
 
 ## 권한
 
-현재 가이드 작업 생성·조회 API에는 관리자 인증이 없습니다. 운영 배포 전 최소한 관리자 역할 또는 내부 네트워크·서비스 인증을 적용합니다.
+가이드 작업 생성·조회 HTTP API는 기본 비활성화합니다. 내부 도구가 필요한 환경에서만 32자 이상의 별도 service Secret으로 활성화하며, 앱의 일반 Bearer 사용자는 인증되더라도 `403`으로 거부합니다. 생성 요청은 내부 호출자별 고정 1분 window Rate Limit과 process별 최대 동시 실행 수를 함께 적용합니다.
+
+입력 URL은 실제 생성 job 등록 전에 다음 경계를 통과해야 합니다.
+
+- 항목당 최대 2,048자와 요청당 최대 10쌍
+- HTTPS와 설정된 S3 bucket·Replicate delivery host allowlist
+- DNS 결과의 loopback·사설·link-local 주소 거부
+- redirect 미추적과 다운로드 최대 25MiB
+
+감사 로그에는 caller 종류, job ID, 음절, 가이드 종류, source 개수만 남기고 service token과 외부 URL 원문은 기록하지 않습니다. `lingko.guide.jobs.requests`, `lingko.guide.jobs.active`, `lingko.guide.jobs.completed` Micrometer 지표로 admission 결과와 처리 결과를 집계하며 운영 alert 임계치는 배포 환경에서 별도로 정합니다.
 
 ## 광고 보상 신뢰 경계
 

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 가이드 작업 로컬 설정 절차 추가
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: ignore된 application 설정 생성 절차와 guide-jobs 활성화·Secret·요청·동시 실행 환경변수를 개발 가이드에 추가했다.
+- 검증: `.env.example`, `application.example.yaml`, Docker 설정과 대조
+- 리스크: 활성화 시 Secret을 저장소에 커밋하지 않아야 함
+
 ## 2026-08-08 - 로컬 AdMob 테스트 실행 절차 추가
 
 - 변경 파일: `local-development.md`, `WORK_LOG.md`

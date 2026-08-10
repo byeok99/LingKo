@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 외부 가이드 URL 로그 비노출
+
+- 변경 파일: `FrameInterpolationVideoGenerator.java`, `ReplicateApiClient.java`, `WORK_LOG.md`
+- 내용: presigned credential이 포함될 수 있는 입력·공급자 결과 URL 원문을 로그와 예외에서 제거하고 job 식별 정보만 남겼다.
+- 검증: Backend 전체 단위·통합 테스트 통과, URL 관련 로그 패턴 점검
+- 리스크: 없음
+
 ## 2026-08-06 - 가이드 영상을 iOS가 디코딩 가능한 형식으로 정규화
 
 - 변경 파일: `VideoPlaybackNormalizer.java`(신규), `FrameInterpolationVideoGenerator.java`

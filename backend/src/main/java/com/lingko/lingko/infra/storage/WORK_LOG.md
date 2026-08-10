@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 외부 미디어 URL 정책 경계 연결
+
+- 변경 파일: `ExternalMediaUrlValidator.java`, `S3Uploader.java`, `WORK_LOG.md`
+- 내용: validator를 가이드 job 사전 검증 정책으로 연결하고 SSRF·redirect·25MiB 경계를 유지하면서 URL 원문을 로그·예외에서 제거했다.
+- 검증: `ExternalMediaUrlValidatorTest`, Backend 전체 단위·통합 테스트 통과; validator line coverage 83.33%
+- 리스크: DNS 검증과 실제 연결 사이의 공급자 DNS 변경은 허용 host 신뢰에 의존
+
 ## 2026-08-07 - 가이드 캐시 조회 실패가 생성을 막지 않게 변경
 
 - 변경 파일: `S3Uploader.java`

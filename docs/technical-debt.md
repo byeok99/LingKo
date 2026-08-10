@@ -6,7 +6,6 @@
 
 | 항목 | 현재 상태 | 위험 | 완료 기준 |
 |---|---|---|---|
-| 가이드 작업 인증 | 생성·조회 API 공개 | 비용 남용 | 관리자/서비스 권한 적용 |
 | 가이드 작업 영속화 | `ConcurrentHashMap` 사용 | 재시작·다중 인스턴스에서 유실 | DB/큐 기반 상태·재시도 |
 
 ## P1: 안정성
@@ -36,6 +35,7 @@
 2. 발음 평가를 동기 HTTP로 유지할지 비동기 작업으로 전환할지
 ## 완료된 의사결정
 
+- 가이드 작업 접근 정책: [Issue #41](https://github.com/byeok99/LingKo/issues/41)에 따라 HTTP endpoint를 기본 비활성화하고, 명시적으로 활성화한 환경에서는 32자 이상의 내부 service Secret만 허용합니다. 일반 Bearer 사용자는 `403`, 미인증·잘못된 Secret은 `401`이며, caller별 분당 생성량·process 동시 실행 수·URL/다운로드 경계를 적용합니다. job 상태 영속화는 [#42](https://github.com/byeok99/LingKo/issues/42)에서 계속 추적합니다.
 - 브랜치 전략: [ADR-0005](architecture/adr/0005-branch-strategy.md)에 따라 `develop`을 통합 브랜치, `main`을 릴리스 브랜치로 사용합니다.
 - Refresh Token 정책: DB에 현재 토큰의 SHA-256 해시를 저장하고 원자적 회전, 이전 토큰 재사용 시 현재 기기 세션 폐기, 절대 만료, 앱의 401 후 1회 자동 갱신을 적용합니다. 운영 전 [#60](https://github.com/byeok99/LingKo/issues/60) 실제 만료 기반 실기기 E2E와 [#62](https://github.com/byeok99/LingKo/issues/62) 동시 DB 부하 검증을 수행합니다.
 - 평가 기회 정책: 최대 5회에서 부족할 때 서버 기준 1시간마다 1회 lazy refill하고, 외부 평가 전에 자연 충전 횟수를 우선 예약합니다. 성공 시 결과 저장과 함께 사용량으로 확정하며 실패 시 reservation token의 횟수를 복구합니다. [ADR-0006](architecture/adr/0006-atomic-practice-quota-transitions.md)에 따라 예약·확정·복구는 조건부 원자 UPDATE로 처리하고, 최초 행 생성만 짧은 사용자 부모 lock으로 직렬화합니다. Flutter AdMob rewarded callback, UMP와 인증·중복 방지 서버 지급 endpoint는 테스트 단계까지 연결했습니다. 운영 Google SSV 서명 검증과 비정상 종료 예약 회수는 후속 작업입니다.
