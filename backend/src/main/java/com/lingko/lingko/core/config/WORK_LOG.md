@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 가이드 작업 admission 설정 추가
+
+- 변경 파일: `GuideGenerationJobSettings.java`, `WORK_LOG.md`
+- 내용: API 활성화, 내부 Secret, 분당 요청, 동시 실행 한도를 type-safe 설정으로 추가하고 활성화 시 32자 미만 Secret으로는 시작하지 못하게 했다.
+- 검증: `GuideGenerationJobSettingsTest`, 배포 조건 테스트, Backend 전체 단위·통합 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-03 - Replicate 제한 재시도 설정 추가
 
 - 변경 파일: `ReplicateSettings.java`, `WORK_LOG.md`

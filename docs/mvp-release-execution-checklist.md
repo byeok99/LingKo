@@ -99,7 +99,7 @@
 
 - [ ] 첫 초대 MVP를 `Android closed testing`으로 시작할지, Android와 iOS를 동시에 배포할지 결정한다.
 - [x] 광고 연동을 출시 범위에 포함한다. Flutter AdMob·UMP·서버 지급 test flow를 연결했고 운영 전 SSV 검증을 완료한다.
-- [ ] 실시간 가이드 생성 API를 운영에서 비활성화하고 기존 가이드 자산만 사용할지 결정한다.
+- [x] 실시간 가이드 생성 HTTP API는 기본 비활성화하고, 내부 service Secret을 설정한 환경에서만 제한적으로 연다.
 - [ ] 디자인 문서의 `weak sound/syllable` 표현을 실제 단어 중심 구현과 일치시키기로 확정한다.
 
 완료 조건:
@@ -127,10 +127,10 @@
 
 ### 2. 가이드 생성 API 비용·보안 경계 확립
 
-- [ ] [#41](https://github.com/byeok99/LingKo/issues/41)에 따라 `/api/pronunciation/guide-jobs`를 인증·인가한다.
-- [ ] 0번에서 비활성화를 선택했다면 운영 프로필에서 endpoint가 등록되지 않도록 한다.
-- [ ] 생성 요청에 Rate Limit, 입력 크기 제한과 감사 로그를 적용한다.
-- [ ] 익명·일반 사용자·관리자 요청에 대한 보안 테스트를 추가한다.
+- [x] [#41](https://github.com/byeok99/LingKo/issues/41)에 따라 `/api/pronunciation/guide-jobs`를 내부 service 인증·인가한다.
+- [x] 명시적 활성화 설정이 없으면 endpoint가 등록되지 않도록 한다.
+- [x] 생성 요청에 caller별 Rate Limit, 동시 실행·입력 크기 제한과 민감값 제외 감사 로그를 적용한다.
+- [x] 익명·일반 사용자·내부 service 요청과 429 경계에 대한 보안 테스트를 추가한다.
 
 완료 조건:
 
@@ -138,7 +138,7 @@
 - 일반 학습 앱 흐름은 가이드 생성 권한 없이도 동작한다.
 - 공개 endpoint를 유지한다면 작업 유실 대응 범위를 [#42](https://github.com/byeok99/LingKo/issues/42)에서 확정한다.
 
-완료 기록: 미작성
+완료 기록: [Issue #41](https://github.com/byeok99/LingKo/issues/41). HTTP surface 기본 비활성화, 32자 이상 내부 Secret, 기본 분당 2회·동시 1개, URL allowlist·SSRF/redirect/25MiB 제한, Micrometer admission/completion 지표를 적용했다. `./gradlew test --tests '*GuideGenerationJob*' --tests '*MicrometerGuideGenerationJobTelemetryTest'` 통과. 작업 상태 영속화는 [#42](https://github.com/byeok99/LingKo/issues/42) 후속 범위다.
 
 ### 3. 개인정보·약관·계정 삭제 공개 경로
 

@@ -84,7 +84,8 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
      * 영상 변환 없이 이미지를 S3에 업로드
      */
     private String handleStaticImage(String imageUrl, String syllable, VideoType type) {
-        log.info("정적 이미지 처리: {}", imageUrl);
+        // 외부 URL은 query credential을 포함할 수 있어 syllable과 type만 감사 정보로 남긴다.
+        log.info("정적 이미지 처리: syllable={}, type={}", syllable, type);
 
         externalMediaUrlValidator.validate(imageUrl);
 
@@ -96,7 +97,7 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
         // URL → S3 업로드
         String s3Url = s3Uploader.uploadFromUrl(imageUrl, s3Key);
 
-        log.info("정적 이미지 완료: {} -> {}", syllable, s3Url);
+        log.info("정적 이미지 완료: syllable={}, type={}", syllable, type);
         return s3Url;
     }
 
@@ -160,7 +161,7 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
             // 4. 최종 영상을 S3에 업로드
             String s3Url = s3Uploader.upload(uploadPath.toString(), s3Key);
 
-            log.info("영상 생성 완료: {} -> {}", syllable, s3Url);
+            log.info("영상 생성 완료: syllable={}, type={}", syllable, type);
             return s3Url;
 
         } finally {
@@ -179,9 +180,8 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
             List<String> pair = urlPairs.get(i);
 
             if (pair.size() != 2) {
-                throw new IllegalArgumentException(
-                        "영상 생성은 2개 프레임 쌍이 필요함: " + pair
-                );
+                // URL 원문을 예외·로그에 섞지 않고 구조 오류만 알린다.
+                throw new IllegalArgumentException("영상 생성은 세그먼트당 2개 프레임이 필요함");
             }
 
             log.info("세그먼트 {}/{} 생성", i + 1, urlPairs.size());
@@ -210,7 +210,8 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
      */
     private Path downloadFromUrl(String url) {
         try {
-            log.debug("다운로드 시작: {}", url);
+            // 공급자 출력 URL도 query credential을 포함할 수 있어 로그에 기록하지 않는다.
+            log.debug("생성 영상 다운로드 시작");
 
             // 확장자 추출
             String extension = extractExtension(url);
@@ -232,8 +233,8 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
             return tempFile;
 
         } catch (IOException e) {
-            log.error("다운로드 실패: {}", url, e);
-            throw new VideoGenerationException("다운로드 실패: " + url, e);
+            log.error("생성 영상 다운로드 실패", e);
+            throw new VideoGenerationException("생성 영상 다운로드 실패", e);
         }
     }
 

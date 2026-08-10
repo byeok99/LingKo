@@ -74,7 +74,7 @@ public class S3Uploader {
 
             String s3Url = publicUrl(s3Key);
 
-            log.info("S3 업로드 완료: {}", s3Url);
+            log.info("S3 업로드 완료: key={}", s3Key);
             return s3Url;
 
         } catch (S3Exception e) {
@@ -145,7 +145,8 @@ public class S3Uploader {
         Path tempFile = null;
 
         try {
-            log.info("URL → S3 업로드: {} -> {}", sourceUrl, s3Key);
+            // presigned URL의 query에는 credential이 포함될 수 있어 URL 원문을 기록하지 않는다.
+            log.info("외부 미디어 → S3 업로드 시작: key={}", s3Key);
 
             // 1. URL에서 임시 파일로 다운로드
             tempFile = downloadFromUrl(sourceUrl);
@@ -153,7 +154,7 @@ public class S3Uploader {
             // 2. 임시 파일을 S3에 업로드
             String s3Url = upload(tempFile.toString(), s3Key);
 
-            log.info("URL → S3 완료: {}", s3Url);
+            log.info("외부 미디어 → S3 업로드 완료: key={}", s3Key);
             return s3Url;
 
         } finally {
@@ -177,7 +178,7 @@ public class S3Uploader {
      */
     private Path downloadFromUrl(String url) {
         try {
-            log.debug("다운로드 시작: {}", url);
+            log.debug("외부 미디어 다운로드 시작");
 
             // 확장자 추출
             String extension = extractExtension(url);
@@ -199,8 +200,8 @@ public class S3Uploader {
             return tempFile;
 
         } catch (IOException e) {
-            log.error("URL 다운로드 실패: {}", url, e);
-            throw new VideoGenerationException("URL 다운로드 실패: " + url, e);
+            log.error("외부 미디어 다운로드 실패", e);
+            throw new VideoGenerationException("외부 미디어 다운로드 실패", e);
         }
     }
 

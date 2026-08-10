@@ -52,6 +52,8 @@ dependencies {
     implementation 'com.microsoft.cognitiveservices.speech:client-sdk:1.47.0@jar'
     implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	// 비용 유발 guide job의 요청·실행 지표를 MeterRegistry에 기록한다.
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
     testImplementation 'com.h2database:h2'
 	implementation platform('software.amazon.awssdk:bom:2.20.26')
 	implementation 'software.amazon.awssdk:s3'

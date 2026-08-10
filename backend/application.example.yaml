@@ -90,5 +90,13 @@ evaluation:
     interval-ms: ${EVALUATION_CLEANUP_INTERVAL_MS:3600000}
     batch-size: ${EVALUATION_CLEANUP_BATCH_SIZE:1000}
 
+guide-generation:
+  jobs:
+    # 비용 작업용 HTTP surface는 기본적으로 닫고, 내부 호출이 필요할 때만 명시적으로 연다.
+    api-enabled: ${GUIDE_JOBS_API_ENABLED:false}
+    internal-token: ${GUIDE_JOBS_INTERNAL_TOKEN:}
+    requests-per-minute: ${GUIDE_JOBS_REQUESTS_PER_MINUTE:2}
+    max-concurrent: ${GUIDE_JOBS_MAX_CONCURRENT:1}
+
 ffmpeg:
   path: ${FFMPEG_PATH:ffmpeg}

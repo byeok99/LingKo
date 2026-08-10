@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 가이드 생성 비용·SSRF 경계 문서화
+
+- 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`
+- 내용: 내부 service Secret, 일반 사용자 403, Rate Limit·동시 실행 제한, URL allowlist·사설 IP·redirect·크기 제한과 민감 URL 로그 금지를 기록했다.
+- 검증: 보안 테스트·설정·로그 구현과 대조
+- 리스크: 운영 Secret Manager 주입과 지표 alert 설정 필요
+
 ## 2026-08-08 - 광고 보상 신뢰 경계와 데이터 보존 문서화
 
 - 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`

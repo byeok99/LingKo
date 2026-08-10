@@ -28,6 +28,7 @@ src/main/java/com/lingko/lingko/
 
 ```bash
 cp .env.example .env
+cp application.example.yaml src/main/resources/application.yaml
 docker compose up --build
 ```
 
@@ -38,6 +39,8 @@ docker compose up --build
 ```
 
 API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB lock과 lease로 한 건씩 claim합니다. Worker는 Azure 평가 후 결과 화면에서 열 수 있는 모든 음절의 다중 프레임 입·혀 가이드를 Replicate와 FFmpeg로 MP4화합니다. 생성 MP4 URL은 기존 `syllables` 테이블에 upsert하고 동일 음절·종류는 DB를 먼저, 동일 음절·종류·프레임 조합은 결정적 S3 cache를 다음으로 재사용합니다. 단일 프레임이나 외부 생성 실패는 PNG로 fallback합니다. 최초 cache miss 시간을 고려해 기본 lease는 600초이며, 초기 운영에서는 Worker 1개를 유지하고 실제 대기시간과 DB lock을 측정한 뒤에만 replica 확장을 검토합니다.
+
+별도의 `/api/pronunciation/guide-jobs` HTTP surface는 비용 남용을 막기 위해 기본 비활성화되어 있습니다. 내부 도구에서 사용할 때만 `GUIDE_JOBS_API_ENABLED=true`와 32자 이상의 별도 `GUIDE_JOBS_INTERNAL_TOKEN` Secret을 설정합니다. 생성 요청은 기본 분당 2회, 동시 1개로 제한하며 값은 `GUIDE_JOBS_REQUESTS_PER_MINUTE`, `GUIDE_JOBS_MAX_CONCURRENT`로 낮은 범위 안에서 조정합니다.
 
 또는 MySQL과 환경변수를 별도로 준비한 후:
 
@@ -80,4 +83,4 @@ API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB loc
 - 가이드 작업 상태는 서버 메모리에 저장됩니다.
 - Refresh Token 갱신·폐기 API는 구현됐으며 운영 전 실제 동시 갱신 부하를 확인해야 합니다.
 - S3 Lifecycle 파일은 저장소 산출물이며 AWS 운영 버킷에는 자동 적용되지 않습니다.
-- 운영 전 Actuator, 관측성, 외부 호출 복원력, 백업 정책이 필요합니다.
+- 가이드 job 기본 지표는 Micrometer에 기록되지만 운영 전 Actuator 노출 정책·alert, 외부 호출 복원력, 백업 정책이 필요합니다.

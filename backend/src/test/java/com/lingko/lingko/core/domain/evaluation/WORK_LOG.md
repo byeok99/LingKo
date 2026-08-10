@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 가이드 작업 admission·배포 조건 회귀 테스트
+
+- 변경 파일: `GuideGenerationJobServiceTest.java`, `GuideGenerationJobSettingsTest.java`, `GuideGenerationJobDeploymentConditionTest.java`, `WORK_LOG.md`
+- 내용: URL 사전 검증, 동시 슬롯 해제, 안전한 Secret 설정, endpoint 기본 미등록 계약을 검증했다.
+- 검증: 타깃 테스트와 Backend 전체 단위·통합 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-06 - 음절 상세 형식 검증 테스트 추가
 
 - 변경 파일: `WeakSoundServiceTest.java`

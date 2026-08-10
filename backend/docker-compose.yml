@@ -53,6 +53,11 @@ services:
       FFMPEG_PATH: ffmpeg
       # 평가 작업은 별도 evaluation-worker가 처리해 API 프로세스의 외부 호출·임시 파일 부하를 격리한다.
       EVALUATION_WORKER_ENABLED: "${EVALUATION_API_WORKER_ENABLED:-false}"
+      # 외부 비용 작업 endpoint는 명시적으로 활성화한 환경에서만 등록한다.
+      GUIDE_JOBS_API_ENABLED: "${GUIDE_JOBS_API_ENABLED:-false}"
+      GUIDE_JOBS_INTERNAL_TOKEN: "${GUIDE_JOBS_INTERNAL_TOKEN:-}"
+      GUIDE_JOBS_REQUESTS_PER_MINUTE: "${GUIDE_JOBS_REQUESTS_PER_MINUTE:-2}"
+      GUIDE_JOBS_MAX_CONCURRENT: "${GUIDE_JOBS_MAX_CONCURRENT:-1}"
 
   evaluation-worker:
     build:

@@ -14,6 +14,7 @@
 ```bash
 cd backend
 cp .env.example .env
+cp application.example.yaml src/main/resources/application.yaml
 ```
 
 ### 주요 환경변수
@@ -39,6 +40,10 @@ cp .env.example .env
 | `AWS_ACCESS_KEY` | AWS 접근 키 | 비밀 |
 | `AWS_SECRET_KEY` | AWS 비밀 키 | 비밀 |
 | `FFMPEG_PATH` | FFmpeg 실행 경로 | `ffmpeg` |
+| `GUIDE_JOBS_API_ENABLED` | 내부 guide-jobs HTTP API 등록 여부 | `false` |
+| `GUIDE_JOBS_INTERNAL_TOKEN` | 활성화 시 필요한 내부 service Secret | 32자 이상, 비밀 |
+| `GUIDE_JOBS_REQUESTS_PER_MINUTE` | 내부 호출자 분당 생성 한도 | 2 |
+| `GUIDE_JOBS_MAX_CONCURRENT` | process당 동시 생성 한도 | 1 |
 | `LOG_LEVEL` | 로그 레벨 | 로컬은 DEBUG 가능 |
 
 ### Docker Compose

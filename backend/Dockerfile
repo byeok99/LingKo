@@ -4,6 +4,8 @@ WORKDIR /workspace
 COPY build.gradle settings.gradle gradlew ./
 COPY gradle ./gradle
 COPY src ./src
+# application.yaml은 로컬 Secret 보호를 위해 ignore하므로 추적 중인 안전한 예시를 jar 설정으로 사용한다.
+COPY application.example.yaml ./src/main/resources/application.yaml
 RUN gradle --no-daemon bootJar
 
 FROM eclipse-temurin:21-jre-jammy

@@ -389,7 +389,13 @@ Authorization: Bearer <access-token>
 
 ### `POST /api/pronunciation/guide-jobs`
 
-현재 인증되지 않은 비동기 작업 생성 API입니다.
+비용이 발생하는 내부 운영용 비동기 작업 생성 API입니다. 기본 설정에서는 Controller 자체가 등록되지 않으며, `GUIDE_JOBS_API_ENABLED=true`와 32자 이상의 `GUIDE_JOBS_INTERNAL_TOKEN`이 함께 설정된 환경에서만 열립니다.
+
+요청 헤더:
+
+```http
+X-LingKo-Internal-Token: <service-secret>
+```
 
 ```json
 {
@@ -403,7 +409,15 @@ Authorization: Bearer <access-token>
 
 성공 시 `202 Accepted`와 작업 ID, 상태, 캐시 키를 반환합니다.
 
+- 일반 사용자 Bearer Token에는 생성 권한이 없으며 `403 GUIDE_JOB_FORBIDDEN`을 반환합니다.
+- 내부 호출자는 기본 분당 2회로 제한되며 초과 시 `429 GUIDE_JOB_RATE_LIMITED`와 `Retry-After`를 반환합니다.
+- 서로 다른 생성 작업은 기본 동시 1개만 실행하며 슬롯이 차면 `429 GUIDE_JOB_CAPACITY_EXCEEDED`를 반환합니다.
+- `syllable`은 한글 음절 1자, `urlPairs`는 최대 10쌍, URL은 항목당 최대 2,048자입니다.
+- 외부 미디어는 HTTPS와 허용된 S3·Replicate host만 허용하며 DNS 결과의 사설·loopback 주소, redirect, 25MiB 초과 응답을 거부합니다.
+
 ### `GET /api/pronunciation/guide-jobs/{jobId}`
+
+생성과 같은 내부 service token이 필요합니다. 상태 조회는 외부 생성 비용을 만들지 않으므로 생성 요청의 분당 한도를 소비하지 않습니다.
 
 상태 후보:
 

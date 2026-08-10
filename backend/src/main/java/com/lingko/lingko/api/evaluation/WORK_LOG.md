@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 가이드 작업 내부 service 접근 경계
+
+- 변경 파일: `GuideGenerationJobController.java`, `GuideGenerationJobAccessGuard.java`, `WORK_LOG.md`
+- 내용: endpoint를 설정으로 기본 비활성화하고 내부 Secret만 생성·조회를 허용했다. 일반 Bearer 사용자는 403, 미인증은 401이며 생성 요청에 고정 1분 한도를 적용했다.
+- 검증: 접근 guard·Controller·배포 조건 테스트와 Backend 전체 단위·통합 테스트 통과
+- 리스크: Rate Limit 상태는 process별 memory이므로 다중 instance 전역 제한은 후속 필요
+
 ## 2026-08-06 - 취약 점수 단위를 어절에서 음절로 변경
 
 - 변경 파일: `EvaluationHistoryController.java`

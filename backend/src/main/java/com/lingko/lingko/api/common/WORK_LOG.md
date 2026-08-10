@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 가이드 작업 보안 오류 응답 추가
+
+- 변경 파일: `GlobalExceptionHandler.java`, `WORK_LOG.md`
+- 내용: 일반 사용자 403과 요청량·동시 실행 초과 429를 고정 오류 코드와 `Retry-After`로 변환했다.
+- 검증: `GuideGenerationJobControllerTest`, Backend 전체 단위·통합 테스트 통과
+- 리스크: 없음
+
 ## 2026-07-29 - 회원 탈퇴 일시 실패 오류 매핑
 
 - 변경 파일: `GlobalExceptionHandler.java`, `WORK_LOG.md`

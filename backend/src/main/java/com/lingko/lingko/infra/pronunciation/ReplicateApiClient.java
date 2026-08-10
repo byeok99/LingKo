@@ -39,7 +39,8 @@ public class ReplicateApiClient {
      */
     public String interpolate(String frame1Url, String frame2Url) {
         try {
-            log.debug("Frame Interpolation 시작: {} -> {}", frame1Url, frame2Url);
+            // 입력 URL은 presigned credential을 포함할 수 있어 로그에 원문을 남기지 않는다.
+            log.debug("Frame Interpolation 시작");
 
             // 1. Prediction 생성
             String predictionId = createPrediction(frame1Url, frame2Url);
@@ -47,16 +48,16 @@ public class ReplicateApiClient {
 
             // 2. 완료까지 폴링
             String videoUrl = pollUntilComplete(predictionId);
-            log.debug("Frame Interpolation 완료: {}", videoUrl);
+            log.debug("Frame Interpolation 완료");
 
             return videoUrl;
 
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            log.error("Frame Interpolation interrupted: {} -> {}", frame1Url, frame2Url, exception);
+            log.error("Frame Interpolation interrupted", exception);
             throw new VideoGenerationException("Frame Interpolation interrupted", exception);
         } catch (Exception e) {
-            log.error("Frame Interpolation 실패: {} -> {}", frame1Url, frame2Url, e);
+            log.error("Frame Interpolation 실패", e);
             throw new VideoGenerationException("Frame Interpolation 실패", e);
         }
     }

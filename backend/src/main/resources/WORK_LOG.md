@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 가이드 생성 HTTP API 기본 비활성화
+
+- 변경 파일: `application.yaml`, `WORK_LOG.md`
+- 내용: guide-jobs 활성화, 내부 Secret, 분당 요청 수와 동시 실행 수를 환경변수에 연결하고 안전한 기본값으로 닫았다.
+- 검증: `./gradlew test integrationTest` 통과
+- 리스크: 활성화 시 32자 이상 Secret 주입 필요
+
 ## 2026-08-03 - Replicate 기본 대기·재시도 설정 보강
 
 - 변경 파일: `application.yaml`, `WORK_LOG.md`

@@ -3,6 +3,9 @@ package com.lingko.lingko.api.common;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
 import com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobConflictException;
 import com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobNotFoundException;
+import com.lingko.lingko.core.domain.evaluation.exception.GuideJobAccessDeniedException;
+import com.lingko.lingko.core.domain.evaluation.exception.GuideJobCapacityExceededException;
+import com.lingko.lingko.core.domain.evaluation.exception.GuideJobRateLimitExceededException;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
 import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
@@ -11,6 +14,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -58,6 +62,26 @@ public class GlobalExceptionHandler {
         // 응답 차이로 인증 정보가 추론되지 않도록 인증 세부사항을 의도적으로 고정 메시지로 대체한다.
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.of("AUTHENTICATION_FAILED", "Authentication failed"));
+    }
+
+    @ExceptionHandler(GuideJobAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleGuideJobAccessDenied(GuideJobAccessDeniedException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of("GUIDE_JOB_FORBIDDEN", "Guide generation is not available to this user"));
+    }
+
+    @ExceptionHandler(GuideJobRateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleGuideJobRateLimit(GuideJobRateLimitExceededException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(exception.retryAfterSeconds()))
+                .body(ErrorResponse.of("GUIDE_JOB_RATE_LIMITED", "Too many guide generation requests"));
+    }
+
+    @ExceptionHandler(GuideJobCapacityExceededException.class)
+    public ResponseEntity<ErrorResponse> handleGuideJobCapacity(GuideJobCapacityExceededException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, "5")
+                .body(ErrorResponse.of("GUIDE_JOB_CAPACITY_EXCEEDED", "Guide generation is busy"));
     }
 
     @ExceptionHandler(SentenceNotFoundException.class)

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-09 - 외부 미디어 URL 비노출·응답 경계 테스트
+
+- 변경 파일: `ExternalMediaUrlValidatorTest.java`, `WORK_LOG.md`
+- 내용: malformed·비허용 URL의 민감 query 비노출과 정상/공급자 오류 연결 경계를 추가 검증했다.
+- 검증: 타깃 테스트와 Backend 전체 단위·통합 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-07 - 캐시 조회 실패 계약을 반대로 고정
 
 - 변경 파일: `S3UploaderTest.java`
