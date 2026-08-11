@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-11 - 로컬 실행 설정 자동 로딩
+
+- 변경 파일: `run-local.sh`, `run-local_test.sh`, `WORK_LOG.md`
+- 내용: `app/.env.local`을 별도 `source` 없이 자동 로딩하고 플랫폼별 Device ID를 선택한다. 꺼진 iOS Simulator와 연결되지 않은 Android AVD를 자동 부팅하며, 명령에서 직접 전달한 환경변수의 우선순위를 보장했다.
+- 검증: 자동 부팅 shell 테스트, Bash 구문 검사, 종료된 `iPhone 15 LingKo`의 실제 부팅·Xcode build·앱 실행 성공
+- 리스크: Android는 AVD 실행 후 설정한 `ANDROID_DEVICE_ID`가 30초 안에 나타나지 않으면 종료한다
+
 ## 2026-08-08 - 로컬 실행에 광고 단위 ID 전달 추가
 
 - 변경 파일: `run-local.sh`, `WORK_LOG.md`

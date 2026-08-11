@@ -7,10 +7,10 @@
         android:label="LingKo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <!-- Google 공식 sample App ID다. 운영 배포 전 LingKo AdMob App ID로 교체한다. -->
+        <!-- Android 광고 요청이 LingKo의 AdMob 앱으로 귀속되도록 플랫폼 전용 App ID를 사용한다. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-5081228614816629~7955011592" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

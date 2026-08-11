@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-11 - iOS LingKo AdMob App ID 적용
+
+- 변경 파일: `Info.plist`, `WORK_LOG.md`
+- 내용: Google sample App ID를 LingKo iOS 앱에 발급된 AdMob App ID로 교체하고 주석을 현재 운영 설정에 맞췄다.
+- 검증: `plutil -lint`, iOS Simulator Xcode build·앱 실행 및 비밀값 노출 점검
+- 리스크: 실제 운영 광고 노출 전 AdMob 앱·광고 단위 승인 상태 확인 필요
+
 ## 2026-08-08 - iOS AdMob 테스트 App ID 등록
 
 - 변경 파일: `Info.plist`, `WORK_LOG.md`
