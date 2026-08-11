@@ -1,3 +1,10 @@
+## 2026-08-11 - Flutter 로컬 설정 자동 로딩 문서화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: Google 로그인·AdMob·플랫폼별 Device/Emulator ID를 `app/.env.local`에 한 번 저장하고 실행 스크립트가 자동 로딩·부팅하는 절차로 갱신했다.
+- 검증: `run-local.sh` 자동 로딩 테스트 및 문서 예시 대조
+- 리스크: 운영 빌드에서는 native App ID와 Rewarded Ad Unit ID를 같은 AdMob 앱 기준으로 맞춰야 한다
+
 ## 2026-08-08 - AdMob 보상형 광고 의존성과 실행 설정 추가
 
 - 변경 파일: `pubspec.yaml`, `pubspec.lock`, `README.md`, `WORK_LOG.md`

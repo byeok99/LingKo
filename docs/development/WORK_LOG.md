@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-11 - Flutter 로컬 환경변수 자동 로딩 절차 반영
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: 매 실행마다 환경변수를 나열하던 절차를 Git에서 제외된 `app/.env.local` 1회 설정과 플랫폼별 단일 실행 명령으로 변경하고, iOS Simulator·Android AVD 자동 부팅을 명시했다.
+- 검증: `app/scripts/run-local.sh` 및 자동화 테스트와 문서 예시 대조
+- 리스크: 운영 광고 ID 사용 시 플랫폼별 native App ID 일치와 Google SSV 연결이 별도로 필요하다
+
 ## 2026-08-09 - 가이드 작업 로컬 설정 절차 추가
 
 - 변경 파일: `local-development.md`, `WORK_LOG.md`

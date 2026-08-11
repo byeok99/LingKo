@@ -94,32 +94,35 @@ flutter run
 flutter run --dart-define=LINGKO_API_BASE_URL=http://192.168.0.10:8080
 ```
 
-Google 로그인까지 사용할 때:
+Google 로그인과 광고 테스트용 로컬 값은 Git에서 제외되는 `app/.env.local`에 한 번만 저장합니다. `run-local.sh`가 자동으로 읽으므로 별도 `source`는 필요하지 않습니다.
+
+```bash
+# app/.env.local
+GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID
+IOS_DEVICE_ID=Flutter-iOS-Device-ID
+ANDROID_DEVICE_ID=emulator-5554
+ANDROID_EMULATOR_ID=Flutter-Android-AVD-ID
+ADMOB_ANDROID_REWARDED_AD_UNIT_ID=Android-Rewarded-Ad-Unit-ID
+ADMOB_IOS_REWARDED_AD_UNIT_ID=iOS-Rewarded-Ad-Unit-ID
+```
 
 ```bash
 cd app
-
-GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
-DEVICE_ID=Flutter-Device-ID \
 ./scripts/run-local.sh ios
-
-GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
-DEVICE_ID=emulator-5554 \
 ./scripts/run-local.sh android
 ```
 
-보상형 광고까지 확인하려면 플랫폼별 test Rewarded Ad Unit ID를 함께 전달합니다. native App ID는 Google 공식 sample 값이 이미 설정되어 있습니다.
+개발 중 보상형 광고를 확인할 때는 `.env.local`의 플랫폼별 값을 Google 공식 test Rewarded Ad Unit ID로 설정합니다.
 
 ```bash
-ADMOB_ANDROID_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/5224354917 \
-ADMOB_IOS_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/1712485313 \
-GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
-./scripts/run-local.sh ios
+# app/.env.local
+ADMOB_ANDROID_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/5224354917
+ADMOB_IOS_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/1712485313
 ```
 
 광고 ID가 없으면 Home의 `+`와 Profile의 광고 개인정보 설정은 비활성입니다. 광고 SDK 변경은 hot reload가 아닌 앱 완전 재빌드가 필요합니다.
 
-`run-local.sh`는 iOS에 `http://localhost:8080`, Android emulator에 `http://10.0.2.2:8080`을 자동 적용합니다. Android 실기기는 `API_URL=http://개발-PC-IP:8080`을 추가합니다.
+`run-local.sh`는 iOS에 `http://localhost:8080`, Android emulator에 `http://10.0.2.2:8080`을 자동 적용합니다. 지정한 iOS Simulator가 꺼져 있으면 부팅하고, Android Device ID가 연결되지 않았으면 `ANDROID_EMULATOR_ID`의 AVD를 실행한 뒤 준비될 때까지 기다립니다. Android 실기기는 `API_URL=http://개발-PC-IP:8080`을 추가합니다. 명령 앞에 직접 지정한 환경변수는 `.env.local`보다 우선합니다.
 
 ## Google OAuth 구성
 
