@@ -10,7 +10,9 @@ sequenceDiagram
     participant B as Backend
     participant D as MySQL
 
-    U->>A: Google 로그인 선택
+    U->>A: 로그인 수단 선택
+    A->>U: 동의 화면 표시 (필수 2건·선택 1건)
+    U->>A: 동의
     A->>G: Google Sign-In
     G-->>A: ID Token
     A->>B: POST /api/auth/oauth/login
@@ -20,7 +22,12 @@ sequenceDiagram
     B->>D: Refresh Token 해시 세션 저장
     B-->>A: Access/Refresh JWT + 사용자 정보
     A->>A: Secure Storage 저장
+    A->>B: POST /api/legal/consent
+    B->>D: 문서 버전별 동의 기록
+    B-->>A: required=false
 ```
+
+동의는 **계정이 만들어지기 전에** 받습니다. 계정 생성 후에 받으면 거부한 사용자의 개인정보가 이미 서버에 생긴 상태가 되어 즉시 삭제하는 경로를 따로 만들어야 합니다. 기록 자체는 사용자에게 귀속되어야 하므로 로그인 성공 직후에 전송합니다.
 
 ## 요청 계약
 
@@ -41,15 +48,17 @@ sequenceDiagram
 
 - `GET /api/evaluations/me`
 - `GET /api/quota/today`
-- `GET /api/users/me/preferences`
-- `PATCH /api/users/me/preferences`
+- `GET /api/sentences/saved`, `PATCH /api/sentences/saved/{sentenceId}`
+- `GET /api/legal/consent`, `POST /api/legal/consent`
 
 토큰이 없거나 형식이 올바르지 않거나 검증에 실패하면 `401 AUTHENTICATION_FAILED`를 반환합니다.
+
+`GET /legal/{document}`는 예외로 인증을 요구하지 않습니다. 아직 계정이 없는 가입 화면 사용자와 스토어 심사자가 같은 문서를 열어야 하기 때문이며, 문서에는 사용자 데이터가 없습니다.
 
 ## 모바일 세션
 
 - 세션은 `flutter_secure_storage`에 저장합니다.
-- 앱 시작 시 저장된 세션을 복원합니다.
+- 앱 시작 시 저장된 세션을 복원한 뒤 `GET /api/legal/consent`로 현재 문서 버전의 동의 여부를 확인합니다. 재동의가 필요하거나 상태를 확인할 수 없으면 Home을 열지 않고 동의 화면을 유지하는 fail-closed로 처리합니다.
 - 보호 API가 `401`을 반환하면 Refresh Token으로 한 번 갱신하고 원 요청을 한 번만 재시도합니다.
 - 동시에 여러 요청이 `401`을 받아도 앱은 하나의 refresh 요청만 실행합니다.
 - refresh가 실패하거나 재시도도 `401`이면 로컬 세션을 삭제하고 로그인 화면으로 이동합니다.

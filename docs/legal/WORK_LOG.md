@@ -1,5 +1,22 @@
 # 작업 이력
 
+## 2026-08-12 - Azure 리전 확정으로 자리표시자 전량 제거
+
+- 변경 파일: `privacy-policy.ko.md`, `privacy-policy.en.md`, `terms-of-service.ko.md`, `terms-of-service.en.md`, `README.md`
+- 내용: Azure Speech 리전을 `koreacentral`(한국 중부)로 확정해 마지막 자리표시자를 채웠다. AWS·Azure가 모두 한국 리전이므로 국외 이전 대상은 Replicate(미국)와 Google(미국) 둘뿐이며 기존 표가 그대로 유효하다. 4개 문서의 자리표시자가 0건이 됐다.
+- 문서 머리말의 "검토 대기" 배너를 "기재 값 확정, 변호사 검토는 생략" 상태로 바꿨다. 이 배너는 서빙 시점에 제거되므로 이용자에게는 노출되지 않는다.
+- 검증: `./gradlew test --tests '*Legal*'` 통과. `backend/src/main/resources/legal/` 사본 동기화 후 `LegalDocumentSourceSyncTest` 통과
+- 리스크: 변호사 검토를 생략하기로 해, README의 「변호사 검토가 필요한 판단」 항목(음성의 생체정보 해당 여부, 무료 서비스 책임 제한 조항의 유효성 등)은 검증 없이 현재 판단대로 게시된다. Azure의 음성 학습 이용 여부는 여전히 미확인이며 문서는 학습 미사용을 전제로 한다
+
+## 2026-08-12 - 개인 운영자 기준으로 사업자 정보 확정
+
+- 변경 파일: `privacy-policy.ko.md`, `privacy-policy.en.md`, `terms-of-service.ko.md`, `terms-of-service.en.md`, `README.md`
+- 내용: 운영자가 법인이 아닌 개인으로 확정돼 문서 구조를 바꿨다. 상호·대표자를 이상벽(LEE SANG BYEOK) 실명으로 두고, 사업자등록번호·사업장 주소·전화 항목은 값을 채우는 대신 **삭제**했다. 개인 주소와 번호를 공개하지 않고 `maplebyeok@gmail.com` 단일 창구로 운영하기로 했으며, 그 사실 자체를 문서에 명시해 항목 누락으로 보이지 않게 했다. 개인정보 보호책임자는 「개인정보 보호법」 제31조 제2항에 따라 운영자 본인이 겸임하고, 별도 부서·운영시간 항목은 1인 운영과 맞지 않아 CPO 연락처로 통합했다.
+- EU 배포 제외 결정 반영: EU 대리인 절을 삭제하고 "EEA·영국에 배포하지 않으며 대상으로 하지 않는다"는 명시로 바꿨다. GDPR 조문에 의존하던 서술(회신 1개월, 72시간 통지, Art. 4(14)·5(1)(e)·22·45, 적정성 결정)을 「개인정보 보호법」 기준으로 교체했다. 만 16세 기준은 유지하되 근거를 "GDPR 16세"가 아니라 "법정대리인 동의 확인 절차를 갖추지 않은 1인 운영이라 법정 14세보다 엄격한 자체 기준"으로 다시 썼다. 광고 지역별 동의도 EEA 명시 대신 "사전 동의를 요구하는 지역"으로 일반화했다.
+- 보관 기간(휴면 12개월·삭제 6개월·로그 3개월·마케팅 3년)과 AWS S3 `ap-northeast-2`는 확정값으로 표기에서 자리표시자를 제거했다.
+- 검증: `./gradlew test --tests '*Legal*'` 통과. `backend/src/main/resources/legal/` 사본을 동기화해 `LegalDocumentSourceSyncTest` 통과 확인
+- 리스크: **Azure Speech 리전이 유일한 미확정 값**이다. 국외면 국외 이전 표에 Microsoft를 추가해야 한다. Azure의 음성 학습 이용 여부도 미확인 상태에서 문서는 학습 미사용을 전제로 기재돼 있다. 휴면 배치는 여전히 미구현이라 기술 부채 P1에 등록했다
+
 ## 2026-08-08 - AdMob·UMP 법무 준비 상태 반영
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

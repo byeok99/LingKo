@@ -6,13 +6,16 @@
 flowchart LR
     subgraph Mobile[Flutter App]
       UI[Home / Practice / Result / Profile]
+      CONSENT[Consent Gate]
       API[API Clients]
       AUTH[Google Identity + Secure Storage]
       REC[Audio Recorder]
+      ADS[Rewarded Ads + UMP]
     end
 
     subgraph APIBackend[Spring Boot API]
       CTRL[REST Controllers]
+      LEGAL[Legal Document Pages]
       DOM[Domain Services]
       JPA[JPA Repositories]
       JOB[Guide Job Service]
@@ -31,6 +34,9 @@ flowchart LR
     FFMPEG[FFmpeg]
 
     UI --> API --> CTRL --> DOM --> JPA --> DB
+    CONSENT --> API
+    UI -->|브라우저로 열기| LEGAL
+    ADS --> GOOGLE
     AUTH --> GOOGLE
     AUTH --> API
     REC -->|Presigned PUT| S3
