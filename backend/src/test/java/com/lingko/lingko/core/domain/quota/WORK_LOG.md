@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - SSV 지급·migration 회귀 테스트
+
+- 변경 파일: `AdRewardServiceTest.java`, `PracticeQuotaServiceTest.java`, `PracticeQuotaMigrationTest.java`, `WORK_LOG.md`
+- 내용: signed 지급, client 무지급, 전역 transaction 멱등성과 V20을 검증한다.
+- 검증: 대상 테스트 통과
+- 리스크: 없음
 
 ## 2026-08-08 - 광고 energy 지급 규칙 테스트 추가
 

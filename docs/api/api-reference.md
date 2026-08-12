@@ -368,22 +368,27 @@ Authorization: Bearer <access-token>
 
 평가 진행 중 예약된 횟수는 `remainingPractices`에서 즉시 제외되고 최초 예약 시 1시간 timer가 시작됩니다. 평가 성공 시 사용량으로 확정되고 시스템 오류 시 복구되며, 다시 최대치가 되면 timer도 제거됩니다. 자연 충전은 API 접근 시 서버가 경과 구간을 계산하는 lazy refill 방식입니다.
 
-### `POST /api/quota/ad-rewards`
+### `POST /api/quota/ad-reward-sessions`
 
-인증 필요. Google Mobile Ads SDK의 `onUserEarnedReward`가 호출된 뒤 앱이 한 번 호출합니다.
+인증 필요. 광고를 열기 전에 앱이 호출하며 Google SSV callback과 로그인 사용자를 연결할 15분짜리 1회성 token을 반환합니다.
 
 ```json
 {
-  "rewardEventId": "ad-1786164000000000-123456789-987654321"
+  "sessionToken": "server-generated-url-safe-token",
+  "expiresAt": "2026-08-12T14:30:00+09:00"
 }
 ```
 
-- `rewardEventId`: 16~80자의 영문·숫자·`_`·`-`. 사용자별 unique receipt로 저장해 같은 event 재전송은 추가 지급하지 않습니다.
-- 사용자는 Bearer Token으로 식별하며 사용자 ID와 보상 수량은 body에서 받지 않습니다.
-- 지급량은 서버에서 1회로 고정하고 현재 총 기회가 5회 이상이면 더 늘리지 않습니다.
-- 기존 `nextRefillAt`은 변경하지 않으며 갱신된 `PracticeQuotaResponse`를 즉시 반환합니다.
+- 앱은 token을 Rewarded Ad의 `customData`로 설정합니다. 원본 token은 DB에 저장하지 않고 SHA-256 hash만 보관합니다.
+- 허용 광고 단위가 설정되지 않았거나 현재 기회가 5회이면 `503 AD_REWARD_UNAVAILABLE`입니다.
 
-현재 endpoint는 Mobile Ads의 **클라이언트 reward callback을 사용하는 테스트 단계 계약**입니다. 운영 배포 전에는 Google SSV callback의 서명·transaction ID를 서버에서 검증하고 receipt 식별자를 provider transaction ID로 전환해야 합니다.
+### `GET /api/quota/ad-reward-sessions/{sessionToken}`
+
+인증 필요. `PENDING`, `COMPLETED`, `EXPIRED`와 실제 지급 여부인 `credited`를 반환합니다. 앱은 client reward callback 이후 `COMPLETED`를 확인한 경우에만 `/api/quota/today`를 다시 조회합니다.
+
+### `GET /api/quota/ad-rewards/ssv`
+
+Google AdMob 전용 공개 callback입니다. query 원문의 ECDSA-SHA256 서명을 Google rotating public key로 검증한 뒤 `ad_unit`, `reward_item`, `reward_amount`, `custom_data`, 전역 고유 `transaction_id`를 확인합니다. 같은 transaction은 한 번만 처리하며 기존 `nextRefillAt`은 바꾸지 않습니다. 클라이언트가 직접 지급하는 과거 `POST /api/quota/ad-rewards`는 지급 로직을 제거하고 `410 Gone`만 반환합니다.
 
 ## 가이드 생성 작업
 

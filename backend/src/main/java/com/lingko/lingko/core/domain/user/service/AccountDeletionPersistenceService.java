@@ -8,6 +8,7 @@ import com.lingko.lingko.core.domain.evaluation.repository.EvaluationSyllableRep
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationWordRepository;
 import com.lingko.lingko.core.domain.quota.repository.DailyPracticeQuotaRepository;
 import com.lingko.lingko.core.domain.quota.repository.AdRewardReceiptRepository;
+import com.lingko.lingko.core.domain.quota.repository.AdRewardSessionRepository;
 import com.lingko.lingko.core.domain.sentence.repository.SavedSentenceRepository;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class AccountDeletionPersistenceService {
     private final DailyPracticeQuotaRepository quotaRepository;
     private final SavedSentenceRepository savedSentenceRepository;
     private final AdRewardReceiptRepository adRewardReceiptRepository;
+    private final AdRewardSessionRepository adRewardSessionRepository;
 
     /**
      * 공유 음절 기준 정보는 보존하고 사용자·세션·작업·결과·쿼터만 삭제한다.
@@ -45,6 +47,7 @@ public class AccountDeletionPersistenceService {
         evaluationWordRepository.deleteAllByUserId(userId);
         evaluationLogRepository.deleteAllByUserId(userId);
         savedSentenceRepository.deleteAllByUserId(userId);
+        adRewardSessionRepository.deleteAllByUserId(userId);
         adRewardReceiptRepository.deleteAllByUserId(userId);
         quotaRepository.deleteAllByUserId(userId);
         if (userRepository.deleteAccountById(userId) != 1) {

@@ -2,6 +2,7 @@
 // 선택 이유: HTTP 전송과 JSON 매핑을 UI에서 분리해 API 변경 영향을 한곳에서 관리한다.
 
 import '../models/practice_quota.dart';
+import '../models/ad_reward_session.dart';
 import 'api_client.dart';
 
 /// Practice 할당량 Api 백엔드 통신 계약을 정의한다.
@@ -9,10 +10,12 @@ import 'api_client.dart';
 abstract class PracticeQuotaApi {
   Future<PracticeQuota> fetchTodayQuota({required String accessToken});
 
-  /// 광고 SDK가 확정한 event 하나를 서버 정책의 평가 기회 1회로 교환한다.
-  Future<PracticeQuota> claimAdReward({
+  /// 광고를 열기 전에 signed callback과 사용자를 연결할 1회성 token을 만든다.
+  Future<AdRewardSession> createAdRewardSession({required String accessToken});
+
+  Future<AdRewardSessionStatus> fetchAdRewardSessionStatus({
     required String accessToken,
-    required String rewardEventId,
+    required String sessionToken,
   });
 }
 
@@ -33,15 +36,28 @@ class DartIoPracticeQuotaApi implements PracticeQuotaApi {
   }
 
   @override
-  Future<PracticeQuota> claimAdReward({
+  Future<AdRewardSession> createAdRewardSession({
     required String accessToken,
-    required String rewardEventId,
   }) async {
     final json = await _client.postJsonWithHeaders(
-      '/api/quota/ad-rewards',
-      {'rewardEventId': rewardEventId.trim()},
+      '/api/quota/ad-reward-sessions',
+      const {},
       {'Authorization': 'Bearer ${accessToken.trim()}'},
     );
-    return PracticeQuota.fromJson(json);
+    return AdRewardSession.fromJson(json);
+  }
+
+  @override
+  Future<AdRewardSessionStatus> fetchAdRewardSessionStatus({
+    required String accessToken,
+    required String sessionToken,
+  }) async {
+    final encodedToken = Uri.encodeComponent(sessionToken.trim());
+    final json = await _client.getJson(
+      '/api/quota/ad-reward-sessions/$encodedToken',
+      const {},
+      {'Authorization': 'Bearer ${accessToken.trim()}'},
+    );
+    return AdRewardSessionStatus.fromJson(json);
   }
 }

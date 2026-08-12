@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - 광고 보상 session 모델 추가
+
+- 변경 파일: `ad_reward_session.dart`, `WORK_LOG.md`
+- 내용: SSV token, 만료 시각과 pending/completed/expired 상태를 엄격하게 매핑한다.
+- 검증: API·widget 테스트 통과
+- 리스크: 없음
 
 ## 2026-08-07 - 서버 법무 동의 상태 모델 추가
 

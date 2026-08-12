@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - 광고 SSV session 데이터 모델 추가
+
+- 변경 파일: `data-model.md`, `WORK_LOG.md`
+- 내용: session token hash, 상태·만료와 provider transaction 유일 제약·탈퇴 삭제를 반영했다.
+- 검증: Entity·V20 migration과 대조
+- 리스크: 없음
+
 ## 2026-08-04 - users 테이블 정의 갱신
 
 - 변경 파일: `data-model.md`

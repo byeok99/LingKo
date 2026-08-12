@@ -1,3 +1,12 @@
+# Work Log
+
+## 2026-08-12 - AdMob SSV 기반 보상 지급으로 전환
+
+- 변경 파일: `README.md`, `lib/`, `test/`
+- 내용: client event 직접 지급을 제거하고 server session token을 `customData`로 전달한 뒤 signed SSV 완료 상태만 반영한다.
+- 검증: Flutter 대상 테스트 통과, 실제 Android AVD 자동 부팅·설치·실행 확인
+- 리스크: AdMob console의 공개 HTTPS callback URL은 배포 후 설정 필요
+
 ## 2026-08-11 - Flutter 로컬 설정 자동 로딩 문서화
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

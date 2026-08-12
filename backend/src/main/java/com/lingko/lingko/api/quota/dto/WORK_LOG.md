@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - 광고 session DTO로 교체
+
+- 변경 파일: `AdRewardClaimRequest.java` 삭제, `AdRewardSessionResponse.java`, `AdRewardSessionStatusResponse.java`, `WORK_LOG.md`
+- 내용: client event claim 대신 server token·상태 응답을 제공한다.
+- 검증: JSON Controller 테스트 통과
+- 리스크: 없음
 
 ## 2026-08-08 - 광고 reward event 입력 계약 추가
 

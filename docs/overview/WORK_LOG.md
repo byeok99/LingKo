@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - 제품 범위의 광고 보상 신뢰 경계 갱신
+
+- 변경 파일: `product-and-scope.md`, `WORK_LOG.md`
+- 내용: 광고 보상을 client callback 단계에서 Google SSV 검증 완료 상태로 갱신하고 운영 allowlist 설정을 후속 조건으로 분리했다.
+- 검증: 앱·Backend SSV 구현 및 API 문서와 대조
+- 리스크: 운영 AdMob callback E2E 필요
+
 ## 2026-08-09 - 가이드 생성 기능 범위 보안 상태 반영
 
 - 변경 파일: `product-and-scope.md`, `WORK_LOG.md`

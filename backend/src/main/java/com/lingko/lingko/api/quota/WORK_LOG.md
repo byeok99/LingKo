@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - 광고 session·Google SSV endpoint 추가
+
+- 변경 파일: `PracticeQuotaController.java`, `AdMobSsvController.java`, `WORK_LOG.md`
+- 내용: 인증 session 생성·조회와 공개 signed callback을 분리하고 legacy 직접 지급은 410으로 폐기했다.
+- 검증: Controller 테스트 통과
+- 리스크: 운영 공개 HTTPS URL 설정 필요
 
 ## 2026-08-08 - 인증 광고 보상 청구 endpoint 추가
 

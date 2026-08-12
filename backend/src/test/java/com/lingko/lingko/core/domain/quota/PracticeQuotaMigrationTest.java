@@ -51,6 +51,29 @@ class PracticeQuotaMigrationTest {
         }
     }
 
+    @Test
+    @DisplayName("SSV migration은 session table과 전역 transaction 유일 제약을 추가한다")
+    void addsSecureAdRewardTables() throws Exception {
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:h2:mem:ad_reward_migration;MODE=MySQL;DATABASE_TO_UPPER=false"
+        )) {
+            runMigration(connection, "V1__baseline_schema.sql");
+            runMigration(connection, "V19__add_ad_reward_receipts.sql");
+            runMigration(connection, "V20__secure_ad_rewards_with_ssv.sql");
+
+            try (ResultSet columns = connection.getMetaData()
+                    .getColumns(null, null, "ad_reward_sessions", "session_token_hash")) {
+                assertThat(columns.next()).as("session token hash exists").isTrue();
+                assertThat(columns.getInt("NULLABLE")).isZero();
+            }
+            try (ResultSet columns = connection.getMetaData()
+                    .getColumns(null, null, "ad_reward_receipts", "provider_transaction_id")) {
+                assertThat(columns.next()).as("provider transaction exists").isTrue();
+                assertThat(columns.getInt("NULLABLE")).isEqualTo(1);
+            }
+        }
+    }
+
     private void runMigration(Connection connection, String filename) throws Exception {
         RunScript.execute(
                 connection,

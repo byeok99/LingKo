@@ -98,7 +98,7 @@
 ### 0. 출시 채널과 기능 범위 확정
 
 - [ ] 첫 초대 MVP를 `Android closed testing`으로 시작할지, Android와 iOS를 동시에 배포할지 결정한다.
-- [x] 광고 연동을 출시 범위에 포함한다. Flutter AdMob·UMP·서버 지급 test flow를 연결했고 운영 전 SSV 검증을 완료한다.
+- [x] 광고 연동을 출시 범위에 포함한다. Flutter AdMob·UMP와 Google SSV 서명·transaction 검증을 연결했다. 운영 AdMob console callback URL test는 배포 후 수행한다.
 - [x] 실시간 가이드 생성 HTTP API는 기본 비활성화하고, 내부 service Secret을 설정한 환경에서만 제한적으로 연다.
 - [ ] 디자인 문서의 `weak sound/syllable` 표현을 실제 단어 중심 구현과 일치시키기로 확정한다.
 

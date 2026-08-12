@@ -205,7 +205,7 @@ MVP에서는 별도 관리자 웹 콘솔을 필수로 하지 않습니다. 운�
 | FR-QUOTA-001 | Must | 현재 기회 조회 | 사용자는 서버 기준 현재·최대 평가 기회와 다음 충전 시간을 확인할 수 있어야 한다. | `remainingPractices`, `freeLimit`, `nextRefillAt`, `serverTime`과 앱 표시 일치 | 구현됨 |
 | FR-QUOTA-002 | Must | 시간 충전 | 평가 기회는 부족할 때 1시간마다 1개씩 자연 충전되고 5개에서 멈춰야 한다. | 여러 시간 경과·자정 통과·최대치 테스트 통과 | 구현됨 |
 | FR-QUOTA-003 | Must | 한도 소진 안내 | 남은 횟수가 없으면 평가를 시작하지 않고 다음 충전 countdown을 표시해야 한다. | 앱 선안내와 서버 429 처리 일치 | 구현됨 |
-| FR-QUOTA-004 | Should | 광고 보상 | 5개 미만이면 광고로 1개를 받을 수 있고 기존 자연 충전 timer는 유지되어야 한다. | 앱 callback 경계·버튼 구현, SDK·서버 보상 검증 연동 | 부분 구현 |
+| FR-QUOTA-004 | Should | 광고 보상 | 5개 미만이면 광고로 1개를 받을 수 있고 기존 자연 충전 timer는 유지되어야 한다. | AdMob SDK·UMP, 1회성 session, Google SSV 서명·transaction 검증 | 구현 완료. 운영 callback URL 설정 필요 |
 
 ### 8.8 사용자 설정
 

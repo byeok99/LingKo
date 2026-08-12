@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - signed 광고 보상 완료 polling
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 광고 전 session을 만들고 client reward 뒤 server completed 상태를 확인한 경우에만 quota를 갱신한다.
+- 검증: reward widget 테스트 통과
+- 리스크: callback 지연이 10초를 넘으면 다음 quota 조회에서 반영됨
 
 ## 2026-08-08 - 광고 시청과 practice energy 갱신 연결
 

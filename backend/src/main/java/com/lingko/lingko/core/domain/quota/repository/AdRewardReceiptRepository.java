@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 /** 광고 reward event의 사용자별 idempotency 기록을 관리한다. */
 public interface AdRewardReceiptRepository extends JpaRepository<AdRewardReceipt, Long> {
 
-    boolean existsByUserIdAndRewardEventId(Long userId, String rewardEventId);
+    boolean existsByProviderTransactionId(String providerTransactionId);
 
     @Modifying
     @Query("delete from AdRewardReceipt receipt where receipt.userId = :userId")

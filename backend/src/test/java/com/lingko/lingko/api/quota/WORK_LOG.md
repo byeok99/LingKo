@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - 광고 session·SSV Controller 테스트
+
+- 변경 파일: `PracticeQuotaControllerTest.java`, `AdMobSsvControllerTest.java`, `WORK_LOG.md`
+- 내용: 인증 token 생성·조회, raw callback과 legacy 410을 검증한다.
+- 검증: 대상 테스트 통과
+- 리스크: 없음
 
 ## 2026-08-08 - 광고 보상 endpoint 인증·validation 테스트 추가
 

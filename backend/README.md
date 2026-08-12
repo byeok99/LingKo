@@ -77,6 +77,8 @@ API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB loc
 
 전체 목록은 `.env.example`과 [로컬 개발 가이드](../docs/development/local-development.md)를 기준으로 합니다. 실제 비밀값은 커밋하지 않습니다.
 
+AdMob 보상은 `ADMOB_SSV_ALLOWED_AD_UNIT_IDS`에 iOS·Android callback의 숫자 `ad_unit`을 설정해야 열립니다. AdMob console의 Rewarded SSV URL은 공개 HTTPS의 `https://<backend-host>/api/quota/ad-rewards/ssv`로 설정하고 reward item·amount를 Backend의 `ADMOB_SSV_REWARD_ITEM`, `ADMOB_SSV_REWARD_AMOUNT`와 일치시킵니다. 허용 광고 단위가 비어 있으면 서버는 보상 session 생성을 거부합니다.
+
 ## 현재 주의사항
 
 - 현재 평가 Worker는 Queue 없이 MySQL을 polling하므로 Worker 수를 늘리기 전에 DB lock 경합을 검증해야 합니다.

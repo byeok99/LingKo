@@ -54,7 +54,7 @@ flowchart TD
 ### 부분 구현
 
 - 평가 결과 영속화 서비스와 조회 API는 있으나 현재 평가 업로드 API와 인증 사용자 연결이 완전하지 않음
-- 광고 보상은 AdMob Rewarded SDK·UMP와 인증된 멱등 quota 지급까지 연결됐으나, 운영 신뢰 경계인 Google SSV 검증은 연결되지 않음
+- 광고 보상은 AdMob Rewarded SDK·UMP, 인증된 멱등 quota 지급과 Google SSV 콜백 검증(`GET /api/quota/ad-rewards/ssv`)까지 연결됨. 허용 광고 단위 ID를 지정하지 않으면 보상 세션 생성이 fail-closed 되므로 운영 환경변수 설정이 남음
 - 가이드 생성 HTTP API는 내부 Secret·Rate Limit·동시 실행 제한을 적용하지만 작업 상태는 서버 메모리에만 저장
 
 ### 계획 또는 운영 전 필수

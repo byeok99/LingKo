@@ -8,6 +8,8 @@
     USERS ||--o{ EVALUATION_JOBS : submits
     USERS ||--o{ DAILY_PRACTICE_QUOTA : owns
     USERS ||--o{ AUTH_REFRESH_SESSIONS : authenticates
+    USERS ||--o{ AD_REWARD_RECEIPTS : redeems
+    USERS ||--o{ AD_REWARD_SESSIONS : opens
     EVALUATION_LOG ||--o{ EVALUATION_SYLLABLE : contains
     EVALUATION_LOG ||--o{ EVALUATION_WORD : contains
     SYLLABLES ||--o{ EVALUATION_SYLLABLE : references
@@ -126,6 +128,25 @@
       datetime created_at
       datetime updated_at
     }
+
+    AD_REWARD_RECEIPTS {
+      bigint ad_reward_receipt_id PK
+      bigint user_idx FK
+      varchar reward_event_id
+      varchar provider_transaction_id UK
+      timestamp created_at
+    }
+
+    AD_REWARD_SESSIONS {
+      bigint ad_reward_session_id PK
+      bigint user_idx FK
+      char session_token_hash UK
+      varchar status
+      varchar transaction_id UK
+      boolean credited
+      timestamp expires_at
+      timestamp completed_at
+    }
 ```
 
 ## 주요 제약
@@ -147,6 +168,9 @@
 - `next_refill_at`은 최초 예약 시 설정되고 1시간 경과 구간마다 `free_used`를 1씩 복구하며 최대 5회에서 `NULL`
 - `auth_refresh_sessions.current_token_hash` 유일
 - `auth_refresh_sessions`: `(user_idx, revoked_at)`, `expires_at` 조회 인덱스
+- `ad_reward_receipts`: 기존 `(user_idx, reward_event_id)` 호환 제약과 nullable `provider_transaction_id` 전역 유일 제약. Google SSV transaction이 quota를 두 번 지급하지 못하게 막습니다
+- `ad_reward_sessions`: 원본을 저장하지 않는 `session_token_hash` 유일 제약, 상태·만료·transaction·실제 지급 여부를 보관합니다
+- `ad_reward_receipts`: `(user_idx, created_at)` 조회 인덱스
 
 ## 데이터 소유권
 
@@ -160,6 +184,8 @@
 | 음절 가이드 | 서비스 공용 | 콘텐츠 관리 정책 적용 |
 | 평가 기회 | 사용자 | 회원 탈퇴 시 삭제 |
 | Refresh 세션 | 사용자·기기 | 로그아웃·만료·회원 탈퇴 시 폐기 또는 삭제 |
+| 광고 보상 영수증 | 사용자 | 회원 탈퇴 시 FK `ON DELETE CASCADE`로 삭제 |
+| 광고 보상 세션 | 사용자 | 회원 탈퇴 시 FK `ON DELETE CASCADE`로 삭제 |
 
 ## 주의사항
 

@@ -18,6 +18,7 @@ import 'package:lingko_app/models/auth_session.dart';
 import 'package:lingko_app/models/evaluation_job.dart';
 import 'package:lingko_app/models/practice_history.dart';
 import 'package:lingko_app/models/practice_quota.dart';
+import 'package:lingko_app/models/ad_reward_session.dart';
 import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
 import 'package:lingko_app/models/weak_sound.dart';
@@ -312,7 +313,8 @@ class FakePracticeQuotaApi implements PracticeQuotaApi {
   PracticeQuota? rewardQuota;
   String? lastAccessToken;
   Object? error;
-  String? lastRewardEventId;
+  String? lastSessionToken;
+  int sessionStatusFetchCount = 0;
 
   @override
   Future<PracticeQuota> fetchTodayQuota({required String accessToken}) async {
@@ -326,17 +328,33 @@ class FakePracticeQuotaApi implements PracticeQuotaApi {
   }
 
   @override
-  Future<PracticeQuota> claimAdReward({
+  Future<AdRewardSession> createAdRewardSession({
     required String accessToken,
-    required String rewardEventId,
   }) async {
     lastAccessToken = accessToken;
-    lastRewardEventId = rewardEventId;
     if (error != null) {
       throw error!;
     }
+    lastSessionToken = 'ssv-session-token';
+    return AdRewardSession(
+      sessionToken: lastSessionToken!,
+      expiresAt: DateTime.parse('2026-06-17T13:00:00+09:00'),
+    );
+  }
+
+  @override
+  Future<AdRewardSessionStatus> fetchAdRewardSessionStatus({
+    required String accessToken,
+    required String sessionToken,
+  }) async {
+    lastAccessToken = accessToken;
+    lastSessionToken = sessionToken;
+    sessionStatusFetchCount++;
     quota = rewardQuota ?? quota;
-    return quota;
+    return const AdRewardSessionStatus(
+      status: AdRewardStatus.completed,
+      credited: true,
+    );
   }
 }
 
@@ -354,10 +372,12 @@ class FakePracticeRewardAdService implements PracticeRewardAdService {
 
   int showCount = 0;
   int privacyOptionsCount = 0;
+  String? lastCustomData;
 
   @override
-  Future<RewardedAdResult> show() async {
+  Future<RewardedAdResult> show({required String customData}) async {
     showCount++;
+    lastCustomData = customData;
     return result;
   }
 
@@ -1366,10 +1386,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(adService.showCount, 1);
-      expect(
-        quotaApi.lastRewardEventId,
-        matches(RegExp(r'^ad-[0-9]+-[0-9]+-[0-9]+$')),
-      );
+      expect(adService.lastCustomData, 'ssv-session-token');
+      expect(quotaApi.sessionStatusFetchCount, 1);
       expect(find.text('4/5'), findsOneWidget);
     },
   );
@@ -1398,7 +1416,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(adService.showCount, 1);
-    expect(quotaApi.lastRewardEventId, isNull);
+    expect(quotaApi.sessionStatusFetchCount, 0);
     expect(find.text('3/5'), findsOneWidget);
   });
 

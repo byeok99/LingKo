@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - 광고 보상 session API 계약 적용
+
+- 변경 파일: `practice_quota_api.dart`, `WORK_LOG.md`
+- 내용: 직접 보상 claim을 session 생성·상태 조회 계약으로 교체했다.
+- 검증: `practice_quota_api_test.dart` 통과
+- 리스크: 없음
 
 ## 2026-08-08 - 광고 보상 quota 청구 API 연동
 

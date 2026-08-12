@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - Rewarded Ad customData 전달
+
+- 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`
+- 내용: 광고 표시 전에 server session token을 `ServerSideVerificationOptions.customData`에 설정한다.
+- 검증: `rewarded_ad_service_test.dart` 통과
+- 리스크: 실제 SSV 도착은 공개 Backend에서만 검증 가능
 
 ## 2026-08-08 - AdMob 보상형 광고 서비스 추가
 

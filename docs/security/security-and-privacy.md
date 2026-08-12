@@ -145,10 +145,10 @@ Worker 다운로드 후에는 실제 바이트를 기준으로 다음을 다시 
 ## 광고 보상 신뢰 경계
 
 - 앱은 UMP의 최신 동의 상태에서 `canRequestAds()`가 true일 때만 광고를 요청합니다.
-- SDK의 `onUserEarnedReward`가 오기 전에는 서버 지급 API를 호출하지 않습니다. 광고를 닫기만 한 경우 지급하지 않습니다.
+- 앱은 광고 표시 전에 인증된 1회성 session token을 발급받아 Rewarded Ad `customData`에 설정합니다.
 - 서버는 활성 Bearer session으로 사용자를 식별하고 수량 입력을 받지 않으며 event 하나당 1회만 지급합니다.
-- 사용자별 unique reward receipt와 quota 행 lock으로 동일 event의 재전송·동시 지급을 중복 반영하지 않습니다.
-- 현재 client-generated event ID는 테스트 연동용이라 변조된 앱이 새 ID로 endpoint를 직접 호출하는 것을 증명 수준으로 막지 못합니다. **운영 배포 전 Google SSV 서명 검증과 provider transaction ID idempotency로 교체해야 합니다.**
+- 서버는 Google rotating public key를 최대 24시간만 cache하고 raw query의 ECDSA-SHA256 서명을 검증합니다. 서명 이후에도 허용 광고 단위, 보상 종류·수량, session 만료와 소유권을 확인합니다.
+- Google의 전역 고유 `transaction_id`와 session row lock으로 재전송·동시 callback을 한 번만 지급합니다. 과거 client 직접 지급 endpoint는 `410 Gone`만 반환합니다.
 
 ## 보안 점검 체크리스트
 

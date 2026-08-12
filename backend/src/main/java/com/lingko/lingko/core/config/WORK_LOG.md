@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - AdMob SSV 정책 설정 추가
+
+- 변경 파일: `AdMobSsvSettings.java`, `WORK_LOG.md`
+- 내용: 허용 광고 단위, 보상 항목·수량과 session 만료를 환경 설정으로 제한한다.
+- 검증: Spring 대상 테스트 통과
+- 리스크: allowlist 미설정 시 fail-closed
 
 ## 2026-08-09 - 가이드 작업 admission 설정 추가
 
