@@ -7,6 +7,13 @@
 - 검증: Entity·V20 migration과 대조
 - 리스크: 없음
 
+## 2026-08-12 - 누락된 테이블 3개를 데이터 모델에 반영
+
+- 변경 파일: `data-model.md`
+- 내용: ERD와 제약·소유권 절이 V16까지만 반영돼 있었다. `saved_sentence`(V17), `legal_consents`(V18), `ad_reward_receipts`(V19)를 엔티티·관계·유일 제약·인덱스·삭제 기준까지 추가했다. 동의 기록의 `client_agreed_at`은 기기 시각 참고값이고 `recorded_at`이 서버 감사 시각이라는 구분, 광고 영수증의 `(user_idx, reward_event_id)`가 중복 지급을 막는 멱등 경계라는 점을 명시했다.
+- 검증: 마이그레이션 SQL 원문과 대조, mermaid 블록 구조 확인
+- 리스크: 없음
+
 ## 2026-08-04 - users 테이블 정의 갱신
 
 - 변경 파일: `data-model.md`

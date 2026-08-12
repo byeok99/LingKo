@@ -10,11 +10,12 @@
 
 ## P1: 안정성
 
+- **휴면 계정 전환·통지·자동 삭제 배치.** 처리방침 제4조와 약관 제11조가 "최종 로그인 후 12개월 휴면 전환, 30일 전 이메일 통지, 휴면 후 6개월 경과 시 삭제"를 약속하지만 구현이 없습니다. 게시 상태에서 동작하지 않으면 허위 고지가 되므로 문서 게시와 같은 시점에 맞춰야 합니다.
+
 - Azure·S3 호출별 타임아웃, 재시도, 지수 백오프와 Replicate `Retry-After`·Jitter 보강
 - 외부 서비스 회로 차단기
-- 평가 요청 멱등성 및 중복 업로드 처리
 - 가이드 작업 worker 동시성·메모리·디스크 제한
-- Spring Boot Actuator와 readiness/liveness
+- readiness/liveness probe 노출. Actuator 의존성은 추가됐으나 `management.endpoint.health.probes` 설정이 없어 `/actuator/health/{readiness,liveness}`가 열리지 않습니다
 - 구조화 로그, 요청 ID, 메트릭, 알림
 - DB 자동 백업과 복구 훈련
 - API OpenAPI 자동 생성
@@ -37,6 +38,8 @@
 
 - 가이드 작업 접근 정책: [Issue #41](https://github.com/byeok99/LingKo/issues/41)에 따라 HTTP endpoint를 기본 비활성화하고, 명시적으로 활성화한 환경에서는 32자 이상의 내부 service Secret만 허용합니다. 일반 Bearer 사용자는 `403`, 미인증·잘못된 Secret은 `401`이며, caller별 분당 생성량·process 동시 실행 수·URL/다운로드 경계를 적용합니다. job 상태 영속화는 [#42](https://github.com/byeok99/LingKo/issues/42)에서 계속 추적합니다.
 - 브랜치 전략: [ADR-0005](architecture/adr/0005-branch-strategy.md)에 따라 `develop`을 통합 브랜치, `main`을 릴리스 브랜치로 사용합니다.
+- 평가 요청 멱등성: `evaluation_jobs`의 `(user_idx, idempotency_key)` 유일 제약과 `request_hash` 비교로 처리합니다. 같은 Key·같은 payload는 기존 작업을 반환하고 다른 payload는 `409 IDEMPOTENCY_CONFLICT`입니다. 중복 업로드는 `audio_object_key` 유일 제약으로 막습니다.
+- 법무 문서 게시 경로: Markdown 원본을 서빙 시점에 변환하는 `GET /legal/{document}`로 제공합니다. HTML 사본을 따로 두지 않아 원본과 어긋날 수 없고, 리소스 사본과 `docs/legal/` 원본의 드리프트는 `LegalDocumentSourceSyncTest`가 막습니다.
 - Refresh Token 정책: DB에 현재 토큰의 SHA-256 해시를 저장하고 원자적 회전, 이전 토큰 재사용 시 현재 기기 세션 폐기, 절대 만료, 앱의 401 후 1회 자동 갱신을 적용합니다. 운영 전 [#60](https://github.com/byeok99/LingKo/issues/60) 실제 만료 기반 실기기 E2E와 [#62](https://github.com/byeok99/LingKo/issues/62) 동시 DB 부하 검증을 수행합니다.
 - 평가 기회 정책: 최대 5회에서 부족할 때 서버 기준 1시간마다 1회 lazy refill하고, 외부 평가 전에 자연 충전 횟수를 우선 예약합니다. 성공 시 결과 저장과 함께 사용량으로 확정하며 실패 시 reservation token의 횟수를 복구합니다. [ADR-0006](architecture/adr/0006-atomic-practice-quota-transitions.md)에 따라 예약·확정·복구는 조건부 원자 UPDATE로 처리하고, 최초 행 생성만 짧은 사용자 부모 lock으로 직렬화합니다. AdMob 보상은 1회성 session, `customData`, Google SSV ECDSA 검증과 전역 transaction 멱등성을 적용했습니다. 비정상 종료 예약 회수는 후속 작업입니다.
 - 음성 보존·탈퇴 정책: 평가 성공·최종 실패 후 원본을 삭제하고 미제출·삭제 실패 객체는 S3 1일 Lifecycle로 만료합니다. 회원 탈퇴는 현재 Access·Refresh Token을 재확인하고 S3 current object·version·delete marker 삭제가 성공한 뒤 사용자 소유 DB 데이터를 하나의 transaction으로 삭제합니다. 실제 AWS Lifecycle·Versioning·탈퇴 E2E는 [#71](https://github.com/byeok99/LingKo/issues/71)에서 검증합니다.

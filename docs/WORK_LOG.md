@@ -1,9 +1,25 @@
+# 작업 이력
+
+## 2026-08-12 - 법무 문서 운영자 정보 확정과 기술 부채 등록
+
+- 변경 파일: `technical-debt.md` (법무 문서 상세는 `legal/WORK_LOG.md`)
+- 내용: 운영 주체가 개인으로 확정되고 EU 배포가 제외되면서 법무 문서 4종을 갱신했다. 문서가 약속하는 휴면 계정 전환·통지·삭제가 구현되어 있지 않아 P1 기술 부채로 등록했다. 게시 상태에서 동작하지 않으면 허위 고지가 되므로 문서 게시 시점과 맞춰야 한다.
+- 검증: `./gradlew test --tests '*Legal*'` 통과
+- 리스크: Azure Speech의 음성 학습 이용 여부 미확인
+
 ## 2026-08-12 - AdMob SSV 구현 상태 문서 동기화
 
 - 변경 파일: `mvp-release-execution-checklist.md`, `technical-debt.md`, `WORK_LOG.md` 및 하위 관련 문서
 - 내용: client callback 단계 설명을 1회성 session·Google ECDSA 검증·전역 transaction 멱등성으로 갱신했다.
 - 검증: 구현·API·보안·데이터·요구사항 문서 대조
 - 리스크: AdMob console 공개 HTTPS callback E2E 필요
+
+## 2026-08-12 - 문서 전반 최신성 점검과 갱신
+
+- 변경 파일: `mvp-release-execution-checklist.md`, `technical-debt.md` (하위 폴더 상세는 각 `WORK_LOG.md`)
+- 내용: docs 전체를 코드와 대조해 뒤처진 서술을 갱신했다. 출시 체크리스트는 기준 브랜치가 `feat/design-a-tokens`, 1번이 미완, coverage 73.59%로 남아 있어 현재(`develop`, 1·2번 완료, 125개 통과·80.19%)로 고쳤고 3번을 부분 완료로 바꿨다. HANDOFF의 다음 작업 판단도 광고 구현 진척을 반영해 다시 썼다. 기술 부채에서는 완료된 평가 멱등성과 법무 문서 게시 경로를 완료 항목으로 옮기고, Actuator는 의존성만 있고 probe 설정이 없다는 실제 상태로 정정했다.
+- 검증: `./gradlew test integrationTest` BUILD SUCCESSFUL, `flutter analyze` 무경고, `flutter test --coverage` 125개 통과(80.19%)
+- 리스크: Spring Boot·Java·Dart·MySQL 버전 표기는 실제와 일치해 수정하지 않았다. 0번 출시 채널 결정은 여전히 미결이며 4·5번 범위가 이에 묶여 있다
 
 ## 2026-08-09 - Issue #41 완료 상태 동기화
 
