@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - 광고 보상 요구사항 구현 완료 반영
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: FR-QUOTA-004를 Google SSV 검증 구현 완료와 운영 callback 설정 후속으로 갱신했다.
+- 검증: 구현·테스트 대조
+- 리스크: 실제 운영 광고 E2E 필요
+
 ## 2026-08-05 - 로마자 읽기 요구사항 추가
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`

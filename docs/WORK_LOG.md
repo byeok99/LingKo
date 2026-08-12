@@ -1,3 +1,10 @@
+## 2026-08-12 - AdMob SSV 구현 상태 문서 동기화
+
+- 변경 파일: `mvp-release-execution-checklist.md`, `technical-debt.md`, `WORK_LOG.md` 및 하위 관련 문서
+- 내용: client callback 단계 설명을 1회성 session·Google ECDSA 검증·전역 transaction 멱등성으로 갱신했다.
+- 검증: 구현·API·보안·데이터·요구사항 문서 대조
+- 리스크: AdMob console 공개 HTTPS callback E2E 필요
+
 ## 2026-08-09 - Issue #41 완료 상태 동기화
 
 - 변경 파일: `mvp-release-execution-checklist.md`, `technical-debt.md`, `WORK_LOG.md`

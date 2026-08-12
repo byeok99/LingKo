@@ -59,6 +59,6 @@
 ## 후속 작업
 
 1. 쿼터 충돌·거부·복구 건수를 관측성 작업 [#48](https://github.com/byeok99/LingKo/issues/48)에 연결합니다.
-2. Flutter AdMob rewarded callback과 인증·idempotency 지급 endpoint는 연결했습니다. 운영 전 Google SSV 서명과 provider transaction ID 검증으로 client callback 신뢰 경계를 강화합니다.
+2. Flutter는 광고 전 1회성 server session을 만들고 token을 `customData`로 설정합니다. Backend는 Google SSV 서명, 광고 단위·보상 정책과 provider transaction ID를 검증한 뒤에만 지급합니다.
 3. 비정상 종료로 남은 예약을 회수하는 만료 정책을 별도 운영 작업으로 정의합니다.
 4. 운영 MySQL 버전 변경 시 `PracticeQuotaConcurrencyTest`를 실제 DB에서 다시 실행합니다.

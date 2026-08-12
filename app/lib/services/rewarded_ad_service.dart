@@ -59,7 +59,7 @@ class RewardedAdConfiguration {
 abstract interface class PracticeRewardAdService {
   bool get isConfigured;
 
-  Future<RewardedAdResult> show();
+  Future<RewardedAdResult> show({required String customData});
 
   /// UMP가 제공하는 광고 개인정보 선택 화면을 다시 연다.
   Future<void> showPrivacyOptions();
@@ -69,7 +69,10 @@ abstract interface class PracticeRewardAdService {
 abstract interface class RewardedAdGateway {
   Future<void> initialize();
 
-  Future<RewardedAdPresentation> load({required String adUnitId});
+  Future<RewardedAdPresentation> load({
+    required String adUnitId,
+    required String customData,
+  });
 
   Future<void> showPrivacyOptions();
 }
@@ -99,14 +102,17 @@ class GooglePracticeRewardAdService implements PracticeRewardAdService {
   bool get isConfigured => configuration.isConfiguredFor(platform);
 
   @override
-  Future<RewardedAdResult> show() async {
+  Future<RewardedAdResult> show({required String customData}) async {
     final adUnitId = configuration.adUnitIdFor(platform);
     if (adUnitId == null) {
       throw const RewardedAdNotConfigured();
     }
 
     await _ensureInitialized();
-    final presentation = await gateway.load(adUnitId: adUnitId);
+    final presentation = await gateway.load(
+      adUnitId: adUnitId,
+      customData: customData,
+    );
     try {
       return await presentation.show();
     } finally {
@@ -194,13 +200,22 @@ class GoogleMobileAdsRewardedAdGateway implements RewardedAdGateway {
   }
 
   @override
-  Future<RewardedAdPresentation> load({required String adUnitId}) {
+  Future<RewardedAdPresentation> load({
+    required String adUnitId,
+    required String customData,
+  }) {
     final loaded = Completer<RewardedAdPresentation>();
     RewardedAd.load(
       adUnitId: adUnitId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) => loaded.complete(_GoogleRewardedAdPresentation(ad)),
+        onAdLoaded: (ad) {
+          // Google SSV callback이 인증 사용자 세션을 찾을 수 있도록 show 전에 설정한다.
+          ad.setServerSideOptions(
+            ServerSideVerificationOptions(customData: customData),
+          );
+          loaded.complete(_GoogleRewardedAdPresentation(ad));
+        },
         onAdFailedToLoad:
             (error) => loaded.completeError(
               StateError('Unable to load rewarded ad: ${error.code}'),

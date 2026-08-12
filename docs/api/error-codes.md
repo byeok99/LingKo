@@ -16,11 +16,14 @@
 |---:|---|---|---|
 | 400 | `VALIDATION_FAILED` | DTO 필수값·형식 누락 | 해당 입력 또는 녹음 상태 안내 |
 | 400 | `INVALID_REQUEST` | JSON 파싱, 쿼리 범위, S3 객체 소유권·메타데이터 불일치 | 사용자 입력 또는 업로드 상태 확인 |
+| 400 | `INVALID_AD_REWARD_CALLBACK` | AdMob SSV 서명 또는 지급 정책 불일치 | 앱에서 호출하지 않음. 서버 보안 로그와 AdMob 설정 확인 |
 | 401 | `AUTHENTICATION_FAILED` | Bearer 토큰 누락·만료·검증 실패 | 세션 갱신 또는 재로그인 |
 | 403 | `GUIDE_JOB_FORBIDDEN` | 일반 사용자 토큰으로 내부 가이드 작업 요청 | 앱에서는 요청하지 않고 내부 도구 권한 확인 |
 | 404 | `SENTENCE_NOT_FOUND` | 추천 문장 ID가 없거나 비활성 | 목록 재조회 |
 | 404 | `GUIDE_JOB_NOT_FOUND` | 작업 ID 없음 또는 서버 재시작 후 상태 소실 | 작업 재생성 안내 |
 | 404 | `EVALUATION_JOB_NOT_FOUND` | 작업 ID가 없거나 다른 사용자 소유 | 작업 생성 상태 확인 |
+| 404 | `AD_REWARD_SESSION_NOT_FOUND` | 보상 token이 없거나 다른 사용자 소유 | 새 광고 보상 session 생성 |
+| 410 | 응답 본문 없음 | 폐기된 client 직접 광고 지급 endpoint 호출 | 앱을 SSV session 계약으로 업데이트 |
 | 409 | `IDEMPOTENCY_CONFLICT` | 같은 Idempotency Key를 다른 평가 요청에 재사용 | 새 키로 새 작업 생성 |
 | 413 | `AUDIO_TOO_LARGE` | 업로드 크기 10MiB 초과 | 더 짧게 재녹음 |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` | WAV가 아닌 파일 | WAV 재녹음 |
@@ -30,6 +33,7 @@
 | 429 | `GUIDE_JOB_CAPACITY_EXCEEDED` | 허용된 동시 가이드 생성 슬롯 사용 중 | `Retry-After` 이후 상태 확인·재시도 |
 | 502 | `EVALUATION_FAILED` | 음성 평가 또는 영상 처리 외부 연동 실패 | 잠시 후 재시도 |
 | 503 | `ACCOUNT_DELETION_UNAVAILABLE` | 회원 탈퇴 중 S3 음성 삭제 실패 | 로그인 상태를 유지하고 잠시 후 재시도 |
+| 503 | `AD_REWARD_UNAVAILABLE` | SSV allowlist 미설정, 최대 quota 또는 Google 공개키 일시 실패 | 설정 확인 또는 잠시 후 재시도 |
 | 500 | `INTERNAL_SERVER_ERROR` | 처리되지 않은 서버 오류 | 일반 오류와 문의 경로 표시 |
 
 ## 앱 처리 원칙

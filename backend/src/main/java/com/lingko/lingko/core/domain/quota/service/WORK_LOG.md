@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - 검증된 SSV만 quota 지급
+
+- 변경 파일: `AdRewardService.java`, `VerifiedAdRewardCallback.java`, `PracticeQuotaService.java`, `WORK_LOG.md`
+- 내용: 1회성 session과 Google transaction을 확인한 callback만 최대 5회 정책으로 지급한다.
+- 검증: 정책·중복·timer·session 테스트 통과
+- 리스크: 없음
 
 ## 2026-08-08 - 광고 보상 energy 지급 규칙 추가
 

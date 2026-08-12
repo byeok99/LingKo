@@ -1,3 +1,19 @@
+# Work Log
+
+## 2026-08-12 - 로컬 AdMob SSV 광고 단위 설정
+
+- 변경 파일: `.env`, `WORK_LOG.md`
+- 내용: 로컬 Backend가 LingKo iOS·Android 보상형 광고의 SSV callback을 허용하도록 숫자 광고 단위 ID와 보상 계약을 설정했다.
+- 검증: 비밀값을 출력하지 않고 관련 환경변수 이름과 값 형식을 확인
+- 리스크: Google SSV callback은 공개 HTTPS Backend 주소에서 E2E 검증 필요
+
+## 2026-08-12 - Google AdMob SSV 보상 검증 추가
+
+- 변경 파일: `.env.example`, `README.md`, `docker-compose.yml`, `src/`
+- 내용: 1회성 session, Google ECDSA 공개키 검증, 광고 정책 allowlist와 전역 transaction 멱등 지급을 추가했다.
+- 검증: SSV·quota·migration·계정 삭제 대상 테스트 통과
+- 리스크: 운영 callback URL과 실제 광고 단위 E2E는 배포 환경에서 확인 필요
+
 ## 2026-08-09 - 가이드 생성 API 비용 경계 설정
 
 - 변경 파일: `build.gradle`, `.env.example`, `application.example.yaml`, `docker-compose.yml`, `Dockerfile`, `README.md`, `WORK_LOG.md`

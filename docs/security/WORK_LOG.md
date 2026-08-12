@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - AdMob SSV 신뢰 경계 완료
+
+- 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`
+- 내용: raw ECDSA 검증, rotating key cache, allowlist, session hash와 provider transaction 멱등성을 반영했다.
+- 검증: 보안 테스트·설정·로그 응답과 대조
+- 리스크: 운영 callback URL·reverse proxy rate limit 확인 필요
 
 ## 2026-08-09 - 가이드 생성 비용·SSRF 경계 문서화
 

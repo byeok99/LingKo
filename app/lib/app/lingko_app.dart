@@ -20,6 +20,7 @@ import '../models/consent_selection.dart';
 import '../models/evaluation_job.dart';
 import '../models/evaluation_progress.dart';
 import '../models/practice_quota.dart';
+import '../models/ad_reward_session.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../models/weak_sound.dart';
@@ -685,18 +686,37 @@ class _LingKoShellState extends State<LingKoShell> {
         return;
       }
 
-      final result = await widget.practiceRewardAdService.show();
+      final session = await widget.authService.runAuthenticated(
+        (accessToken) => widget.practiceQuotaApi.createAdRewardSession(
+          accessToken: accessToken,
+        ),
+      );
+      final result = await widget.practiceRewardAdService.show(
+        customData: session.sessionToken,
+      );
       if (result != RewardedAdResult.earned) {
         return;
       }
-      final nextQuota = await widget.authService.runAuthenticated(
-        (accessToken) => widget.practiceQuotaApi.claimAdReward(
-          accessToken: accessToken,
-          rewardEventId: _newRewardEventId(),
-        ),
-      );
+      for (var attempt = 0; attempt < 10; attempt++) {
+        final status = await widget.authService.runAuthenticated(
+          (accessToken) => widget.practiceQuotaApi.fetchAdRewardSessionStatus(
+            accessToken: accessToken,
+            sessionToken: session.sessionToken,
+          ),
+        );
+        if (status.status == AdRewardStatus.completed) {
+          if (mounted) {
+            await loadPracticeQuota();
+          }
+          return;
+        }
+        if (status.status == AdRewardStatus.expired) {
+          throw StateError('Ad reward session expired');
+        }
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
       if (mounted) {
-        setState(() => practiceQuota = nextQuota);
+        await loadPracticeQuota();
       }
     } on AuthSessionExpiredException {
       if (mounted) {
@@ -902,12 +922,6 @@ class _LingKoShellState extends State<LingKoShell> {
   String _newEvaluationIdempotencyKey() {
     final random = Random.secure().nextInt(1 << 32);
     return 'evaluation-${DateTime.now().microsecondsSinceEpoch}-$random';
-  }
-
-  String _newRewardEventId() {
-    final first = Random.secure().nextInt(1 << 32);
-    final second = Random.secure().nextInt(1 << 32);
-    return 'ad-${DateTime.now().microsecondsSinceEpoch}-$first-$second';
   }
 
   // Practice의 통합 입력에서 표준 발음 준비가 끝난 최신 문장으로 연습 대상을 교체합니다.

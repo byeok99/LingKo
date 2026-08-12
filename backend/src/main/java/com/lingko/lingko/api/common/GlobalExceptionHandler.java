@@ -8,6 +8,9 @@ import com.lingko.lingko.core.domain.evaluation.exception.GuideJobCapacityExceed
 import com.lingko.lingko.core.domain.evaluation.exception.GuideJobRateLimitExceededException;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
+import com.lingko.lingko.core.domain.quota.exception.AdMobSsvVerificationException;
+import com.lingko.lingko.core.domain.quota.exception.AdRewardSessionNotFoundException;
+import com.lingko.lingko.core.domain.quota.exception.AdRewardUnavailableException;
 import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
 import com.lingko.lingko.core.domain.user.service.AccountDeletionUnavailableException;
 import jakarta.validation.ConstraintViolationException;
@@ -94,6 +97,33 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleQuotaExceeded(QuotaExceededException exception) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(ErrorResponse.of("QUOTA_EXCEEDED", "Practice energy exhausted"));
+    }
+
+    @ExceptionHandler(AdMobSsvVerificationException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidAdMobCallback(
+            AdMobSsvVerificationException exception
+    ) {
+        // 위조 판단 근거와 cryptographic 예외는 외부에 노출하지 않는다.
+        log.warn("Rejected AdMob SSV callback: {}", exception.getMessage());
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.of("INVALID_AD_REWARD_CALLBACK", "Invalid ad reward callback"));
+    }
+
+    @ExceptionHandler(AdRewardSessionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAdRewardSessionNotFound(
+            AdRewardSessionNotFoundException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of("AD_REWARD_SESSION_NOT_FOUND", "Ad reward session not found"));
+    }
+
+    @ExceptionHandler(AdRewardUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleAdRewardUnavailable(
+            AdRewardUnavailableException exception
+    ) {
+        log.warn("Ad reward is temporarily unavailable", exception);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.of("AD_REWARD_UNAVAILABLE", "Ad reward is temporarily unavailable"));
     }
 
     @ExceptionHandler(EvaluationJobConflictException.class)

@@ -70,18 +70,19 @@ public class PracticeQuotaService {
      * 동일 event 재전송은 현재 상태만 반환하며, 자연 충전 timer는 수정하지 않는다.</p>
      */
     @Transactional
-    public PracticeQuotaResponse grantAdReward(Long userId, String rewardEventId) {
+    public boolean grantVerifiedAdReward(Long userId, String rewardEventId) {
         DailyPracticeQuota quota = findOrCreateCurrentQuota(userId);
-        if (adRewardReceiptRepository.existsByUserIdAndRewardEventId(userId, rewardEventId)) {
-            return toResponse(quota);
+        if (adRewardReceiptRepository.existsByProviderTransactionId(rewardEventId)) {
+            return false;
         }
 
         adRewardReceiptRepository.save(AdRewardReceipt.create(userId, rewardEventId));
         // 버튼을 누른 뒤 자연 충전으로 이미 5회가 된 경쟁 상황에서도 최대치를 넘기지 않는다.
         if (quota.remainingPractices() < MAX_NATURAL_PRACTICES) {
             quota.addRewardedPractices(1);
+            return true;
         }
-        return toResponse(quota);
+        return false;
     }
 
     @Transactional

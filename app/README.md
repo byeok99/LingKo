@@ -133,7 +133,7 @@ ADMOB_IOS_REWARDED_AD_UNIT_ID=iOS-Rewarded-Ad-Unit-ID
 
 ### AdMob 보상형 광고 테스트
 
-플랫폼별 Rewarded Ad Unit ID를 `.env.local`에 설정하면 `+` 버튼, UMP 개인정보 동의, 광고 완료 후 서버의 평가 기회 1회 지급까지 테스트할 수 있습니다. 개발 중에는 아래 Google 공식 test ID를 사용합니다.
+플랫폼별 Rewarded Ad Unit ID를 `.env.local`에 설정하면 `+` 버튼과 UMP 개인정보 동의를 테스트할 수 있습니다. 실제 지급은 Backend의 Google SSV callback이 완료된 경우에만 반영됩니다. Google 공식 test ID는 광고 UI 확인용이며 LingKo AdMob console에 SSV URL을 연결한 운영 광고 단위가 아니면 server 지급 callback은 오지 않습니다.
 
 ```bash
 # app/.env.local
@@ -141,7 +141,7 @@ ADMOB_ANDROID_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/5224354917
 ADMOB_IOS_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/1712485313
 ```
 
-ID가 비어 있으면 동작하지 않는 `+` 버튼과 광고 개인정보 설정 행을 노출하지 않습니다. 운영 빌드 전에는 native App ID와 Rewarded Ad Unit ID를 같은 플랫폼의 LingKo 운영 값으로 맞추고 Google SSV를 연결해야 합니다.
+ID가 비어 있으면 동작하지 않는 `+` 버튼과 광고 개인정보 설정 행을 노출하지 않습니다. 운영 빌드 전에는 native App ID와 Rewarded Ad Unit ID를 같은 플랫폼의 LingKo 운영 값으로 맞추고, AdMob SSV URL을 공개 HTTPS의 `/api/quota/ad-rewards/ssv`로 설정해야 합니다.
 
 Android Google 로그인은 Google Cloud의 Android OAuth Client에 `com.byeok.lingko` package name과 현재 Debug SHA-1이 등록되어 있어야 합니다.
 

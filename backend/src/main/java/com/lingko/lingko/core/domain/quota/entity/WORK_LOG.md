@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - SSV session·provider transaction 모델 추가
+
+- 변경 파일: `AdRewardSession.java`, `AdRewardSessionStatus.java`, `AdRewardReceipt.java`, `WORK_LOG.md`
+- 내용: token hash, 만료·완료 상태와 Google transaction을 저장한다.
+- 검증: JPA·migration 테스트 통과
+- 리스크: 없음
 
 ## 2026-08-08 - 광고 보상 중복 방지 receipt entity 추가
 

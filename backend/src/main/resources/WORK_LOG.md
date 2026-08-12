@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - AdMob SSV 환경 설정 추가
+
+- 변경 파일: `application.yaml`, `WORK_LOG.md`
+- 내용: 광고 단위 allowlist는 기본 빈 값으로 fail-closed 되게 구성했다.
+- 검증: Spring 설정 load·대상 테스트 통과
+- 리스크: 배포 환경변수 필수
 
 ## 2026-08-09 - 가이드 생성 HTTP API 기본 비활성화
 

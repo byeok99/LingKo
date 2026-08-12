@@ -25,7 +25,10 @@ import java.time.Instant;
 @Entity
 @Table(
         name = "ad_reward_receipts",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_idx", "reward_event_id"})
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"user_idx", "reward_event_id"}),
+                @UniqueConstraint(columnNames = "provider_transaction_id")
+        }
 )
 @Getter
 @Builder
@@ -42,9 +45,13 @@ public class AdRewardReceipt {
     @Column(name = "user_idx", nullable = false)
     private Long userId;
 
-    /** 앱이 광고 표시 한 건마다 만든 idempotency 식별자다. */
+    /** 기존 test-stage receipt와 schema 호환성을 유지하는 사용자별 event 식별자다. */
     @Column(name = "reward_event_id", nullable = false, length = 80)
     private String rewardEventId;
+
+    /** Google SSV가 서명한 전역 고유 transaction 식별자다. 기존 receipt는 null일 수 있다. */
+    @Column(name = "provider_transaction_id", length = 80)
+    private String providerTransactionId;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -57,6 +64,7 @@ public class AdRewardReceipt {
         return AdRewardReceipt.builder()
                 .userId(userId)
                 .rewardEventId(rewardEventId)
+                .providerTransactionId(rewardEventId)
                 .build();
     }
 }

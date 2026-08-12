@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - 광고 보상 SSV API 계약 갱신
+
+- 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`
+- 내용: session 생성·조회, signed callback, legacy 410과 오류 코드를 문서화했다.
+- 검증: Backend Controller·DTO와 대조
+- 리스크: 없음
+
 ## 2026-08-09 - 가이드 작업 내부 API 계약 갱신
 
 - 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`

@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - SSV 광고 session migration 추가
+
+- 변경 파일: `V20__secure_ad_rewards_with_ssv.sql`, `WORK_LOG.md`
+- 내용: session table과 nullable provider transaction 전역 unique 컬럼을 추가해 기존 receipt와 호환한다.
+- 검증: H2 MySQL mode migration 테스트 통과
+- 리스크: 실제 MySQL 8 migration은 배포 전 검증 필요
 
 ## 2026-08-08 - 광고 보상 receipt migration 추가
 

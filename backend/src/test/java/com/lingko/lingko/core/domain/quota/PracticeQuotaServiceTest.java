@@ -256,8 +256,10 @@ class PracticeQuotaServiceTest {
                 .toInstant();
 
         clock.advance(Duration.ofMinutes(20));
-        PracticeQuotaResponse response = quotaService.grantAdReward(user.getUserIdx(), "reward-event-123");
+        boolean credited = quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-123");
+        PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
 
+        assertThat(credited).isTrue();
         assertThat(response.rewardedAvailable()).isEqualTo(1);
         assertThat(response.remainingPractices()).isEqualTo(4);
         assertThat(response.nextRefillAt().toInstant()).isEqualTo(originalRefillAt);
@@ -271,9 +273,11 @@ class PracticeQuotaServiceTest {
         quotaService.consumePractice(user.getUserIdx());
         quotaService.consumePractice(user.getUserIdx());
 
-        quotaService.grantAdReward(user.getUserIdx(), "reward-event-123");
-        PracticeQuotaResponse repeated = quotaService.grantAdReward(user.getUserIdx(), "reward-event-123");
+        quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-123");
+        boolean repeatedCredit = quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-123");
+        PracticeQuotaResponse repeated = quotaService.getTodayQuota(user.getUserIdx());
 
+        assertThat(repeatedCredit).isFalse();
         assertThat(repeated.rewardedAvailable()).isEqualTo(1);
         assertThat(repeated.remainingPractices()).isEqualTo(4);
         assertThat(adRewardReceiptRepository.count()).isEqualTo(1);
@@ -284,8 +288,10 @@ class PracticeQuotaServiceTest {
     void doesNotExceedFivePractices() {
         User user = saveUser();
 
-        PracticeQuotaResponse response = quotaService.grantAdReward(user.getUserIdx(), "reward-event-at-max");
+        boolean credited = quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-at-max");
+        PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
 
+        assertThat(credited).isFalse();
         assertThat(response.remainingPractices()).isEqualTo(5);
         assertThat(response.rewardedAvailable()).isZero();
         assertThat(adRewardReceiptRepository.count()).isEqualTo(1);

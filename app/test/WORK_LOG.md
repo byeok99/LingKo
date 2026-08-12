@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - AdMob SSV 앱 회귀 테스트
+
+- 변경 파일: `practice_quota_api_test.dart`, `rewarded_ad_service_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: session API, customData, signed 완료 후 즉시 quota 갱신을 검증한다.
+- 검증: 대상 Flutter 테스트 68개 통과
+- 리스크: 없음
 
 ## 2026-08-08 - 보상형 광고와 quota 회귀 테스트 추가
 

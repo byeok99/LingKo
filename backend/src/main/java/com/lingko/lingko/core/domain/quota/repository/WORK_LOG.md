@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - 광고 session lock·transaction 조회 추가
+
+- 변경 파일: `AdRewardSessionRepository.java`, `AdRewardReceiptRepository.java`, `WORK_LOG.md`
+- 내용: session row lock과 전역 provider transaction 중복 조회를 추가했다.
+- 검증: AdRewardService 테스트 통과
+- 리스크: 없음
 
 ## 2026-08-08 - 광고 보상 receipt 저장소 추가
 

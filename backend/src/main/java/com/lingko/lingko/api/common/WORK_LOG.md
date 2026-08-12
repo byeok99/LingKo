@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - 광고 보상 안전 오류 매핑
+
+- 변경 파일: `GlobalExceptionHandler.java`, `WORK_LOG.md`
+- 내용: SSV 위조 사유를 숨기고 session 없음·일시 실패를 안정된 오류 코드로 변환한다.
+- 검증: Controller 테스트 통과
+- 리스크: 없음
 
 ## 2026-08-09 - 가이드 작업 보안 오류 응답 추가
 

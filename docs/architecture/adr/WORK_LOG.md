@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - quota ADR의 광고 신뢰 경계 갱신
+
+- 변경 파일: `0006-atomic-practice-quota-transitions.md`, `WORK_LOG.md`
+- 내용: client callback 후속 계획을 server session·Google SSV 검증 완료 구조로 교체했다.
+- 검증: 앱·Backend 흐름 대조
+- 리스크: 없음
 
 ## 2026-08-08 - practice quota ADR에 광고 보상 전이 추가
 

@@ -1,4 +1,11 @@
-# 작업 이력
+# Work Log
+
+## 2026-08-12 - 회원 탈퇴 광고 session 정리
+
+- 변경 파일: `AccountDeletionPersistenceService.java`, `WORK_LOG.md`
+- 내용: 회원 탈퇴 transaction에서 광고 보상 session을 receipt보다 먼저 삭제한다.
+- 검증: `AccountDeletionPersistenceServiceTest` 통과
+- 리스크: 없음
 
 ## 2026-08-08 - 계정 삭제에 광고 receipt 정리 연결
 

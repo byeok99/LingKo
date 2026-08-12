@@ -49,11 +49,12 @@ void main() {
         gateway: gateway,
       );
 
-      final result = await service.show();
+      final result = await service.show(customData: 'ssv-session-token');
 
       expect(result, RewardedAdResult.earned);
       expect(gateway.initializationCount, 1);
       expect(gateway.loadedAdUnitIds, ['ios-rewarded-id']);
+      expect(gateway.loadedCustomData, ['ssv-session-token']);
       expect(presentation.showCount, 1);
       expect(presentation.disposeCount, 1);
     });
@@ -71,8 +72,8 @@ void main() {
         gateway: gateway,
       );
 
-      await service.show();
-      await service.show();
+      await service.show(customData: 'session-1');
+      await service.show(customData: 'session-2');
 
       expect(gateway.initializationCount, 1);
       expect(gateway.loadedAdUnitIds, [
@@ -95,8 +96,14 @@ void main() {
         gateway: gateway,
       );
 
-      await expectLater(service.show(), throwsStateError);
-      expect(await service.show(), RewardedAdResult.earned);
+      await expectLater(
+        service.show(customData: 'session-1'),
+        throwsStateError,
+      );
+      expect(
+        await service.show(customData: 'session-2'),
+        RewardedAdResult.earned,
+      );
       expect(gateway.initializationCount, 2);
     });
 
@@ -115,7 +122,7 @@ void main() {
 
       expect(service.isConfigured, isFalse);
       await expectLater(
-        service.show(),
+        service.show(customData: 'session-token'),
         throwsA(isA<RewardedAdNotConfigured>()),
       );
       expect(gateway.initializationCount, 0);
@@ -136,7 +143,10 @@ void main() {
         gateway: gateway,
       );
 
-      await expectLater(service.show(), throwsStateError);
+      await expectLater(
+        service.show(customData: 'session-token'),
+        throwsStateError,
+      );
       expect(presentation.disposeCount, 1);
     });
   });
@@ -152,6 +162,7 @@ class FakeRewardedAdGateway implements RewardedAdGateway {
   int initializationFailuresRemaining;
   int initializationCount = 0;
   final List<String> loadedAdUnitIds = [];
+  final List<String> loadedCustomData = [];
 
   @override
   Future<void> initialize() async {
@@ -163,8 +174,12 @@ class FakeRewardedAdGateway implements RewardedAdGateway {
   }
 
   @override
-  Future<RewardedAdPresentation> load({required String adUnitId}) async {
+  Future<RewardedAdPresentation> load({
+    required String adUnitId,
+    required String customData,
+  }) async {
     loadedAdUnitIds.add(adUnitId);
+    loadedCustomData.add(customData);
     return presentation;
   }
 
