@@ -1,6 +1,6 @@
 # LingKo Terms of Service
 
-> **Draft.** Values marked `«example: …»` are unconfirmed placeholders. Replace them with real values and obtain legal review before release. See [README.md](./README.md) for the open items.
+> **All values in this document are confirmed.** No placeholders remain. It has not been reviewed by a lawyer. See [README.md](./README.md) for details.
 
 - Effective Date 2026-08-07
 
@@ -8,7 +8,7 @@
 
 ## Article 1 (Purpose)
 
-These Terms govern the rights, obligations, and responsibilities between «example: LingKo Inc.» (the "Company") and users in connection with LingKo (the "Service"), a Korean pronunciation learning application. They apply to users in every region. Where mandatory law in your country of residence is more favourable to you, that law prevails.
+These Terms govern the rights, obligations, and responsibilities between LEE SANG BYEOK (the "Company") and users in connection with LingKo (the "Service"), a Korean pronunciation learning application. They apply to users in every region. Where mandatory law in your country of residence is more favourable to you, that law prevails.
 
 ## Article 2 (Definitions)
 
@@ -129,13 +129,13 @@ The Service may be used only by persons aged **16 or over**. The Company applies
 
 2. **Deleting your account permanently removes your account data, learning history, assessment results, evaluation credits, and login sessions. This cannot be undone.** Check anything you need before deleting.
 
-3. **Dormancy.** After «example: 12 months» without a login, the Company places the account in a dormant state and stores its personal data separately. You are emailed at least 30 days beforehand. Signing in again lifts the dormant state immediately.
+3. **Dormancy.** After 12 months without a login, the Company places the account in a dormant state and stores its personal data separately. You are emailed at least 30 days beforehand. Signing in again lifts the dormant state immediately.
 
-4. **Deletion of dormant accounts.** After a further «example: 6 months» without a login, the Company deletes the account and learning history, having emailed you at least 30 days beforehand. Where your registered email address is no longer valid and the notice does not arrive, the Company is taken to have discharged its notification duty by sending it.
+4. **Deletion of dormant accounts.** After a further 6 months without a login, the Company deletes the account and learning history, having emailed you at least 30 days beforehand. Where your registered email address is no longer valid and the notice does not arrive, the Company is taken to have discharged its notification duty by sending it.
 
 5. The Company may suspend your access or terminate the contract if you breach Article 12, after prior notice. Where the breach is serious or urgent action is required, it may act immediately and notify you of the reason afterwards.
 
-6. If you disagree with a suspension or termination, contact «example: support@lingko.kr». The Company restores access immediately where the objection is well founded.
+6. If you disagree with a suspension or termination, contact maplebyeok@gmail.com. The Company restores access immediately where the objection is well founded.
 
 ## Article 12 (User Obligations)
 
@@ -160,7 +160,7 @@ You must not:
 
 3. Reference pronunciation is derived by applying Korean phonological rules. When those rules are improved, values stored with past records are not reused and the reference is recalculated with the current rules, so the reference for a given sentence may change over time.
 
-4. If you disagree with a result, contact «example: support@lingko.kr» for an explanation and human review.
+4. If you disagree with a result, contact maplebyeok@gmail.com for an explanation and human review.
 
 ## Article 14 (Interruption and Discontinuation)
 
@@ -194,7 +194,7 @@ You must not:
 
 2. The Company is not liable for interruption attributable to you, for your not achieving an expected learning outcome, or for transactions between you and an advertiser.
 
-3. **Given that the Service is free of charge, the Company's liability for loss caused by its slight negligence** (meaning fault other than intent or gross negligence) **is limited to «example: KRW 100,000».**
+3. **Given that the Service is free of charge, the Company's liability for loss caused by its slight negligence** (meaning fault other than intent or gross negligence) **is limited to KRW 100,000.**
 
 4. **The limitation in paragraph 3 does not apply to loss caused by the Company's intent or gross negligence, to death or personal injury, or to loss arising from breach of data protection law.**
 
@@ -202,7 +202,7 @@ You must not:
 
 ## Article 18 (Contact and Dispute Resolution)
 
-1. Enquiries about the Service may be submitted at **Settings › Contact** in the app or to «example: support@lingko.kr».
+1. Enquiries about the Service may be submitted at **Settings › Contact** in the app or to maplebyeok@gmail.com.
 
 2. In the event of a dispute you may apply for mediation to the Korea Consumer Agency, the Consumer Dispute Mediation Committee, the Personal Information Dispute Mediation Committee, or an alternative dispute resolution (ADR) body in your country of residence.
 
@@ -210,7 +210,7 @@ You must not:
 
 4. Proceedings between the Company and a member lie with the district court having jurisdiction over the member's address at the time of filing, or their residence where there is no address. Where neither is clear, or the member resides abroad, the court determined under the Korean Civil Procedure Act has jurisdiction.
 
-5. A consumer domiciled in an EU Member State may bring proceedings either in «example: the Seoul Central District Court» or **in the courts of the Member State in which they are domiciled**, and the Company may bring proceedings against such a consumer **only in the courts of that Member State** (Articles 17–19, Brussels I bis Regulation (EU) No 1215/2012).
+5. The Service is not distributed in the European Economic Area or the United Kingdom and is not directed at users there. If we distribute in those territories in future, we will revise these Terms beforehand to state the jurisdiction and governing law that apply to consumers there.
 
 ---
 
@@ -224,11 +224,9 @@ These Terms take effect on 2026-08-07.
 
 ## Provider Information
 
-- Legal name «example: LingKo Inc.»
-- Representative «example: Hong Gil-dong»
-- Registered address «example: 000 Teheran-ro, 00F, Gangnam-gu, Seoul, Republic of Korea»
-- Registration number «example: 000-00-00000»
-- Phone «example: +82-2-0000-0000»
-- Email «example: support@lingko.kr»
+- Operator LEE SANG BYEOK (이상벽)
+- Email **maplebyeok@gmail.com**
+
+The Service is run by an individual, not a company. There is no business registration number, no business premises, and no telephone line; every enquiry is received at the email address above. If the operator registers a business or introduces paid features, the business details required by law will be published here.
 
 [한국어](./terms-of-service.ko.md) · [Privacy Policy](./privacy-policy.en.md)

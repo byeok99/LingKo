@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - 인증 흐름의 동의 gate 반영과 삭제된 endpoint 정리
+
+- 변경 파일: `authentication-flow.md`, `system-architecture.md`
+- 내용: 로그인 sequence에 계정 생성 전 동의와 로그인 직후 동의 기록을 넣고, 세션 복원 시 현재 문서 버전 동의를 확인하는 fail-closed 규칙을 적었다. 인증 필요 API 목록에서 V16으로 제거된 `GET/PATCH /api/users/me/preferences`를 삭제하고 실제 존재하는 저장 문장·동의 endpoint로 교체했으며, `GET /legal/{document}`가 인증 예외인 이유를 남겼다. 구성도에 Consent Gate, Legal Document Pages, Rewarded Ads + UMP를 추가했다.
+- 검증: controller 목록과 대조, mermaid 블록 확인
+- 리스크: 없음
+
 ## 2026-08-05 - 로마자 파생 경계 문서화
 
 - 변경 파일: `evaluation-flow.md`, `WORK_LOG.md`

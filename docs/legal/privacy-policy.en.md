@@ -1,8 +1,10 @@
 # LingKo Privacy Policy
 
-> **Draft.** Values marked `«example: …»` are unconfirmed placeholders. Replace them with real values and obtain legal review before release. See [README.md](./README.md) for the open items.
+> **All values in this document are confirmed.** No placeholders remain. It has not been reviewed by a lawyer, and whether Azure Speech uses recordings for model training is unverified. See [README.md](./README.md) for details.
 
-«example: LingKo Inc.» ("we", "us", "our") explains below how we handle personal data when you use LingKo (the "Service"). This Policy applies to users in all regions. Additional rights available depending on where you live are set out in Section 12.
+LEE SANG BYEOK ("we", "us", "our") explains below how we handle personal data when you use LingKo (the "Service"). This Policy applies to users in all regions. Additional rights available depending on where you live are set out in Section 12.
+
+The Service is operated by an **individual**, not a company. We keep no business premises or telephone line and receive every enquiry at a single email address.
 
 - Effective Date 2026-08-07
 - Last Updated 2026-08-07
@@ -60,7 +62,7 @@ If you sign in with Apple and choose Hide My Email, we receive and process Apple
 
 We do not collect sensitive data or government-issued identification numbers.
 
-Voice recordings are processed **solely to measure the accuracy of Korean pronunciation**, never to identify you. We do not subject recordings to any technical processing intended to uniquely identify a natural person, so we do not create biometric data within the meaning of Article 4(14) GDPR.
+Voice recordings are processed **solely to measure the accuracy of Korean pronunciation**, never to identify you. We do not subject recordings to any technical processing intended to uniquely identify a natural person, so we do not create biometric information from them.
 
 ---
 
@@ -78,18 +80,18 @@ Voice recordings are processed **solely to measure the accuracy of Korean pronun
 
 | Data | Retention |
 |---|---|
-| Account data | Deleted without undue delay when you close your account. If you do not close it, the account becomes dormant after «example: 12 months» without a login and is deleted «example: 6 months» after that |
+| Account data | Deleted without undue delay when you close your account. If you do not close it, the account becomes dormant after 12 months without a login and is deleted 6 months after that |
 | **Voice recordings you upload** | **Kept only for the minimum period needed to perform the assessment, and deleted without undue delay once the assessment succeeds or finally fails.** Files uploaded but never submitted, or whose individual deletion failed, expire one day after upload under a storage lifecycle policy |
 | Assessment results, practice history, saved sentences | Deleted on account closure or with the dormant-account schedule above |
 | Evaluation credits and recharge records | Deleted on account closure or with the dormant-account schedule above |
 | Session data | Deleted on logout, session expiry, or account closure, whichever is earliest |
-| Marketing consent and withdrawal records | «example: 3 years» after withdrawal, to evidence consent in the event of a dispute |
-| Usage and access logs | «example: 3 months» |
+| Marketing consent and withdrawal records | 3 years after withdrawal, to evidence consent in the event of a dispute |
+| Usage and access logs | 3 months |
 | Advertising identifiers and ad interaction records | Not retained separately by us; Google's retention follows Google's policies |
 
 Storage lifecycle expiry is processed asynchronously, so we cannot guarantee deletion at exactly 24 hours.
 
-**Dormant accounts.** After «example: 12 months» without a login we place the account in a dormant state and store its personal data separately from that of active users. We email you at least 30 days before the account becomes dormant, and again at least 30 days before deletion. Signing in again lifts the dormant state immediately. We apply this so that we do not keep personal data for longer than necessary (Article 5(1)(e) GDPR).
+**Dormant accounts.** After 12 months without a login we place the account in a dormant state and store its personal data separately from that of active users. We email you at least 30 days before the account becomes dormant, and again at least 30 days before deletion. Signing in again lifts the dormant state immediately. We apply this so that we do not keep personal data for longer than is necessary for the purposes described here.
 
 ---
 
@@ -105,8 +107,8 @@ As described in Section 6, advertising identifiers and related data are transmit
 
 | Processor | Service | Data processed | Location |
 |---|---|---|---|
-| Amazon Web Services, Inc. | Temporary storage of audio, infrastructure | Voice recordings | «example: Republic of Korea (ap-northeast-2)» |
-| Microsoft Corporation (Azure AI Speech) | Pronunciation assessment | Voice recordings, target sentence text | «example: Republic of Korea (koreacentral)» |
+| Amazon Web Services, Inc. | Temporary storage of audio, infrastructure | Voice recordings | Republic of Korea (ap-northeast-2, Seoul) |
+| Microsoft Corporation (Azure AI Speech) | Pronunciation assessment | Voice recordings, target sentence text | Republic of Korea (koreacentral) |
 | Replicate, Inc. | Learning guide video generation | Sentence text and generation media; no data identifying you | United States |
 | Google LLC (AdMob) | Ad serving and performance measurement | Advertising identifier, IP address, device information, ad interaction records | United States |
 
@@ -120,10 +122,10 @@ We are established in the Republic of Korea, so data is transferred outside the 
 
 | Destination | Recipient | Safeguard |
 |---|---|---|
-| Republic of Korea | «example: LingKo Inc.», «example: AWS and Azure Korea regions» | **Adequacy decision** under Art. 45 GDPR — Commission Implementing Decision (EU) 2022/254 of 17 December 2021 |
+| Republic of Korea | LEE SANG BYEOK, AWS ap-northeast-2 (Seoul) | Operator and primary storage are located in Korea. Korean law (PIPA) applies |
 | United States | Google LLC, Replicate, Inc. | **Standard Contractual Clauses** under Art. 46(2)(c) — Commission Implementing Decision (EU) 2021/914, with a transfer impact assessment |
 
-A copy of the Standard Contractual Clauses is available on request at «example: privacy@lingko.kr».
+A copy of the Standard Contractual Clauses is available on request at maplebyeok@gmail.com.
 
 You may object to international transfers. For advertising, you can limit them by turning off personalised ads in **Settings › Ad privacy settings**; for anything else, contact us using Section 11.
 
@@ -153,8 +155,8 @@ You can opt out of personalised advertising at any time. Ads will still appear, 
 
 ### Regional consent for advertising
 
-- **EEA, UK, and Switzerland**: on first launch, a Consent Management Platform (CMP) lets you choose **in advance** whether your data may be used for advertising purposes. You can use the Service without consenting; you will simply receive non-personalised ads. You can change your choice at any time in Settings › Ad privacy settings.
-- **iOS**: the App Tracking Transparency (ATT) prompt lets you decide whether we may access your advertising identifier. If you decline, the identifier is not collected.
+- **Where local law requires prior consent**: on first launch, a Consent Management Platform (CMP) lets you choose **in advance** whether your data may be used for advertising purposes. You can use the Service without consenting; you will simply receive non-personalised ads.
+- **iOS**: turning off Settings › Privacy & Security › Tracking stops the advertising identifier from being collected.
 - **Elsewhere**: use Settings › Ad privacy settings to control personalised advertising.
 
 ### Cookies
@@ -199,11 +201,11 @@ You may at any time:
 **How**
 
 - **In the app** — Settings gives you Terms of Service, Privacy Policy, Ad privacy settings, Account deletion (which erases everything), and Contact
-- Email «example: privacy@lingko.kr»
-- Phone «example: +82-2-0000-0000»
-- Post «example: 000 Teheran-ro, 00F, Gangnam-gu, Seoul, Republic of Korea»
+- Email maplebyeok@gmail.com
 
-We act without undue delay: **within 10 days** under the Korean Personal Information Protection Act, and **within one month** under the GDPR (extendable by two further months for complex requests, with notice to you within the first month). Exercising your rights is free unless requests are manifestly unfounded or excessive.
+The Service is run by an individual with no business premises or telephone line. All requests are received by email.
+
+We act without undue delay and reply **within 10 days** as required by the Korean Personal Information Protection Act. If a request needs longer, we tell you the reason and the expected schedule first. Exercising your rights is free unless requests are manifestly unfounded or excessive.
 
 Once you request rectification or erasure, we stop using or disclosing the data concerned until the request is completed. A representative acting on your behalf must provide written authority.
 
@@ -226,28 +228,21 @@ Once you request rectification or erasure, we stop using or disclosing the data 
 
 **Physical.** Systems holding personal data run in cloud providers' data centres and rely on those providers' physical access controls.
 
-**Breach notification.** We notify users and regulators without undue delay as required by applicable law. Where the GDPR applies, we notify the competent supervisory authority **within 72 hours** under Article 33 and inform affected individuals without undue delay where Article 34 requires it.
+**Breach notification.** Under Article 34 of the Korean Personal Information Protection Act we notify affected users without undue delay, and where the statutory thresholds are met we report to the Personal Information Protection Commission or the Korea Internet & Security Agency **within 72 hours**.
 
 ---
 
 ## 11. Contact and Data Protection Officer
 
-**Privacy Officer**
+The Service is run by an individual. Under Article 31(2) of the Korean Personal Information Protection Act, the operator also serves as the Privacy Officer. Every request and enquiry — access, rectification, erasure, suspension of processing — is received and handled at the single address below.
 
-- Name «example: Hong Gil-dong»
-- Title «example: Chief Executive»
-- Phone «example: +82-2-0000-0000»
-- Email «example: privacy@lingko.kr»
+**Privacy Officer and requests desk**
 
-**Requests desk**
+- Name LEE SANG BYEOK (이상벽)
+- Title Operator
+- Email **maplebyeok@gmail.com**
 
-- Team «example: Customer Support»
-- Email «example: privacy@lingko.kr»
-- Hours «example: weekdays 10:00–18:00 KST»
-
-**Data Protection Officer (Art. 37 GDPR)**: not appointed. Our processing does not involve regular and systematic monitoring of data subjects on a large scale, nor large-scale processing of special categories of data, so appointment is not mandatory.
-
-**EU Representative (Art. 27 GDPR)**: «example: not yet designated». We are established outside the Union and offer the Service to data subjects in the Union, so we are assessing this obligation and will publish the representative's name, address, and contact details here once designated.
+Because the Service is run by one person, we do not operate a telephone line or fixed office hours. We reply **within 10 days** of receiving a request. If a request needs longer, we tell you the reason and the expected schedule first.
 
 ---
 
@@ -255,11 +250,9 @@ Once you request rectification or erasure, we stop using or disclosing the data 
 
 ### European Economic Area and United Kingdom
 
-You have the right of access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction (Art. 18), data portability (Art. 20), objection (Art. 21), rights concerning automated decision-making (Art. 22), and withdrawal of consent (Art. 7(3)).
+**The Service is not distributed in the European Economic Area or the United Kingdom and is not directed at users in those territories.** Those countries are excluded from the app stores' distribution list. We therefore do not appoint an EU Representative under Article 27 GDPR.
 
-Our legal bases are: **contract** (Art. 6(1)(b)) for account management, pronunciation assessment, learning history, and evaluation credits; **legitimate interests** (Art. 6(1)(f)) for security, abuse prevention, and service improvement, where our interest is keeping accounts and the Service secure and reliable and we use the minimum data necessary; and **consent** (Art. 6(1)(a)) for advertising-related processing and marketing messages, which you may withdraw at any time.
-
-You have the right to lodge a complaint with a supervisory authority in your Member State of residence, place of work, or place of the alleged infringement. A list is at https://edpb.europa.eu/about-edpb/about-edpb/members_en
+If we distribute there in future, we will revise this Policy before doing so to publish the legal bases, data subject rights, supervisory authority complaint route, and EU Representative details that the GDPR requires.
 
 ### Republic of Korea
 
@@ -275,9 +268,9 @@ Where the law of your country grants further rights, we honour them. Contact us 
 
 The Service is for users aged **16 and over**, and we do not permit registration below that age. We do not knowingly collect personal data from anyone under 16.
 
-The Korean Personal Information Protection Act uses 14 and Article 8 GDPR uses 16; we apply the stricter threshold of 16 uniformly.
+The Korean Personal Information Protection Act requires a legal guardian's consent to collect data from children under 14. As a one-person service we have no way to verify guardian consent, so we set a single, stricter joining age of **16** and do not accept registrations below it.
 
-If we learn that we hold data from someone under 16 we delete it without undue delay. A holder of parental responsibility may contact «example: privacy@lingko.kr» to request deletion.
+If we learn that we hold data from someone under 16 we delete it without undue delay. A holder of parental responsibility may contact maplebyeok@gmail.com to request deletion.
 
 ---
 
@@ -288,15 +281,15 @@ Pronunciation scores are produced automatically by a speech recognition and pron
 - **Logic**: your recording is compared with the reference pronunciation of the target sentence (a normalised string derived by applying Korean phonological rules), and accuracy is calculated at sentence and syllable level.
 - **Process**: choose a sentence and record → upload to private storage → the engine compares and scores → results returned → the original recording is deleted.
 - **Method**: we use the pronunciation assessment feature of an external speech service. **We do not use your recordings to train artificial intelligence models.**
-- **Status**: scores are study feedback and produce no legal or similarly significant effects, so they are not a decision under Article 22 GDPR or Article 37-2 of the Korean Act.
+- **Status**: scores are study feedback and produce no legal or similarly significant effects, so they are not a decision under Article 37-2 of the Korean Personal Information Protection Act.
 
-If you disagree with a result, contact «example: privacy@lingko.kr» for an explanation and human review.
+If you disagree with a result, contact maplebyeok@gmail.com for an explanation and human review.
 
 ---
 
 ## 15. Changes to This Policy
 
-We announce changes in the app at least **7 days** before they take effect, and at least **30 days** before for changes that disadvantage users or that affect users to whom the GDPR applies.
+We announce changes in the app at least **7 days** before they take effect, and at least **30 days** before for changes that disadvantage users.
 
 **Revision history**
 
