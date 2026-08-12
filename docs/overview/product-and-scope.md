@@ -50,11 +50,16 @@ flowchart TD
 - 기본 비활성화된 내부 service 전용 가이드 생성 작업 생성·상태 조회
 - 앱 내 확인과 현재 세션 재확인을 거치는 회원 탈퇴·개인정보 삭제
 - 평가 종료 즉시 원본 음성 삭제와 미제출 객체 1일 Lifecycle 정책
+- 추천 문장 저장·해제와 저장 목록 조회
+- 약관·개인정보 처리방침의 인증 없는 공개 HTML 서빙(`/legal/{terms|privacy}`, 한국어·영문)
+- 가입 전 필수 2건·선택 1건 동의 화면과 문서 버전별 동의 기록, 개정 시 재동의를 요구하는 fail-closed gate
+- Profile에서 약관·처리방침 재열람
 
 ### 부분 구현
 
 - 평가 결과 영속화 서비스와 조회 API는 있으나 현재 평가 업로드 API와 인증 사용자 연결이 완전하지 않음
 - 광고 보상은 AdMob Rewarded SDK·UMP, 인증된 멱등 quota 지급과 Google SSV 콜백 검증(`GET /api/quota/ad-rewards/ssv`)까지 연결됨. 허용 광고 단위 ID를 지정하지 않으면 보상 세션 생성이 fail-closed 되므로 운영 환경변수 설정이 남음
+- iOS 앱 추적 투명성(ATT)은 `Info.plist`에 `NSUserTrackingUsageDescription`이 없어 권한 요청을 띄울 수 없음. 처리방침은 ATT 제공을 전제로 기재되어 있어 출시 전 문구 추가 필요
 - 가이드 생성 HTTP API는 내부 Secret·Rate Limit·동시 실행 제한을 적용하지만 작업 상태는 서버 메모리에만 저장
 
 ### 계획 또는 운영 전 필수

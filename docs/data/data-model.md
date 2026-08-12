@@ -8,11 +8,14 @@
     USERS ||--o{ EVALUATION_JOBS : submits
     USERS ||--o{ DAILY_PRACTICE_QUOTA : owns
     USERS ||--o{ AUTH_REFRESH_SESSIONS : authenticates
+    USERS ||--o{ SAVED_SENTENCE : bookmarks
+    USERS ||--o{ LEGAL_CONSENTS : accepts
     USERS ||--o{ AD_REWARD_RECEIPTS : redeems
     USERS ||--o{ AD_REWARD_SESSIONS : opens
     EVALUATION_LOG ||--o{ EVALUATION_SYLLABLE : contains
     EVALUATION_LOG ||--o{ EVALUATION_WORD : contains
     SYLLABLES ||--o{ EVALUATION_SYLLABLE : references
+    RECOMMENDED_SENTENCES ||--o{ SAVED_SENTENCE : references
 
     RECOMMENDED_SENTENCES {
       bigint sentence_id PK
@@ -129,6 +132,24 @@
       datetime updated_at
     }
 
+    SAVED_SENTENCE {
+      bigint saved_sentence_idx PK
+      bigint user_idx FK
+      bigint sentence_id
+      datetime created_at
+    }
+
+    LEGAL_CONSENTS {
+      bigint legal_consent_idx PK
+      bigint user_idx FK
+      varchar document_version
+      boolean terms_agreed
+      boolean privacy_acknowledged
+      boolean marketing_opt_in
+      datetime client_agreed_at
+      datetime recorded_at
+    }
+
     AD_REWARD_RECEIPTS {
       bigint ad_reward_receipt_id PK
       bigint user_idx FK
@@ -168,9 +189,16 @@
 - `next_refill_at`은 최초 예약 시 설정되고 1시간 경과 구간마다 `free_used`를 1씩 복구하며 최대 5회에서 `NULL`
 - `auth_refresh_sessions.current_token_hash` 유일
 - `auth_refresh_sessions`: `(user_idx, revoked_at)`, `expires_at` 조회 인덱스
+- `saved_sentence`: `(user_idx, sentence_id)` 유일. 같은 문장을 두 번 저장할 수 없습니다
+- `saved_sentence`: `(user_idx, created_at DESC)` 최근 저장 순 목록 인덱스
+- `legal_consents`: `(user_idx, document_version)` 유일. 같은 사용자·버전의 재시도가 새 행을 만들지 않는 idempotent 기록입니다
+- `legal_consents`: `(user_idx, recorded_at DESC)` 최신 기록 순 조회 인덱스
+- `legal_consents.client_agreed_at`은 기기 시각 참고값이고 `recorded_at`이 서버 기준 감사 시각입니다. 기기 시각은 사용자가 바꿀 수 있어 단독 근거로 쓰지 않습니다
+- `legal_consents.document_version`은 문서 시행일(`docs/legal/`)과 앱의 `consentDocumentVersion` 상수와 같은 값을 유지합니다
 - `ad_reward_receipts`: 기존 `(user_idx, reward_event_id)` 호환 제약과 nullable `provider_transaction_id` 전역 유일 제약. Google SSV transaction이 quota를 두 번 지급하지 못하게 막습니다
 - `ad_reward_sessions`: 원본을 저장하지 않는 `session_token_hash` 유일 제약, 상태·만료·transaction·실제 지급 여부를 보관합니다
 - `ad_reward_receipts`: `(user_idx, created_at)` 조회 인덱스
+- `legal_consents`, `ad_reward_receipts`, `ad_reward_sessions`의 사용자 FK는 `ON DELETE CASCADE`입니다
 
 ## 데이터 소유권
 
@@ -184,6 +212,8 @@
 | 음절 가이드 | 서비스 공용 | 콘텐츠 관리 정책 적용 |
 | 평가 기회 | 사용자 | 회원 탈퇴 시 삭제 |
 | Refresh 세션 | 사용자·기기 | 로그아웃·만료·회원 탈퇴 시 폐기 또는 삭제 |
+| 저장 문장 | 사용자 | 회원 탈퇴 시 삭제. 참조하는 추천 문장 자체는 공용 콘텐츠라 보존 |
+| 약관 동의 기록 | 사용자 | 회원 탈퇴 시 FK `ON DELETE CASCADE`로 삭제. 문서 개정 시 과거 버전 기록은 지우지 않고 새 버전 행을 추가 |
 | 광고 보상 영수증 | 사용자 | 회원 탈퇴 시 FK `ON DELETE CASCADE`로 삭제 |
 | 광고 보상 세션 | 사용자 | 회원 탈퇴 시 FK `ON DELETE CASCADE`로 삭제 |
 

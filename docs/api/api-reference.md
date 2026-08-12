@@ -132,6 +132,32 @@ Authorization: Bearer <access-token>
 
 추천 문장 응답의 `standardPronunciation`은 DB에 저장한 정답을 반환하지 않습니다. 서버가 `originalText`를 Unicode 문장부호·기호 제거와 공백 정규화한 뒤 현재 한국어 음운 규칙으로 매 요청 계산합니다. `romanizedPronunciation`은 이 표준 발음에서 파생하며 음절은 하이픈, 단어는 공백으로 구분합니다.
 
+### `GET /api/sentences/saved`
+
+인증 필요. 사용자가 저장한 문장을 최근 저장 순으로 반환합니다.
+
+```json
+{
+  "items": [],
+  "totalCount": 0
+}
+```
+
+`items`는 추천 문장 단건 조회와 같은 형식입니다. `totalCount`를 따로 두는 이유는 화면 머리말의 개수가 목록 길이와 반드시 일치해야 하기 때문이며, 이후 페이지네이션이 붙어도 조용히 어긋나지 않게 하기 위함입니다.
+
+### `PATCH /api/sentences/saved/{sentenceId}`
+
+인증 필요. 저장 상태를 뒤집습니다.
+
+```json
+{
+  "sentenceId": 12,
+  "saved": true
+}
+```
+
+화면이 원하는 상태를 보내지 않고 **서버가 실제 상태를 뒤집습니다.** 두 기기에서 동시에 누를 때 뒤늦게 도착한 요청이 이전 상태를 되살리는 것을 막기 위한 계약입니다. 앱은 응답의 `saved`를 최종 상태로 삼아야 합니다.
+
 ## 발음 준비
 
 ### `POST /api/pronunciation/convert`

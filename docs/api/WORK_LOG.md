@@ -7,6 +7,13 @@
 - 검증: Backend Controller·DTO와 대조
 - 리스크: 없음
 
+## 2026-08-12 - 저장 문장 API 문서화와 동의 오류 처리 보강
+
+- 변경 파일: `api-reference.md`, `error-codes.md`
+- 내용: 구현돼 있으나 문서에 없던 `GET /api/sentences/saved`와 `PATCH /api/sentences/saved/{sentenceId}`를 추가했다. 앱이 원하는 상태를 보내지 않고 서버가 실제 상태를 뒤집는 이유(두 기기 동시 조작 시 늦게 도착한 요청이 이전 상태를 되살리는 것 방지)를 계약으로 적었다. 오류 문서에는 동의 버전 불일치·필수 동의 누락이 `INVALID_REQUEST`로 온다는 점과, 동의 확인 실패를 통과로 해석하면 안 된다는 처리 원칙을 넣었다.
+- 검증: `SavedSentenceController`·DTO·`LegalConsentService`의 예외 경로와 대조
+- 리스크: 없음
+
 ## 2026-08-09 - 가이드 작업 내부 API 계약 갱신
 
 - 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`

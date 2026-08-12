@@ -1,7 +1,7 @@
 # LingKo MVP 출시 실행 체크리스트
 
-기준일: 2026-08-06
-기준 브랜치: `feat/design-a-tokens`
+기준일: 2026-08-12
+기준 브랜치: `develop`
 대상 디자인: [LingKo Direction A](design_handoff_lingko_direction_a/README.md)
 
 이 문서는 LingKo를 초대 기반 MVP로 출시하기 위해 남은 작업을 **한 번에 하나씩 처리하는 실행 기준**이다. 제품 요구사항의 상세 정의는 기존 요구사항 문서를 유지하고, 여기서는 작업 순서·완료 조건·검증 증거만 관리한다.
@@ -111,10 +111,10 @@
 
 ### 1. Direction A 변경 통합
 
-- [ ] [PR #88](https://github.com/byeok99/LingKo/pull/88)의 앱·백엔드 API 계약과 70개 변경 파일을 최종 리뷰한다.
-- [ ] Direction A 11개 화면, 저장 문장, 취약 단어, 로마자 가이드 회귀 테스트를 확인한다.
-- [ ] 문서에서 완료된 Issue를 미완료로 안내하는 오래된 상태를 정리한다.
-- [ ] `develop`에 병합한 뒤 깨끗한 checkout에서 전체 검증한다.
+- [x] [PR #88](https://github.com/byeok99/LingKo/pull/88)의 앱·백엔드 API 계약과 70개 변경 파일을 최종 리뷰한다.
+- [x] Direction A 11개 화면, 저장 문장, 취약 단어, 로마자 가이드 회귀 테스트를 확인한다.
+- [x] 문서에서 완료된 Issue를 미완료로 안내하는 오래된 상태를 정리한다.
+- [x] `develop`에 병합한 뒤 깨끗한 checkout에서 전체 검증한다.
 
 완료 조건:
 
@@ -123,7 +123,7 @@
 - Flutter line coverage가 프로젝트 기준 80% 이상이거나, 미달 범위와 보완 Issue가 승인되어 있다.
 - 관련 요구사항·로드맵·기술부채 문서가 현재 코드와 일치한다.
 
-완료 기록: 현재 로컬 기준 Backend test/integrationTest, Flutter analyze, Flutter 86 tests 통과. Flutter line coverage 73.59%로 완료 조건 미달.
+완료 기록: PR #88은 `develop`에 병합됐고(`1bbd562`), 이후 #90·#91·#92·#95·#96·#97까지 통합됐다. 2026-08-12 기준 `./gradlew test integrationTest` BUILD SUCCESSFUL, `flutter analyze` 무경고, `flutter test --coverage` 125개 통과, Flutter line coverage 80.19%로 완료 조건(80% 이상)을 충족한다.
 
 ### 2. 가이드 생성 API 비용·보안 경계 확립
 
@@ -142,19 +142,23 @@
 
 ### 3. 개인정보·약관·계정 삭제 공개 경로
 
-- [ ] 개인정보처리방침과 이용약관을 공개 HTTPS URL로 배포한다.
-- [ ] 앱의 `Audio & privacy`와 `About`에서 정책과 버전을 열 수 있게 한다.
+- [~] 개인정보처리방침과 이용약관을 공개 URL로 배포한다. 서빙 경로는 구현했으나 운영 HTTPS 도메인에 아직 올리지 않았다.
+- [x] 앱의 Profile에서 정책과 버전을 열 수 있게 한다.
 - [ ] Google Play용 외부 계정 삭제 안내·요청 URL을 제공한다.
 - [ ] 녹음 수집 목적, 저장 위치, 삭제 시점, 외부 처리자와 탈퇴 정책을 스토어 고지와 일치시킨다.
 - [ ] [#71](https://github.com/byeok99/LingKo/issues/71)의 실제 AWS Lifecycle·Versioning·탈퇴 삭제 E2E를 완료한다.
+- [x] 문서의 자리표시자를 확정된 운영 정보로 교체했다. 변호사 검토는 운영자 판단으로 생략하고 남은 법적 위험을 `docs/legal/README.md`에 기록했다.
 
 완료 조건:
 
 - 앱과 스토어 심사 정보에서 동일한 정책 URL에 접근할 수 있다.
 - 테스트 계정 탈퇴 후 DB 데이터와 S3 current object/version/delete marker가 남지 않는다.
 - 삭제 실패 시 사용자 응답과 운영자 재처리 절차가 검증되어 있다.
+- 게시하는 문서에 미확정 자리표시자가 없고, 검토하지 않은 법적 판단과 기술적 사실이 명시돼 있다.
 
-완료 기록: 미작성
+완료 기록: 문서 값과 서빙 경로는 준비됐다. `docs/legal/`에 한국어·영문 공통 1세트를 작성했고, 백엔드가 `GET /legal/{terms|privacy}?lang={ko|en}`로 인증 없이 서빙한다. 원본과 서빙 사본의 드리프트는 `LegalDocumentSourceSyncTest`가 막는다. 앱은 가입 전 필수 2건·선택 1건 동의를 받고 문서 버전별로 기록하며(`POST /api/legal/consent`), Profile에서 다시 열 수 있다.
+
+**남은 차단 요인**: 운영 HTTPS 도메인 게시, Play 계정 삭제 URL, 스토어 고지 일치, #71 E2E와 문서가 전제한 Azure Speech 음성 학습 미사용 확인이 남아 있다. 변호사 검토 생략에 따른 위험은 [docs/legal/README.md](legal/README.md)를 따른다.
 
 ### 4. 플랫폼 인증과 소셜 로그인 완결
 
@@ -322,7 +326,11 @@ Go 조건:
 
 ## HANDOFF
 
-다음 작업은 **0. 출시 채널과 기능 범위 확정**이다. 결정이 끝나면 **1. Direction A 변경 통합**으로 이동한다. 각 구현 작업은 `tdd-workflow`로 회귀 테스트를 먼저 추가하고, 완료 전 `verification-loop` 기준으로 build·test·lint·security와 문서 동기화를 확인한다.
+**1. Direction A 변경 통합**과 **2. 가이드 생성 API 경계**는 완료됐고, **3. 개인정보·약관**은 문서·경로 구현까지 진행돼 내용 확정만 남았다.
+
+다음 작업은 여전히 **0. 출시 채널과 기능 범위 확정**이다. 0번이 미결이라 4번(Apple 로그인 필수 여부)과 5번(빌드 대상 플랫폼)의 범위가 확정되지 않는다. 광고 코드의 SSV 검증은 완료됐으며 배포 후 AdMob console의 공개 HTTPS callback URL과 실제 운영 광고 단위 E2E를 확인해야 한다.
+
+각 구현 작업은 `tdd-workflow`로 회귀 테스트를 먼저 추가하고, 완료 전 `verification-loop` 기준으로 build·test·lint·security와 문서 동기화를 확인한다.
 
 관련 기준 문서:
 

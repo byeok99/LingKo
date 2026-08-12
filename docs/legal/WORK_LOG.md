@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - AdMob SSV 구현 상태 동기화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: client callback 기반 테스트 지급 설명을 1회성 session과 Google SSV 검증 완료 상태로 교체하고 운영 설정·E2E를 후속 위험으로 분리했다.
+- 검증: 앱·Backend SSV 구현 및 API 문서와 대조
+- 리스크: 운영 공개 HTTPS callback과 실제 광고 단위 E2E 필요
+
 ## 2026-08-12 - Azure 리전 확정으로 자리표시자 전량 제거
 
 - 변경 파일: `privacy-policy.ko.md`, `privacy-policy.en.md`, `terms-of-service.ko.md`, `terms-of-service.en.md`, `README.md`
