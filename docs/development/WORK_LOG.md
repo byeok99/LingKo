@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple 로그인 개발·검증 절차 추가
+
+- 변경 파일: `local-development.md`, `testing-and-troubleshooting.md`, `WORK_LOG.md`
+- 내용: `APPLE_CLIENT_ID`, App ID capability, provisioning과 실기기 점검·오류 진단 절차를 추가했다.
+- 검증: 설정 파일·entitlement·iOS simulator build와 대조
+- 리스크: Apple Developer portal 작업은 수동 필요
+
 ## 2026-08-11 - Flutter 로컬 환경변수 자동 로딩 절차 반영
 
 - 변경 파일: `local-development.md`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-12 - Apple OAuth 보안 경계 문서화
+
+- 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`
+- 내용: raw nonce, RS256/JWK, issuer·audience·만료·verified email 검증과 token 로그 금지를 반영했다.
+- 검증: verifier 테스트·비밀값 scan·OSV 점검과 대조
+- 리스크: authorization code revocation과 rate limit 후속 필요
+
 ## 2026-08-12 - AdMob SSV 신뢰 경계 완료
 
 - 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`

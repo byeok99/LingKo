@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Sign in with Apple entitlement 추가
+
+- 변경 파일: `Runner.entitlements`, `WORK_LOG.md`
+- 내용: iOS native Apple 로그인을 위한 `com.apple.developer.applesignin=Default` entitlement를 선언했다.
+- 검증: `plutil -lint`, iOS simulator build 성공
+- 리스크: App ID capability 활성화와 실기기 provisioning 검증 필요
+
 ## 2026-08-11 - iOS LingKo AdMob App ID 적용
 
 - 변경 파일: `Info.plist`, `WORK_LOG.md`

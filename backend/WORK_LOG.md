@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-12 - Apple OAuth 검증 의존성·설정 추가
+
+- 변경 파일: `build.gradle`, `.env.example`, `application.example.yaml`, `README.md`, `WORK_LOG.md`
+- 내용: Nimbus JOSE JWT와 공개 Apple App ID 환경변수 계약을 추가하고 운영 설정을 안내했다.
+- 검증: Backend 단위 293개·통합 16개 통과, 통합 합산 라인 커버리지 80.20%, OSV 추가 의존성 취약점 0건
+- 리스크: Apple authorization code 교환·revocation과 endpoint rate limit은 출시 전 필요
+
 ## 2026-08-12 - 로컬 AdMob SSV 광고 단위 설정
 
 - 변경 파일: `.env`, `WORK_LOG.md`

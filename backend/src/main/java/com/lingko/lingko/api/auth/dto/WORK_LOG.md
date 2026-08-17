@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple OAuth 요청 경계 확장
+
+- 변경 파일: `OAuthLoginRequest.java`, `WORK_LOG.md`
+- 내용: raw nonce·최초 이름을 추가하고 길이·문자·provider별 필수 조건을 검증한다.
+- 검증: AuthController validation 테스트와 Backend 전체 테스트 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `AuthTokenResponse.java`, `AuthUserResponse.java`, `OAuthLoginRequest.java`, `RefreshTokenRequest.java`, `WORK_LOG.md`

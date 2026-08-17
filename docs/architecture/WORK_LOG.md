@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple 인증 신뢰 경계 반영
+
+- 변경 파일: `authentication-flow.md`, `system-architecture.md`, `WORK_LOG.md`
+- 내용: native nonce 생성부터 Apple JWK 검증·세션 발급까지의 provider 중립 흐름과 남은 revocation 경계를 기록했다.
+- 검증: 앱·Backend 호출 순서와 대조
+- 리스크: authorization code·refresh token 운영 흐름 미구현
+
 ## 2026-08-12 - 인증 흐름의 동의 gate 반영과 삭제된 endpoint 정리
 
 - 변경 파일: `authentication-flow.md`, `system-architecture.md`

@@ -8,7 +8,7 @@ flowchart LR
       UI[Home / Practice / Result / Profile]
       CONSENT[Consent Gate]
       API[API Clients]
-      AUTH[Google Identity + Secure Storage]
+      AUTH[Google / Apple Identity + Secure Storage]
       REC[Audio Recorder]
       ADS[Rewarded Ads + UMP]
     end
@@ -28,6 +28,7 @@ flowchart LR
 
     DB[(MySQL 8)]
     GOOGLE[Google OAuth]
+    APPLE[Sign in with Apple]
     AZURE[Azure Speech]
     REP[Replicate]
     S3[AWS S3]
@@ -38,6 +39,7 @@ flowchart LR
     UI -->|브라우저로 열기| LEGAL
     ADS --> GOOGLE
     AUTH --> GOOGLE
+    AUTH --> APPLE
     AUTH --> API
     REC -->|Presigned PUT| S3
     API --> CTRL
@@ -58,7 +60,7 @@ flowchart LR
 |---|---|
 | Flutter UI | 사용자 흐름, 로딩·오류 상태, 녹음 제어, 결과 표시 |
 | Flutter API 계층 | JSON 요청, Presigned S3 PUT, 작업 Polling, 응답 모델 변환 |
-| 인증 서비스 | Google ID Token 획득, 백엔드 로그인, 세션 저장·삭제 |
+| 인증 서비스 | Google·Apple identity token 획득, nonce 결합, 백엔드 로그인, 세션 저장·삭제 |
 | REST Controller | HTTP 계약·입력 검증·인증 토큰 해석 |
 | Domain Service | 표준 발음, 평가, 기록, 설정, 쿼터, 작업 규칙 |
 | JPA/Flyway | 영속 모델과 스키마 버전 관리 |
@@ -93,7 +95,7 @@ flowchart LR
 
 ## 신뢰 경계
 
-- 모바일에서 전달된 Google ID Token은 백엔드가 검증한 후 자체 JWT를 발급합니다.
+- 모바일에서 전달된 Google·Apple identity token은 백엔드가 공급자별 audience와 서명·만료를 검증한 후 자체 JWT를 발급합니다. Apple은 요청별 nonce도 검증합니다.
 - Bearer JWT가 필요한 API는 기록, 사용자 설정, 쿼터 조회입니다.
 - 평가 업로드·작업 API는 활성 Bearer 세션과 사용자별 S3 prefix를 검증합니다. 가이드 작업 API는 아직 인증 경계가 충분하지 않습니다.
 - 외부 URL과 업로드 파일은 서버에서 형식과 크기를 검증해야 합니다.

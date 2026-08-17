@@ -9,10 +9,37 @@ import 'package:lingko_app/api/auth_api.dart';
 import 'package:lingko_app/models/auth_session.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
 import 'package:lingko_app/services/auth_session_store.dart';
+import 'package:lingko_app/services/apple_identity_service.dart';
 import 'package:lingko_app/services/google_identity_service.dart';
 
 // 갱신 토큰 회전, single-flight 재시도, 로그아웃, 생명주기 경합을 검증한다.
 void main() {
+  test(
+    'Apple credential is exchanged and the LingKo session is saved',
+    () async {
+      final store = AuthSessionStore(storage: MemoryTokenStorage());
+      final authApi = FakeAuthApi();
+      final service = DefaultAppAuthService(
+        authApi: authApi,
+        appleIdentityService: FakeAppleIdentityService(),
+        googleIdentityService: FakeGoogleIdentityService(),
+        sessionStore: store,
+      );
+
+      final session = await service.signInWithApple();
+
+      expect(session, _session);
+      expect(authApi.appleCredentials, [
+        (
+          'apple-identity-token',
+          'raw-nonce-012345678901234567890123',
+          'Apple Learner',
+        ),
+      ]);
+      expect(await store.read(), _session);
+    },
+  );
+
   test('401 response refreshes the session and retries exactly once', () async {
     final store = AuthSessionStore(storage: MemoryTokenStorage());
     await store.save(_session);
@@ -218,9 +245,20 @@ class FakeAuthApi implements AuthApi {
   final refreshTokens = <String>[];
   final logoutTokens = <String>[];
   final accountDeletionTokens = <(String, String)>[];
+  final appleCredentials = <(String, String, String?)>[];
 
   @override
   Future<AuthSession> loginWithGoogleIdToken(String idToken) async => _session;
+
+  @override
+  Future<AuthSession> loginWithAppleCredential({
+    required String identityToken,
+    required String rawNonce,
+    String? displayName,
+  }) async {
+    appleCredentials.add((identityToken, rawNonce, displayName));
+    return _session;
+  }
 
   @override
   Future<AuthSession> refreshSession(String refreshToken) async {
@@ -256,6 +294,17 @@ class FakeAuthApi implements AuthApi {
 class FakeGoogleIdentityService implements GoogleIdentityService {
   @override
   Future<String> signInAndGetIdToken() async => 'google-id-token';
+}
+
+/// Apple 플랫폼 인증을 실제 계정 UI 없이 재현한다.
+class FakeAppleIdentityService implements AppleIdentityService {
+  @override
+  Future<AppleIdentityCredential> signIn() async =>
+      const AppleIdentityCredential(
+        identityToken: 'apple-identity-token',
+        rawNonce: 'raw-nonce-012345678901234567890123',
+        displayName: 'Apple Learner',
+      );
 }
 
 /// 테스트에서 Memory 토큰 저장소 의존성을 결정적으로 대체한다.

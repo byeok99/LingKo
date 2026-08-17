@@ -4,6 +4,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -511,6 +512,7 @@ class FakeAppAuthService implements AppAuthService {
   final Object? legalConsentStatusError;
   final Object? legalConsentRecordError;
   bool signInCalled = false;
+  bool appleSignInCalled = false;
   int legalConsentRecordCount = 0;
   ConsentSelection? recordedConsent;
   bool deleteAccountCalled = false;
@@ -545,6 +547,15 @@ class FakeAppAuthService implements AppAuthService {
       throw error!;
     }
 
+    return session!;
+  }
+
+  @override
+  Future<AuthSession> signInWithApple() async {
+    appleSignInCalled = true;
+    if (error != null) {
+      throw error!;
+    }
     return session!;
   }
 
@@ -785,6 +796,106 @@ Future<void> agreeToConsent(WidgetTester tester) async {
 
 // 앱 workflow의 인증 gate와 갱신 토큰 만료 동작을 검증한다.
 void main() {
+  testWidgets(
+    'iOS Apple login waits for consent and then uses Apple provider',
+    (WidgetTester tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        final authService = FakeAppAuthService();
+        await tester.pumpWidget(
+          LingKoApp(
+            pronunciationApi: FakePronunciationApi(),
+            sentenceApi: FakeSentenceApi(),
+            evaluationApi: FakeEvaluationApi(),
+            practiceQuotaApi: FakePracticeQuotaApi(),
+            authService: authService,
+            audioRecorderService: FakeAudioRecorderService(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Continue with Apple'), findsOneWidget);
+        await tester.tap(find.text('Continue with Apple'));
+        await tester.pumpAndSettle();
+        expect(authService.appleSignInCalled, isFalse);
+
+        await agreeToConsent(tester);
+
+        expect(authService.appleSignInCalled, isTrue);
+        expect(authService.signInCalled, isFalse);
+        expect(authService.legalConsentRecordCount, 1);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    },
+  );
+
+  testWidgets('login provider buttons use balanced icon and label sizes', (
+    WidgetTester tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      await tester.pumpWidget(
+        LingKoApp(
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: FakeEvaluationApi(),
+          practiceQuotaApi: FakePracticeQuotaApi(),
+          authService: FakeAppAuthService(),
+          audioRecorderService: FakeAudioRecorderService(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final googleIconSlot = find.byKey(const Key('google-sign-in-icon-slot'));
+      final appleIconSlot = find.byKey(const Key('apple-sign-in-icon-slot'));
+      final googleLabel = find.byKey(const Key('google-sign-in-label'));
+      final appleLabel = tester.widget<Text>(
+        find.byKey(const Key('apple-sign-in-label')),
+      );
+
+      expect(tester.getSize(googleIconSlot), const Size.square(24));
+      expect(tester.getSize(appleIconSlot), const Size.square(24));
+      expect(
+        tester.getCenter(googleIconSlot).dx,
+        closeTo(tester.getCenter(appleIconSlot).dx, 0.01),
+      );
+      expect(
+        tester.getCenter(googleLabel).dx,
+        closeTo(
+          tester.getCenter(find.byKey(const Key('apple-sign-in-label'))).dx,
+          0.01,
+        ),
+      );
+      expect(appleLabel.style?.fontSize, 15);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets('Android does not offer Apple login without web redirect setup', (
+    WidgetTester tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    try {
+      await tester.pumpWidget(
+        LingKoApp(
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: FakeEvaluationApi(),
+          practiceQuotaApi: FakePracticeQuotaApi(),
+          authService: FakeAppAuthService(),
+          audioRecorderService: FakeAudioRecorderService(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Continue with Apple'), findsNothing);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
   testWidgets('App shows logo splash while restoring session', (
     WidgetTester tester,
   ) async {

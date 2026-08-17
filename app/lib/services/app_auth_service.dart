@@ -8,6 +8,7 @@ import '../models/auth_session.dart';
 import '../models/consent_selection.dart';
 import '../models/legal_consent_status.dart';
 import 'auth_session_store.dart';
+import 'apple_identity_service.dart';
 import 'google_identity_service.dart';
 
 /// 로컬·서버 인증 세션의 앱 수준 생명주기를 소유한다.
@@ -15,6 +16,8 @@ abstract class AppAuthService {
   Future<AuthSession?> restoreSession();
 
   Future<AuthSession> signInWithGoogle();
+
+  Future<AuthSession> signInWithApple();
 
   /// 현재 로그인 사용자가 최신 문서 버전에 동의했는지 서버에서 확인한다.
   Future<LegalConsentStatus> fetchLegalConsentStatus();
@@ -38,16 +41,20 @@ class DefaultAppAuthService implements AppAuthService {
     AuthApi? authApi,
     LegalConsentApi? legalConsentApi,
     GoogleIdentityService? googleIdentityService,
+    AppleIdentityService? appleIdentityService,
     AuthSessionStore? sessionStore,
   }) : _authApi = authApi ?? DartIoAuthApi(),
        _legalConsentApi = legalConsentApi ?? DartIoLegalConsentApi(),
        _googleIdentityService =
            googleIdentityService ?? GoogleSignInIdentityService(),
+       _appleIdentityService =
+           appleIdentityService ?? SignInWithAppleIdentityService(),
        _sessionStore = sessionStore ?? AuthSessionStore();
 
   final AuthApi _authApi;
   final LegalConsentApi _legalConsentApi;
   final GoogleIdentityService _googleIdentityService;
+  final AppleIdentityService _appleIdentityService;
   final AuthSessionStore _sessionStore;
   // 동시 401 응답이 한 번만 회전하도록 모든 호출자가 같은 Future를 공유한다.
   Future<AuthSession>? _refreshInFlight;
@@ -69,6 +76,22 @@ class DefaultAppAuthService implements AppAuthService {
     }
     await _sessionStore.save(session);
 
+    return session;
+  }
+
+  @override
+  Future<AuthSession> signInWithApple() async {
+    final revision = ++_sessionRevision;
+    final credential = await _appleIdentityService.signIn();
+    final session = await _authApi.loginWithAppleCredential(
+      identityToken: credential.identityToken,
+      rawNonce: credential.rawNonce,
+      displayName: credential.displayName,
+    );
+    if (revision != _sessionRevision) {
+      throw const AuthSessionExpiredException();
+    }
+    await _sessionStore.save(session);
     return session;
   }
 

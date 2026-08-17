@@ -34,7 +34,7 @@
 - 광고 SDK가 연결되기 전까지 `+`는 주입된 callback만 호출하며 성공을 가정하지 않는다.
 - 어절 점수는 API 값을 표시하지만 음절에는 측정되지 않은 점수를 만들지 않는다.
 - 채점 API가 백분율을 주지 않으므로 Scoring ring은 서버 단계만 표현하고 숫자를 표시하지 않는다.
-- Apple 로그인은 구현 전까지 비활성 상태를 유지한다.
+- Apple 로그인은 iOS에서만 Apple 공식 스타일의 활성 버튼을 표시한다. Android는 Service ID·HTTPS redirect 계약을 구현하기 전까지 노출하지 않는다.
 - Sound detail 모델에 입·혀 media 계약이 없으므로 동작하지 않는 guide 버튼을 추가하지 않는다. 기존 Result/Review의 실제 음절 guide 경로는 유지한다.
 
 ## 검증 기준
@@ -42,4 +42,4 @@
 - `flutter analyze`
 - `flutter test --coverage`
 - 작은 화면·큰 글자 위젯 테스트
-- 실제 기기에서 light/dark, 녹음 permission, TTS, Google 로그인, media 재생 수동 확인
+- 실제 기기에서 light/dark, 녹음 permission, TTS, Google·Apple 로그인, media 재생 수동 확인

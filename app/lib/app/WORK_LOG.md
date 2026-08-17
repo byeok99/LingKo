@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-12 - 동의 gate에 Apple 로그인 연결
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 선택 provider를 동의 완료까지 보존해 Google·Apple 흐름을 분리하고 iOS에서만 Apple 버튼을 노출한다.
+- 검증: provider별 widget test와 Flutter 전체 테스트 통과
+- 리스크: Android·Web은 Service ID와 HTTPS redirect 준비 전까지 미노출
+
 ## 2026-08-12 - signed 광고 보상 완료 polling
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

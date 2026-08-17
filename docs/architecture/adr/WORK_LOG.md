@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-12 - iOS Apple 로그인 ADR 추가
+
+- 변경 파일: `0003-ios-apple-login.md`, `README.md`, `WORK_LOG.md`
+- 내용: native iOS 우선 범위, nonce/JWK 검증 결정과 Android·Web·revocation 후속 조건을 기록했다.
+- 검증: 코드·설정·출시 체크리스트와 대조
+- 리스크: 외부 capability와 실기기 검증 미완료
+
 ## 2026-08-12 - quota ADR의 광고 신뢰 경계 갱신
 
 - 변경 파일: `0006-atomic-practice-quota-transitions.md`, `WORK_LOG.md`

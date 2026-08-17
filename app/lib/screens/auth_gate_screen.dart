@@ -2,6 +2,7 @@
 // 선택 이유: 화면은 상호작용과 표시 상태를 소유하고 네트워크·플랫폼 작업은 주입된 서비스에 위임한다.
 
 import 'package:flutter/material.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
 
 import '../app/app_theme.dart';
 import '../app/app_palette.dart';
@@ -35,12 +36,16 @@ class LoginScreen extends StatelessWidget {
     super.key,
     required this.isLoading,
     required this.errorText,
-    required this.onSignIn,
+    required this.onSignInWithGoogle,
+    required this.onSignInWithApple,
+    required this.showAppleSignIn,
   });
 
   final bool isLoading;
   final String? errorText;
-  final VoidCallback onSignIn;
+  final VoidCallback onSignInWithGoogle;
+  final VoidCallback onSignInWithApple;
+  final bool showAppleSignIn;
 
   @override
   Widget build(BuildContext context) {
@@ -130,10 +135,12 @@ class LoginScreen extends StatelessWidget {
           ],
           _GoogleSignInButton(
             isLoading: isLoading,
-            onPressed: isLoading ? null : onSignIn,
+            onPressed: isLoading ? null : onSignInWithGoogle,
           ),
-          const SizedBox(height: 10),
-          const _AppleSignInButton(),
+          if (showAppleSignIn) ...[
+            const SizedBox(height: 10),
+            _AppleSignInButton(onPressed: isLoading ? null : onSignInWithApple),
+          ],
           const SizedBox(height: 14),
           Text(
             'Recordings are deleted right after scoring.',
@@ -146,34 +153,106 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-/// 아직 연결되지 않은 Apple 로그인 자리다.
-///
-/// iOS에서 소셜 로그인을 제공하면 Apple 로그인도 함께 제공해야 심사를 통과한다.
-/// 버튼만 두고 동작을 비워두면 사용자가 눌러도 아무 일이 없어 고장으로 보이므로,
-/// 비활성 상태와 준비 중임을 함께 보여준다.
+/// Apple 공식 logo painter를 공통 provider 버튼 배치에 연결한다.
 class _AppleSignInButton extends StatelessWidget {
-  const _AppleSignInButton();
+  const _AppleSignInButton({required this.onPressed});
+
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      enabled: false,
-      label: 'Continue with Apple, coming soon',
-      child: Container(
-        height: AppSizes.buttonHeight,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: context.palette.neutralFill,
-          borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+    return _ProviderSignInButton(
+      buttonKey: const Key('apple-sign-in-button'),
+      iconSlotKey: const Key('apple-sign-in-icon-slot'),
+      labelKey: const Key('apple-sign-in-label'),
+      label: 'Continue with Apple',
+      onPressed: onPressed,
+      backgroundColor: Colors.black,
+      foregroundColor: Colors.white,
+      disabledForegroundColor: Colors.white70,
+      borderColor: Colors.black,
+      textStyle: const TextStyle(
+        fontFamily: '.SF Pro Text',
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.2,
+      ),
+      icon: const SizedBox(
+        key: Key('apple-sign-in-logo'),
+        width: 20,
+        height: 24,
+        child: CustomPaint(
+          painter: apple.AppleLogoPainter(color: Colors.white),
         ),
-        child: Text(
-          'Continue with Apple · coming soon',
-          style: TextStyle(
-            color: context.palette.disabled,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
+      ),
+    );
+  }
+}
+
+/// 공급자마다 다른 logo 비율을 보존하면서 icon 열과 중앙 label 기준선을 통일한다.
+class _ProviderSignInButton extends StatelessWidget {
+  const _ProviderSignInButton({
+    required this.buttonKey,
+    required this.iconSlotKey,
+    required this.labelKey,
+    required this.label,
+    required this.onPressed,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.disabledForegroundColor,
+    required this.borderColor,
+    required this.textStyle,
+    required this.icon,
+  });
+
+  final Key buttonKey;
+  final Key iconSlotKey;
+  final Key labelKey;
+  final String label;
+  final VoidCallback? onPressed;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final Color disabledForegroundColor;
+  final Color borderColor;
+  final TextStyle textStyle;
+  final Widget icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      key: buttonKey,
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: backgroundColor,
+        disabledBackgroundColor: backgroundColor,
+        foregroundColor: foregroundColor,
+        disabledForegroundColor: disabledForegroundColor,
+        minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
+        padding: EdgeInsets.zero,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+          side: BorderSide(color: borderColor),
+        ),
+        textStyle: textStyle,
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: AppSizes.buttonHeight,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              left: 20,
+              top: 14,
+              child: SizedBox.square(
+                key: iconSlotKey,
+                dimension: 24,
+                child: Center(child: icon),
+              ),
+            ),
+            Text(label, key: labelKey, style: textStyle),
+          ],
         ),
       ),
     );
@@ -245,46 +324,37 @@ class _GoogleSignInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton(
+    return _ProviderSignInButton(
+      buttonKey: const Key('google-sign-in-button'),
+      iconSlotKey: const Key('google-sign-in-icon-slot'),
+      labelKey: const Key('google-sign-in-label'),
+      label: isLoading ? 'Signing in' : 'Continue with Google',
       onPressed: onPressed,
-      style: FilledButton.styleFrom(
-        // Google 로그인 버튼의 중립 색상은 제공자 브랜드 가이드를 따르는 예외다.
-        backgroundColor: Colors.white,
-        disabledBackgroundColor: Colors.white,
-        foregroundColor: AppColors.providerButtonForeground,
-        disabledForegroundColor: AppColors.providerButtonDisabled,
-        minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          // 브랜드 색은 예외로 두되 형태(반경 15·높이 52)는 앱 버튼 규칙을 따른다.
-          borderRadius: BorderRadius.circular(AppSizes.radiusControl),
-          side: const BorderSide(color: AppColors.providerButtonBorder),
-        ),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isLoading)
-            const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          else
-            Image.asset(
-              'assets/images/google_g_logo.png',
-              key: const Key('google-sign-in-logo'),
-              width: 20,
-              height: 20,
-              fit: BoxFit.contain,
-            ),
-          const SizedBox(width: 12),
-          Text(isLoading ? 'Signing in' : 'Continue with Google'),
-        ],
-      ),
+      backgroundColor: Colors.white,
+      foregroundColor: AppColors.providerButtonForeground,
+      disabledForegroundColor: AppColors.providerButtonDisabled,
+      borderColor: AppColors.providerButtonBorder,
+      textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+      icon:
+          isLoading
+              ? const SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+              : ClipRect(
+                child: Transform.scale(
+                  // 원본 PNG의 투명 여백이 약 2/3라 실제 G만 24px slot 안에서 확대한다.
+                  scale: 2.65,
+                  child: Image.asset(
+                    'assets/images/google_g_logo.png',
+                    key: const Key('google-sign-in-logo'),
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
+              ),
     );
   }
 }

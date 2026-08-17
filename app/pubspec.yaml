@@ -37,6 +37,9 @@ dependencies:
   path_provider: ^2.1.5
   record: ^6.2.1
   google_sign_in: ^7.2.0
+  # Flutter 3.29의 Dart 3.7과 호환되는 안정 major를 사용한다.
+  sign_in_with_apple: ^7.0.1
+  crypto: ^3.0.6
   flutter_secure_storage: ^10.3.1
   flutter_tts: ^4.2.5
   video_player: ^2.9.2

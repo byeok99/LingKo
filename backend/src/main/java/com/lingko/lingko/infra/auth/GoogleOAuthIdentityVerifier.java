@@ -25,7 +25,12 @@ public class GoogleOAuthIdentityVerifier implements OAuthIdentityVerifier {
     private final WebClient.Builder webClientBuilder;
 
     @Override
-    public OAuthIdentity verify(String idToken) {
+    public String provider() {
+        return "GOOGLE";
+    }
+
+    @Override
+    public OAuthIdentity verify(String idToken, String rawNonce) {
         validateSettings();
 
         try {

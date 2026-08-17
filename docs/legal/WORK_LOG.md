@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple 로그인 법무 구현 상태 갱신
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: iOS 코드 구현 완료와 authorization code 보관·회원 탈퇴 revocation 미완료를 구분했다.
+- 검증: 인증·탈퇴 구현과 대조
+- 리스크: Apple 승인 revocation 완료 전 출시 요구사항 미충족
+
 ## 2026-08-12 - AdMob SSV 구현 상태 동기화
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple 계정 생성·보존 회귀 테스트
+
+- 변경 파일: `AuthServiceTest.java`, `WORK_LOG.md`
+- 내용: Apple 신규 사용자·최초 이름·재로그인 보존, 미지원 provider와 Google client 이름 불신을 검증했다.
+- 검증: 대상 RED/GREEN 및 Backend 전체 테스트 통과
+- 리스크: 없음
+
 ## 2026-07-29 - 회원 탈퇴 token 재확인 테스트
 
 - 변경 파일: `AuthServiceTest.java`, `WORK_LOG.md`

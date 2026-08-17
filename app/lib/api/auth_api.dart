@@ -9,6 +9,13 @@ abstract class AuthApi {
   /// Google ID 토큰을 최초 LingKo 토큰 쌍으로 교환한다.
   Future<AuthSession> loginWithGoogleIdToken(String idToken);
 
+  /// Apple identity token과 요청별 원 nonce를 LingKo token 쌍으로 교환한다.
+  Future<AuthSession> loginWithAppleCredential({
+    required String identityToken,
+    required String rawNonce,
+    String? displayName,
+  });
+
   /// 현재 갱신 토큰을 회전된 토큰 쌍으로 교체한다.
   Future<AuthSession> refreshSession(String refreshToken);
 
@@ -30,6 +37,24 @@ class DartIoAuthApi implements AuthApi {
     final json = await _client.postJson('/api/auth/oauth/login', {
       'provider': 'GOOGLE',
       'idToken': idToken.trim(),
+    });
+
+    return AuthSession.fromJson(json);
+  }
+
+  @override
+  Future<AuthSession> loginWithAppleCredential({
+    required String identityToken,
+    required String rawNonce,
+    String? displayName,
+  }) async {
+    final normalizedName = displayName?.trim();
+    final json = await _client.postJson('/api/auth/oauth/login', {
+      'provider': 'APPLE',
+      'idToken': identityToken.trim(),
+      'rawNonce': rawNonce.trim(),
+      if (normalizedName != null && normalizedName.isNotEmpty)
+        'displayName': normalizedName,
     });
 
     return AuthSession.fromJson(json);

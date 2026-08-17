@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-12 - iOS Apple 로그인 의존성·앱 안내 추가
+
+- 변경 파일: `README.md`, `pubspec.yaml`, `pubspec.lock`, `WORK_LOG.md`
+- 내용: Dart 3.7 호환 Apple 로그인·nonce hash 의존성을 고정하고 지원 플랫폼과 설정을 문서화했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 75개 통과(라인 80.20%), iOS simulator build 성공
+- 리스크: Apple Developer capability·실기기 인증은 별도 확인 필요
+
 ## 2026-08-12 - AdMob SSV 기반 보상 지급으로 전환
 
 - 변경 파일: `README.md`, `lib/`, `test/`

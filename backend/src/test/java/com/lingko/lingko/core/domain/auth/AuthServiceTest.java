@@ -129,10 +129,67 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Apple 로그인은 검증된 subject와 최초 제공 이름으로 사용자를 생성한다")
+    void loginWithAppleCreatesUserFromVerifiedIdentity() {
+        AuthTokenResponse response = authService.loginWithOAuth(new OAuthLoginRequest(
+                " apple ",
+                " apple-token ",
+                "raw-nonce-012345678901234567890123",
+                "  Apple   Learner  "
+        ));
+
+        User user = userRepository.findBySocialIdAndSocialType(
+                "apple-sub-456",
+                User.SocialType.APPLE
+        ).orElseThrow();
+        assertThat(response.getUser().getUserId()).isEqualTo(user.getUserIdx());
+        assertThat(user.getEmail()).isEqualTo("relay@privaterelay.appleid.com");
+        assertThat(user.getName()).isEqualTo("Apple Learner");
+    }
+
+    @Test
+    @DisplayName("Apple 재로그인에서 이름이 다시 오지 않아도 기존 profile 이름을 보존한다")
+    void loginWithApplePreservesExistingNameWhenAppleOmitsIt() {
+        User existing = User.builder()
+                .socialId("apple-sub-456")
+                .socialType(User.SocialType.APPLE)
+                .email("old-relay@privaterelay.appleid.com")
+                .name("First Login Name")
+                .build();
+        entityManager.persist(existing);
+        entityManager.flush();
+        entityManager.clear();
+
+        authService.loginWithOAuth(new OAuthLoginRequest(
+                "APPLE",
+                "apple-token",
+                "raw-nonce-012345678901234567890123",
+                null
+        ));
+
+        User updated = userRepository.findById(existing.getUserIdx()).orElseThrow();
+        assertThat(updated.getEmail()).isEqualTo("relay@privaterelay.appleid.com");
+        assertThat(updated.getName()).isEqualTo("First Login Name");
+    }
+
+    @Test
+    @DisplayName("Google 로그인은 Apple 전용 client display name을 신뢰하지 않는다")
+    void loginWithGoogleIgnoresClientDisplayName() {
+        AuthTokenResponse response = authService.loginWithOAuth(new OAuthLoginRequest(
+                "GOOGLE",
+                "nameless-google-token",
+                null,
+                "Untrusted Client Name"
+        ));
+
+        assertThat(response.getUser().getName()).isNull();
+    }
+
+    @Test
     @DisplayName("지원하지 않는 OAuth provider는 거부한다")
     void unsupportedProviderIsRejected() {
-        assertThatThrownBy(() -> authService.loginWithOAuth(new OAuthLoginRequest("APPLE", "valid-token")))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> authService.loginWithOAuth(new OAuthLoginRequest("KAKAO", "valid-token")))
+                .isInstanceOf(AuthException.class)
                 .hasMessage("Unsupported OAuth provider");
     }
 
@@ -289,17 +346,50 @@ class AuthServiceTest {
 
         @Bean
         OAuthIdentityVerifier googleIdentityVerifier() {
-            return idToken -> {
-                if (!"valid-token".equals(idToken)) {
-                    throw new IllegalArgumentException("invalid token");
+            return new OAuthIdentityVerifier() {
+                @Override
+                public String provider() {
+                    return "GOOGLE";
                 }
 
-                return new OAuthIdentity(
-                        "google-sub-123",
-                        "user@example.com",
-                        "LingKo User",
-                        "https://example.com/profile.png"
-                );
+                @Override
+                public OAuthIdentity verify(String idToken, String rawNonce) {
+                    if (!"valid-token".equals(idToken) && !"nameless-google-token".equals(idToken)) {
+                        throw new IllegalArgumentException("invalid token");
+                    }
+
+                    return new OAuthIdentity(
+                            "google-sub-123",
+                            "user@example.com",
+                            "nameless-google-token".equals(idToken) ? null : "LingKo User",
+                            "https://example.com/profile.png"
+                    );
+                }
+            };
+        }
+
+        @Bean
+        OAuthIdentityVerifier appleIdentityVerifier() {
+            return new OAuthIdentityVerifier() {
+                @Override
+                public String provider() {
+                    return "APPLE";
+                }
+
+                @Override
+                public OAuthIdentity verify(String idToken, String rawNonce) {
+                    if (!"apple-token".equals(idToken)
+                            || !"raw-nonce-012345678901234567890123".equals(rawNonce)) {
+                        throw new IllegalArgumentException("invalid token");
+                    }
+
+                    return new OAuthIdentity(
+                            "apple-sub-456",
+                            "relay@privaterelay.appleid.com",
+                            null,
+                            null
+                    );
+                }
             };
         }
     }

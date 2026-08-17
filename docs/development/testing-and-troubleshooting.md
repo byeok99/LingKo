@@ -64,7 +64,7 @@ flutter build apk --debug
 - 권한 거부 후 재시도 UX
 - 실제 WAV 업로드와 평가 성공
 - 녹음 중 화면 이동·앱 백그라운드 전환
-- Google 로그인·로그아웃·앱 재실행 후 세션 복원
+- Google·iOS Apple 로그인, 취소, 로그아웃, 앱 재실행 후 세션 복원
 - 만료되거나 잘못된 JWT 처리
 - 느린 네트워크와 서버 오류 표시
 - 추천 문장·자유 문장 평가
@@ -115,6 +115,16 @@ GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
 DEVICE_ID=emulator-5554 \
 ./scripts/run-local.sh android
 ```
+
+### iOS Apple 로그인 창이 열리지 않음
+
+1. Apple Developer App ID `com.byeok.lingko`에 Sign in with Apple이 활성인지 확인
+2. Xcode Runner target의 Signing & Capabilities와 `Runner.entitlements` 확인
+3. capability 변경 뒤 provisioning profile이 갱신됐는지 확인
+4. Backend `APPLE_CLIENT_ID`가 token audience인 Bundle ID와 같은지 확인
+5. iOS 13 이상 실기기에서 Apple 계정 로그인·2단계 인증 상태 확인
+
+identity token과 raw nonce는 로그·이슈·스크린샷에 남기지 않습니다.
 
 ### WAV 415 오류
 

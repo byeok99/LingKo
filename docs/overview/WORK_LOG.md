@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple 로그인 제품 범위 갱신
+
+- 변경 파일: `product-and-scope.md`, `WORK_LOG.md`
+- 내용: iOS native Apple 로그인을 현재 범위에 넣고 Android·Web은 redirect 설정 전 제외했다.
+- 검증: 앱 플랫폼 분기와 요구사항 대조
+- 리스크: 출시 전 실기기 E2E 필요
+
 ## 2026-08-12 - 제품 범위의 광고 보상 신뢰 경계 갱신
 
 - 변경 파일: `product-and-scope.md`, `WORK_LOG.md`

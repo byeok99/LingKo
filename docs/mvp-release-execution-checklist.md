@@ -163,7 +163,9 @@
 ### 4. 플랫폼 인증과 소셜 로그인 완결
 
 - [ ] Android 운영 OAuth client와 패키지 서명 fingerprint를 연결한다.
-- [ ] iOS를 포함한다면 Apple 로그인 앱·백엔드 연동을 구현한다.
+- [x] iOS Apple 로그인 앱·백엔드 코드와 Sign in with Apple entitlement를 구현한다.
+- [ ] Apple Developer의 `com.byeok.lingko` App ID capability·provisioning을 갱신하고 실기기에서 검증한다.
+- [ ] Apple authorization code 교환·refresh token 보관·회원 탈퇴 revocation을 구현한다.
 - [ ] Google/Apple 로그인 취소, 네트워크 실패, 잘못된 token, 탈퇴 계정 재로그인을 검증한다.
 - [ ] [#60](https://github.com/byeok99/LingKo/issues/60) 실제 token 만료·회전·세션 복원 E2E를 완료한다.
 - [ ] [#62](https://github.com/byeok99/LingKo/issues/62) Refresh Token 동시 갱신 부하를 검증한다.
@@ -174,7 +176,11 @@
 - 로그에 OAuth credential과 token이 남지 않는다.
 - 만료·재사용·로그아웃 이후 폐기된 token으로 보호 API를 호출할 수 없다.
 
-완료 기록: 미작성
+완료 기록: Flutter iOS에 Apple 공식 버튼과 native credential 요청을 연결했다. 요청마다 raw nonce를
+생성하고 SHA-256만 Apple에 전달하며, Backend는 공개 JWK 서명·issuer·App ID audience·만료·nonce와
+검증된 이메일을 확인한 뒤 `APPLE` 사용자와 LingKo 기기 세션을 생성한다. 이름은 Apple이 최초
+승인 때만 주는 특성 때문에 이후 null 응답에서 보존한다. Android는 Service ID와 HTTPS redirect가
+없어 Apple 버튼을 노출하지 않는다. 외부 App ID 활성화, 실기기 E2E와 Apple token revocation은 미완료다.
 
 ### 5. 운영 빌드와 환경 설정
 

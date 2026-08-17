@@ -54,6 +54,10 @@ google:
   client-secret: ${GOOGLE_CLIENT_SECRET:}
   redirect-uri: ${GOOGLE_REDIRECT_URI:}
 
+apple:
+  # native iOS identity token의 audience인 App ID(Bundle ID)다. 비밀값은 아니다.
+  client-id: ${APPLE_CLIENT_ID:}
+
 replicate:
   api-key: ${REPLICATE_API_KEY:}
   version: ${REPLICATE_VERSION:}

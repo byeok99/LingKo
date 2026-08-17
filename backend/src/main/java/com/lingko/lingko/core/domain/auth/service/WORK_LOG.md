@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - 공급자별 OAuth verifier 주입
+
+- 변경 파일: `AuthService.java`, `OAuthIdentityVerifier.java`, `WORK_LOG.md`
+- 내용: verifier 목록 생성자 주입으로 Google·Apple을 선택하고 Apple 최초 이름만 제한적으로 보완한다.
+- 검증: provider 선택·신규/재로그인·client 이름 불신 테스트와 Backend 전체 테스트 통과
+- 리스크: endpoint 공통 rate limit은 후속 보안 과제
+
 ## 2026-07-29 - 회원 탈퇴 현재 세션 재확인
 
 - 변경 파일: `AuthService.java`, `WORK_LOG.md`

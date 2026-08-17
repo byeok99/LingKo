@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-12 - 로컬 Apple client ID binding 추가
+
+- 변경 파일: `application.yaml`, `WORK_LOG.md`
+- 내용: git-ignored 로컬 실행 설정에 `APPLE_CLIENT_ID`를 `apple.client-id`로 연결했다.
+- 검증: Spring ApplicationContext를 포함한 Backend 전체 테스트 통과
+- 리스크: 각 실행 환경에 실제 App ID 값 주입 필요
+
 ## 2026-08-12 - AdMob SSV 환경 설정 추가
 
 - 변경 파일: `application.yaml`, `WORK_LOG.md`
