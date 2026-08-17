@@ -2,7 +2,7 @@
 
 ## 보호 대상
 
-- Google ID Token
+- Google·Apple identity token과 Apple 로그인 raw nonce
 - LingKo Access/Refresh JWT
 - JWT 서명 키
 - Google·Azure·Replicate·AWS 자격증명
@@ -14,6 +14,8 @@
 ## 인증·토큰
 
 - Google ID Token은 백엔드에서 audience와 유효성을 검증합니다.
+- Apple identity token은 Apple 공개 JWK의 RS256 서명, 고정 issuer, `APPLE_CLIENT_ID` audience,
+  만료, subject, 이메일 검증 상태와 SHA-256 nonce를 확인합니다. 이메일이 아니라 Apple `sub`를 계정 키로 사용합니다.
 - 백엔드는 자체 Access/Refresh JWT를 발급합니다.
 - Flutter는 토큰을 `flutter_secure_storage`에 저장합니다.
 - Bearer 토큰이 필요한 API는 사용자 ID 쿼리값 대신 JWT subject를 사용합니다.
@@ -38,6 +40,7 @@
 - 키 ID(`kid`)와 JWT 키 회전
 - 인증 실패 rate limit
 - 계정 탈취 대응과 전체 세션 로그아웃
+- Apple authorization code를 `/auth/token`에서 교환해 refresh token을 안전하게 보관하고 회원 탈퇴 시 Apple 승인을 revoke하는 흐름
 
 ## 비밀정보
 
@@ -45,6 +48,7 @@
 - `.env.example`에는 빈 값 또는 안전한 예시만 둡니다.
 - 로그, PR, 이슈, 테스트 fixture, 스크린샷에 비밀값을 넣지 않습니다.
 - 모바일 앱에는 Google Client Secret, JWT Secret, AWS Secret을 넣지 않습니다.
+- `APPLE_CLIENT_ID`인 Bundle ID는 공개 식별자이며, Apple private key·client secret은 현재 앱과 저장소에 두지 않습니다.
 - 노출 가능성이 있으면 즉시 키 폐기·재발급·로그 조사합니다.
 
 ## 음성 업로드
@@ -115,7 +119,7 @@ Worker 다운로드 후에는 실제 바이트를 기준으로 다음을 다시 
 로그에 남기지 않는 값:
 
 - Authorization 헤더
-- Google ID Token
+- Google·Apple identity token과 Apple raw nonce
 - Access/Refresh Token
 - API 키와 비밀번호
 - 전체 음성 파일이나 Base64 데이터

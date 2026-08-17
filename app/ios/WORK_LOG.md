@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple 로그인 iOS project 연결
+
+- 변경 파일: `Podfile`, `Runner.xcodeproj/project.pbxproj`, `Podfile.lock`, `WORK_LOG.md`
+- 내용: Runner entitlement와 `sign_in_with_apple` pod를 연결하고 native 지원 경계에 맞춰 최소 iOS를 13.0으로 고정했다.
+- 검증: UTF-8 locale에서 iOS simulator build 성공
+- 리스크: 갱신된 provisioning profile을 사용하는 실기기 서명 검증 필요
+
 ## 2026-08-08 - iOS Mobile Ads pod 잠금 갱신
 
 - 변경 파일: `Podfile.lock`, `WORK_LOG.md`

@@ -62,7 +62,7 @@ Access Token의 subject에서만 결정합니다.
 
 ### `POST /api/auth/oauth/login`
 
-Google ID Token을 검증하고 LingKo JWT를 발급합니다.
+Google 또는 Apple identity token을 검증하고 LingKo JWT를 발급합니다.
 
 ```json
 {
@@ -70,6 +70,22 @@ Google ID Token을 검증하고 LingKo JWT를 발급합니다.
   "idToken": "..."
 }
 ```
+
+iOS Apple 로그인은 앱이 매 요청 생성한 원 nonce와 최초 승인 때만 제공될 수 있는 이름을 함께 보냅니다.
+
+```json
+{
+  "provider": "APPLE",
+  "idToken": "...",
+  "rawNonce": "32~128자의 요청별 nonce",
+  "displayName": "Apple Learner"
+}
+```
+
+`displayName`은 선택이며 100자 이하로 정규화합니다. Backend는 Apple 공개 JWK의 RS256 서명,
+`iss=https://appleid.apple.com`, `aud=APPLE_CLIENT_ID`, `exp`, `sub`, SHA-256 nonce와 이메일 검증
+상태를 확인합니다. 계정 키는 이메일이 아니라 Apple `sub`입니다. 잘못된 token·nonce·audience는
+`401 AUTHENTICATION_FAILED`, Apple 요청의 nonce 누락은 `400 VALIDATION_FAILED`입니다.
 
 응답 필드:
 

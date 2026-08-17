@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple identity token verifier 구현
+
+- 변경 파일: `AppleOAuthIdentityVerifier.java`, `GoogleOAuthIdentityVerifier.java`, `WORK_LOG.md`
+- 내용: Apple JWK 서명·RS256·issuer·audience·만료·subject·nonce·email 검증과 provider 식별 계약을 구현했다.
+- 검증: verifier 보안 테스트, Spring 생성자 주입, Backend 전체 테스트 통과
+- 리스크: 원격 Apple JWK endpoint 장애 시 신규 key 검증 실패 가능
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `GoogleOAuthIdentityVerifier.java`, `WORK_LOG.md`

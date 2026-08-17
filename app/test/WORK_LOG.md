@@ -1,5 +1,19 @@
 # Work Log
 
+## 2026-08-13 - 로그인 버튼 크기 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: 두 provider의 24px icon slot, 동일 X축과 label 중심선, Apple 라벨 15px 계약을 widget geometry로 고정했다.
+- 검증: 구현 전 실패 확인, `flutter test --coverage` 132개 통과(라인 80.25%)
+- 리스크: 없음
+
+## 2026-08-12 - Apple 로그인 앱 회귀 테스트
+
+- 변경 파일: `apple_identity_service_test.dart`, `app_auth_service_test.dart`, `auth_api_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: nonce hash, credential 교환·저장, 동의 선행, provider 선택과 플랫폼별 버튼 노출을 검증한다.
+- 검증: `flutter test --coverage` 75개 통과, 라인 80.20%
+- 리스크: native 계정 UI와 취소·재시도는 실기기 E2E 필요
+
 ## 2026-08-12 - AdMob SSV 앱 회귀 테스트
 
 - 변경 파일: `practice_quota_api_test.dart`, `rewarded_ad_service_test.dart`, `widget_test.dart`, `WORK_LOG.md`

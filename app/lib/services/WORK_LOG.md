@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-12 - Apple native identity service 구현
+
+- 변경 파일: `apple_identity_service.dart`, `app_auth_service.dart`, `WORK_LOG.md`
+- 내용: cryptographic raw nonce를 만들고 SHA-256만 Apple에 전달한 뒤 Backend 세션 교환·저장을 연결했다.
+- 검증: nonce hash·빈 token·세션 저장 테스트와 Flutter 전체 테스트 통과
+- 리스크: authorization code·Apple refresh token은 아직 처리하지 않음
+
 ## 2026-08-12 - Rewarded Ad customData 전달
 
 - 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`

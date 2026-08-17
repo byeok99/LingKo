@@ -16,7 +16,7 @@ LingKo는 한국어 학습자가 문장을 듣고 따라 말한 뒤, 발음 점�
 ```mermaid
 flowchart TD
     A[앱 실행] --> B{로그인 여부}
-    B -->|비로그인| C[Google 로그인]
+    B -->|비로그인| C[Google / iOS Apple 로그인]
     B -->|로그인| D[홈]
     C --> D
     D --> E[추천 문장 선택]
@@ -43,6 +43,7 @@ flowchart TD
 - 점수·인식 문장·취약 글자 표시
 - 정적 입·혀 가이드 URL 표시
 - Google OAuth 로그인
+- iOS native Apple 로그인과 Backend identity token·nonce 검증
 - Access/Refresh JWT 발급 및 모바일 보안 저장소 저장
 - Refresh Token 회전·재사용 탐지·현재 기기 로그아웃과 모바일 자동 갱신
 - 로그인 사용자의 연습 기록 조회
@@ -64,7 +65,7 @@ flowchart TD
 
 ### 계획 또는 운영 전 필수
 
-- Apple/Kakao 로그인
+- Apple Developer App ID 활성화·실기기 E2E·token revocation, Kakao 로그인
 - 운영 관리자 인증과 권한 관리
 - 영속 작업 큐와 재시도 정책
 - CI/CD, 모니터링, 알림, 백업 자동화

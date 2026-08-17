@@ -13,7 +13,7 @@ LingKo는 한국어 학습자가 자신의 발음을 녹음하고, 표준 발음
 - 한국어 표준 발음 변환과 글자별 발음 가이드 조회
 - WAV 음성 녹음 및 발음 평가
 - 정확도·유창성·완성도 점수와 취약 글자 표시
-- Google OAuth 로그인과 JWT 세션 저장
+- Google OAuth·iOS Apple 로그인과 JWT 세션 저장
 - 개인별 학습 설정과 연습 기록 조회
 - 일일 무료 연습 횟수 조회
 - 입·혀 가이드 이미지 및 비동기 영상 생성 작업
@@ -24,6 +24,7 @@ LingKo는 한국어 학습자가 자신의 발음을 녹음하고, 표준 발음
 flowchart LR
     U[사용자] --> A[Flutter App]
     A --> G[Google Sign-In]
+    A --> P[Sign in with Apple]
     A -->|REST / JSON / Multipart| B[Spring Boot API]
     B --> D[(MySQL)]
     B --> Z[Azure Speech]
@@ -42,6 +43,7 @@ flowchart LR
 - Material 3
 - `record`
 - `google_sign_in`
+- `sign_in_with_apple`
 - `flutter_secure_storage`
 
 ### Backend

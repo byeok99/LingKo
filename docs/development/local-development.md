@@ -32,6 +32,7 @@ cp application.example.yaml src/main/resources/application.yaml
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | Access Token 만료 | 30 |
 | `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | Refresh Token 만료 | 14 |
 | `GOOGLE_CLIENT_ID` | 서버에서 검증할 Google Web Client ID | 로그인 시 필수 |
+| `APPLE_CLIENT_ID` | Apple native token audience인 iOS App ID(Bundle ID) | iOS Apple 로그인 시 필수, 현재 `com.byeok.lingko` |
 | `AZURE_SECRET_KEY` | Azure Speech 키 | 실제 평가 시 필수 |
 | `AZURE_REGION` | Azure Speech 리전 | 실제 평가 시 필수 |
 | `REPLICATE_API_KEY` | Replicate 키 | 영상 생성 시 필수 |
@@ -141,6 +142,16 @@ cd app/android
 
 Google Cloud의 Android OAuth Client에는 package name `com.byeok.lingko`와 `Variant: debug`의 SHA-1을 등록해야 합니다. 계정 선택 후 로그인 창이 취소되는 것처럼 보이면 package name, SHA-1, Web Client ID 순서로 확인합니다.
 
+## iOS Sign in with Apple 구성
+
+- Apple Developer의 Identifiers에서 `com.byeok.lingko` App ID에 **Sign in with Apple**을 primary App ID로 활성화합니다.
+- capability 변경 후 automatic signing으로 provisioning profile을 다시 받습니다.
+- Backend에 `APPLE_CLIENT_ID=com.byeok.lingko`를 설정합니다. 이는 비밀값이 아니라 identity token의 허용 audience입니다.
+- 앱의 `Runner.entitlements`와 Debug/Profile/Release build setting은 `com.apple.developer.applesignin = Default`를 사용합니다.
+- Apple 계정과 2단계 인증이 설정된 iOS 13 이상 실기기에서 최초 로그인, 이메일 가리기, 재로그인, 취소를 확인합니다.
+
+Android·Web Apple 로그인은 Service ID, 도메인과 HTTPS Return URL, callback 검증이 필요해 현재 앱에서 노출하지 않습니다.
+
 ## 권한
 
 ### Android
@@ -152,6 +163,7 @@ Google Cloud의 Android OAuth Client에는 package name `com.byeok.lingko`와 `V
 
 - `NSMicrophoneUsageDescription`
 - CocoaPods 설치 필요
+- Sign in with Apple capability가 포함된 provisioning profile
 
 ```bash
 cd app/ios

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple 로그인 HTTP 계약 테스트
+
+- 변경 파일: `AuthControllerTest.java`, `WORK_LOG.md`
+- 내용: Apple identity token·raw nonce 수락과 nonce 누락 400 응답을 고정했다.
+- 검증: AuthController 및 Backend 전체 테스트 통과
+- 리스크: 없음
+
 ## 2026-07-29 - 회원 탈퇴 HTTP 계약 테스트
 
 - 변경 파일: `AuthControllerTest.java`, `WORK_LOG.md`

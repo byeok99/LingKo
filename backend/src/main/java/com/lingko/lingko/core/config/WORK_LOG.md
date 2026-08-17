@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-12 - Apple OAuth audience 설정 추가
+
+- 변경 파일: `AppleOAuthSettings.java`, `WORK_LOG.md`
+- 내용: Apple identity token의 허용 audience를 type-safe 설정으로 binding한다.
+- 검증: Spring ApplicationContext와 Apple verifier 테스트 통과
+- 리스크: 배포 환경 `APPLE_CLIENT_ID` 누락 시 Apple 로그인 fail-closed
+
 ## 2026-08-12 - AdMob SSV 정책 설정 추가
 
 - 변경 파일: `AdMobSsvSettings.java`, `WORK_LOG.md`

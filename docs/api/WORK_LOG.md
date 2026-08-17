@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple OAuth API 계약 추가
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: `APPLE` provider의 identity token·raw nonce·최초 이름과 검증 조건을 문서화했다.
+- 검증: DTO·service·controller 테스트와 대조
+- 리스크: authorization code 교환 endpoint는 후속 필요
+
 ## 2026-08-12 - 광고 보상 SSV API 계약 갱신
 
 - 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`

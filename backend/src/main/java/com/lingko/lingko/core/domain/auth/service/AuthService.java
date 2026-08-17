@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * 외부 신원 검증과 LingKo 토큰 세션 생명주기를 조율한다.
@@ -23,27 +24,35 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private static final String GOOGLE_PROVIDER = "GOOGLE";
-
     private final UserRepository userRepository;
-    private final OAuthIdentityVerifier googleIdentityVerifier;
+    private final List<OAuthIdentityVerifier> identityVerifiers;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenSessionRepository refreshTokenSessionRepository;
     private final RefreshTokenHasher refreshTokenHasher;
 
     /**
-     * Google 사용자를 생성·갱신하고 독립적으로 폐기 가능한 새 세션을 시작한다.
+     * 검증된 소셜 사용자를 생성·갱신하고 독립적으로 폐기 가능한 새 세션을 시작한다.
      */
     @Transactional
     public AuthTokenResponse loginWithOAuth(OAuthLoginRequest request) {
-        if (!GOOGLE_PROVIDER.equals(request.normalizedProvider())) {
-            throw new IllegalArgumentException("Unsupported OAuth provider");
-        }
-
-        OAuthIdentity identity = googleIdentityVerifier.verify(request.trimmedIdToken());
-        User user = userRepository.findBySocialIdAndSocialType(identity.socialId(), User.SocialType.GOOGLE)
+        String provider = request.normalizedProvider();
+        OAuthIdentityVerifier verifier = identityVerifiers.stream()
+                .filter(candidate -> candidate.provider().equals(provider))
+                .findFirst()
+                .orElseThrow(() -> new AuthException("Unsupported OAuth provider"));
+        User.SocialType socialType = User.SocialType.valueOf(provider);
+        OAuthIdentity verifiedIdentity = verifier.verify(
+                request.trimmedIdToken(),
+                request.trimmedRawNonce()
+        );
+        OAuthIdentity identity = withFirstPartyDisplayName(
+                verifiedIdentity,
+                request.normalizedDisplayName(),
+                socialType
+        );
+        User user = userRepository.findBySocialIdAndSocialType(identity.socialId(), socialType)
                 .map(existing -> updateUser(existing, identity))
-                .orElseGet(() -> createUser(identity));
+                .orElseGet(() -> createUser(identity, socialType));
         JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(user.getUserIdx());
         refreshTokenSessionRepository.save(RefreshTokenSession.create(
                 tokens.refreshSessionId(),
@@ -147,16 +156,33 @@ public class AuthService {
         return user;
     }
 
-    private User createUser(OAuthIdentity identity) {
+    private User createUser(OAuthIdentity identity, User.SocialType socialType) {
         User user = User.builder()
                 .socialId(identity.socialId())
-                .socialType(User.SocialType.GOOGLE)
+                .socialType(socialType)
                 .email(identity.email())
                 .name(identity.name())
                 .profileImageUrl(identity.profileImageUrl())
                 .build();
 
         return userRepository.save(user);
+    }
+
+    private OAuthIdentity withFirstPartyDisplayName(
+            OAuthIdentity identity,
+            String displayName,
+            User.SocialType socialType
+    ) {
+        if (socialType != User.SocialType.APPLE || identity.name() != null || displayName == null) {
+            return identity;
+        }
+        // Apple 이름은 최초 승인 응답에만 있고 token claim에는 없으므로 검증·정규화된 요청값을 보완한다.
+        return new OAuthIdentity(
+                identity.socialId(),
+                identity.email(),
+                displayName,
+                identity.profileImageUrl()
+        );
     }
 
     private AuthUserResponse toUserResponse(User user) {

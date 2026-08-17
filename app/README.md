@@ -10,7 +10,7 @@ LingKo의 iOS/Android 모바일 클라이언트입니다. 추천 문장 또는 �
 - WAV 음성 녹음과 평가 업로드
 - 정확도·유창성·완성도 점수 표시
 - 취약 글자와 입·혀 가이드 표시
-- Google 로그인
+- Google 로그인과 iOS native Apple 로그인
 - Access/Refresh Token 보안 저장소 저장
 - Access Token 만료 시 Refresh Token 회전과 요청 1회 재시도
 - 로그인 세션 복원과 로그아웃
@@ -31,7 +31,7 @@ app/
 │   ├── data/                  # 이전 mock 또는 정적 데이터
 │   ├── models/                # API·화면 모델
 │   ├── screens/               # Home, Practice, Result, Profile
-│   ├── services/              # 인증 세션, Google 로그인, 녹음
+│   ├── services/              # 인증 세션, Google·Apple 로그인, 녹음
 │   └── widgets/               # 재사용 UI
 ├── test/                      # API·세션·Widget 테스트
 ├── pubspec.yaml
@@ -65,14 +65,14 @@ flowchart TD
 - `sentence_api.dart`: 추천 문장
 - `pronunciation_api.dart`: 자유 문장 준비
 - `evaluation_api.dart`: 평가 업로드와 연습 기록
-- `auth_api.dart`: Google ID Token을 LingKo JWT로 교환
+- `auth_api.dart`: Google·Apple identity token을 LingKo JWT로 교환
 - `user_preferences_api.dart`: 학습 설정 조회·수정
 
 ### 인증
 
 `DefaultAppAuthService`는 다음 순서로 로그인합니다.
 
-1. `google_sign_in`으로 Google ID Token 획득
+1. 선택한 provider에서 identity token 획득. Apple은 요청별 raw nonce를 만들고 SHA-256만 native 요청에 전달
 2. 백엔드 `POST /api/auth/oauth/login` 호출
 3. LingKo Access/Refresh Token 수신
 4. `flutter_secure_storage`에 세션 저장
@@ -145,6 +145,10 @@ ID가 비어 있으면 동작하지 않는 `+` 버튼과 광고 개인정보 설
 
 Android Google 로그인은 Google Cloud의 Android OAuth Client에 `com.byeok.lingko` package name과 현재 Debug SHA-1이 등록되어 있어야 합니다.
 
+iOS Apple 로그인은 iOS 13 이상, `com.byeok.lingko` App ID의 Sign in with Apple capability와 갱신된 provisioning profile,
+Backend의 `APPLE_CLIENT_ID=com.byeok.lingko`가 필요합니다. Android는 Service ID·HTTPS redirect가 아직 없어
+Apple 버튼을 표시하지 않습니다.
+
 ```bash
 cd android
 ./gradlew signingReport
@@ -163,7 +167,7 @@ flutter test
 flutter build apk --debug
 ```
 
-릴리스 전에는 Android/iOS 실기기에서 마이크 권한, 실제 녹음, Google 로그인, 앱 재시작 후 세션 복원과 실제 Access Token 만료 후 자동 갱신을 확인합니다.
+릴리스 전에는 Android/iOS 실기기에서 마이크 권한, 실제 녹음, Google·Apple 로그인, 앱 재시작 후 세션 복원과 실제 Access Token 만료 후 자동 갱신을 확인합니다.
 
 ## 구조 원칙
 

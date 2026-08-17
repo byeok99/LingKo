@@ -1,3 +1,10 @@
+## 2026-08-12 - iOS Apple 로그인 구현 범위 안내
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: iOS Apple 로그인 구현 상태와 Android·Web 제외 범위를 루트 안내에 동기화했다.
+- 검증: 앱·Backend 전체 테스트와 활성 문서 대조
+- 리스크: Apple Developer capability와 실기기 E2E, authorization code revocation은 출시 전 필요
+
 ## 2026-08-04 - 단어 점수 저장 조건 정리와 상태값 타입화
 
 - 변경 파일: backend 평가 DTO·service·test, app models·widgets·screens·test, `docs/api/api-reference.md`

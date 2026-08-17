@@ -80,6 +80,42 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Apple OAuth 로그인은 identity token과 raw nonce를 함께 받는다")
+    void appleOauthLoginAcceptsIdentityTokenAndRawNonce() throws Exception {
+        when(authService.loginWithOAuth(any())).thenReturn(AuthTokenResponse.builder()
+                .tokenType("Bearer")
+                .accessToken("access.jwt")
+                .refreshToken("refresh.jwt")
+                .expiresInSeconds(1800L)
+                .user(AuthUserResponse.builder().userId(9L).build())
+                .build());
+
+        mockMvc.perform(post("/api/auth/oauth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "provider", "APPLE",
+                                "idToken", "valid-apple-identity-token",
+                                "rawNonce", "raw-nonce-012345678901234567890123",
+                                "displayName", "Apple Learner"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.userId").value(9L));
+    }
+
+    @Test
+    @DisplayName("Apple OAuth 로그인은 raw nonce가 없으면 요청 경계에서 거부한다")
+    void appleOauthLoginRequiresRawNonce() throws Exception {
+        mockMvc.perform(post("/api/auth/oauth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "provider", "APPLE",
+                                "idToken", "valid-apple-identity-token"
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+    }
+
+    @Test
     @DisplayName("idToken은 필수다")
     void idTokenIsRequired() throws Exception {
         mockMvc.perform(post("/api/auth/oauth/login")

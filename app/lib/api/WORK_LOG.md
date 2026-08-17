@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-12 - Apple credential 교환 API 추가
+
+- 변경 파일: `auth_api.dart`, `WORK_LOG.md`
+- 내용: identity token·raw nonce·최초 이름을 `APPLE` OAuth 요청으로 보내는 계약을 추가했다.
+- 검증: `auth_api_test.dart`, Flutter 전체 테스트 통과
+- 리스크: authorization code 교환 계약은 후속 구현 필요
+
 ## 2026-08-12 - 광고 보상 session API 계약 적용
 
 - 변경 파일: `practice_quota_api.dart`, `WORK_LOG.md`

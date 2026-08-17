@@ -54,6 +54,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	// 비용 유발 guide job의 요청·실행 지표를 MeterRegistry에 기록한다.
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// Apple identity token의 RS256 서명과 JWK rotation을 검증한다.
+	implementation 'com.nimbusds:nimbus-jose-jwt:10.9.1'
     testImplementation 'com.h2database:h2'
 	implementation platform('software.amazon.awssdk:bom:2.20.26')
 	implementation 'software.amazon.awssdk:s3'

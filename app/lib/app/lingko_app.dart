@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'app_palette.dart';
@@ -39,6 +40,8 @@ import '../services/app_auth_service.dart';
 import '../services/sentence_speech_service.dart';
 import '../services/rewarded_ad_service.dart';
 import 'app_theme.dart';
+
+enum _SignInProvider { google, apple }
 
 // 앱 전체 설정을 담당하는 최상위 위젯입니다.
 // 여기서는 앱 이름, 테마 색상, 기본 글자 스타일, 첫 화면을 정합니다.
@@ -177,6 +180,9 @@ class _LingKoShellState extends State<LingKoShell> {
   /// null이면 아직 이번 가입 흐름에서 동의를 받지 않았다는 뜻이다. 로그인에 실패하면
   /// 값을 비워 다음 시도에서 동의를 다시 받는다. 동의만 남고 계정이 없는 상태를 만들지 않는다.
   ConsentSelection? pendingConsent;
+
+  /// 계정 생성 전 동의 gate를 통과한 뒤 호출할 사용자의 실제 로그인 수단이다.
+  _SignInProvider? pendingSignInProvider;
   PracticeQuota? practiceQuota;
   bool isLoadingPracticeQuota = false;
   String? practiceQuotaError;
@@ -424,8 +430,9 @@ class _LingKoShellState extends State<LingKoShell> {
   ///
   /// 계정이 만들어진 뒤에 동의를 받으면, 거부한 사용자의 개인정보가 이미 서버에 생긴
   /// 상태가 되어 즉시 삭제하는 경로를 따로 만들어야 한다. 계정 생성 전에 받으면 그 경로가 없어도 된다.
-  void openConsent() {
+  void openConsent(_SignInProvider provider) {
     setState(() {
+      pendingSignInProvider = provider;
       isConsentOpen = true;
       consentGateDocumentVersion = consentDocumentVersion;
       consentErrorText = null;
@@ -450,7 +457,14 @@ class _LingKoShellState extends State<LingKoShell> {
         isSigningIn = true;
       });
       try {
-        activeSession = await widget.authService.signInWithGoogle();
+        final provider = pendingSignInProvider;
+        if (provider == null) {
+          throw StateError('Sign-in provider was not selected');
+        }
+        activeSession = switch (provider) {
+          _SignInProvider.google => await widget.authService.signInWithGoogle(),
+          _SignInProvider.apple => await widget.authService.signInWithApple(),
+        };
         if (!mounted) {
           return;
         }
@@ -461,11 +475,17 @@ class _LingKoShellState extends State<LingKoShell> {
         if (!mounted) {
           return;
         }
+        final failedProvider = pendingSignInProvider;
         setState(() {
           pendingConsent = null;
+          pendingSignInProvider = null;
           isConsentOpen = false;
           isSubmittingConsent = false;
-          authErrorText = 'Unable to sign in with Google. Please try again.';
+          authErrorText = switch (failedProvider) {
+            _SignInProvider.apple =>
+              'Unable to sign in with Apple. Please try again.',
+            _ => 'Unable to sign in with Google. Please try again.',
+          };
         });
         return;
       } finally {
@@ -488,6 +508,7 @@ class _LingKoShellState extends State<LingKoShell> {
       setState(() {
         isConsentOpen = false;
         pendingConsent = null;
+        pendingSignInProvider = null;
         consentErrorText = null;
       });
       await loadAuthenticatedData(activeSession);
@@ -541,6 +562,7 @@ class _LingKoShellState extends State<LingKoShell> {
       setState(() {
         isConsentOpen = false;
         pendingConsent = null;
+        pendingSignInProvider = null;
         consentErrorText = null;
       });
       return;
@@ -595,6 +617,7 @@ class _LingKoShellState extends State<LingKoShell> {
         consentErrorText = null;
         consentGateDocumentVersion = consentDocumentVersion;
         pendingConsent = null;
+        pendingSignInProvider = null;
         practiceQuota = null;
         practiceQuotaError = null;
         evaluationProgress = const EvaluationProgress();
@@ -956,7 +979,10 @@ class _LingKoShellState extends State<LingKoShell> {
       return LoginScreen(
         isLoading: isSigningIn,
         errorText: authErrorText,
-        onSignIn: openConsent,
+        onSignInWithGoogle: () => openConsent(_SignInProvider.google),
+        onSignInWithApple: () => openConsent(_SignInProvider.apple),
+        // Android는 Service ID·HTTPS redirect 계약이 별도라 native iOS 범위에서만 노출한다.
+        showAppleSignIn: defaultTargetPlatform == TargetPlatform.iOS,
       );
     }
 

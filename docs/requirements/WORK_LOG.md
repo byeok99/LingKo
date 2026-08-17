@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple 로그인 기능 요구사항 갱신
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: iOS Apple 로그인 코드 구현과 외부 capability·revocation 후속 상태를 분리했다.
+- 검증: 구현·테스트·출시 체크리스트 대조
+- 리스크: 외부 설정 완료 전 요구사항은 부분 완료
+
 ## 2026-08-12 - 광고 보상 요구사항 구현 완료 반영
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`

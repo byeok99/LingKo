@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple profile snapshot 보존
+
+- 변경 파일: `User.java`, `WORK_LOG.md`
+- 내용: Apple 재로그인의 null 이름·이메일·이미지가 기존 profile 값을 지우지 않게 갱신 규칙을 보강했다.
+- 검증: Apple 재로그인 회귀 테스트와 Backend 전체 테스트 통과
+- 리스크: 사용자가 profile 직접 수정 기능을 갖게 되면 공급자 갱신 우선순위 재정의 필요
+
 ## 2026-08-04 - User에서 언어 설정 제거
 
 - 변경 파일: `User.java`

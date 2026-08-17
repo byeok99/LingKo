@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-12 - Apple 로그인 출시 체크리스트 갱신
+
+- 변경 파일: `mvp-release-execution-checklist.md`, `WORK_LOG.md`
+- 내용: 코드·entitlement 완료와 capability·실기기·authorization code/revocation 미완료를 분리했다.
+- 검증: 앱·Backend 구현 및 테스트 결과와 대조
+- 리스크: 미완료 항목 완료 전 iOS 출시 불가
+
 ## 2026-08-12 - 법무 문서 운영자 정보 확정과 기술 부채 등록
 
 - 변경 파일: `technical-debt.md` (법무 문서 상세는 `legal/WORK_LOG.md`)

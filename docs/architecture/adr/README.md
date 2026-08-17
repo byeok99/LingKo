@@ -6,6 +6,7 @@ ADR은 중요한 기술 선택의 배경과 결과를 보존합니다.
 |---|---|---|
 | [0001](0001-flutter-mobile-client.md) | 승인 | Flutter로 iOS/Android 클라이언트 구성 |
 | [0002](0002-google-oauth-and-jwt.md) | 승인 | Google OAuth 신원 확인 후 자체 JWT 발급 |
+| [0003](0003-ios-apple-login.md) | 승인 | iOS Apple identity token과 요청별 nonce 검증 |
 | [0003](0003-flyway-schema-management.md) | 승인 | Flyway 기반 DB 스키마 버전 관리 |
 | [0004](0004-separate-external-integration-tests.md) | 승인 | 외부 서비스 통합 테스트 별도 실행 |
 | [0005](0005-branch-strategy.md) | 승인 | `develop` 통합, `main` 릴리스 브랜치 운영 |

@@ -6,18 +6,18 @@
 sequenceDiagram
     participant U as User
     participant A as Flutter App
-    participant G as Google
+    participant P as Google / Apple
     participant B as Backend
     participant D as MySQL
 
     U->>A: 로그인 수단 선택
     A->>U: 동의 화면 표시 (필수 2건·선택 1건)
     U->>A: 동의
-    A->>G: Google Sign-In
-    G-->>A: ID Token
+    A->>P: 선택한 provider 인증
+    P-->>A: ID Token
     A->>B: POST /api/auth/oauth/login
-    B->>G: ID Token 검증
-    G-->>B: 사용자 식별 정보
+    B->>P: provider별 ID Token 검증
+    P-->>B: 사용자 식별 정보
     B->>D: 사용자 생성 또는 프로필 갱신
     B->>D: Refresh Token 해시 세션 저장
     B-->>A: Access/Refresh JWT + 사용자 정보
@@ -39,6 +39,11 @@ sequenceDiagram
   "idToken": "google-id-token"
 }
 ```
+
+Apple 요청은 `provider=APPLE`, `idToken`, `rawNonce`, 선택 `displayName`을 사용합니다. 앱은
+cryptographically secure raw nonce를 만들고 SHA-256 값만 Apple 요청에 전달합니다. Backend는 Apple
+공개 JWK로 RS256 서명을 확인하고 issuer, App ID audience, 만료, subject, token nonce를 검증합니다.
+Apple 이름은 최초 승인 응답에만 있으므로 이후 null 응답은 저장된 이름을 지우지 않습니다.
 
 응답에는 `tokenType`, `accessToken`, `refreshToken`, `expiresInSeconds`, `user`가 포함됩니다.
 
@@ -96,6 +101,7 @@ sequenceDiagram
 - 인증이 필요한 모든 사용자 기능에 공통 필터 적용
 - 가이드 작업 관리자 권한
 - 로그인·실패 이벤트 감사 로그
+- Apple authorization code 교환·refresh token 보관과 회원 탈퇴 시 Apple token revocation
 
 ## 금지 사항
 

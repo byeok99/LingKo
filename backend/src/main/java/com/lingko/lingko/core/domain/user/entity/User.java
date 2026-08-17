@@ -55,10 +55,16 @@ public class User {
     private LocalDateTime lastLoginAt;
 
     public void updateOAuthProfile(String email, String name, String profileImageUrl) {
-        // provider profile field는 로그인 시 갱신하는 시점 데이터이며 로컬 학습 설정은 변경하지 않는다.
-        this.email = email;
-        this.name = name;
-        this.profileImageUrl = profileImageUrl;
+        // Apple은 이름을 최초 승인 때만 전달하므로 null 응답이 기존 profile snapshot을 지우지 않게 한다.
+        if (email != null) {
+            this.email = email;
+        }
+        if (name != null) {
+            this.name = name;
+        }
+        if (profileImageUrl != null) {
+            this.profileImageUrl = profileImageUrl;
+        }
     }
 
     public enum SocialType {

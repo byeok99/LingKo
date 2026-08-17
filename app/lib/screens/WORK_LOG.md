@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-08-13 - 로그인 provider 버튼 비율 조정
+
+- 변경 파일: `auth_gate_screen.dart`, `WORK_LOG.md`
+- 내용: Google PNG의 큰 투명 여백을 보정하고 Apple 공식 logo painter와 함께 공통 24px icon slot·동일 왼쪽 열에 배치했다. 두 label은 15px로 버튼 정중앙에 고정했다.
+- 검증: icon slot·X축·label 중심 RED→GREEN widget test, iPhone 15 Simulator 실제 렌더 screenshot 육안 확인, `flutter analyze`, Flutter 전체 테스트 통과
+- 리스크: 없음
+
+## 2026-08-12 - iOS Apple 로그인 버튼 활성화
+
+- 변경 파일: `auth_gate_screen.dart`, `WORK_LOG.md`
+- 내용: 준비 중 placeholder를 공식 Apple 버튼으로 교체하고 provider별 callback을 분리했다.
+- 검증: iOS 노출·Android 미노출 widget test, Flutter 전체 테스트 통과
+- 리스크: 실기기 Apple 인증 UI는 외부 capability 설정 후 확인 필요
+
 ## 2026-08-08 - 광고 개인정보 설정 상태 연결
 
 - 변경 파일: `profile_screen.dart`, `WORK_LOG.md`
