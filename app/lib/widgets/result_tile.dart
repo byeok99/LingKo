@@ -8,6 +8,7 @@ import '../models/practice_sentence.dart';
 import 'guide_sheet.dart';
 import 'shared_widgets.dart';
 
+/// 음절 점수의 가용 상태와 등급을 표시하고 해당 발음 가이드 진입점을 제공한다.
 class ResultTile extends StatelessWidget {
   const ResultTile({super.key, required this.result, this.width = 64});
 

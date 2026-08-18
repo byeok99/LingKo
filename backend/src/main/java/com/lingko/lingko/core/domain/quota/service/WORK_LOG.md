@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-18 - quota 출처 enum 주석 보강
+
+- 변경 파일: `PracticeQuotaService.java`, `WORK_LOG.md`
+- 내용: 연습 예약이 무료 기본량과 광고 보상량 중 어느 quota에서 차감됐는지 나타내는 공개 enum 의미를 명시했다.
+- 검증: Backend 단위 테스트 293개·통합 테스트 16개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-12 - 검증된 SSV만 quota 지급
 
 - 변경 파일: `AdRewardService.java`, `VerifiedAdRewardCallback.java`, `PracticeQuotaService.java`, `WORK_LOG.md`

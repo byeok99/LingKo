@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-18 - 평가 service 공개 type 주석 보강
+
+- 변경 파일: `EvaluationJobExecutor.java`, `EvaluationJobService.java`, `EvaluationPersistenceService.java`, `WORK_LOG.md`
+- 내용: Worker 실행 결과, 평가 대상, 영속 명령 record의 계층 간 계약을 Javadoc에 명시했다.
+- 검증: Backend 단위 테스트 293개·통합 테스트 16개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-09 - 가이드 생성 비용 admission 강화
 
 - 변경 파일: `GuideGenerationJobService.java`, `GuideGenerationJobTelemetry.java`, `GuideSourceUrlPolicy.java`, `WORK_LOG.md`

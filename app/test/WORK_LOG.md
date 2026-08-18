@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-18 - Apple identity service 테스트 의도 명시
+
+- 변경 파일: `apple_identity_service_test.dart`, `WORK_LOG.md`
+- 내용: nonce 원문 비노출과 identity token 필수 조건을 보장하는 테스트 파일의 의도를 명시했다.
+- 검증: Flutter 전체 테스트 132개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-13 - 로그인 버튼 크기 회귀 테스트
 
 - 변경 파일: `widget_test.dart`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-18 - 공개 API 경계 주석 보강
+
+- 변경 파일: `api_client.dart`, `auth_api.dart`, `WORK_LOG.md`
+- 내용: transport typedef의 요청 종류와 Apple raw nonce·nullable 최초 이름의 계약을 Dartdoc에 명시했다.
+- 검증: `flutter analyze` 통과, Flutter 전체 테스트 132개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-12 - Apple credential 교환 API 추가
 
 - 변경 파일: `auth_api.dart`, `WORK_LOG.md`

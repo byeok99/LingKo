@@ -163,6 +163,9 @@ public class EvaluationJobService {
         }
     }
 
+    /**
+     * 평가 요청이 참조할 문장 출처와 원문·표준 발음을 하나의 검증된 입력으로 묶는다.
+     */
     public record EvaluationTarget(
             EvaluationLog.PracticeSource source,
             Long sentenceId,

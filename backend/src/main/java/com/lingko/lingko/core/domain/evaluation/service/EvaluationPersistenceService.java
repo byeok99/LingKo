@@ -159,6 +159,9 @@ public class EvaluationPersistenceService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
+    /**
+     * 외부 평가 응답과 사용자·문장 문맥을 한 transaction에서 저장하기 위한 명령이다.
+     */
     @Builder
     public record SaveEvaluationResultCommand(
             User user,

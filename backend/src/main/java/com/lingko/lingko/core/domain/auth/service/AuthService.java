@@ -32,6 +32,9 @@ public class AuthService {
 
     /**
      * 검증된 소셜 사용자를 생성·갱신하고 독립적으로 폐기 가능한 새 세션을 시작한다.
+     *
+     * <p>provider별 verifier가 검증한 신원만 신뢰한다. 예외적으로 Apple이 최초 승인에만
+     * 제공하는 이름은 Apple 로그인이고 token 신원에 이름이 없을 때만 보완한다.</p>
      */
     @Transactional
     public AuthTokenResponse loginWithOAuth(OAuthLoginRequest request) {

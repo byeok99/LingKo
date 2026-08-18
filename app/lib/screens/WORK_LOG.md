@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-18 - 공개 화면 책임 주석 보강
+
+- 변경 파일: `auth_gate_screen.dart`, `practice_screen.dart`, `profile_screen.dart`, `result_screen.dart`, `review_screen.dart`, `WORK_LOG.md`
+- 내용: 주요 화면의 사용자 흐름 책임과 `showAppleSignIn`의 iOS native credential 노출 계약을 Dartdoc에 명시했다.
+- 검증: `flutter analyze` 통과, Flutter 전체 테스트 132개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-13 - 로그인 provider 버튼 비율 조정
 
 - 변경 파일: `auth_gate_screen.dart`, `WORK_LOG.md`

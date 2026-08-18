@@ -20,6 +20,7 @@ class AdRewardSession {
   }
 }
 
+/// 광고 보상 session이 signed callback을 기다리는지, 완료됐는지, 만료됐는지를 나타낸다.
 enum AdRewardStatus { pending, completed, expired }
 
 /// 서버가 signed callback을 처리했는지 polling하는 상태다.

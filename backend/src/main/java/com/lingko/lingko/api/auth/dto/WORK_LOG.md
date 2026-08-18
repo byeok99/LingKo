@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-18 - OAuth 요청 field 의미 주석 보강
+
+- 변경 파일: `OAuthLoginRequest.java`, `WORK_LOG.md`
+- 내용: provider·token·provider별 nullable nonce·최초 이름의 API 계약과 편의 생성자 의도를 Javadoc에 명시했다.
+- 검증: Backend 단위 테스트 293개·통합 테스트 16개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-12 - Apple OAuth 요청 경계 확장
 
 - 변경 파일: `OAuthLoginRequest.java`, `WORK_LOG.md`

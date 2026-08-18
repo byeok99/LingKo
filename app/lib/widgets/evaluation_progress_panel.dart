@@ -7,6 +7,7 @@ import '../app/app_palette.dart';
 import '../models/evaluation_progress.dart';
 import 'shared_widgets.dart';
 
+/// 서버가 제공하는 비동기 평가 단계를 진행 UI와 재시도·백그라운드 동작으로 연결한다.
 class EvaluationProgressPanel extends StatelessWidget {
   const EvaluationProgressPanel({
     super.key,

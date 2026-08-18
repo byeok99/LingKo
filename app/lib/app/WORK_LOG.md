@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-18 - 로그인 provider 상태 주석 보강
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 동의 gate 동안 선택한 native 인증 흐름을 보존하는 provider enum의 의도를 명시했다.
+- 검증: `flutter analyze` 통과, Flutter 전체 테스트 132개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-12 - 동의 gate에 Apple 로그인 연결
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

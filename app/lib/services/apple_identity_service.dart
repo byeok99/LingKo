@@ -6,8 +6,11 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+/// Apple 계정 UI 호출을 테스트 대역으로 교체하기 위한 최소 함수 계약이다.
 typedef AppleCredentialRequester =
     Future<ApplePlatformCredential> Function(String hashedNonce);
+
+/// 로그인 시도마다 새로운 cryptographic nonce를 만들도록 생성 경계를 분리한다.
 typedef AppleNonceGenerator = String Function();
 
 /// Backend가 Apple identity token의 요청 귀속을 검증하는 데 필요한 credential 묶음이다.
@@ -18,7 +21,10 @@ class AppleIdentityCredential {
     this.displayName,
   });
 
+  /// Backend가 Apple 공개 key와 claim을 검증할 서명된 identity token이다.
   final String identityToken;
+
+  /// Apple에는 hash만 전달하며 Backend nonce 비교 전까지 앱 내부에서 보관하는 원문이다.
   final String rawNonce;
 
   /// Apple 이름은 최초 승인에만 존재하며 null은 기존 서버 이름을 보존하라는 뜻이다.
@@ -33,13 +39,19 @@ class ApplePlatformCredential {
     this.familyName,
   });
 
+  /// null은 플랫폼 인증 응답만으로 Backend 로그인을 계속할 수 없다는 뜻이다.
   final String? identityToken;
+
+  /// 이름은 최초 승인에서만 제공되므로 null은 정상적인 재로그인 응답일 수 있다.
   final String? givenName;
   final String? familyName;
 }
 
 /// Apple 계정 UI를 열고 검증 가능한 credential을 반환하는 플랫폼 경계다.
 abstract class AppleIdentityService {
+  /// 원 nonce와 Apple identity token을 한 묶음으로 반환해 다른 요청과 섞이지 않게 한다.
+  ///
+  /// 플랫폼이 token을 주지 않으면 [AppleSignInUnavailableException]을 던진다.
   Future<AppleIdentityCredential> signIn();
 }
 

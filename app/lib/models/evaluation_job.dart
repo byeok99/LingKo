@@ -2,6 +2,7 @@
 
 import 'practice_result.dart';
 
+/// Backend 평가 작업의 polling 상태이며 알 수 없는 wire 값은 허용하지 않는다.
 enum EvaluationJobStatus {
   pending,
   processing,

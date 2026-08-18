@@ -213,6 +213,7 @@ public class EvaluationJob {
         );
     }
 
+    /** 비동기 평가 작업의 영속 상태이며 Worker의 claim·완료·실패 전이를 제한한다. */
     public enum Status {
         PENDING,
         PROCESSING,

@@ -20,6 +20,7 @@ const Duration _sentencePreparationDelay = Duration(milliseconds: 700);
 const PracticeSentenceInputFormatter _customSentenceInputFormatter =
     PracticeSentenceInputFormatter();
 
+/// 문장 선택부터 발음 재생·녹음·평가 제출까지 한 번의 연습 흐름을 소유한다.
 class PracticeScreen extends StatefulWidget {
   const PracticeScreen({
     super.key,

@@ -45,6 +45,8 @@ class LoginScreen extends StatelessWidget {
   final String? errorText;
   final VoidCallback onSignInWithGoogle;
   final VoidCallback onSignInWithApple;
+
+  /// true일 때만 Apple 버튼을 그린다. 현재 native credential 계약이 있는 iOS에서만 사용한다.
   final bool showAppleSignIn;
 
   @override

@@ -6,6 +6,7 @@ import '../app/app_theme.dart';
 import '../app/app_palette.dart';
 import 'shared_widgets.dart';
 
+/// 정확도·유창성·완성도 점수를 0~100 범위로 정규화해 비교 가능한 막대로 표시한다.
 class ScoreBreakdown extends StatelessWidget {
   const ScoreBreakdown({
     super.key,

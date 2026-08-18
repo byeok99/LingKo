@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-18 - OAuth profile null 의미 주석 보강
+
+- 변경 파일: `User.java`, `WORK_LOG.md`
+- 내용: null profile 값은 삭제가 아니라 공급자 미제공을 뜻하며 기존 snapshot을 보존한다는 규칙과 `SocialType` 책임을 명시했다.
+- 검증: Backend 단위 테스트 293개·통합 테스트 16개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-12 - Apple profile snapshot 보존
 
 - 변경 파일: `User.java`, `WORK_LOG.md`

@@ -42,6 +42,11 @@ public class AppleOAuthIdentityVerifier implements OAuthIdentityVerifier {
     private final ConfigurableJWTProcessor<SecurityContext> jwtProcessor;
     private final Clock clock;
 
+    /**
+     * 운영 환경에서는 Apple 원격 JWK를 cache·갱신하는 processor와 UTC clock을 사용한다.
+     *
+     * @param settings 허용할 Apple App ID audience 설정
+     */
     @Autowired
     public AppleOAuthIdentityVerifier(AppleOAuthSettings settings) {
         this(settings, createProcessor(), Clock.systemUTC());

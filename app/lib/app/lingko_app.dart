@@ -41,6 +41,7 @@ import '../services/sentence_speech_service.dart';
 import '../services/rewarded_ad_service.dart';
 import 'app_theme.dart';
 
+/// 동의 gate가 끝날 때까지 사용자가 고른 native 인증 흐름을 보존한다.
 enum _SignInProvider { google, apple }
 
 // 앱 전체 설정을 담당하는 최상위 위젯입니다.

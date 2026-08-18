@@ -5,15 +5,22 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+/// API JSON object를 transport 경계에서 일관된 nullable 값 map으로 표현한다.
 typedef JsonMap = Map<String, Object?>;
+
+/// GET 요청 구현을 테스트 대역이나 Dart IO transport로 교체하는 계약이다.
 typedef GetJsonTransport =
     Future<ApiResponse> Function(
       Uri uri,
       Duration timeout,
       Map<String, String> headers,
     );
+
+/// 인증 header가 필요 없는 JSON POST 요청의 교체 가능한 transport 계약이다.
 typedef PostJsonTransport =
     Future<ApiResponse> Function(Uri uri, JsonMap body, Duration timeout);
+
+/// 명시적 header를 포함하는 JSON POST 요청의 교체 가능한 transport 계약이다.
 typedef PostJsonWithHeadersTransport =
     Future<ApiResponse> Function(
       Uri uri,
@@ -21,6 +28,8 @@ typedef PostJsonWithHeadersTransport =
       Duration timeout,
       Map<String, String> headers,
     );
+
+/// 인증 header와 JSON body를 함께 보내는 DELETE transport 계약이다.
 typedef DeleteJsonWithHeadersTransport =
     Future<ApiResponse> Function(
       Uri uri,
@@ -28,6 +37,8 @@ typedef DeleteJsonWithHeadersTransport =
       Duration timeout,
       Map<String, String> headers,
     );
+
+/// presigned URL에 로컬 파일을 직접 올리는 PUT transport 계약이다.
 typedef PutFileTransport =
     Future<ApiResponse> Function(
       Uri uri,
@@ -35,6 +46,8 @@ typedef PutFileTransport =
       String contentType,
       Duration timeout,
     );
+
+/// 인증 header를 포함하는 부분 수정 요청의 transport 계약이다.
 typedef PatchJsonTransport =
     Future<ApiResponse> Function(
       Uri uri,
@@ -42,6 +55,8 @@ typedef PatchJsonTransport =
       Duration timeout,
       Map<String, String> headers,
     );
+
+/// 파일과 field를 함께 보내는 multipart 요청의 교체 가능한 transport 계약이다.
 typedef MultipartTransport =
     Future<ApiResponse> Function(
       Uri uri,

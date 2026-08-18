@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-18 - Apple verifier 생성 경계 주석 보강
+
+- 변경 파일: `AppleOAuthIdentityVerifier.java`, `WORK_LOG.md`
+- 내용: 운영 생성자가 원격 JWK cache·rotation과 UTC clock을 선택하는 이유 및 audience 설정 책임을 Javadoc에 명시했다.
+- 검증: Backend 단위 테스트 293개·통합 테스트 16개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-12 - Apple identity token verifier 구현
 
 - 변경 파일: `AppleOAuthIdentityVerifier.java`, `GoogleOAuthIdentityVerifier.java`, `WORK_LOG.md`
