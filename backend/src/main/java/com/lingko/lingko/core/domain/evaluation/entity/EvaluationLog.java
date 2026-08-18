@@ -100,6 +100,7 @@ public class EvaluationLog {
         word.setEvaluationLog(this);
     }
 
+    /** 평가 문장이 추천 목록과 사용자 직접 입력 중 어디에서 시작됐는지 나타낸다. */
     public enum PracticeSource {
         RECOMMENDED,
         CUSTOM

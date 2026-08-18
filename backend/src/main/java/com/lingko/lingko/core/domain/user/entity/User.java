@@ -54,6 +54,12 @@ public class User {
     @Column(name = "last_login_at", nullable = false)
     private LocalDateTime lastLoginAt;
 
+    /**
+     * 공급자가 이번 로그인에서 실제로 반환한 profile 값만 최신 snapshot에 반영한다.
+     *
+     * <p>null은 값을 지우라는 요청이 아니라 공급자가 이번 응답에서 제공하지 않았다는 뜻이다.
+     * 특히 Apple 재로그인은 이름을 생략하므로 기존 이름을 보존해야 한다.</p>
+     */
     public void updateOAuthProfile(String email, String name, String profileImageUrl) {
         // Apple은 이름을 최초 승인 때만 전달하므로 null 응답이 기존 profile snapshot을 지우지 않게 한다.
         if (email != null) {
@@ -67,6 +73,7 @@ public class User {
         }
     }
 
+    /** 사용자 계정을 외부 공급자 subject와 함께 유일하게 식별하는 공급자 종류다. */
     public enum SocialType {
         GOOGLE, APPLE, KAKAO
     }

@@ -16,6 +16,7 @@ import '../widgets/shared_widgets.dart';
 import '../widgets/romanized_pronunciation.dart';
 import '../widgets/word_syllable_explorer.dart';
 
+/// 인증된 사용자의 평가 기록을 불러와 상세 확인과 문장 재연습을 연결한다.
 class ReviewScreen extends StatefulWidget {
   const ReviewScreen({
     super.key,

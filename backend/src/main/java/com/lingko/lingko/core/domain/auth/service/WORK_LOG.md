@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-18 - OAuth 신원 신뢰 경계 주석 보강
+
+- 변경 파일: `AuthService.java`, `WORK_LOG.md`
+- 내용: provider verifier 결과만 신뢰하고 Apple 최초 이름만 제한적으로 보완하는 로그인 규칙을 Javadoc에 명시했다.
+- 검증: Backend 단위 테스트 293개·통합 테스트 16개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-12 - 공급자별 OAuth verifier 주입
 
 - 변경 파일: `AuthService.java`, `OAuthIdentityVerifier.java`, `WORK_LOG.md`

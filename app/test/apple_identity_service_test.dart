@@ -1,3 +1,6 @@
+// 파일 의도: Apple nonce와 native credential 변환의 보안 계약을 검증한다.
+// 선택 이유: 실제 계정 UI 없이 원문 nonce 비노출과 token 필수 조건을 결정적으로 재현한다.
+
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';

@@ -9,6 +9,7 @@ import '../models/consent_selection.dart';
 import '../services/app_auth_service.dart';
 import '../widgets/shared_widgets.dart';
 
+/// 현재 계정 정보, 법무 문서, 개인정보 동작과 세션 종료를 한곳에서 제공한다.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     super.key,

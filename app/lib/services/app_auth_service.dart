@@ -13,10 +13,13 @@ import 'google_identity_service.dart';
 
 /// 로컬·서버 인증 세션의 앱 수준 생명주기를 소유한다.
 abstract class AppAuthService {
+  /// 안전한 로컬 저장소에서 이전 LingKo 세션을 복원하며 없으면 null을 반환한다.
   Future<AuthSession?> restoreSession();
 
+  /// Google 계정 인증을 완료하고 새 LingKo 세션을 저장한다.
   Future<AuthSession> signInWithGoogle();
 
+  /// 요청별 nonce가 결합된 Apple credential을 교환하고 새 LingKo 세션을 저장한다.
   Future<AuthSession> signInWithApple();
 
   /// 현재 로그인 사용자가 최신 문서 버전에 동의했는지 서버에서 확인한다.
@@ -35,7 +38,7 @@ abstract class AppAuthService {
   Future<void> deleteAccount();
 }
 
-/// Google 신원, LingKo 토큰, 안전한 로컬 저장을 조율한다.
+/// Google·Apple 신원, LingKo 토큰, 안전한 로컬 저장을 조율한다.
 class DefaultAppAuthService implements AppAuthService {
   DefaultAppAuthService({
     AuthApi? authApi,

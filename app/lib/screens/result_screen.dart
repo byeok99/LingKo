@@ -9,6 +9,7 @@ import '../widgets/score_card.dart';
 import '../widgets/shared_widgets.dart';
 import '../widgets/word_syllable_explorer.dart';
 
+/// 문장 평가 결과를 음절 단위로 탐색하고 저장·재연습 동작으로 연결하는 화면이다.
 class ResultScreen extends StatelessWidget {
   const ResultScreen({
     super.key,

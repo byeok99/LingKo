@@ -56,6 +56,7 @@ public class EvaluationJobExecutor {
         }
     }
 
+    /** Worker가 다음 polling에서 완료·재시도·영구 실패를 구분하는 실행 결과다. */
     public enum ExecutionResult {
         COMPLETED,
         RETRY_SCHEDULED,

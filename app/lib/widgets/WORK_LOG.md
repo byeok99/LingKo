@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-18 - 공개 공통 widget 주석 보강
+
+- 변경 파일: `evaluation_progress_panel.dart`, `result_tile.dart`, `score_breakdown.dart`, `shared_widgets.dart`, `WORK_LOG.md`
+- 내용: CTA·상태·점수·문자 표시 widget과 비동기 평가 panel의 재사용 책임을 Dartdoc에 명시했다.
+- 검증: `flutter analyze` 통과, Flutter 전체 테스트 132개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-07 - 점수 카드와 어절 탐색을 새 Result 시안에 맞춤
 
 - 변경 파일: `score_card.dart`, `word_syllable_explorer.dart`

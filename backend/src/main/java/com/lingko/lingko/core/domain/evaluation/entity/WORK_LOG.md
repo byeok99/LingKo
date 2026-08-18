@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-18 - 평가 entity 상태 enum 주석 보강
+
+- 변경 파일: `EvaluationJob.java`, `EvaluationLog.java`, `WORK_LOG.md`
+- 내용: 비동기 작업 영속 상태와 추천·직접 입력 문장 출처 enum의 업무 의미를 Javadoc에 명시했다.
+- 검증: Backend 단위 테스트 293개·통합 테스트 16개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-04 - 음절·단어 점수 nullable 의미 주석
 
 - 변경 파일: `EvaluationSyllable.java`, `EvaluationWord.java`

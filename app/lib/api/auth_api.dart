@@ -10,6 +10,10 @@ abstract class AuthApi {
   Future<AuthSession> loginWithGoogleIdToken(String idToken);
 
   /// Apple identity token과 요청별 원 nonce를 LingKo token 쌍으로 교환한다.
+  ///
+  /// [rawNonce]는 Apple에 전달한 SHA-256 nonce의 원문이며 Backend가 token의
+  /// 요청 귀속을 검증하는 데만 사용한다. [displayName]의 null은 Apple이 최초 승인
+  /// 이름을 다시 제공하지 않았다는 뜻이므로 기존 profile 이름을 보존해야 한다.
   Future<AuthSession> loginWithAppleCredential({
     required String identityToken,
     required String rawNonce,

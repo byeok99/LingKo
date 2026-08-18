@@ -77,6 +77,7 @@ class TopBar extends StatelessWidget {
   }
 }
 
+/// 섹션 제목과 선택적인 우측 동작을 같은 수평 기준선에 배치한다.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({super.key, required this.title, this.trailing});
 
@@ -132,6 +133,7 @@ class AppCard extends StatelessWidget {
   }
 }
 
+/// 핵심 CTA의 gradient·진행 상태·접근성 label을 화면마다 동일하게 유지한다.
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
     super.key,
@@ -216,6 +218,7 @@ class PrimaryButton extends StatelessWidget {
   }
 }
 
+/// 주 동작과 경쟁하지 않는 outline 형태의 보조 동작을 제공한다.
 class SecondaryButton extends StatelessWidget {
   const SecondaryButton({
     super.key,
@@ -247,8 +250,10 @@ class SecondaryButton extends StatelessWidget {
   }
 }
 
+/// 상태 의미를 테마별 전경·배경색 조합으로 변환하기 위한 의미 기반 tone이다.
 enum StatusTone { info, success, warning, error, neutral }
 
+/// [StatusTone]에 맞는 저강도 배경과 강조색으로 짧은 상태를 표시한다.
 class StatusBadge extends StatelessWidget {
   const StatusBadge({
     super.key,
@@ -289,6 +294,7 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
+/// 0~100 종합 점수를 원형 진행률과 접근성 문구로 함께 표현한다.
 class ScoreRing extends StatelessWidget {
   const ScoreRing({super.key, required this.score, this.size = 118});
 
@@ -340,6 +346,7 @@ class ScoreRing extends StatelessWidget {
   }
 }
 
+/// loading·empty·error 상태와 선택적인 복구 동작을 같은 카드 구조로 표시한다.
 class StatePanel extends StatelessWidget {
   const StatePanel({
     super.key,
@@ -391,6 +398,7 @@ class StatePanel extends StatelessWidget {
   }
 }
 
+/// 평가 문자의 발음 오류 종류를 작은 보조 정보로 함께 보여준다.
 class CharacterChip extends StatelessWidget {
   const CharacterChip({super.key, required this.result});
 
@@ -430,6 +438,7 @@ class CharacterChip extends StatelessWidget {
   }
 }
 
+/// 한글 음절을 목록과 상세 화면에서 일관된 강조 면으로 표시한다.
 class CharacterBadge extends StatelessWidget {
   const CharacterBadge({super.key, required this.text, this.large = false});
 

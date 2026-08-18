@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-18 - 공개 상태 enum 주석 보강
+
+- 변경 파일: `ad_reward_session.dart`, `evaluation_job.dart`, `WORK_LOG.md`
+- 내용: 광고 보상 session과 비동기 평가 작업의 wire 상태 의미를 Dartdoc에 명시했다.
+- 검증: `flutter analyze` 통과, Flutter 전체 테스트 132개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-12 - 광고 보상 session 모델 추가
 
 - 변경 파일: `ad_reward_session.dart`, `WORK_LOG.md`

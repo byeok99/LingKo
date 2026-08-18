@@ -205,6 +205,7 @@ public class PracticeQuotaService {
         return instant == null ? null : OffsetDateTime.ofInstant(instant, SERVICE_ZONE);
     }
 
+    /** 한 번의 연습이 무료 기본량과 광고 보상량 중 어디에서 예약됐는지 나타낸다. */
     public enum QuotaSource {
         FREE,
         REWARDED

@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-18 - Apple 인증 service 계약 주석 보강
+
+- 변경 파일: `app_auth_service.dart`, `apple_identity_service.dart`, `WORK_LOG.md`
+- 내용: 공개 로그인 method, nonce 생성·전달 경계, nullable Apple credential field와 예외 의미를 Dartdoc에 명시했다.
+- 검증: `flutter analyze` 통과, Flutter 전체 테스트 132개 통과
+- 리스크: 동작 변경 없음
+
 ## 2026-08-12 - Apple native identity service 구현
 
 - 변경 파일: `apple_identity_service.dart`, `app_auth_service.dart`, `WORK_LOG.md`
