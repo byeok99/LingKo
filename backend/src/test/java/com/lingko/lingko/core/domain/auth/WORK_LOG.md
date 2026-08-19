@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - Review 기존 계정 세션 테스트
+
+- 변경 파일: `AuthServiceTest.java`, `WORK_LOG.md`
+- 내용: 기존 사용자는 새 계정 생성 없이 세션을 받고 없는 사용자 ID는 인증 실패하는지 검증한다.
+- 검증: 구현 전 method 부재 실패 확인, Backend 전체 318개 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-12 - Apple 계정 생성·보존 회귀 테스트
 
 - 변경 파일: `AuthServiceTest.java`, `WORK_LOG.md`

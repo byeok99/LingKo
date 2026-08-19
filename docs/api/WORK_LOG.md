@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - App Review 로그인 API 계약
+
+- 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`
+- 내용: 4~128자 review 로그인 요청·응답, 동일 401 실패, 429와 `Retry-After` 계약을 문서화했다.
+- 검증: DTO·controller·exception handler 테스트와 대조
+- 리스크: 없음
+
 ## 2026-08-12 - Apple OAuth API 계약 추가
 
 - 변경 파일: `api-reference.md`, `WORK_LOG.md`

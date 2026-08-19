@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-19 - App Review 로그인 안내 추가
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: wordmark 5회 탭과 서버 검증 코드 기반 review 계정 세션 흐름, 앱 내 credential 저장 금지를 안내했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 138개 통과(라인 80.37%)
+- 리스크: 운영 Backend Secret과 동일 build 실기기 검증 필요
+
 ## 2026-08-12 - iOS Apple 로그인 의존성·앱 안내 추가
 
 - 변경 파일: `README.md`, `pubspec.yaml`, `pubspec.lock`, `WORK_LOG.md`

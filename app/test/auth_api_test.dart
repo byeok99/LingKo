@@ -90,6 +90,41 @@ void main() {
     },
   );
 
+  test('loginForReview posts only the entered access code', () async {
+    Uri? requestedUri;
+    Map<String, Object?>? requestedBody;
+    final api = DartIoAuthApi(
+      client: ApiClient(
+        baseUrl: 'http://localhost:8080',
+        postJsonTransport: (uri, body, timeout) async {
+          requestedUri = uri;
+          requestedBody = body;
+          return ApiResponse(
+            statusCode: 200,
+            body: jsonEncode({
+              'tokenType': 'Bearer',
+              'accessToken': 'review-access.jwt',
+              'refreshToken': 'review-refresh.jwt',
+              'expiresInSeconds': 1800,
+              'user': {'userId': 73, 'name': 'App Review'},
+            }),
+          );
+        },
+      ),
+    );
+
+    final session = await api.loginForReview(
+      ' review-code-with-at-least-32-bytes ',
+    );
+
+    expect(
+      requestedUri.toString(),
+      'http://localhost:8080/api/auth/review/login',
+    );
+    expect(requestedBody, {'accessCode': 'review-code-with-at-least-32-bytes'});
+    expect(session.user.userId, 73);
+  });
+
   test('refreshSession rotates token pair and maps session', () async {
     Uri? requestedUri;
     Map<String, Object?>? requestedBody;

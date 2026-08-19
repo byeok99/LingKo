@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-19 - App Review 인증 보안 경계
+
+- 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`
+- 내용: 앱 내 credential 금지, 서버 hash 검증, 기본 비활성화, 시도 제한과 심사 후 세션 폐기를 명시했다.
+- 검증: guard·controller·Flutter 오류 비노출 테스트와 대조
+- 리스크: OAuth 공통 Rate Limit과 분산 review Rate Limit은 운영 후속
+
 ## 2026-08-12 - Apple OAuth 보안 경계 문서화
 
 - 변경 파일: `security-and-privacy.md`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-19 - Review 계정 세션·동의 gate 연결
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: review 로그인 세션을 secure storage 계약과 최신 법무 동의 확인에 연결하고 서버 오류 세부사항을 숨겼다.
+- 검증: review 성공·실패 widget test, `flutter analyze`, 전체 138개 테스트 통과
+- 리스크: 운영 review 계정의 최신 동의와 sample 데이터 준비 필요
+
 ## 2026-08-18 - 로그인 provider 상태 주석 보강
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

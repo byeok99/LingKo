@@ -20,6 +20,9 @@ abstract class AuthApi {
     String? displayName,
   });
 
+  /// Review Notes로 전달된 코드를 Backend에서 검증해 미리 준비된 제한 계정 세션을 받는다.
+  Future<AuthSession> loginForReview(String accessCode);
+
   /// 현재 갱신 토큰을 회전된 토큰 쌍으로 교체한다.
   Future<AuthSession> refreshSession(String refreshToken);
 
@@ -59,6 +62,16 @@ class DartIoAuthApi implements AuthApi {
       'rawNonce': rawNonce.trim(),
       if (normalizedName != null && normalizedName.isNotEmpty)
         'displayName': normalizedName,
+    });
+
+    return AuthSession.fromJson(json);
+  }
+
+  /// 심사용 코드 원문을 요청 body에만 담고 일반 token 응답 계약으로 변환한다.
+  @override
+  Future<AuthSession> loginForReview(String accessCode) async {
+    final json = await _client.postJson('/api/auth/review/login', {
+      'accessCode': accessCode.trim(),
     });
 
     return AuthSession.fromJson(json);

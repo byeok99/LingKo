@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-19 - Review 접근 fail-closed 설정
+
+- 변경 파일: `ReviewAccessSettings.java`, `WORK_LOG.md`
+- 내용: 기능 활성화 시 64자리 SHA-256 hex와 양수 사용자 ID가 없으면 startup validation이 실패하도록 했다.
+- 검증: `ReviewAccessGuardTest`, Backend 전체 단위·통합 테스트 통과
+- 리스크: 실제 운영 Secret Manager 주입 필요
+
 ## 2026-08-12 - Apple OAuth audience 설정 추가
 
 - 변경 파일: `AppleOAuthSettings.java`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - Review 접근 환경변수 문서화
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: 기본 비활성화, code hash·사용자 ID·시도 한도 환경변수의 의미와 안전한 기본값을 추가했다.
+- 검증: `.env.example`, `application.example.yaml`, 설정 class와 대조
+- 리스크: 운영 값은 저장소 밖 Secret Manager에서 별도 주입 필요
+
 ## 2026-08-12 - Apple 로그인 개발·검증 절차 추가
 
 - 변경 파일: `local-development.md`, `testing-and-troubleshooting.md`, `WORK_LOG.md`

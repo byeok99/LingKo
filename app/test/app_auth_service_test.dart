@@ -15,6 +15,27 @@ import 'package:lingko_app/services/google_identity_service.dart';
 // 갱신 토큰 회전, single-flight 재시도, 로그아웃, 생명주기 경합을 검증한다.
 void main() {
   test(
+    'review access code session is saved without embedding credentials',
+    () async {
+      final store = AuthSessionStore(storage: MemoryTokenStorage());
+      final authApi = FakeAuthApi();
+      final service = DefaultAppAuthService(
+        authApi: authApi,
+        googleIdentityService: FakeGoogleIdentityService(),
+        sessionStore: store,
+      );
+
+      final session = await service.signInForReview(
+        'review-code-with-at-least-32-bytes',
+      );
+
+      expect(session, _session);
+      expect(authApi.reviewAccessCodes, ['review-code-with-at-least-32-bytes']);
+      expect(await store.read(), _session);
+    },
+  );
+
+  test(
     'Apple credential is exchanged and the LingKo session is saved',
     () async {
       final store = AuthSessionStore(storage: MemoryTokenStorage());
@@ -246,9 +267,16 @@ class FakeAuthApi implements AuthApi {
   final logoutTokens = <String>[];
   final accountDeletionTokens = <(String, String)>[];
   final appleCredentials = <(String, String, String?)>[];
+  final reviewAccessCodes = <String>[];
 
   @override
   Future<AuthSession> loginWithGoogleIdToken(String idToken) async => _session;
+
+  @override
+  Future<AuthSession> loginForReview(String accessCode) async {
+    reviewAccessCodes.add(accessCode);
+    return _session;
+  }
 
   @override
   Future<AuthSession> loginWithAppleCredential({

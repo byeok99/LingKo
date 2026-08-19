@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - App Review 접근 요구사항 추가
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: 외부 소셜 credential·2FA 없이 전용 계정으로 심사하는 FR-AUTH-009와 완료 기준을 추가했다.
+- 검증: 앱·Backend 구현 및 Review Notes Runbook과 대조
+- 리스크: 운영 Secret·review 계정 수명주기는 제출마다 확인 필요
+
 ## 2026-08-12 - Apple 로그인 기능 요구사항 갱신
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`

@@ -58,6 +58,14 @@ apple:
   # native iOS identity token의 audience인 App ID(Bundle ID)다. 비밀값은 아니다.
   client-id: ${APPLE_CLIENT_ID:}
 
+review-access:
+  # App Review 기간에만 활성화하며 원문 코드는 Review Notes와 운영 Secret에만 둔다.
+  enabled: ${REVIEW_ACCESS_ENABLED:false}
+  code-sha256: ${REVIEW_ACCESS_CODE_SHA256:}
+  user-id: ${REVIEW_ACCESS_USER_ID:}
+  max-attempts: ${REVIEW_ACCESS_MAX_ATTEMPTS:5}
+  window-seconds: ${REVIEW_ACCESS_WINDOW_SECONDS:300}
+
 replicate:
   api-key: ${REPLICATE_API_KEY:}
   version: ${REPLICATE_VERSION:}

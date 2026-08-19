@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - App Review 접근·Review Notes Runbook
+
+- 변경 파일: `app-review-access.md`, `WORK_LOG.md`
+- 내용: 전용 계정 준비, 4~128자 code hash 주입, 제출용 영문 Review Notes, 짧은 코드의 심사 직후 비활성화·세션 폐기 절차를 추가했다.
+- 검증: 앱·Backend 구현, 환경변수와 SQL column 계약 대조
+- 리스크: 실제 App Store Connect 입력·운영 배포·심사자 접속은 수동 수행 필요
+
 ## 2026-07-29 - Lifecycle 적용·탈퇴 장애 절차
 
 - 변경 파일: `operations-runbook.md`, `WORK_LOG.md`

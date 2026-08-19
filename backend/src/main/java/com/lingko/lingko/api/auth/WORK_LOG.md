@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - App Review 로그인 HTTP 경계 추가
+
+- 변경 파일: `AuthController.java`, `ReviewAccessGuard.java`, `WORK_LOG.md`
+- 내용: review 코드 endpoint와 기본 비활성화·상수 시간 hash 검증·process별 원격 주소 Rate Limit을 추가했다.
+- 검증: `AuthControllerTest`, `ReviewAccessGuardTest`, Backend 전체 단위·통합 테스트 통과
+- 리스크: 다중 instance에서는 gateway 공유 Rate Limit 필요
+
 ## 2026-07-29 - 회원 탈퇴 API 추가
 
 - 변경 파일: `AuthController.java`, `WORK_LOG.md`

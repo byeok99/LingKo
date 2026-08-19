@@ -82,6 +82,12 @@ Backend는 Apple 공개 JWK의 RS256 서명과 issuer·audience·만료·nonce�
 현재 로그인 검증 경로에 두지 않습니다. authorization code 교환과 계정 삭제 시 Apple token revocation은
 출시 전 후속 보안 작업입니다.
 
+App Review 전용 로그인은 기본 비활성화됩니다. 심사 기간에만 `REVIEW_ACCESS_ENABLED=true`, 기존
+review 계정의 `REVIEW_ACCESS_USER_ID`, 4~128자 심사용 코드의 SHA-256 hex인
+`REVIEW_ACCESS_CODE_SHA256`을 Secret Manager로 주입합니다. 원문 코드는 앱·저장소·로그에 넣지
+않으며 짧은 코드를 쓰는 경우 심사 기간에만 활성화하고 기본 5분 동안 원격 주소별 5회로 제한합니다. 상세 준비와 Review Notes 문안은
+[App Review 접근 Runbook](../docs/operations/app-review-access.md)을 따릅니다.
+
 AdMob 보상은 `ADMOB_SSV_ALLOWED_AD_UNIT_IDS`에 iOS·Android callback의 숫자 `ad_unit`을 설정해야 열립니다. AdMob console의 Rewarded SSV URL은 공개 HTTPS의 `https://<backend-host>/api/quota/ad-rewards/ssv`로 설정하고 reward item·amount를 Backend의 `ADMOB_SSV_REWARD_ITEM`, `ADMOB_SSV_REWARD_AMOUNT`와 일치시킵니다. 허용 광고 단위가 비어 있으면 서버는 보상 session 생성을 거부합니다.
 
 ## 현재 주의사항

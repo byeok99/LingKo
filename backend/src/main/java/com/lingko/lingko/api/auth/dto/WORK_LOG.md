@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - 심사용 접근 코드 요청 계약
+
+- 변경 파일: `ReviewLoginRequest.java`, `WORK_LOG.md`
+- 내용: 앞뒤 공백 정규화와 4~128자 validation을 적용해 4자리 심사 코드를 수락한다.
+- 검증: 4자 성공·3자 거부 RED→GREEN, Backend 전체 318개 통과, 합산 라인 80.35%
+- 리스크: 4자리 코드는 추측에 약하므로 심사 기간에만 활성화하고 직후 폐기 필요
+
 ## 2026-08-18 - OAuth 요청 field 의미 주석 보강
 
 - 변경 파일: `OAuthLoginRequest.java`, `WORK_LOG.md`

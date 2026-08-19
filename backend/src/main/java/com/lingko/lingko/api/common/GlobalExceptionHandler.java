@@ -7,6 +7,7 @@ import com.lingko.lingko.core.domain.evaluation.exception.GuideJobAccessDeniedEx
 import com.lingko.lingko.core.domain.evaluation.exception.GuideJobCapacityExceededException;
 import com.lingko.lingko.core.domain.evaluation.exception.GuideJobRateLimitExceededException;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.auth.exception.ReviewAccessRateLimitExceededException;
 import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
 import com.lingko.lingko.core.domain.quota.exception.AdMobSsvVerificationException;
 import com.lingko.lingko.core.domain.quota.exception.AdRewardSessionNotFoundException;
@@ -65,6 +66,16 @@ public class GlobalExceptionHandler {
         // 응답 차이로 인증 정보가 추론되지 않도록 인증 세부사항을 의도적으로 고정 메시지로 대체한다.
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.of("AUTHENTICATION_FAILED", "Authentication failed"));
+    }
+
+    /** 심사용 인증 공격을 늦추면서 구체적인 검증 실패 정보 없이 재시도 시각만 전달한다. */
+    @ExceptionHandler(ReviewAccessRateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleReviewAccessRateLimit(
+            ReviewAccessRateLimitExceededException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(exception.retryAfterSeconds()))
+                .body(ErrorResponse.of("REVIEW_ACCESS_RATE_LIMITED", "Too many review access attempts"));
     }
 
     @ExceptionHandler(GuideJobAccessDeniedException.class)

@@ -11,6 +11,7 @@ LingKo의 iOS/Android 모바일 클라이언트입니다. 추천 문장 또는 �
 - 정확도·유창성·완성도 점수 표시
 - 취약 글자와 입·혀 가이드 표시
 - Google 로그인과 iOS native Apple 로그인
+- 로그인 화면 LingKo wordmark 5회 탭 후 서버 검증 코드를 입력하는 App Review 전용 로그인
 - Access/Refresh Token 보안 저장소 저장
 - Access Token 만료 시 Refresh Token 회전과 요청 1회 재시도
 - 로그인 세션 복원과 로그아웃
@@ -76,6 +77,11 @@ flowchart TD
 2. 백엔드 `POST /api/auth/oauth/login` 호출
 3. LingKo Access/Refresh Token 수신
 4. `flutter_secure_storage`에 세션 저장
+
+App Review 흐름은 소셜 provider credential을 앱에 저장하지 않습니다. 3초 안에 LingKo wordmark를
+5회 탭하면 코드 입력창을 열고, 입력값을 `POST /api/auth/review/login`으로 보냅니다. Backend 검증에
+성공한 기존 review 계정 세션도 같은 secure storage·동의 확인·갱신·로그아웃 계약을 사용합니다.
+원문 코드는 앱 설정, asset, `--dart-define`에 넣지 않습니다.
 
 보호 API가 `401`을 반환하면 Refresh Token을 한 번 회전하고 원래 요청을 한 번만 재시도합니다. 동시 `401`은 하나의 갱신 요청을 공유하며, 갱신 실패 또는 재시도 후 `401`이면 로컬 세션을 삭제하고 재로그인을 요구합니다.
 

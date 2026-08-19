@@ -17,7 +17,7 @@
 | 400 | `VALIDATION_FAILED` | DTO 필수값·형식 누락 | 해당 입력 또는 녹음 상태 안내 |
 | 400 | `INVALID_REQUEST` | JSON 파싱, 쿼리 범위, S3 객체 소유권·메타데이터 불일치, 동의 문서 버전이 서버 현재 버전과 다르거나 필수 동의가 누락된 경우 | 사용자 입력 또는 업로드 상태 확인. 동의 관련이면 최신 문서 버전을 다시 받아 동의 화면을 표시 |
 | 400 | `INVALID_AD_REWARD_CALLBACK` | AdMob SSV 서명 또는 지급 정책 불일치 | 앱에서 호출하지 않음. 서버 보안 로그와 AdMob 설정 확인 |
-| 401 | `AUTHENTICATION_FAILED` | Bearer 토큰 누락·만료·검증 실패 | 세션 갱신 또는 재로그인 |
+| 401 | `AUTHENTICATION_FAILED` | Bearer 토큰 누락·만료·검증 실패 또는 심사용 접근 검증 실패 | 세션 갱신 또는 재로그인. 심사용 접근은 설정·코드·계정 존재 여부를 서버 응답으로 구분하지 않음 |
 | 403 | `GUIDE_JOB_FORBIDDEN` | 일반 사용자 토큰으로 내부 가이드 작업 요청 | 앱에서는 요청하지 않고 내부 도구 권한 확인 |
 | 404 | `SENTENCE_NOT_FOUND` | 추천 문장 ID가 없거나 비활성 | 목록 재조회 |
 | 404 | `GUIDE_JOB_NOT_FOUND` | 작업 ID 없음 또는 서버 재시작 후 상태 소실 | 작업 재생성 안내 |
@@ -31,6 +31,7 @@
 | 429 | `QUOTA_EXCEEDED` | 무료·보상 횟수 모두 소진 | 리셋 시각 또는 보상 흐름 표시 |
 | 429 | `GUIDE_JOB_RATE_LIMITED` | 내부 호출자의 분당 생성 요청 한도 초과 | `Retry-After` 이후 재시도 |
 | 429 | `GUIDE_JOB_CAPACITY_EXCEEDED` | 허용된 동시 가이드 생성 슬롯 사용 중 | `Retry-After` 이후 상태 확인·재시도 |
+| 429 | `REVIEW_ACCESS_RATE_LIMITED` | 같은 원격 주소의 심사용 로그인 시도 한도 초과 | `Retry-After` 이후 재시도 |
 | 502 | `EVALUATION_FAILED` | 음성 평가 또는 영상 처리 외부 연동 실패 | 잠시 후 재시도 |
 | 503 | `ACCOUNT_DELETION_UNAVAILABLE` | 회원 탈퇴 중 S3 음성 삭제 실패 | 로그인 상태를 유지하고 잠시 후 재시도 |
 | 503 | `AD_REWARD_UNAVAILABLE` | SSV allowlist 미설정, 최대 quota 또는 Google 공개키 일시 실패 | 설정 확인 또는 잠시 후 재시도 |

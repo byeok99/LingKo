@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-19 - App Review 전용 인증 설정 추가
+
+- 변경 파일: `.env.example`, `application.example.yaml`, `docker-compose.yml`, `README.md`, `WORK_LOG.md`
+- 내용: SHA-256 code hash, 기존 사용자 ID와 원격 주소별 시도 한도를 환경변수 계약으로 추가했다. 로컬 DB에 전용 App Review 계정을 준비하고 ignore된 `.env`의 hash·user ID로 기능을 활성화했다.
+- 검증: Backend 전체 318개 통과, 합산 라인 80.35%, `docker compose config --quiet`, 로컬 container review login E2E
+- 리스크: 4자리 코드는 추측에 약하므로 심사 직후 기능·발급 세션을 폐기해야 함; 운영 DB에는 전용 계정 별도 준비 필요
+
 ## 2026-08-12 - Apple OAuth 검증 의존성·설정 추가
 
 - 변경 파일: `build.gradle`, `.env.example`, `application.example.yaml`, `README.md`, `WORK_LOG.md`

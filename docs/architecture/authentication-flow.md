@@ -29,6 +29,30 @@ sequenceDiagram
 
 동의는 **계정이 만들어지기 전에** 받습니다. 계정 생성 후에 받으면 거부한 사용자의 개인정보가 이미 서버에 생긴 상태가 되어 즉시 삭제하는 경로를 따로 만들어야 합니다. 기록 자체는 사용자에게 귀속되어야 하므로 로그인 성공 직후에 전송합니다.
 
+### App Review 전용 흐름
+
+```mermaid
+sequenceDiagram
+    participant R as Reviewer
+    participant A as Flutter App
+    participant B as Backend
+    participant D as MySQL
+
+    R->>A: LingKo wordmark 5회 탭
+    A->>R: 접근 코드 입력창
+    R->>A: Review Notes의 코드 입력
+    A->>B: POST /api/auth/review/login
+    B->>B: 활성화·Rate Limit·SHA-256 hash 검증
+    B->>D: 설정된 기존 review 사용자 조회
+    B->>D: Refresh Token 해시 세션 저장
+    B-->>A: Access/Refresh JWT + 사용자 정보
+    A->>A: Secure Storage 저장
+    A->>B: 현재 동의 상태 확인
+```
+
+원문 코드는 앱과 DB에 저장하지 않습니다. 기능은 기본 비활성화이며 서버 Secret의 hash와 기존 사용자
+ID가 함께 설정된 심사 기간에만 열립니다. review 세션도 일반 세션과 동일하게 회전·폐기됩니다.
+
 ## 요청 계약
 
 `POST /api/auth/oauth/login`
@@ -108,3 +132,4 @@ sequenceDiagram
 - ID Token, Access Token, Refresh Token, JWT 비밀키를 로그에 남기지 않습니다.
 - `.env` 또는 실제 OAuth 비밀값을 커밋하지 않습니다.
 - 모바일 앱에 서버 JWT 비밀키나 Google Client Secret을 포함하지 않습니다.
+- 모바일 앱과 저장소에 심사용 접근 코드, review 계정 비밀번호, 고정 JWT를 포함하지 않습니다.

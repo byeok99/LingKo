@@ -93,6 +93,22 @@ iOS Apple 로그인은 앱이 매 요청 생성한 원 nonce와 최초 승인 �
 tokenType, accessToken, refreshToken, expiresInSeconds, user
 ```
 
+### `POST /api/auth/review/login`
+
+App Review 기간에만 활성화하는 전용 endpoint입니다. 앱은 Review Notes로 전달된 코드를 사용자가 직접
+입력했을 때만 전송하며 credential을 저장하거나 build에 포함하지 않습니다.
+
+```json
+{
+  "accessCode": "4~128자의 심사용 코드"
+}
+```
+
+Backend는 원문이 아닌 운영 환경의 SHA-256 hash와 상수 시간 비교하고, 성공하면
+`REVIEW_ACCESS_USER_ID`로 지정된 기존 사용자에게 일반 로그인과 같은 token 응답을 발급합니다.
+기능 비활성화·코드 불일치·계정 없음은 모두 `401 AUTHENTICATION_FAILED`입니다. 서버가 관찰한 같은
+원격 주소의 기본 5분 5회 제한을 넘으면 `429 REVIEW_ACCESS_RATE_LIMITED`와 `Retry-After`를 반환합니다.
+
 ### `POST /api/auth/token/refresh`
 
 현재 Refresh Token을 검증하고 새로운 Access/Refresh Token 쌍으로 회전합니다.

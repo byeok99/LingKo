@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-19 - App Review 로그인 TDD 회귀 테스트
+
+- 변경 파일: `auth_api_test.dart`, `app_auth_service_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: API body, secure session 저장, 4/5회 탭, 시간 reset, 4자리 코드 성공 진입과 민감 오류 비노출 계약을 테스트했다.
+- 검증: 4자리 제출 기준 RED→GREEN, `flutter test --coverage` 138개 통과(라인 80.37%)
+- 리스크: 실제 운영 코드와 실기기 네트워크 E2E는 미실행
+
 ## 2026-08-18 - Apple identity service 테스트 의도 명시
 
 - 변경 파일: `apple_identity_service_test.dart`, `WORK_LOG.md`

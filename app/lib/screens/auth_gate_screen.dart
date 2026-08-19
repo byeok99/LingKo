@@ -1,6 +1,8 @@
 // 파일 의도: auth gate screen 사용자 workflow와 화면 상태를 구성한다.
 // 선택 이유: 화면은 상호작용과 표시 상태를 소유하고 네트워크·플랫폼 작업은 주입된 서비스에 위임한다.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart' as apple;
 
@@ -31,13 +33,14 @@ class SplashScreen extends StatelessWidget {
 
 /// Login Screen 사용자 화면과 interaction 경계를 제공한다.
 /// 표시 상태는 화면에 두고 외부 작업은 주입된 API·서비스에 위임한다.
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({
     super.key,
     required this.isLoading,
     required this.errorText,
     required this.onSignInWithGoogle,
     required this.onSignInWithApple,
+    required this.onSignInForReview,
     required this.showAppleSignIn,
   });
 
@@ -45,9 +48,56 @@ class LoginScreen extends StatelessWidget {
   final String? errorText;
   final VoidCallback onSignInWithGoogle;
   final VoidCallback onSignInWithApple;
+  final Future<void> Function(String accessCode) onSignInForReview;
 
   /// true일 때만 Apple 버튼을 그린다. 현재 native credential 계약이 있는 iOS에서만 사용한다.
   final bool showAppleSignIn;
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+/// 심사용 진입 gesture의 짧은 연속 탭 상태만 보유하고 인증 결과는 상위 shell에 위임한다.
+class _LoginScreenState extends State<LoginScreen> {
+  static const _requiredReviewTaps = 5;
+  static const _reviewTapWindow = Duration(seconds: 3);
+
+  int _reviewTapCount = 0;
+  Timer? _reviewTapResetTimer;
+
+  void _handleReviewAccessTap() {
+    _reviewTapCount++;
+    _reviewTapResetTimer?.cancel();
+    _reviewTapResetTimer = Timer(_reviewTapWindow, () {
+      _reviewTapCount = 0;
+      _reviewTapResetTimer = null;
+    });
+    if (_reviewTapCount < _requiredReviewTaps) {
+      return;
+    }
+
+    _reviewTapResetTimer?.cancel();
+    _reviewTapResetTimer = null;
+    _reviewTapCount = 0;
+    unawaited(_requestReviewAccessCode());
+  }
+
+  @override
+  void dispose() {
+    _reviewTapResetTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _requestReviewAccessCode() async {
+    final accessCode = await showDialog<String>(
+      context: context,
+      builder: (context) => const _ReviewAccessDialog(),
+    );
+    if (!mounted || accessCode == null) {
+      return;
+    }
+    await widget.onSignInForReview(accessCode);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +110,19 @@ class LoginScreen extends StatelessWidget {
       top: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Wordmark(),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              key: const Key('review-access-trigger'),
+              behavior: HitTestBehavior.opaque,
+              excludeFromSemantics: true,
+              onTap: widget.isLoading ? null : _handleReviewAccessTap,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: Wordmark(),
+              ),
+            ),
+          ),
           const SizedBox(height: 28),
           Text(
             'Fix your Korean pronunciation, one syllable at a time.',
@@ -125,9 +187,9 @@ class LoginScreen extends StatelessWidget {
       bottom: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (errorText != null) ...[
+          if (widget.errorText != null) ...[
             Text(
-              errorText!,
+              widget.errorText!,
               style: TextStyle(
                 color: context.palette.error,
                 fontWeight: FontWeight.w600,
@@ -136,12 +198,14 @@ class LoginScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
           ],
           _GoogleSignInButton(
-            isLoading: isLoading,
-            onPressed: isLoading ? null : onSignInWithGoogle,
+            isLoading: widget.isLoading,
+            onPressed: widget.isLoading ? null : widget.onSignInWithGoogle,
           ),
-          if (showAppleSignIn) ...[
+          if (widget.showAppleSignIn) ...[
             const SizedBox(height: 10),
-            _AppleSignInButton(onPressed: isLoading ? null : onSignInWithApple),
+            _AppleSignInButton(
+              onPressed: widget.isLoading ? null : widget.onSignInWithApple,
+            ),
           ],
           const SizedBox(height: 14),
           Text(
@@ -151,6 +215,72 @@ class LoginScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 입력한 코드를 화면 수명보다 오래 보관하지 않고 4자 이상일 때만 상위 흐름에 전달한다.
+class _ReviewAccessDialog extends StatefulWidget {
+  const _ReviewAccessDialog();
+
+  @override
+  State<_ReviewAccessDialog> createState() => _ReviewAccessDialogState();
+}
+
+class _ReviewAccessDialogState extends State<_ReviewAccessDialog> {
+  final TextEditingController _controller = TextEditingController();
+  bool _canSubmit = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _updateSubmissionState(String value) {
+    final nextCanSubmit = value.trim().length >= 4;
+    if (nextCanSubmit != _canSubmit) {
+      setState(() {
+        _canSubmit = nextCanSubmit;
+      });
+    }
+  }
+
+  void _submit() {
+    if (!_canSubmit) {
+      return;
+    }
+    Navigator.of(context).pop(_controller.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      key: const Key('review-access-dialog'),
+      title: const Text('Review access'),
+      content: TextField(
+        key: const Key('review-access-code-field'),
+        controller: _controller,
+        autofocus: true,
+        obscureText: true,
+        enableSuggestions: false,
+        autocorrect: false,
+        textInputAction: TextInputAction.done,
+        decoration: const InputDecoration(labelText: 'Access code'),
+        onChanged: _updateSubmissionState,
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          key: const Key('review-access-submit'),
+          onPressed: _canSubmit ? _submit : null,
+          child: const Text('Continue'),
+        ),
+      ],
     );
   }
 }
