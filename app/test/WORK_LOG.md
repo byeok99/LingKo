@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-19 - Result 북마크 헤더 정렬 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `WORK_LOG.md`
+- 내용: Result 제목은 화면 중앙에 남고 북마크는 18px 우측 content inset에 맞는지 geometry로 고정했다.
+- 검증: 우측 위치 250px 오류 RED 확인 후 GREEN, `flutter test --coverage` 138개 통과(라인 80.38%)
+- 리스크: 없음
+
 ## 2026-08-19 - App Review 로그인 TDD 회귀 테스트
 
 - 변경 파일: `auth_api_test.dart`, `app_auth_service_test.dart`, `widget_test.dart`, `WORK_LOG.md`

@@ -3427,10 +3427,20 @@ void main() {
             sentence: sentence,
             result: result,
             onTryAgain: () => retried = true,
+            isSaved: false,
+            onToggleSaved: () {},
           ),
         ),
       ),
     );
+
+    final resultBounds = tester.getRect(find.byType(ResultScreen));
+    final titleCenter = tester.getCenter(find.text('Result'));
+    final bookmarkBounds = tester.getRect(
+      find.byKey(const ValueKey('result-save-sentence')),
+    );
+    expect(titleCenter.dx, closeTo(resultBounds.center.dx, 0.1));
+    expect(bookmarkBounds.right, closeTo(resultBounds.right - 18, 0.1));
 
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('word-score-0')),

@@ -6,7 +6,7 @@ import '../app/app_theme.dart';
 import '../app/app_palette.dart';
 import '../models/practice_sentence.dart';
 
-/// 장식용 액션을 만들지 않고 제목과 실제 동작만 노출하는 공통 상단 바다.
+/// 장식용 액션을 만들지 않고 부모 폭 전체에 제목과 실제 동작만 배치하는 공통 상단 바다.
 class TopBar extends StatelessWidget {
   const TopBar({
     super.key,
@@ -45,34 +45,39 @@ class TopBar extends StatelessWidget {
         ],
       ],
     );
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 47),
-      child:
-          centered
-              ? Stack(
-                alignment: Alignment.topCenter,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 48),
-                    child: titleBlock,
-                  ),
-                  if (leading != null)
-                    Positioned(left: 0, top: 0, child: leading!),
-                  if (trailing != null)
-                    Positioned(right: 0, top: 0, child: trailing!),
-                ],
-              )
-              : Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (leading != null) ...[
-                    leading!,
-                    SizedBox(width: AppSpacing.sm),
+    return SizedBox(
+      // centered Stack이 제목의 intrinsic width로 줄면 Positioned action도
+      // 제목 옆에 붙으므로, 항상 부모 폭을 채워 양끝 slot을 고정한다.
+      width: double.infinity,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 47),
+        child:
+            centered
+                ? Stack(
+                  alignment: Alignment.topCenter,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 48),
+                      child: titleBlock,
+                    ),
+                    if (leading != null)
+                      Positioned(left: 0, top: 0, child: leading!),
+                    if (trailing != null)
+                      Positioned(right: 0, top: 0, child: trailing!),
                   ],
-                  Expanded(child: titleBlock),
-                  if (trailing != null) trailing!,
-                ],
-              ),
+                )
+                : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (leading != null) ...[
+                      leading!,
+                      SizedBox(width: AppSpacing.sm),
+                    ],
+                    Expanded(child: titleBlock),
+                    if (trailing != null) trailing!,
+                  ],
+                ),
+      ),
     );
   }
 }
