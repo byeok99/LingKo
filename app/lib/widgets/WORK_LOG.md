@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - centered TopBar 우측 action 정렬 복구
+
+- 변경 파일: `shared_widgets.dart`, `WORK_LOG.md`
+- 내용: centered `TopBar`가 제목의 intrinsic width로 줄어 trailing 북마크가 제목 옆에 붙던 문제를 막기 위해 부모 가로폭을 항상 채운다.
+- 검증: Result 헤더 제목 중앙·북마크 우측 inset RED→GREEN, `flutter analyze`, Flutter 전체 138개 통과(라인 80.38%)
+- 리스크: 실기기 safe area와 우측 touch target 육안 확인 필요
+
 ## 2026-08-18 - 공개 공통 widget 주석 보강
 
 - 변경 파일: `evaluation_progress_panel.dart`, `result_tile.dart`, `score_breakdown.dart`, `shared_widgets.dart`, `WORK_LOG.md`
