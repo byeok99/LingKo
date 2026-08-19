@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - Review 인증 HTTP·보안 테스트
+
+- 변경 파일: `AuthControllerTest.java`, `ReviewAccessGuardTest.java`, `WORK_LOG.md`
+- 내용: 4자 수락·3자 거부 validation, hash 검증, 비활성화, 원격 주소 시도 제한, 401·429와 `Retry-After` 계약을 검증한다.
+- 검증: 4자리 요청 RED→GREEN, Backend 전체 318개 통과, 합산 라인 80.35%
+- 리스크: 분산 Rate Limit은 운영 gateway에서 별도 검증 필요
+
 ## 2026-08-12 - Apple 로그인 HTTP 계약 테스트
 
 - 변경 파일: `AuthControllerTest.java`, `WORK_LOG.md`

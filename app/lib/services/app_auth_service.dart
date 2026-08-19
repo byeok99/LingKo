@@ -22,6 +22,9 @@ abstract class AppAuthService {
   /// 요청별 nonce가 결합된 Apple credential을 교환하고 새 LingKo 세션을 저장한다.
   Future<AuthSession> signInWithApple();
 
+  /// 사용자가 직접 입력한 심사용 코드로 제한 계정 세션을 만들고 안전한 저장소에 보관한다.
+  Future<AuthSession> signInForReview(String accessCode);
+
   /// 현재 로그인 사용자가 최신 문서 버전에 동의했는지 서버에서 확인한다.
   Future<LegalConsentStatus> fetchLegalConsentStatus();
 
@@ -91,6 +94,18 @@ class DefaultAppAuthService implements AppAuthService {
       rawNonce: credential.rawNonce,
       displayName: credential.displayName,
     );
+    if (revision != _sessionRevision) {
+      throw const AuthSessionExpiredException();
+    }
+    await _sessionStore.save(session);
+    return session;
+  }
+
+  /// review 세션도 다른 로그인과 같은 revision 경합 방지와 secure storage 정책을 적용한다.
+  @override
+  Future<AuthSession> signInForReview(String accessCode) async {
+    final revision = ++_sessionRevision;
+    final session = await _authApi.loginForReview(accessCode);
     if (revision != _sessionRevision) {
       throw const AuthSessionExpiredException();
     }

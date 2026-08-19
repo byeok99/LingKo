@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - 로그인 wordmark 심사용 진입점
+
+- 변경 파일: `auth_gate_screen.dart`, `WORK_LOG.md`
+- 내용: 3초 안에 5회 연속 탭하면 저장하지 않는 암호 입력 dialog를 열고 4자 이상일 때만 제출한다.
+- 검증: 4자리 코드 제출 RED→GREEN, `flutter analyze`, Flutter 전체 138개 통과(라인 80.37%)
+- 리스크: 제출 build의 실제 기기 tap 영역 수동 확인 필요
+
 ## 2026-08-18 - 공개 화면 책임 주석 보강
 
 - 변경 파일: `auth_gate_screen.dart`, `practice_screen.dart`, `profile_screen.dart`, `result_screen.dart`, `review_screen.dart`, `WORK_LOG.md`

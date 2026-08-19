@@ -2,11 +2,13 @@ package com.lingko.lingko.api.auth;
 
 import com.lingko.lingko.api.auth.dto.AuthTokenResponse;
 import com.lingko.lingko.api.auth.dto.OAuthLoginRequest;
+import com.lingko.lingko.api.auth.dto.ReviewLoginRequest;
 import com.lingko.lingko.api.auth.dto.RefreshTokenRequest;
 import com.lingko.lingko.core.domain.auth.service.AuthService;
 import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.user.service.AccountDeletionService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,6 +30,7 @@ public class AuthController {
     private final AuthService authService;
     private final ActiveSessionAuthenticator activeSessionAuthenticator;
     private final AccountDeletionService accountDeletionService;
+    private final ReviewAccessGuard reviewAccessGuard;
 
     /**
      * 검증된 외부 provider 신원 토큰을 LingKo 세션으로 교환한다.
@@ -35,6 +38,19 @@ public class AuthController {
     @PostMapping("/oauth/login")
     public AuthTokenResponse loginWithOAuth(@Valid @RequestBody OAuthLoginRequest request) {
         return authService.loginWithOAuth(request);
+    }
+
+    /** Review Notes로 전달된 코드를 검증한 뒤 미리 준비된 제한 계정에 새 세션을 발급한다. */
+    @PostMapping("/review/login")
+    public AuthTokenResponse loginForReview(
+            @Valid @RequestBody ReviewLoginRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        Long reviewUserId = reviewAccessGuard.authorizeAndConsume(
+                request.trimmedAccessCode(),
+                servletRequest.getRemoteAddr()
+        );
+        return authService.loginReviewUser(reviewUserId);
     }
 
     /**

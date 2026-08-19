@@ -32,6 +32,7 @@
 - [테스트·트러블슈팅](development/testing-and-troubleshooting.md)
 - [트러블슈팅 노트](troubleshooting/README.md)
 - [운영 Runbook](operations/operations-runbook.md)
+- [App Review 접근 Runbook](operations/app-review-access.md)
 - [보안·개인정보](security/security-and-privacy.md)
 - [처리방침·이용약관 (한국·EU 초안)](legal/README.md)
 - [기술 부채](technical-debt.md)

@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-19 - App Review 로그인 API 연결
+
+- 변경 파일: `auth_api.dart`, `WORK_LOG.md`
+- 내용: 사용자가 입력한 코드만 `POST /api/auth/review/login`에 전달하고 기존 세션 모델로 응답을 해석한다.
+- 검증: `auth_api_test.dart`, Flutter 전체 138개 테스트 통과
+- 리스크: 실제 운영 HTTPS endpoint 검증 필요
+
 ## 2026-08-18 - 공개 API 경계 주석 보강
 
 - 변경 파일: `api_client.dart`, `auth_api.dart`, `WORK_LOG.md`

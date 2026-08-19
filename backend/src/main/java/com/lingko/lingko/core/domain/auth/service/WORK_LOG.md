@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - 기존 review 사용자 세션 발급
+
+- 변경 파일: `AuthService.java`, `WORK_LOG.md`
+- 내용: 코드 검증을 통과한 기존 사용자에게만 일반 OAuth와 동일한 회전·폐기 가능 세션을 발급하고 발급 로직을 공유한다.
+- 검증: `AuthServiceTest`, Backend 전체 단위·통합 테스트 통과
+- 리스크: review 사용자가 삭제되면 운영 설정의 사용자 ID 재지정 필요
+
 ## 2026-08-18 - OAuth 신원 신뢰 경계 주석 보강
 
 - 변경 파일: `AuthService.java`, `WORK_LOG.md`

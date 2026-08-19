@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - App Review 인증 흐름 반영
+
+- 변경 파일: `authentication-flow.md`, `WORK_LOG.md`
+- 내용: 5회 탭부터 hash 검증·기존 사용자 조회·세션 저장·동의 확인까지의 신뢰 경계를 추가했다.
+- 검증: Flutter shell과 Backend 인증 service 흐름 대조
+- 리스크: 운영 reverse proxy Rate Limit 필요
+
 ## 2026-08-12 - Apple 인증 신뢰 경계 반영
 
 - 변경 파일: `authentication-flow.md`, `system-architecture.md`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - Review 접근 Rate Limit 예외
+
+- 변경 파일: `ReviewAccessRateLimitExceededException.java`, `WORK_LOG.md`
+- 내용: 제한 초과의 남은 대기 시간을 HTTP 계층에 전달하는 전용 예외를 추가했다.
+- 검증: guard·controller 타깃 테스트와 Backend 전체 테스트 통과
+- 리스크: 없음
+
 ## 2026-07-24 - 한국어 의도 중심 주석 보강
 
 - 변경 파일: `AuthException.java`, `RefreshTokenReuseException.java`, `WORK_LOG.md`

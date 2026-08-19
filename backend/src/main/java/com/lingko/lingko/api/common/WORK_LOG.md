@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-19 - Review 접근 시도 제한 오류 매핑
+
+- 변경 파일: `GlobalExceptionHandler.java`, `WORK_LOG.md`
+- 내용: 심사용 로그인 한도 초과를 고정 코드와 `Retry-After`가 있는 429로 변환한다.
+- 검증: `AuthControllerTest`, Backend 전체 단위·통합 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-12 - 광고 보상 안전 오류 매핑
 
 - 변경 파일: `GlobalExceptionHandler.java`, `WORK_LOG.md`

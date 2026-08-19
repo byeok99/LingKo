@@ -107,6 +107,34 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("심사용 로그인은 미리 저장된 사용자에 새 세션을 발급하고 계정을 만들지 않는다")
+    void loginReviewUserIssuesSessionForExistingAccount() {
+        User reviewUser = User.builder()
+                .socialId("review-google-subject")
+                .socialType(User.SocialType.GOOGLE)
+                .email("review@example.invalid")
+                .name("App Review")
+                .build();
+        entityManager.persist(reviewUser);
+        entityManager.flush();
+
+        AuthTokenResponse response = authService.loginReviewUser(reviewUser.getUserIdx());
+
+        assertThat(response.getUser().getUserId()).isEqualTo(reviewUser.getUserIdx());
+        assertThat(response.getAccessToken()).isNotBlank();
+        assertThat(response.getRefreshToken()).isNotBlank();
+        assertThat(userRepository.count()).isEqualTo(1);
+        assertThat(refreshTokenSessionRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("설정된 심사용 사용자가 없으면 인증 정보 노출 없이 로그인을 거부한다")
+    void loginReviewUserRejectsMissingAccount() {
+        assertThatThrownBy(() -> authService.loginReviewUser(999L))
+                .isInstanceOf(AuthException.class);
+    }
+
+    @Test
     @DisplayName("기존 Google 사용자는 중복 생성하지 않고 profile snapshot을 갱신한다")
     void loginWithGoogleReusesExistingUser() {
         User existing = User.builder()

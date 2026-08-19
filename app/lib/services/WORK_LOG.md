@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-19 - Review 세션 저장 경계 추가
+
+- 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`
+- 내용: Backend가 발급한 review 세션을 기존 revision 경합 방지와 secure storage 흐름으로 저장한다.
+- 검증: `app_auth_service_test.dart`, Flutter 전체 138개 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-18 - Apple 인증 service 계약 주석 보강
 
 - 변경 파일: `app_auth_service.dart`, `apple_identity_service.dart`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-19 - App Review 운영 문서 인덱스 연결
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 개발·운영 탐색에서 App Review 접근 Runbook을 바로 찾을 수 있게 연결했다.
+- 검증: 상대 링크와 대상 파일 존재 확인
+- 리스크: 없음
+
 ## 2026-08-12 - Apple 로그인 출시 체크리스트 갱신
 
 - 변경 파일: `mvp-release-execution-checklist.md`, `WORK_LOG.md`

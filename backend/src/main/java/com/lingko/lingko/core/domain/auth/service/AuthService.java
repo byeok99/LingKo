@@ -56,15 +56,18 @@ public class AuthService {
         User user = userRepository.findBySocialIdAndSocialType(identity.socialId(), socialType)
                 .map(existing -> updateUser(existing, identity))
                 .orElseGet(() -> createUser(identity, socialType));
-        JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(user.getUserIdx());
-        refreshTokenSessionRepository.save(RefreshTokenSession.create(
-                tokens.refreshSessionId(),
-                user,
-                refreshTokenHasher.hash(tokens.refreshToken()),
-                tokens.refreshExpiresAt()
-        ));
+        return startSession(user);
+    }
 
-        return toTokenResponse(user, tokens);
+    /** 코드 검증을 이미 통과한 기존 review 계정에만 일반 사용자와 동일한 폐기 가능한 세션을 발급한다. */
+    @Transactional
+    public AuthTokenResponse loginReviewUser(Long reviewUserId) {
+        if (reviewUserId == null) {
+            throw new AuthException("Review access denied");
+        }
+        User reviewUser = userRepository.findById(reviewUserId)
+                .orElseThrow(() -> new AuthException("Review access denied"));
+        return startSession(reviewUser);
     }
 
     /**
@@ -151,6 +154,17 @@ public class AuthService {
                 .expiresInSeconds(tokens.expiresInSeconds())
                 .user(toUserResponse(user))
                 .build();
+    }
+
+    private AuthTokenResponse startSession(User user) {
+        JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(user.getUserIdx());
+        refreshTokenSessionRepository.save(RefreshTokenSession.create(
+                tokens.refreshSessionId(),
+                user,
+                refreshTokenHasher.hash(tokens.refreshToken()),
+                tokens.refreshExpiresAt()
+        ));
+        return toTokenResponse(user, tokens);
     }
 
     private User updateUser(User user, OAuthIdentity identity) {

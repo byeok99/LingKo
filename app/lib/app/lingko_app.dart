@@ -441,6 +441,85 @@ class _LingKoShellState extends State<LingKoShell> {
     });
   }
 
+  /// Review Notes의 코드를 검증해 기존 계정 세션을 복원하고 최신 동의 상태까지 확인한다.
+  Future<void> signInForReview(String accessCode) async {
+    if (isSigningIn) {
+      return;
+    }
+    setState(() {
+      isSigningIn = true;
+      authErrorText = null;
+    });
+
+    late final AuthSession activeSession;
+    try {
+      activeSession = await widget.authService.signInForReview(accessCode);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        session = activeSession;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        authErrorText =
+            error is ApiException && error.statusCode == 429
+                ? 'Too many review access attempts. Please try again later.'
+                : 'Unable to verify review access. Please try again.';
+      });
+      return;
+    } finally {
+      if (mounted && session == null) {
+        setState(() {
+          isSigningIn = false;
+        });
+      }
+    }
+
+    try {
+      final consentStatus = await widget.authService.fetchLegalConsentStatus();
+      if (!mounted) {
+        return;
+      }
+      if (consentStatus.required) {
+        setState(() {
+          pendingSignInProvider = null;
+          isConsentOpen = true;
+          consentGateDocumentVersion = consentStatus.documentVersion;
+          consentErrorText = null;
+        });
+        return;
+      }
+      await loadAuthenticatedData(activeSession);
+    } on AuthSessionExpiredException {
+      await handleSessionChanged(null);
+      if (mounted) {
+        setState(() {
+          authErrorText = 'Your session expired. Please sign in again.';
+        });
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      // 상태 확인 장애를 동의 완료로 간주하지 않고 review 계정도 같은 fail-closed gate에 둔다.
+      setState(() {
+        isConsentOpen = true;
+        consentGateDocumentVersion = consentDocumentVersion;
+        consentErrorText = 'Could not verify your agreement. Please try again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSigningIn = false;
+        });
+      }
+    }
+  }
+
   /// 동의 화면에서 필수 항목을 채우고 계속하기를 누른 뒤의 흐름이다.
   Future<void> acceptConsentAndSignIn(ConsentSelection selection) async {
     if (isSubmittingConsent) {
@@ -982,6 +1061,7 @@ class _LingKoShellState extends State<LingKoShell> {
         errorText: authErrorText,
         onSignInWithGoogle: () => openConsent(_SignInProvider.google),
         onSignInWithApple: () => openConsent(_SignInProvider.apple),
+        onSignInForReview: signInForReview,
         // Android는 Service ID·HTTPS redirect 계약이 별도라 native iOS 범위에서만 노출한다.
         showAppleSignIn: defaultTargetPlatform == TargetPlatform.iOS,
       );

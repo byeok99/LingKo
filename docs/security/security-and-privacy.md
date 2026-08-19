@@ -24,6 +24,9 @@
 - Access Token은 같은 `sid`의 활성 서버 세션을 확인하므로 로그아웃·재사용 탐지 후 즉시 거부됩니다.
 - Refresh Token의 절대 만료는 로그인 시점부터 계산하며 회전으로 연장하지 않습니다.
 - 앱은 동시 refresh를 하나로 합치고 보호 API 요청을 최대 한 번만 재시도합니다.
+- App Review 접근은 기본 비활성화하며 앱에는 원문 코드·계정 비밀번호·고정 JWT를 넣지 않습니다.
+- 심사용 원문 코드는 Review Notes에서 입력받고 Backend는 환경 Secret의 SHA-256 hash를 상수 시간 비교합니다.
+- 심사용 로그인은 기존 전용 사용자에게만 세션을 발급하며 원격 주소별 고정 window Rate Limit을 적용합니다.
 
 ## 법무 동의 기록
 
@@ -38,7 +41,7 @@
 ### 운영 전 필수
 
 - 키 ID(`kid`)와 JWT 키 회전
-- 인증 실패 rate limit
+- OAuth 로그인 등 심사용 endpoint 이외 인증 실패의 공통 rate limit
 - 계정 탈취 대응과 전체 세션 로그아웃
 - Apple authorization code를 `/auth/token`에서 교환해 refresh token을 안전하게 보관하고 회원 탈퇴 시 Apple 승인을 revoke하는 흐름
 
@@ -48,6 +51,7 @@
 - `.env.example`에는 빈 값 또는 안전한 예시만 둡니다.
 - 로그, PR, 이슈, 테스트 fixture, 스크린샷에 비밀값을 넣지 않습니다.
 - 모바일 앱에는 Google Client Secret, JWT Secret, AWS Secret을 넣지 않습니다.
+- 심사용 원문 코드와 그 hash는 로그·Issue·PR에 남기지 않으며 심사 완료 후 새 로그인을 끄고 기존 세션도 폐기합니다.
 - `APPLE_CLIENT_ID`인 Bundle ID는 공개 식별자이며, Apple private key·client secret은 현재 앱과 저장소에 두지 않습니다.
 - 노출 가능성이 있으면 즉시 키 폐기·재발급·로그 조사합니다.
 

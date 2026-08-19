@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:lingko_app/api/api_client.dart';
 import 'package:lingko_app/api/evaluation_api.dart';
 import 'package:lingko_app/models/score_status.dart';
 import 'package:lingko_app/api/practice_content_api.dart';
@@ -513,6 +514,7 @@ class FakeAppAuthService implements AppAuthService {
   final Object? legalConsentRecordError;
   bool signInCalled = false;
   bool appleSignInCalled = false;
+  final reviewAccessCodes = <String>[];
   int legalConsentRecordCount = 0;
   ConsentSelection? recordedConsent;
   bool deleteAccountCalled = false;
@@ -553,6 +555,15 @@ class FakeAppAuthService implements AppAuthService {
   @override
   Future<AuthSession> signInWithApple() async {
     appleSignInCalled = true;
+    if (error != null) {
+      throw error!;
+    }
+    return session!;
+  }
+
+  @override
+  Future<AuthSession> signInForReview(String accessCode) async {
+    reviewAccessCodes.add(accessCode);
     if (error != null) {
       throw error!;
     }
@@ -796,6 +807,128 @@ Future<void> agreeToConsent(WidgetTester tester) async {
 
 // 앱 workflow의 인증 gate와 갱신 토큰 만료 동작을 검증한다.
 void main() {
+  testWidgets('four consecutive wordmark taps keep review access hidden', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (var tap = 0; tap < 4; tap++) {
+      await tester.tap(find.byKey(const Key('review-access-trigger')));
+    }
+    await tester.pump();
+
+    expect(find.byKey(const Key('review-access-dialog')), findsNothing);
+  });
+
+  testWidgets('review wordmark tap sequence resets after three seconds', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: FakeAppAuthService(),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (var tap = 0; tap < 4; tap++) {
+      await tester.tap(find.byKey(const Key('review-access-trigger')));
+    }
+    await tester.pump(const Duration(seconds: 4));
+    await tester.tap(find.byKey(const Key('review-access-trigger')));
+    await tester.pump();
+
+    expect(find.byKey(const Key('review-access-dialog')), findsNothing);
+  });
+
+  testWidgets('fifth consecutive wordmark tap opens review code login', (
+    WidgetTester tester,
+  ) async {
+    final authService = FakeAppAuthService();
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (var tap = 0; tap < 5; tap++) {
+      await tester.tap(find.byKey(const Key('review-access-trigger')));
+    }
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('review-access-dialog')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('review-access-code-field')),
+      '0000',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('review-access-submit')));
+    await tester.pumpAndSettle();
+
+    expect(authService.reviewAccessCodes, ['0000']);
+    expect(find.text('Practice by situation'), findsOneWidget);
+  });
+
+  testWidgets('review access failure hides server authentication details', (
+    WidgetTester tester,
+  ) async {
+    final authService =
+        FakeAppAuthService()
+          ..error = const ApiException(
+            'sensitive review hash mismatch',
+            statusCode: 401,
+          );
+    await tester.pumpWidget(
+      LingKoApp(
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (var tap = 0; tap < 5; tap++) {
+      await tester.tap(find.byKey(const Key('review-access-trigger')));
+    }
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('review-access-code-field')),
+      'wrong-review-code-with-enough-length',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('review-access-submit')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Unable to verify review access. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('sensitive review hash mismatch'), findsNothing);
+  });
+
   testWidgets(
     'iOS Apple login waits for consent and then uses Apple provider',
     (WidgetTester tester) async {

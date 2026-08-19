@@ -33,6 +33,11 @@ cp application.example.yaml src/main/resources/application.yaml
 | `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | Refresh Token 만료 | 14 |
 | `GOOGLE_CLIENT_ID` | 서버에서 검증할 Google Web Client ID | 로그인 시 필수 |
 | `APPLE_CLIENT_ID` | Apple native token audience인 iOS App ID(Bundle ID) | iOS Apple 로그인 시 필수, 현재 `com.byeok.lingko` |
+| `REVIEW_ACCESS_ENABLED` | App Review 전용 로그인 활성화 | 기본 `false`, 심사 기간에만 `true` |
+| `REVIEW_ACCESS_CODE_SHA256` | 심사용 코드의 SHA-256 hex | 활성화 시 필수 Secret, 원문 저장 금지 |
+| `REVIEW_ACCESS_USER_ID` | 미리 준비한 review 사용자 ID | 활성화 시 양수 ID 필수 |
+| `REVIEW_ACCESS_MAX_ATTEMPTS` | 원격 주소별 시간 창 시도 한도 | 기본 5 |
+| `REVIEW_ACCESS_WINDOW_SECONDS` | 심사용 로그인 시도 제한 창 | 기본 300초 |
 | `AZURE_SECRET_KEY` | Azure Speech 키 | 실제 평가 시 필수 |
 | `AZURE_REGION` | Azure Speech 리전 | 실제 평가 시 필수 |
 | `REPLICATE_API_KEY` | Replicate 키 | 영상 생성 시 필수 |

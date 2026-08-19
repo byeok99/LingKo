@@ -5,6 +5,7 @@ import com.lingko.lingko.api.auth.dto.AuthTokenResponse;
 import com.lingko.lingko.api.auth.dto.AuthUserResponse;
 import com.lingko.lingko.api.auth.dto.RefreshTokenRequest;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.auth.exception.ReviewAccessRateLimitExceededException;
 import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.auth.service.AuthService;
 import com.lingko.lingko.core.domain.user.service.AccountDeletionService;
@@ -21,12 +22,14 @@ import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -47,6 +50,66 @@ class AuthControllerTest {
     private ActiveSessionAuthenticator activeSessionAuthenticator;
     @MockitoBean
     private AccountDeletionService accountDeletionService;
+    @MockitoBean
+    private ReviewAccessGuard reviewAccessGuard;
+
+    @Test
+    @DisplayName("심사용 로그인은 원격 주소별 접근 코드를 검증한 뒤 지정 계정 세션을 반환한다")
+    void reviewLoginVerifiesAccessCodeBeforeIssuingSession() throws Exception {
+        String accessCode = "0000";
+        when(reviewAccessGuard.authorizeAndConsume(accessCode, "203.0.113.10")).thenReturn(7L);
+        when(authService.loginReviewUser(7L)).thenReturn(AuthTokenResponse.builder()
+                .tokenType("Bearer")
+                .accessToken("access.jwt")
+                .refreshToken("refresh.jwt")
+                .expiresInSeconds(1800L)
+                .user(AuthUserResponse.builder().userId(7L).build())
+                .build());
+
+        mockMvc.perform(post("/api/auth/review/login")
+                        .with(request -> {
+                            request.setRemoteAddr("203.0.113.10");
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("accessCode", accessCode))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("access.jwt"))
+                .andExpect(jsonPath("$.user.userId").value(7L));
+
+        verify(reviewAccessGuard).authorizeAndConsume(accessCode, "203.0.113.10");
+        verify(authService).loginReviewUser(7L);
+    }
+
+    @Test
+    @DisplayName("심사용 접근 코드는 4자 미만의 값을 요청 경계에서 거부한다")
+    void reviewLoginValidatesAccessCode() throws Exception {
+        mockMvc.perform(post("/api/auth/review/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("accessCode", "000"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+
+        verifyNoInteractions(reviewAccessGuard);
+        verifyNoInteractions(authService);
+    }
+
+    @Test
+    @DisplayName("심사용 로그인 시도 제한은 Retry-After가 있는 429로 반환한다")
+    void reviewLoginReturnsRateLimitResponse() throws Exception {
+        String accessCode = "review-code-for-controller-test";
+        when(reviewAccessGuard.authorizeAndConsume(accessCode, "127.0.0.1"))
+                .thenThrow(new ReviewAccessRateLimitExceededException(120));
+
+        mockMvc.perform(post("/api/auth/review/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("accessCode", accessCode))))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("Retry-After", "120"))
+                .andExpect(jsonPath("$.code").value("REVIEW_ACCESS_RATE_LIMITED"));
+
+        verifyNoInteractions(authService);
+    }
 
     @Test
     @DisplayName("Google OAuth 로그인은 access/refresh token과 사용자 정보를 반환한다")
