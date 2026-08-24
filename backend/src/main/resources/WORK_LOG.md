@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-24 - 공통 Spring 설정을 추적 가능한 단일 기준으로 전환
+
+- 변경 파일: `application.yaml`, `WORK_LOG.md`
+- 내용: 최신 평가·심사 설정과 기존 AdMob SSV 설정을 환경변수 placeholder 기반의 정식 설정 한 파일로 통합했다. 이전 로컬 파일은 Git 제외 경로에 백업했다.
+- 검증: YAML resource 포함 여부, 민감 설정의 환경변수 참조, Backend 전체 테스트
+- 리스크: 백업 파일은 새 설정 검증 후 로컬에서 삭제 가능
+
 ## 2026-08-12 - 로컬 Apple client ID binding 추가
 
 - 변경 파일: `application.yaml`, `WORK_LOG.md`

@@ -28,9 +28,12 @@ src/main/java/com/lingko/lingko/
 
 ```bash
 cp .env.example .env
-cp application.example.yaml src/main/resources/application.yaml
+chmod 600 .env
 docker compose up --build
 ```
+
+Spring 설정 계약은 추적되는 `src/main/resources/application.yaml`이 단일 기준입니다. Secret은
+YAML을 복사하거나 수정하지 않고 `.env`로 주입합니다.
 
 기본 Compose 구성은 API 내부 평가 Worker를 끄고 web server가 없는 DB polling Worker 컨테이너 1개를 함께 실행합니다.
 
@@ -75,7 +78,8 @@ API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB loc
 
 ## 환경변수
 
-전체 목록은 `.env.example`과 [로컬 개발 가이드](../docs/development/local-development.md)를 기준으로 합니다. 실제 비밀값은 커밋하지 않습니다.
+전체 목록은 `src/main/resources/application.yaml`, `.env.example`과
+[로컬 개발 가이드](../docs/development/local-development.md)를 기준으로 합니다. 실제 비밀값은 커밋하지 않습니다.
 
 Apple native 로그인은 `APPLE_CLIENT_ID`에 identity token audience인 iOS App ID(Bundle ID)를 설정합니다.
 Backend는 Apple 공개 JWK의 RS256 서명과 issuer·audience·만료·nonce를 확인하며 Apple private key를

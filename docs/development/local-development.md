@@ -14,8 +14,11 @@
 ```bash
 cd backend
 cp .env.example .env
-cp application.example.yaml src/main/resources/application.yaml
+chmod 600 .env
 ```
+
+`src/main/resources/application.yaml`은 저장소가 추적하는 공통 설정 계약이므로 별도로 복사하거나
+Secret으로 수정하지 않습니다. 실행에 필요한 실제 값은 `.env`로만 주입합니다.
 
 ### 주요 환경변수
 
@@ -184,7 +187,8 @@ cd app && flutter analyze && flutter test
 
 ## 비밀정보 관리
 
-- `.env`는 커밋하지 않습니다.
+- Backend Secret은 `backend/.env`에 저장하고 커밋하지 않습니다.
 - `.env.example`에는 값이 아닌 키와 안전한 기본값만 둡니다.
+- 실제 `.env`는 소유자만 읽고 쓸 수 있도록 `chmod 600`을 적용합니다.
 - PR, 이슈, 터미널 캡처에 토큰과 API 키를 노출하지 않습니다.
 - 노출 가능성이 있으면 즉시 키를 폐기하고 재발급합니다.

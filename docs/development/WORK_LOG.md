@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-08-24 - Backend 공통 설정 복사 절차 제거
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: 실제 설정을 `application.example.yaml`에서 복사하던 안내를 제거하고 추적되는 `application.yaml`과 `.env`의 책임을 구분했다.
+- 검증: Backend README·Dockerfile·로컬 실행 절차와 대조
+- 리스크: 없음
+
 ## 2026-08-19 - Review 접근 환경변수 문서화
 
 - 변경 파일: `local-development.md`, `WORK_LOG.md`

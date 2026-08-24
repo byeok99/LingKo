@@ -3,9 +3,8 @@ FROM gradle:8.14.3-jdk21 AS build
 WORKDIR /workspace
 COPY build.gradle settings.gradle gradlew ./
 COPY gradle ./gradle
+# 환경별 값은 런타임 환경변수로 주입하므로 추적된 application.yaml도 source와 함께 복사한다.
 COPY src ./src
-# application.yaml은 로컬 Secret 보호를 위해 ignore하므로 추적 중인 안전한 예시를 jar 설정으로 사용한다.
-COPY application.example.yaml ./src/main/resources/application.yaml
 RUN gradle --no-daemon bootJar
 
 FROM eclipse-temurin:21-jre-jammy

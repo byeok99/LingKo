@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-08-24 - Spring 설정 파일명과 실행 경로 통일
+
+- 변경 파일: `.dockerignore`, `Dockerfile`, `README.md`, `src/main/resources/application.yaml`, `WORK_LOG.md`
+- 내용: 실제 실행 설정을 예시 파일에서 복사하던 구조를 제거하고 추적되는 정식 `application.yaml`을 Docker·bootRun의 단일 기준으로 통일했다. 실제 환경변수 파일과 로컬 백업은 Docker build context에서도 제외했다.
+- 검증: Dockerfile·문서 참조 검사, 설정 placeholder 검사, Backend 전체 테스트
+- 리스크: 배포 환경에서 필수 환경변수를 빠짐없이 주입해야 함
+
 ## 2026-08-19 - App Review 전용 인증 설정 추가
 
 - 변경 파일: `.env.example`, `application.example.yaml`, `docker-compose.yml`, `README.md`, `WORK_LOG.md`

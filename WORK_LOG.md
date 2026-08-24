@@ -1,3 +1,10 @@
+## 2026-08-24 - Spring 공통 설정의 정식 파일명 전환
+
+- 변경 파일: `.gitignore`, `WORK_LOG.md`
+- 내용: 실제 실행에 쓰이는 Backend 공통 설정만 `src/main/resources/application.yaml` 경로에서 추적하고, 이전 Backend 로컬 설정 백업은 Git에서 제외하도록 규칙을 조정했다.
+- 검증: 설정 추적 가능 여부, 비밀값 placeholder 검사, Backend 전체 테스트
+- 리스크: 실제 Secret은 계속 저장소 밖에서 주입해야 함
+
 ## 2026-08-12 - iOS Apple 로그인 구현 범위 안내
 
 - 변경 파일: `README.md`, `WORK_LOG.md`
