@@ -42,9 +42,11 @@ out/
 .vscode/
 
 application.yaml
+!backend/src/main/resources/application.yaml
 .env
 .env.*
 !.env.example
+backend/.local/
 
 # Local app reference docs
 app/docs/

@@ -112,3 +112,12 @@ guide-generation:
 
 ffmpeg:
   path: ${FFMPEG_PATH:ffmpeg}
+
+admob:
+  ssv:
+    enabled: ${ADMOB_SSV_ENABLED:true}
+    # 배포 환경이 허용 값을 명시하지 않으면 보상 세션 생성이 fail-closed 된다.
+    allowed-ad-unit-ids: ${ADMOB_SSV_ALLOWED_AD_UNIT_IDS:}
+    reward-item: ${ADMOB_SSV_REWARD_ITEM:pronunciation_chance}
+    reward-amount: ${ADMOB_SSV_REWARD_AMOUNT:1}
+    session-expiry-minutes: ${ADMOB_SSV_SESSION_EXPIRY_MINUTES:15}

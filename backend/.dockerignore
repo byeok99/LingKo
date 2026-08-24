@@ -5,3 +5,4 @@ logs
 *.iml
 out
 .env
+.local
