@@ -47,9 +47,12 @@ sequenceDiagram
     B->>D: 쿼터 예약 + PENDING 작업 저장
     B-->>A: 202 + jobId
     W->>D: PENDING polling + lock + lease claim
+    W->>D: phase = DOWNLOADING_AUDIO
     W->>S: WAV 다운로드
+    W->>D: phase = ANALYZING_SPEECH
     W->>Z: 기준 문장과 WAV 평가
     Z-->>W: 발음 점수·인식 결과
+    W->>D: phase = PREPARING_GUIDES
     W->>S: 평가 음절 가이드 MP4 cache 조회
     alt 다중 프레임 cache miss
         W->>R: 입·혀 프레임 보간
@@ -58,6 +61,7 @@ sequenceDiagram
     else 단일 프레임 또는 생성 실패
         W->>W: 정적 PNG fallback 유지
     end
+    W->>D: phase = FINALIZING
     W->>D: 결과 저장 + 쿼터 확정 + SUCCEEDED
     W->>S: 원본 음성 삭제
     A->>B: GET /api/evaluations/jobs/{jobId}
@@ -70,6 +74,7 @@ sequenceDiagram
 - 앱은 응답받은 URL에 동일한 `Content-Type`과 길이로 직접 PUT합니다.
 - 작업 생성 요청은 사용자 소유 `objectKey`와 `sentenceId` 또는 `text`를 전달합니다.
 - 작업 생성은 8~100자의 `Idempotency-Key`가 필요합니다.
+- 앱은 S3 PUT 동안 실제 byte 비율만 표시하고, 작업 생성 후에는 서버 phase를 단계 안내로 사용합니다. 각 단계 소요 시간이 다르므로 phase를 균등 백분율로 환산하지 않습니다.
 - `sentenceId`와 `text` 중 하나는 반드시 필요
 - 최대 크기: 10MiB
 - 형식: 16-bit mono PCM WAV
@@ -103,7 +108,7 @@ sequenceDiagram
   → 추천·자유 문장 기준 정보 확정
   → Idempotency 확인과 현재 평가 기회 예약·충전 timer 시작
   → PENDING 작업 저장 후 202 응답
-  → 독립 Worker가 DB polling으로 lease를 획득한 뒤 S3 다운로드·WAV 헤더 검증·외부 평가
+  → 독립 Worker가 DB polling으로 lease를 획득한 뒤 S3 다운로드·WAV 헤더 검증·외부 평가를 수행하며 실제 경계마다 phase 갱신
   → Azure detailed JSON의 단어 수·텍스트·위치를 기준 문장과 검증해 신뢰 가능한 단어 점수만 채택
   → 글자 점수 제공 여부와 관계없이 모든 평가 음절의 다중 프레임 입·혀 가이드를 cache 조회 또는 생성
   → 결과·단어 점수 snapshot·guide-only 음절 저장, 쿼터 확정과 SUCCEEDED를 단일 DB 트랜잭션으로 처리

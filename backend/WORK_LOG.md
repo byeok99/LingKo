@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-02 - 평가 작업 실제 phase 응답 추가
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: Worker의 S3 다운로드·Azure 분석·가이드 준비·마무리 phase와 앱 표시 계약을 운영 개요에 반영했다.
+- 검증: Backend 단위 테스트 통과, 통합 테스트 16건 통과
+- 리스크: 운영 MySQL에 V21 migration 적용 필요
+
 ## 2026-08-24 - Spring 설정 파일명과 실행 경로 통일
 
 - 변경 파일: `.dockerignore`, `Dockerfile`, `README.md`, `src/main/resources/application.yaml`, `WORK_LOG.md`

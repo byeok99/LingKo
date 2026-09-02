@@ -28,8 +28,10 @@ class EvaluationJobMigrationTest {
             runMigration(connection, "V9__add_evaluation_job_cleanup_index.sql");
             runMigration(connection, "V10__add_evaluation_job_queue_dispatch.sql");
             runMigration(connection, "V11__remove_evaluation_job_queue_dispatch.sql");
+            runMigration(connection, "V21__add_evaluation_job_phase.sql");
 
             assertColumn(connection, "evaluation_jobs", "status");
+            assertColumn(connection, "evaluation_jobs", "phase");
             assertColumn(connection, "evaluation_jobs", "lease_expires_at");
             assertColumn(connection, "evaluation_jobs", "result_payload");
             assertColumnMissing(connection, "evaluation_jobs", "enqueued_at");

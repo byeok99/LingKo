@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-02 - 평가 phase 응답 회귀 테스트
+
+- 변경 파일: `EvaluationJobControllerTest.java`, `WORK_LOG.md`
+- 내용: 작업 생성·조회 JSON에 phase가 포함되는 API 계약을 검증한다.
+- 검증: 대상 Controller 테스트와 Backend 전체 단위·통합 테스트 통과
+- 리스크: 없음
+
 ## 2026-08-09 - 가이드 작업 HTTP 보안 계약 테스트
 
 - 변경 파일: `GuideGenerationJobControllerTest.java`, `GuideGenerationJobAccessGuardTest.java`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-02 - 평가 phase 저장값 반영
+
+- 변경 파일: `scalability-plan.md`, `WORK_LOG.md`
+- 내용: 평가 작업에 저장되는 실제 Worker phase 허용값을 확장 계약에 추가했다.
+- 검증: Entity·migration·API 문서와 대조
+- 리스크: phase update 3회의 운영 DB 비용 미측정
+
 ## 2026-07-29 - 단일 DB Worker 확장 정책 반영
 
 - 변경 파일: `scalability-plan.md`, `WORK_LOG.md`

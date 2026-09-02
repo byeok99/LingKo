@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-02 - Worker 실제 처리 경계 기록
+
+- 변경 파일: `EvaluationJobExecutor.java`, `EvaluationJobProcessingService.java`, `EvaluationJobService.java`, `EvaluationService.java`, `WORK_LOG.md`
+- 내용: 다운로드 뒤 분석, Azure 응답 뒤 가이드 준비, 결과 저장 전 마무리 phase를 짧은 transaction으로 기록하고 API 응답에 연결했다.
+- 검증: Executor 대상 테스트와 Backend 전체 단위·통합 테스트 통과
+- 리스크: phase 갱신으로 작업당 DB update 3회가 추가되므로 운영 지연 metric 확인 필요
+
 ## 2026-08-18 - 평가 service 공개 type 주석 보강
 
 - 변경 파일: `EvaluationJobExecutor.java`, `EvaluationJobService.java`, `EvaluationPersistenceService.java`, `WORK_LOG.md`

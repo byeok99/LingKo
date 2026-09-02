@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-02 - 평가 phase 앱 상태 모델 추가
+
+- 변경 파일: `evaluation_job.dart`, `evaluation_progress.dart`, `WORK_LOG.md`
+- 내용: Backend phase를 엄격히 파싱하고 실제 대기·다운로드·분석·가이드·마무리 UI 단계와 안내 문구로 변환했다.
+- 검증: 모델 대상 테스트, `flutter analyze`, Flutter 전체 142개 테스트 통과
+- 리스크: Backend 순차 배포 중 phase 누락은 status 기반 보수적 fallback으로 표시됨
+
 ## 2026-08-18 - 공개 상태 enum 주석 보강
 
 - 변경 파일: `ad_reward_session.dart`, `evaluation_job.dart`, `WORK_LOG.md`

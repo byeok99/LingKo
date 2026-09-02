@@ -187,7 +187,7 @@ flutter build apk --debug
 
 - 일일 쿼터 조회 UI와 평가 시 실제 차감 흐름은 완전히 연결되지 않았습니다.
 - 문장 준비 단계는 정적 PNG 가이드를 사용하고, 평가 완료 결과는 점수 제공 여부와 관계없이 모든 음절의 다중 프레임 가이드를 MP4로 재생합니다. 단일 프레임과 생성 실패는 PNG로 fallback합니다.
-- 최초 영상 cache miss는 외부 보간과 병합 시간이 필요할 수 있어 앱은 평가 작업을 최대 600초 동안 polling합니다.
+- 최초 영상 cache miss는 외부 보간과 병합 시간이 필요할 수 있어 앱은 평가 작업을 최대 600초 동안 polling합니다. 업로드는 실제 byte 전송률을 표시하고, 이후에는 Backend의 `QUEUED`, `DOWNLOADING_AUDIO`, `ANALYZING_SPEECH`, `PREPARING_GUIDES`, `FINALIZING` phase를 움직이는 진행 표시와 함께 안내하며 임의 완료율은 만들지 않습니다.
 - 일부 오래된 mock 데이터와 설명성 코드 정리가 필요합니다.
 
 프로젝트 전체 구성과 운영 관점은 [루트 README](../README.md)와 [문서 인덱스](../docs/README.md)를 참고합니다.

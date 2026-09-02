@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-02 - 평가 진행률 TDD 회귀 테스트
+
+- 변경 파일: `evaluation_api_test.dart`, `evaluation_progress_test.dart`, `evaluation_progress_panel_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: upload byte callback, phase 파싱·매핑, 실제 업로드 ring, 서버 indeterminate 표시와 실패 상태 animation 정지를 검증했다.
+- 검증: RED 확인 후 GREEN, Flutter 전체 142개 테스트 통과(라인 80.33%)
+- 리스크: 실제 S3·Worker E2E는 미실행
+
 ## 2026-08-19 - Result 북마크 헤더 정렬 회귀 테스트
 
 - 변경 파일: `widget_test.dart`, `WORK_LOG.md`

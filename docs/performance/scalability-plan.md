@@ -247,6 +247,7 @@ WHERE user_idx = :userId
 
 - 요청 payload hash
 - 상태: PENDING / PROCESSING / SUCCEEDED / FAILED
+- 처리 phase: QUEUED / DOWNLOADING_AUDIO / ANALYZING_SPEECH / PREPARING_GUIDES / FINALIZING
 - 평가 작업 ID 또는 결과 ID
 - 생성·완료 시각
 - 재시도 가능한 실패 여부

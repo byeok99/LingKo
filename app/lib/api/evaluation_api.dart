@@ -16,9 +16,11 @@ abstract class EvaluationApi {
     required String audioPath,
   });
 
+  /// 비공개 음성을 presigned URL로 보내고 0~1 범위의 실제 byte 진행률을 선택적으로 전달한다.
   Future<void> uploadAudio({
     required EvaluationUpload upload,
     required String audioPath,
+    void Function(double progress)? onProgress,
   });
 
   Future<EvaluationJob> createJob({
@@ -70,11 +72,17 @@ class DartIoEvaluationApi implements EvaluationApi {
   Future<void> uploadAudio({
     required EvaluationUpload upload,
     required String audioPath,
+    void Function(double progress)? onProgress,
   }) {
     return _client.putFile(
       url: upload.uploadUrl,
       filePath: audioPath,
       contentType: 'audio/wav',
+      onProgress: (sentBytes, totalBytes) {
+        if (totalBytes > 0) {
+          onProgress?.call((sentBytes / totalBytes).clamp(0, 1).toDouble());
+        }
+      },
     );
   }
 

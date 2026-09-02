@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-02 - 평가 작업 phase API 계약 추가
+
+- 변경 파일: `EvaluationJobResponse.java`, `WORK_LOG.md`
+- 내용: polling 응답에 실제 Worker phase를 포함해 앱이 처리 단계를 추측하지 않도록 했다.
+- 검증: `EvaluationJobControllerTest`, Backend 전체 단위·통합 테스트 통과
+- 리스크: 구버전 앱은 추가 JSON 필드를 무시하므로 없음
+
 ## 2026-08-09 - 가이드 생성 입력 상한 강화
 
 - 변경 파일: `GuideGenerationJobRequest.java`, `WORK_LOG.md`

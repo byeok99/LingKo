@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-02 - 평가 업로드·polling 진행 상태 연결
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 업로드 byte 비율과 매 polling 응답의 Backend phase를 앱 전역 평가 상태에 반영하고 같은 frame의 가짜 중간 전이를 제거했다.
+- 검증: Widget 회귀 테스트, `flutter analyze`, Flutter 전체 142개 테스트 통과
+- 리스크: 실제 Worker 장시간 처리 흐름은 배포 환경 실기기 확인 필요
+
 ## 2026-08-19 - Review 계정 세션·동의 gate 연결
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

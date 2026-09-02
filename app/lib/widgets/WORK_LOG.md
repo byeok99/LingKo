@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-02 - 실제 단계 기반 평가 진행 UI
+
+- 변경 파일: `evaluation_progress_panel.dart`, `WORK_LOG.md`
+- 내용: 업로드는 실제 비율을 보간하고 서버 처리는 무한 회전 ring으로 표시한다. 단계·문구 전환을 animation하고 완료·실패 시 animation을 정지했다.
+- 검증: Panel·Widget 회귀 테스트, `flutter analyze`, Flutter 전체 142개 테스트 통과
+- 리스크: 실기기 화면 전환의 체감 속도는 육안 확인 필요
+
 ## 2026-08-19 - centered TopBar 우측 action 정렬 복구
 
 - 변경 파일: `shared_widgets.dart`, `WORK_LOG.md`

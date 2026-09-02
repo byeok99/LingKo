@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-02 - 음성 평가 진행 표시 계약 갱신
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 실제 업로드 byte 비율과 Backend phase를 사용하고 임의 백분율을 만들지 않는 진행 UI 계약을 문서화했다.
+- 검증: `flutter analyze`, Flutter 전체 142개 테스트 통과(라인 80.33%)
+- 리스크: 실제 네트워크와 장시간 가이드 생성은 실기기 확인 필요
+
 ## 2026-08-19 - App Review 로그인 안내 추가
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

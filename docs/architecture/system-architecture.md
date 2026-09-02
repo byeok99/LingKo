@@ -91,7 +91,7 @@ flowchart LR
 - S3 직접 업로드 후 영속 DB 작업을 사용하는 발음 평가
 - 가이드 영상 생성 작업
 
-평가 작업은 MySQL에 영속화되고 독립 Worker 한 개가 DB를 polling합니다. claim 시 DB lock과 lease를 기록하므로 Worker 재시작 후 만료 작업을 복구할 수 있습니다. 가이드 작업은 여전히 `ConcurrentHashMap`과 프로세스 내 Executor를 사용하므로 서버 재시작 시 상태가 사라집니다.
+평가 작업은 MySQL에 영속화되고 독립 Worker 한 개가 DB를 polling합니다. claim 시 DB lock과 lease를 기록하므로 Worker 재시작 후 만료 작업을 복구할 수 있습니다. Worker는 S3 다운로드, Azure 분석, 가이드 준비, 결과 마무리 경계마다 영속 phase를 갱신하며 앱은 이를 백분율로 환산하지 않고 표시합니다. 가이드 작업은 여전히 `ConcurrentHashMap`과 프로세스 내 Executor를 사용하므로 서버 재시작 시 상태가 사라집니다.
 
 ## 신뢰 경계
 

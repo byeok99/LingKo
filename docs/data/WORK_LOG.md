@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-02 - 평가 작업 phase 데이터 모델 반영
+
+- 변경 파일: `data-model.md`, `WORK_LOG.md`
+- 내용: `evaluation_jobs.phase` 허용값과 실제 처리 경계라는 의미를 schema 문서에 추가했다.
+- 검증: Entity·V21 migration과 대조
+- 리스크: 운영 migration 적용 필요
+
 ## 2026-08-12 - 광고 SSV session 데이터 모델 추가
 
 - 변경 파일: `data-model.md`, `WORK_LOG.md`

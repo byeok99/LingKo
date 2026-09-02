@@ -24,10 +24,13 @@ public class EvaluationJobExecutor {
         Path localAudio = null;
         try {
             localAudio = audioStorage.download(job.getAudioObjectKey());
+            processingService.advancePhase(job, EvaluationJob.Phase.ANALYZING_SPEECH);
             PracticeResultResponse result = evaluationService.evaluatePronunciation(
                     localAudio,
-                    job.getStandardPronunciation()
+                    job.getStandardPronunciation(),
+                    () -> processingService.advancePhase(job, EvaluationJob.Phase.PREPARING_GUIDES)
             );
+            processingService.advancePhase(job, EvaluationJob.Phase.FINALIZING);
             processingService.complete(job, result);
             deleteSourceBestEffort(job);
             return ExecutionResult.COMPLETED;
