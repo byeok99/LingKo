@@ -45,7 +45,11 @@ typedef PutFileTransport =
       String filePath,
       String contentType,
       Duration timeout,
+      UploadProgressCallback? onProgress,
     );
+
+/// 파일 내용이나 presigned URL을 노출하지 않고 전송된 byte 수만 상위 계층에 알린다.
+typedef UploadProgressCallback = void Function(int sentBytes, int totalBytes);
 
 /// 인증 header를 포함하는 부분 수정 요청의 transport 계약이다.
 typedef PatchJsonTransport =
@@ -134,16 +138,19 @@ class ApiClient {
     return _decodeResponse(response);
   }
 
+  /// Presigned PUT을 수행하며 URL이나 파일 내용을 노출하지 않고 전송 byte만 callback으로 알린다.
   Future<void> putFile({
     required String url,
     required String filePath,
     required String contentType,
+    UploadProgressCallback? onProgress,
   }) async {
     final response = await _putFileTransport(
       Uri.parse(url),
       filePath,
       contentType,
       uploadTimeout,
+      onProgress,
     );
     _throwIfError(response);
   }
@@ -430,6 +437,7 @@ Future<ApiResponse> _putFileWithDartIo(
   String filePath,
   String contentType,
   Duration timeout,
+  UploadProgressCallback? onProgress,
 ) async {
   final client = HttpClient();
   final file = File(filePath);
@@ -437,8 +445,15 @@ Future<ApiResponse> _putFileWithDartIo(
   try {
     final request = await client.putUrl(uri).timeout(timeout);
     request.headers.set(HttpHeaders.contentTypeHeader, contentType);
-    request.contentLength = await file.length();
-    await request.addStream(file.openRead()).timeout(timeout);
+    final totalBytes = await file.length();
+    request.contentLength = totalBytes;
+    var sentBytes = 0;
+    final measuredStream = file.openRead().map((chunk) {
+      sentBytes += chunk.length;
+      onProgress?.call(sentBytes, totalBytes);
+      return chunk;
+    });
+    await request.addStream(measuredStream).timeout(timeout);
     final response = await request.close().timeout(timeout);
     final responseBody = await response.transform(utf8.decoder).join();
     return ApiResponse(statusCode: response.statusCode, body: responseBody);

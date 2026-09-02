@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-02 - Presigned PUT 업로드 진행률 전달
+
+- 변경 파일: `api_client.dart`, `evaluation_api.dart`, `WORK_LOG.md`
+- 내용: 파일 chunk별 전송 byte 수를 callback으로 전달하되 presigned URL과 파일 내용은 노출하지 않는다.
+- 검증: API 대상 테스트, `flutter analyze`, Flutter 전체 142개 테스트 통과
+- 리스크: 실제 S3 네트워크에서 callback 빈도와 체감은 실기기 확인 필요
+
 ## 2026-08-19 - App Review 로그인 API 연결
 
 - 변경 파일: `auth_api.dart`, `WORK_LOG.md`

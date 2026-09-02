@@ -182,6 +182,7 @@
 - `evaluation_jobs`: `(status, next_attempt_at, lease_expires_at, created_at)` Worker claim 인덱스
 - `evaluation_jobs`: `(status, completed_at)` 완료 작업 정리 인덱스
 - `evaluation_jobs.status`: `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`
+- `evaluation_jobs.phase`: `QUEUED`, `DOWNLOADING_AUDIO`, `ANALYZING_SPEECH`, `PREPARING_GUIDES`, `FINALIZING`; 완료율 추정값이 아니라 Worker가 실제 진입한 처리 경계
 - `daily_practice_quota`: `(user_idx, quota_date)` 유일
 - `daily_practice_quota.quota_date` 인덱스
 - 물리 테이블명과 `quota_date`는 기존 평가 job reservation token·migration 호환을 위해 유지하며, 서비스는 사용자별 최신 행 하나를 현재 시간 충전형 에너지로 사용

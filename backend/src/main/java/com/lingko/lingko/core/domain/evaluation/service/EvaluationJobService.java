@@ -145,6 +145,7 @@ public class EvaluationJobService {
         return new EvaluationJobResponse(
                 job.getJobId(),
                 job.getStatus(),
+                job.getPhase(),
                 readResult(job.getResultPayload()),
                 job.getErrorCode(),
                 job.getCreatedAt(),

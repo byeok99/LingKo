@@ -72,12 +72,16 @@ class IndependentEvaluationWorkerIntegrationTest {
         when(audioStorage.download(anyString())).thenAnswer(invocation ->
                 Path.of("/tmp", Math.abs(invocation.<String>getArgument(0).hashCode()) + ".wav")
         );
-        when(evaluationService.evaluatePronunciation(any(Path.class), anyString()))
-                .thenReturn(PracticeResultResponse.builder()
-                        .overallScore(90)
-                        .characters(List.of())
-                        .weakCharacters(List.of())
-                        .build());
+        when(evaluationService.evaluatePronunciation(any(Path.class), anyString(), any(Runnable.class)))
+                .thenAnswer(invocation -> {
+                    // 실제 service처럼 Azure 분석 뒤 callback을 실행해 phase 전이까지 통합 검증한다.
+                    invocation.<Runnable>getArgument(2).run();
+                    return PracticeResultResponse.builder()
+                            .overallScore(90)
+                            .characters(List.of())
+                            .weakCharacters(List.of())
+                            .build();
+                });
     }
 
     @AfterEach

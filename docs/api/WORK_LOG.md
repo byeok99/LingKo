@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-02 - 평가 작업 phase API 문서화
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: 생성·조회 응답의 phase 허용값과 단계별 소요 시간을 백분율로 환산하지 않는 계약을 추가했다.
+- 검증: DTO·Controller 테스트와 대조
+- 리스크: 없음
+
 ## 2026-08-19 - App Review 로그인 API 계약
 
 - 변경 파일: `api-reference.md`, `error-codes.md`, `WORK_LOG.md`

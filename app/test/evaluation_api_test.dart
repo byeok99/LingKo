@@ -50,6 +50,7 @@ void main() {
             body: jsonEncode({
               'jobId': 'job-id',
               'status': 'PENDING',
+              'phase': 'QUEUED',
               'result': null,
               'errorCode': null,
               'createdAt': '2026-07-27T01:00:00Z',
@@ -57,11 +58,19 @@ void main() {
             }),
           );
         },
-        putFileTransport: (uri, filePath, contentType, timeout) async {
+        putFileTransport: (
+          uri,
+          filePath,
+          contentType,
+          timeout,
+          onProgress,
+        ) async {
           uploadUri = uri;
           uploadedPath = filePath;
           uploadHeaders = {'Content-Type': contentType};
           uploadTimeout = timeout;
+          onProgress?.call(16022, 32044);
+          onProgress?.call(32044, 32044);
           return const ApiResponse(statusCode: 200, body: '');
         },
       ),
@@ -72,7 +81,12 @@ void main() {
         accessToken: 'access.jwt',
         audioPath: audio.path,
       );
-      await api.uploadAudio(upload: upload, audioPath: audio.path);
+      final uploadProgress = <double>[];
+      await api.uploadAudio(
+        upload: upload,
+        audioPath: audio.path,
+        onProgress: uploadProgress.add,
+      );
       final job = await api.createJob(
         accessToken: 'access.jwt',
         idempotencyKey: 'evaluation-request-1',
@@ -90,6 +104,8 @@ void main() {
       expect(uploadTimeout, const Duration(seconds: 60));
       expect(job.jobId, 'job-id');
       expect(job.status, EvaluationJobStatus.pending);
+      expect(job.phase, EvaluationJobPhase.queued);
+      expect(uploadProgress, [0.5, 1.0]);
     } finally {
       await audio.delete();
     }
@@ -107,6 +123,7 @@ void main() {
             body: jsonEncode({
               'jobId': 'job-id',
               'status': 'SUCCEEDED',
+              'phase': 'FINALIZING',
               'errorCode': null,
               'result': {
                 'overallScore': 91,
@@ -150,12 +167,16 @@ void main() {
     final job = await api.fetchJob(accessToken: 'access.jwt', jobId: 'job-id');
 
     expect(job.status, EvaluationJobStatus.succeeded);
+    expect(job.phase, EvaluationJobPhase.finalizing);
     expect(job.result?.overallScore, 91);
     expect(job.result?.scoreBreakdown.accuracy, 92);
     expect(job.result?.wordScoreStatus, ScoreStatus.available);
     expect(job.result?.words.single.text, '안녕하세요');
     expect(job.result?.words.single.score, 91);
-    expect(job.result?.words.single.syllables.single.scoreStatus, ScoreStatus.unavailable);
+    expect(
+      job.result?.words.single.syllables.single.scoreStatus,
+      ScoreStatus.unavailable,
+    );
   });
 
   test('custom text is sent when creating a job', () async {
@@ -170,6 +191,7 @@ void main() {
             body: jsonEncode({
               'jobId': 'job-id',
               'status': 'PENDING',
+              'phase': 'QUEUED',
               'result': null,
               'errorCode': null,
               'createdAt': '2026-07-27T01:00:00Z',
@@ -330,10 +352,16 @@ void main() {
     expect(history.items.single.scoreBreakdown.accuracy, 92);
     expect(history.items.single.characters.single.character, '맛');
     expect(history.items.single.characters.single.score, 88);
-    expect(history.items.single.characters.single.scoreStatus, ScoreStatus.available);
+    expect(
+      history.items.single.characters.single.scoreStatus,
+      ScoreStatus.available,
+    );
     expect(history.items.single.words.single.text, '마싯게따');
     expect(history.items.single.words.single.score, 88);
-    expect(history.items.single.words.single.syllables.single.scoreStatus, ScoreStatus.unavailable);
+    expect(
+      history.items.single.words.single.syllables.single.scoreStatus,
+      ScoreStatus.unavailable,
+    );
     expect(
       history.items.single.characters.single.note,
       'Keep the final consonant clear.',

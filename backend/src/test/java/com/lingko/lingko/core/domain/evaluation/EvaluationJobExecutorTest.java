@@ -17,6 +17,8 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,12 +51,30 @@ class EvaluationJobExecutorTest {
         when(job.getAudioObjectKey()).thenReturn("evaluation-audio/7/audio.wav");
         when(job.getStandardPronunciation()).thenReturn("안녕하세여.");
         when(audioStorage.download("evaluation-audio/7/audio.wav")).thenReturn(audioPath);
-        when(evaluationService.evaluatePronunciation(audioPath, "안녕하세여.")).thenReturn(result);
+        doAnswer(invocation -> {
+            Runnable onSpeechAnalyzed = invocation.getArgument(2);
+            onSpeechAnalyzed.run();
+            return result;
+        }).when(evaluationService).evaluatePronunciation(
+                org.mockito.ArgumentMatchers.eq(audioPath),
+                org.mockito.ArgumentMatchers.eq("안녕하세여."),
+                org.mockito.ArgumentMatchers.any(Runnable.class)
+        );
 
         EvaluationJobExecutor.ExecutionResult outcome = executor.execute(job);
 
         assertThat(outcome).isEqualTo(EvaluationJobExecutor.ExecutionResult.COMPLETED);
-        verify(processingService).complete(job, result);
+        var ordered = inOrder(audioStorage, processingService, evaluationService);
+        ordered.verify(audioStorage).download("evaluation-audio/7/audio.wav");
+        ordered.verify(processingService).advancePhase(job, EvaluationJob.Phase.ANALYZING_SPEECH);
+        ordered.verify(evaluationService).evaluatePronunciation(
+                org.mockito.ArgumentMatchers.eq(audioPath),
+                org.mockito.ArgumentMatchers.eq("안녕하세여."),
+                org.mockito.ArgumentMatchers.any(Runnable.class)
+        );
+        ordered.verify(processingService).advancePhase(job, EvaluationJob.Phase.PREPARING_GUIDES);
+        ordered.verify(processingService).advancePhase(job, EvaluationJob.Phase.FINALIZING);
+        ordered.verify(processingService).complete(job, result);
         verify(audioStorage).delete("evaluation-audio/7/audio.wav");
         verify(audioStorage).deleteLocal(audioPath);
     }
@@ -68,7 +88,11 @@ class EvaluationJobExecutorTest {
         when(job.getAudioObjectKey()).thenReturn("evaluation-audio/7/audio.wav");
         when(job.getStandardPronunciation()).thenReturn("안녕하세여.");
         when(audioStorage.download("evaluation-audio/7/audio.wav")).thenReturn(audioPath);
-        when(evaluationService.evaluatePronunciation(audioPath, "안녕하세여.")).thenThrow(failure);
+        when(evaluationService.evaluatePronunciation(
+                org.mockito.ArgumentMatchers.eq(audioPath),
+                org.mockito.ArgumentMatchers.eq("안녕하세여."),
+                org.mockito.ArgumentMatchers.any(Runnable.class)
+        )).thenThrow(failure);
         when(processingService.fail(job, failure)).thenReturn(false);
 
         EvaluationJobExecutor.ExecutionResult outcome = executor.execute(job);

@@ -83,6 +83,10 @@ public class EvaluationJob {
     @Column(name = "status", nullable = false, length = 20)
     private Status status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "phase", nullable = false, length = 30)
+    private Phase phase;
+
     @Column(name = "attempt_count", nullable = false)
     private int attemptCount;
 
@@ -135,6 +139,7 @@ public class EvaluationJob {
         this.quotaDate = quotaDate;
         this.quotaSource = quotaSource;
         this.status = Status.PENDING;
+        this.phase = Phase.QUEUED;
         this.nextAttemptAt = now;
     }
 
@@ -173,17 +178,36 @@ public class EvaluationJob {
      */
     public void claim(Instant now, Instant leaseExpiresAt) {
         status = Status.PROCESSING;
+        // 새 lease는 새 실행 시도를 뜻하므로 이전 실패 phase를 다운로드 시작점으로 초기화한다.
+        phase = Phase.DOWNLOADING_AUDIO;
         attemptCount++;
         nextAttemptAt = now;
         this.leaseExpiresAt = leaseExpiresAt;
         errorCode = null;
     }
 
+    /**
+     * 새 Worker 시도가 전체 파이프라인을 다시 수행하므로 대기 상태와 시작 phase를 함께 복원한다.
+     */
     public void scheduleRetry(Instant nextAttemptAt, String errorCode) {
         status = Status.PENDING;
+        phase = Phase.QUEUED;
         this.nextAttemptAt = nextAttemptAt;
         this.errorCode = errorCode;
         leaseExpiresAt = null;
+    }
+
+    /**
+     * 같은 Worker 시도 안에서 사용자가 보는 phase가 뒤로 움직이지 않도록 전이를 제한한다.
+     */
+    public void advancePhase(Phase nextPhase) {
+        if (status != Status.PROCESSING) {
+            throw new IllegalStateException("evaluation job is not processing");
+        }
+        if (nextPhase.ordinal() < phase.ordinal()) {
+            throw new IllegalStateException("evaluation job phase cannot move backwards");
+        }
+        phase = nextPhase;
     }
 
     public void succeed(String resultPayload, Instant completedAt) {
@@ -219,5 +243,16 @@ public class EvaluationJob {
         PROCESSING,
         SUCCEEDED,
         FAILED
+    }
+
+    /**
+     * 장시간 실행되는 평가 작업에서 완료율을 추측하지 않고 실제 완료된 경계를 나타낸다.
+     */
+    public enum Phase {
+        QUEUED,
+        DOWNLOADING_AUDIO,
+        ANALYZING_SPEECH,
+        PREPARING_GUIDES,
+        FINALIZING
     }
 }

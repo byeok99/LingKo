@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-02 - 평가 작업 phase 컬럼 추가
+
+- 변경 파일: `V21__add_evaluation_job_phase.sql`, `WORK_LOG.md`
+- 내용: non-null phase 컬럼과 기존 PENDING·PROCESSING·terminal 행의 안전한 초기값을 추가했다.
+- 검증: H2 MySQL mode migration test와 Backend 전체 단위·통합 테스트 통과
+- 리스크: 운영 MySQL backup 후 migration 적용 필요
+
 ## 2026-08-12 - SSV 광고 session migration 추가
 
 - 변경 파일: `V20__secure_ad_rewards_with_ssv.sql`, `WORK_LOG.md`

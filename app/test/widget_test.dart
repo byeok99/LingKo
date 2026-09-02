@@ -156,6 +156,9 @@ class FakeEvaluationApi implements EvaluationApi {
   String? lastText;
   Object? error;
   Completer<EvaluationJob>? createJobCompleter;
+  EvaluationJob? createdJob;
+  List<EvaluationJob> fetchedJobs = const [];
+  int fetchedJobIndex = 0;
   PracticeHistory history = PracticeHistory(
     items: [
       PracticeHistoryItem(
@@ -230,10 +233,13 @@ class FakeEvaluationApi implements EvaluationApi {
   Future<void> uploadAudio({
     required EvaluationUpload upload,
     required String audioPath,
+    void Function(double progress)? onProgress,
   }) async {
     if (error != null) {
       throw error!;
     }
+    onProgress?.call(0.5);
+    onProgress?.call(1);
   }
 
   @override
@@ -252,6 +258,9 @@ class FakeEvaluationApi implements EvaluationApi {
     }
     if (createJobCompleter != null) {
       return createJobCompleter!.future;
+    }
+    if (createdJob != null) {
+      return createdJob!;
     }
 
     return const EvaluationJob(
@@ -279,7 +288,10 @@ class FakeEvaluationApi implements EvaluationApi {
     required String accessToken,
     required String jobId,
   }) async {
-    throw StateError('completed fake jobs must not be polled');
+    if (fetchedJobIndex < fetchedJobs.length) {
+      return fetchedJobs[fetchedJobIndex++];
+    }
+    throw StateError('no fake evaluation job response remains');
   }
 
   @override
@@ -1771,7 +1783,7 @@ void main() {
 
     expect(find.byKey(const ValueKey('evaluation-progress')), findsOneWidget);
     // 단계 이름은 내부 용어가 아니라 사용자가 읽을 수 있는 문장이어야 한다.
-    expect(find.text('Sending it for evaluation'), findsOneWidget);
+    expect(find.text('Waiting for the evaluator'), findsOneWidget);
     expect(find.text('Evaluation job'), findsNothing);
     expect(find.text('Result'), findsNothing);
 

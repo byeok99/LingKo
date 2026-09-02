@@ -397,6 +397,20 @@ public class EvaluationService {
      * Worker가 S3에서 받은 로컬 WAV를 다시 복사하지 않고 공급자 평가에 전달한다.
      */
     public PracticeResultResponse evaluatePronunciation(Path audioPath, String referenceText) {
+        return evaluatePronunciation(audioPath, referenceText, () -> {
+        });
+    }
+
+    /**
+     * 공급자 채점이 끝난 직후 결과·가이드 조립 시작을 Worker에 알린다.
+     *
+     * callback을 결과 조립 전에 호출해야 긴 영상 생성 구간이 음성 분석으로 잘못 표시되지 않는다.
+     */
+    public PracticeResultResponse evaluatePronunciation(
+            Path audioPath,
+            String referenceText,
+            Runnable onSpeechAnalyzed
+    ) {
         try {
             long fileSize = Files.size(audioPath);
             try (InputStream input = Files.newInputStream(audioPath)) {
@@ -406,6 +420,7 @@ public class EvaluationService {
             }
             AssessmentResult assessmentResult = requireSpeechEvaluator()
                     .evaluate(audioPath.toString(), referenceText);
+            onSpeechAnalyzed.run();
             return toPracticeResult(referenceText, assessmentResult);
         } catch (IOException exception) {
             throw new VideoGenerationException("Failed to read uploaded audio", exception);

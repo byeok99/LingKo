@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-02 - 평가 진행 phase 흐름 문서화
+
+- 변경 파일: `system-architecture.md`, `evaluation-flow.md`, `WORK_LOG.md`
+- 내용: S3 다운로드·Azure 분석·가이드 준비·마무리의 phase 저장 순서와 앱의 실제 upload 비율·비율 없는 서버 단계 표시를 반영했다.
+- 검증: Worker executor와 Flutter polling 구현 대조
+- 리스크: 실제 외부 연동 장시간 E2E 미실행
+
 ## 2026-08-19 - App Review 인증 흐름 반영
 
 - 변경 파일: `authentication-flow.md`, `WORK_LOG.md`

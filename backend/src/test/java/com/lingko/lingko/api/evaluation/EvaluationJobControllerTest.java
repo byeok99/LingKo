@@ -81,6 +81,7 @@ class EvaluationJobControllerTest {
         when(jobService.createJob(any(), any(), any())).thenReturn(new EvaluationJobResponse(
                 "job-id",
                 EvaluationJob.Status.PENDING,
+                EvaluationJob.Phase.QUEUED,
                 null,
                 null,
                 Instant.parse("2026-07-27T01:00:00Z"),
@@ -99,7 +100,8 @@ class EvaluationJobControllerTest {
                                 """))
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.jobId").value("job-id"))
-                .andExpect(jsonPath("$.status").value("PENDING"));
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.phase").value("QUEUED"));
 
         verify(jobService).createJob(
                 org.mockito.ArgumentMatchers.eq(7L),
@@ -119,6 +121,7 @@ class EvaluationJobControllerTest {
         when(jobService.getJob(7L, "job-id")).thenReturn(new EvaluationJobResponse(
                 "job-id",
                 EvaluationJob.Status.PROCESSING,
+                EvaluationJob.Phase.ANALYZING_SPEECH,
                 null,
                 null,
                 Instant.parse("2026-07-27T01:00:00Z"),
@@ -128,6 +131,7 @@ class EvaluationJobControllerTest {
         mockMvc.perform(get("/api/evaluations/jobs/job-id")
                         .header("Authorization", "Bearer access-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("PROCESSING"));
+                .andExpect(jsonPath("$.status").value("PROCESSING"))
+                .andExpect(jsonPath("$.phase").value("ANALYZING_SPEECH"));
     }
 }

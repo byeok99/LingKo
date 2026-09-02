@@ -69,6 +69,15 @@ public class EvaluationJobProcessingService {
     }
 
     /**
+     * 외부 호출 사이의 실제 작업 경계를 짧은 transaction으로 기록해 polling 응답이 현재 phase를 제공한다.
+     */
+    @Transactional
+    public void advancePhase(EvaluationJob claimedJob, EvaluationJob.Phase phase) {
+        EvaluationJob job = requireProcessingJob(claimedJob.getJobId());
+        job.advancePhase(phase);
+    }
+
+    /**
      * @return 원본 음성을 삭제해도 되는 최종 실패이면 true
      */
     @Transactional

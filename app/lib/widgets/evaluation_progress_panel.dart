@@ -30,7 +30,7 @@ class EvaluationProgressPanel extends StatelessWidget {
       ),
       (
         EvaluationProgressStage.creatingJob,
-        'Sending it for evaluation',
+        'Waiting for the evaluator',
         Icons.article_outlined,
       ),
       (
@@ -42,6 +42,11 @@ class EvaluationProgressPanel extends StatelessWidget {
         EvaluationProgressStage.preparingFeedback,
         'Preparing your feedback',
         Icons.view_module_outlined,
+      ),
+      (
+        EvaluationProgressStage.finalizing,
+        'Finalizing your result',
+        Icons.task_alt_outlined,
       ),
     ];
     final activeIndex = _stageIndex(
@@ -73,14 +78,7 @@ class EvaluationProgressPanel extends StatelessWidget {
               children: [
                 SizedBox.square(
                   dimension: 140,
-                  child: CircularProgressIndicator(
-                    // 서버가 백분율을 주지 않으므로 숫자는 표시하지 않고, 실제로 받은
-                    // 네 단계 상태만 ring의 구간으로 매핑한다.
-                    value: ((activeIndex + 1) / steps.length).clamp(0, 1),
-                    backgroundColor: context.palette.blue200,
-                    color: context.palette.primary,
-                    strokeWidth: 10,
-                  ),
+                  child: _EvaluationProgressRing(progress: progress),
                 ),
                 Container(
                   width: 94,
@@ -90,10 +88,14 @@ class EvaluationProgressPanel extends StatelessWidget {
                     color: context.palette.softBlue,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.graphic_eq,
-                    size: 36,
-                    color: context.palette.primaryDark,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: Icon(
+                      _stageIcon(progress.stage),
+                      key: ValueKey(progress.stage),
+                      size: 36,
+                      color: context.palette.primaryDark,
+                    ),
                   ),
                 ),
               ],
@@ -101,21 +103,29 @@ class EvaluationProgressPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        Text(
-          progress.stage == EvaluationProgressStage.failed
-              ? 'We could not complete the evaluation'
-              : 'Listening to your pronunciation…',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineMedium,
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Text(
+            progress.stage == EvaluationProgressStage.failed
+                ? 'We could not complete the evaluation'
+                : _stageTitle(progress.stage),
+            key: ValueKey(progress.stage),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
         ),
         const SizedBox(height: 8),
         // 실패 사유 같은 상황별 메시지가 있을 때만 보여준다. 정상 진행 중에는
         // 아래 안내 카드가 같은 내용을 이미 전달하므로 문장을 중복하지 않는다.
         if (progress.message != null) ...[
-          Text(
-            progress.message!,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: Text(
+              progress.message!,
+              key: ValueKey(progress.message),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
           const SizedBox(height: 8),
         ],
@@ -162,12 +172,99 @@ class EvaluationProgressPanel extends StatelessWidget {
 int _stageIndex(EvaluationProgressStage stage) {
   return switch (stage) {
     EvaluationProgressStage.idle || EvaluationProgressStage.uploading => 0,
-    EvaluationProgressStage.creatingJob => 1,
+    EvaluationProgressStage.creatingJob || EvaluationProgressStage.queued => 1,
+    EvaluationProgressStage.downloadingAudio ||
     EvaluationProgressStage.analyzing => 2,
     EvaluationProgressStage.preparingFeedback => 3,
-    EvaluationProgressStage.completed => 4,
+    EvaluationProgressStage.finalizing => 4,
+    EvaluationProgressStage.completed => 5,
     EvaluationProgressStage.failed => 2,
   };
+}
+
+IconData _stageIcon(EvaluationProgressStage stage) {
+  return switch (stage) {
+    EvaluationProgressStage.uploading => Icons.file_upload_outlined,
+    EvaluationProgressStage.creatingJob ||
+    EvaluationProgressStage.queued => Icons.schedule_rounded,
+    EvaluationProgressStage.downloadingAudio => Icons.cloud_download_outlined,
+    EvaluationProgressStage.analyzing => Icons.graphic_eq,
+    EvaluationProgressStage.preparingFeedback => Icons.view_module_outlined,
+    EvaluationProgressStage.finalizing ||
+    EvaluationProgressStage.completed => Icons.task_alt_outlined,
+    EvaluationProgressStage.failed => Icons.error_outline,
+    EvaluationProgressStage.idle => Icons.mic_none,
+  };
+}
+
+String _stageTitle(EvaluationProgressStage stage) {
+  return switch (stage) {
+    EvaluationProgressStage.uploading => 'Uploading your recording…',
+    EvaluationProgressStage.creatingJob ||
+    EvaluationProgressStage.queued => 'Waiting for your evaluation…',
+    EvaluationProgressStage.downloadingAudio => 'Loading your recording…',
+    EvaluationProgressStage.analyzing => 'Listening to your pronunciation…',
+    EvaluationProgressStage.preparingFeedback => 'Preparing your feedback…',
+    EvaluationProgressStage.finalizing => 'Almost ready…',
+    EvaluationProgressStage.completed => 'Your result is ready',
+    EvaluationProgressStage.failed => 'Evaluation failed',
+    EvaluationProgressStage.idle => 'Ready to evaluate',
+  };
+}
+
+/// 업로드 중에는 실제 byte 비율을 보간하고, 서버 작업은 완료율을 추측하지 않는 회전 ring으로 표시한다.
+class _EvaluationProgressRing extends StatelessWidget {
+  const _EvaluationProgressRing({required this.progress});
+
+  final EvaluationProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final uploadFraction =
+        progress.stage == EvaluationProgressStage.uploading
+            ? progress.uploadFraction
+            : null;
+    if (uploadFraction == null && progress.isActive) {
+      return CircularProgressIndicator(
+        key: const ValueKey('evaluation-progress-ring'),
+        backgroundColor: context.palette.blue200,
+        color: context.palette.primary,
+        strokeWidth: 10,
+        semanticsLabel: 'Evaluation in progress',
+      );
+    }
+
+    if (uploadFraction == null) {
+      // 완료·실패처럼 멈춘 상태에서는 영구 animation을 남기지 않아 접근성 도구와 화면 안정화를 방해하지 않는다.
+      return CircularProgressIndicator(
+        key: const ValueKey('evaluation-progress-ring'),
+        value: progress.stage == EvaluationProgressStage.completed ? 1 : 0,
+        backgroundColor: context.palette.blue200,
+        color:
+            progress.stage == EvaluationProgressStage.failed
+                ? context.palette.error
+                : context.palette.primary,
+        strokeWidth: 10,
+        semanticsLabel: 'Evaluation stopped',
+      );
+    }
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: uploadFraction.clamp(0, 1).toDouble()),
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      builder:
+          (context, value, child) => CircularProgressIndicator(
+            key: const ValueKey('evaluation-progress-ring'),
+            value: value,
+            backgroundColor: context.palette.blue200,
+            color: context.palette.primary,
+            strokeWidth: 10,
+            semanticsLabel: 'Audio upload progress',
+            semanticsValue: '${(value * 100).round()} percent',
+          ),
+    );
+  }
 }
 
 enum _StepState { pending, active, complete, failed }
@@ -191,7 +288,8 @@ class _EvaluationStepRow extends StatelessWidget {
       _StepState.failed => context.palette.error,
       _StepState.pending => context.palette.disabled,
     };
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       constraints: const BoxConstraints(minHeight: 56),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
@@ -216,18 +314,15 @@ class _EvaluationStepRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           if (state == _StepState.active)
-            Container(
+            SizedBox(
               width: 24,
               height: 24,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: context.palette.softBlue,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.more_horiz_rounded,
-                color: context.palette.primary,
-                size: 16,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: CircularProgressIndicator(
+                  color: context.palette.primary,
+                  strokeWidth: 2,
+                ),
               ),
             )
           else

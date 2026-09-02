@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-02 - 독립 Worker phase callback 통합 검증
+
+- 변경 파일: `IndependentEvaluationWorkerIntegrationTest.java`, `WORK_LOG.md`
+- 내용: Azure mock이 실제 service와 같이 가이드 준비 callback을 호출하도록 맞춰 40개 작업의 phase 포함 완료 흐름을 검증했다.
+- 검증: 독립 Worker 통합 테스트와 전체 통합 테스트 16건 통과
+- 리스크: 실제 외부 Azure·Replicate E2E는 미실행
+
 ## 2026-07-30 - 평가 입력 정규화 통합 검증
 
 - 변경 파일: `EvaluationApplicationFlowIntegrationTest.java`, `WORK_LOG.md`

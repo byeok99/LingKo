@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-02 - 평가 작업 phase 영속화
+
+- 변경 파일: `EvaluationJob.java`, `WORK_LOG.md`
+- 내용: 실제 Worker 경계를 나타내는 phase를 추가하고 claim·retry·단조 증가 규칙을 entity invariant로 보호했다.
+- 검증: `EvaluationJobTest`, Backend 전체 단위·통합 테스트 통과
+- 리스크: 운영 배포 전 V21 migration 선적용 필요
+
 ## 2026-08-18 - 평가 entity 상태 enum 주석 보강
 
 - 변경 파일: `EvaluationJob.java`, `EvaluationLog.java`, `WORK_LOG.md`

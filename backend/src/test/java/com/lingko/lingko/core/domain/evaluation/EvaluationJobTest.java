@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * DB Worker가 재시작과 재시도에서도 복원할 수 있도록 평가 작업 상태 전이 계약을 검증한다.
@@ -23,9 +24,12 @@ class EvaluationJobTest {
         Instant now = Instant.parse("2026-07-27T01:00:00Z");
         EvaluationJob job = pendingJob(now);
 
+        assertThat(job.getPhase()).isEqualTo(EvaluationJob.Phase.QUEUED);
+
         job.claim(now, now.plusSeconds(60));
 
         assertThat(job.getStatus()).isEqualTo(EvaluationJob.Status.PROCESSING);
+        assertThat(job.getPhase()).isEqualTo(EvaluationJob.Phase.DOWNLOADING_AUDIO);
         assertThat(job.getAttemptCount()).isEqualTo(1);
         assertThat(job.getLeaseExpiresAt()).isEqualTo(now.plusSeconds(60));
     }
@@ -40,9 +44,25 @@ class EvaluationJobTest {
         job.scheduleRetry(now.plusSeconds(5), "EVALUATION_FAILED");
 
         assertThat(job.getStatus()).isEqualTo(EvaluationJob.Status.PENDING);
+        assertThat(job.getPhase()).isEqualTo(EvaluationJob.Phase.QUEUED);
         assertThat(job.getNextAttemptAt()).isEqualTo(now.plusSeconds(5));
         assertThat(job.getErrorCode()).isEqualTo("EVALUATION_FAILED");
         assertThat(job.getLeaseExpiresAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("처리 phase는 같은 시도 안에서 앞으로만 이동한다")
+    void advancesPhaseMonotonically() {
+        Instant now = Instant.parse("2026-07-27T01:00:00Z");
+        EvaluationJob job = pendingJob(now);
+        job.claim(now, now.plusSeconds(60));
+
+        job.advancePhase(EvaluationJob.Phase.ANALYZING_SPEECH);
+        job.advancePhase(EvaluationJob.Phase.PREPARING_GUIDES);
+
+        assertThat(job.getPhase()).isEqualTo(EvaluationJob.Phase.PREPARING_GUIDES);
+        assertThatThrownBy(() -> job.advancePhase(EvaluationJob.Phase.ANALYZING_SPEECH))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

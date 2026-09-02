@@ -911,6 +911,7 @@ class _LingKoShellState extends State<LingKoShell> {
       evaluationProgress = const EvaluationProgress(
         stage: EvaluationProgressStage.uploading,
         message: 'Uploading your recording.',
+        uploadFraction: 0,
       );
     });
 
@@ -924,6 +925,19 @@ class _LingKoShellState extends State<LingKoShell> {
       await widget.evaluationApi.uploadAudio(
         upload: upload,
         audioPath: audioPath,
+        onProgress: (progress) {
+          if (!mounted ||
+              evaluationProgress.stage != EvaluationProgressStage.uploading) {
+            return;
+          }
+          setState(() {
+            evaluationProgress = EvaluationProgress(
+              stage: EvaluationProgressStage.uploading,
+              message: 'Uploading your recording.',
+              uploadFraction: progress,
+            );
+          });
+        },
       );
       if (mounted) {
         setState(() {
@@ -948,12 +962,7 @@ class _LingKoShellState extends State<LingKoShell> {
 
       if (mounted) {
         setState(() {
-          evaluationProgress = EvaluationProgress(
-            stage: EvaluationProgressStage.analyzing,
-            jobId: job.jobId,
-            message:
-                'Pronunciation analysis is running. You can use another tab.',
-          );
+          evaluationProgress = EvaluationProgress.fromJob(job);
         });
         // 서버가 평가 기회를 예약한 직후 Home의 남은 수량도 같은 값으로 맞춘다.
         await loadPracticeQuota();
@@ -964,19 +973,10 @@ class _LingKoShellState extends State<LingKoShell> {
         if (job.status == EvaluationJobStatus.succeeded && job.result != null) {
           if (mounted) {
             setState(() {
-              evaluationProgress = EvaluationProgress(
-                stage: EvaluationProgressStage.preparingFeedback,
-                jobId: job.jobId,
-                message: 'Preparing your feedback.',
-              );
               latestResult = job.result;
               hasResult = true;
               isPracticeImmersive = false;
-              evaluationProgress = EvaluationProgress(
-                stage: EvaluationProgressStage.completed,
-                jobId: job.jobId,
-                message: 'Your pronunciation result is ready.',
-              );
+              evaluationProgress = EvaluationProgress.fromJob(job);
             });
             // 평가는 수 분이 걸릴 수 있어 사용자가 다른 일을 하고 있을 가능성이 높다.
             // 결과 도착과 실패를 소리 없이도 알 수 있게 촉각으로 구분해 알린다.
@@ -987,6 +987,16 @@ class _LingKoShellState extends State<LingKoShell> {
         }
         if (job.status == EvaluationJobStatus.failed) {
           throw const ApiException('Pronunciation evaluation failed');
+        }
+
+        if (mounted) {
+          final nextProgress = EvaluationProgress.fromJob(job);
+          if (nextProgress.stage != evaluationProgress.stage ||
+              nextProgress.message != evaluationProgress.message) {
+            setState(() {
+              evaluationProgress = nextProgress;
+            });
+          }
         }
 
         await Future<void>.delayed(const Duration(seconds: 1));
