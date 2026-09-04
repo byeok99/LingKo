@@ -11,6 +11,16 @@ void main() {
       iosAdUnitId: 'ios-rewarded-id',
     );
 
+    test('별도 빌드 설정이 없어도 iOS 운영 reward 광고가 구성된다', () {
+      const environmentConfiguration =
+          RewardedAdConfiguration.fromEnvironment();
+
+      expect(
+        environmentConfiguration.isConfiguredFor(RewardedAdPlatform.ios),
+        isTrue,
+      );
+    });
+
     test('플랫폼별 reward ad unit ID를 선택한다', () {
       expect(
         configuration.adUnitIdFor(RewardedAdPlatform.android),
@@ -57,6 +67,44 @@ void main() {
       expect(gateway.loadedCustomData, ['ssv-session-token']);
       expect(presentation.showCount, 1);
       expect(presentation.disposeCount, 1);
+    });
+
+    test('빌드에 설정한 테스트 기기 ID를 SDK 초기화 경계에 전달한다', () async {
+      final gateway = FakeRewardedAdGateway(
+        FakeRewardedAdPresentation(result: RewardedAdResult.dismissed),
+      );
+      final service = GooglePracticeRewardAdService(
+        configuration: const RewardedAdConfiguration(
+          androidAdUnitId: 'android-rewarded-id',
+          iosAdUnitId: 'ios-rewarded-id',
+        ),
+        platform: RewardedAdPlatform.ios,
+        gateway: gateway,
+        testDeviceId: '  ios-test-device-id  ',
+      );
+
+      await service.show(customData: 'session-token');
+
+      expect(gateway.initializedTestDeviceIds, ['ios-test-device-id']);
+    });
+
+    test('테스트 기기 ID가 비어 있으면 운영 광고 요청 설정을 바꾸지 않는다', () async {
+      final gateway = FakeRewardedAdGateway(
+        FakeRewardedAdPresentation(result: RewardedAdResult.dismissed),
+      );
+      final service = GooglePracticeRewardAdService(
+        configuration: const RewardedAdConfiguration(
+          androidAdUnitId: 'android-rewarded-id',
+          iosAdUnitId: 'ios-rewarded-id',
+        ),
+        platform: RewardedAdPlatform.ios,
+        gateway: gateway,
+        testDeviceId: '   ',
+      );
+
+      await service.show(customData: 'session-token');
+
+      expect(gateway.initializedTestDeviceIds, [null]);
     });
 
     test('두 번째 표시는 SDK를 다시 초기화하지 않는다', () async {
@@ -161,12 +209,14 @@ class FakeRewardedAdGateway implements RewardedAdGateway {
   final RewardedAdPresentation presentation;
   int initializationFailuresRemaining;
   int initializationCount = 0;
+  final List<String?> initializedTestDeviceIds = [];
   final List<String> loadedAdUnitIds = [];
   final List<String> loadedCustomData = [];
 
   @override
-  Future<void> initialize() async {
+  Future<void> initialize({String? testDeviceId}) async {
     initializationCount++;
+    initializedTestDeviceIds.add(testDeviceId);
     if (initializationFailuresRemaining > 0) {
       initializationFailuresRemaining--;
       throw StateError('initialization failed');

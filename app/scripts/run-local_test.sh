@@ -84,6 +84,7 @@ run_with_clean_environment() {
     unset DEVICE_ID IOS_DEVICE_ID ANDROID_DEVICE_ID ANDROID_EMULATOR_ID
     unset GOOGLE_SERVER_CLIENT_ID GOOGLE_ID LINGKO_API_BASE_URL API_URL
     unset ADMOB_ANDROID_REWARDED_AD_UNIT_ID ADMOB_IOS_REWARDED_AD_UNIT_ID
+    unset ADMOB_TEST_DEVICE_ID
     unset SIMULATOR_STATE ANDROID_BOOT_MARKER ANDROID_DEVICE_ID_FOR_TEST
     export PATH="$mock_bin:$PATH"
     export LINGKO_ENV_FILE="$env_file"
@@ -100,6 +101,7 @@ printf '%s\n' \
   "GOOGLE_SERVER_CLIENT_ID='google-from-file'" \
   "LINGKO_API_BASE_URL='http://127.0.0.1:18080'" \
   "ADMOB_IOS_REWARDED_AD_UNIT_ID='ios-ad-from-file'" \
+  "ADMOB_TEST_DEVICE_ID='ios-test-device-from-file'" \
   "IOS_DEVICE_ID='ios-device-from-file'" \
   > "$auto_env_file"
 
@@ -114,6 +116,8 @@ assert_argument "$auto_output_file" \
   '--dart-define=LINGKO_API_BASE_URL=http://127.0.0.1:18080'
 assert_argument "$auto_output_file" \
   '--dart-define=ADMOB_IOS_REWARDED_AD_UNIT_ID=ios-ad-from-file'
+assert_argument "$auto_output_file" \
+  '--dart-define=ADMOB_TEST_DEVICE_ID=ios-test-device-from-file'
 assert_argument "$auto_output_file" '-d'
 assert_argument "$auto_output_file" 'ios-device-from-file'
 
@@ -198,6 +202,7 @@ override_output_file="$temp_dir/override.args"
 printf '%s\n' \
   "GOOGLE_SERVER_CLIENT_ID='google-from-file'" \
   "ADMOB_IOS_REWARDED_AD_UNIT_ID='ios-ad-from-file'" \
+  "ADMOB_TEST_DEVICE_ID='test-device-from-file'" \
   > "$override_env_file"
 
 run_with_clean_environment \
@@ -206,11 +211,14 @@ run_with_clean_environment \
   env \
     GOOGLE_SERVER_CLIENT_ID='google-from-shell' \
     ADMOB_IOS_REWARDED_AD_UNIT_ID='ios-ad-from-shell' \
+    ADMOB_TEST_DEVICE_ID='test-device-from-shell' \
     "$script_under_test" ios
 
 assert_argument "$override_output_file" \
   '--dart-define=GOOGLE_SERVER_CLIENT_ID=google-from-shell'
 assert_argument "$override_output_file" \
   '--dart-define=ADMOB_IOS_REWARDED_AD_UNIT_ID=ios-ad-from-shell'
+assert_argument "$override_output_file" \
+  '--dart-define=ADMOB_TEST_DEVICE_ID=test-device-from-shell'
 
 echo 'run-local.sh tests passed'
