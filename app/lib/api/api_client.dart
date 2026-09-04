@@ -260,22 +260,26 @@ class ApiClient {
   }
 }
 
+const _productionApiBaseUrl = 'https://lingko-api.duckdns.org';
+
+/// 앱이 사용할 Backend base URL을 결정한다.
+///
+/// 로컬 개발과 격리 테스트는 `LINGKO_API_BASE_URL`을 명시해 대상을 바꿀 수 있다.
+/// 값을 주입하지 않은 Xcode·release 빌드는 실제 iPhone의 localhost로 잘못 연결되지
+/// 않도록 운영 HTTPS 주소를 사용한다.
 String resolveLingKoApiBaseUrl({
   String environmentOverride = const String.fromEnvironment(
     'LINGKO_API_BASE_URL',
   ),
-  bool? isAndroid,
 }) {
   final trimmedOverride = environmentOverride.trim();
-  // 배포 환경과 실제 기기는 호스트 주소가 서로 다르므로 명시적으로 전달한 주소를 가장 먼저 사용한다.
+  // 테스트나 로컬 Backend를 명시한 빌드는 호출자가 선택한 주소를 가장 먼저 사용한다.
   if (trimmedOverride.isNotEmpty) {
     return trimmedOverride;
   }
 
-  // Android 에뮬레이터에서 10.0.2.2는 개발 PC의 localhost를 가리키는 예약 주소다.
-  return (isAndroid ?? Platform.isAndroid)
-      ? 'http://10.0.2.2:8080'
-      : 'http://localhost:8080';
+  // 기본값은 인증 token을 평문 HTTP로 보내지 않는 운영 HTTPS endpoint로 고정한다.
+  return _productionApiBaseUrl;
 }
 
 /// Api 응답 백엔드 요청·응답 매핑을 구현한다.

@@ -8,19 +8,15 @@ import 'package:lingko_app/api/api_client.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 
 void main() {
-  test('ApiClient defaults to Android emulator host on Android', () {
-    expect(resolveLingKoApiBaseUrl(isAndroid: true), 'http://10.0.2.2:8080');
-  });
-
-  test('ApiClient defaults to localhost outside Android emulator', () {
-    expect(resolveLingKoApiBaseUrl(isAndroid: false), 'http://localhost:8080');
+  test('ApiClient defaults to the production HTTPS API', () {
+    // Xcode에서 직접 실행해도 iPhone의 localhost로 연결되지 않아야 한다.
+    expect(resolveLingKoApiBaseUrl(), 'https://lingko-api.duckdns.org');
   });
 
   test('ApiClient uses LINGKO_API_BASE_URL override when provided', () {
     expect(
       resolveLingKoApiBaseUrl(
         environmentOverride: ' http://192.168.0.10:8080 ',
-        isAndroid: true,
       ),
       'http://192.168.0.10:8080',
     );
