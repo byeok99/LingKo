@@ -122,7 +122,7 @@ DEVICE_ID=emulator-5554 \
 2. Xcode Runner target의 Signing & Capabilities와 `Runner.entitlements` 확인
 3. capability 변경 뒤 provisioning profile이 갱신됐는지 확인
 4. Backend `APPLE_CLIENT_ID`가 token audience인 Bundle ID와 같은지 확인
-5. iOS 13 이상 실기기에서 Apple 계정 로그인·2단계 인증 상태 확인
+5. 앱의 최소 지원 버전인 iOS 15.0 이상 실기기에서 Apple 계정 로그인·2단계 인증 상태 확인
 
 identity token과 raw nonce는 로그·이슈·스크린샷에 남기지 않습니다.
 

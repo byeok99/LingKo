@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-05 - iOS 최소 지원 버전 15.0 적용
+
+- 변경 파일: `Podfile`, `Podfile.lock`, `Runner.xcodeproj/project.pbxproj`, `WORK_LOG.md`
+- 내용: Runner의 모든 build configuration과 CocoaPods가 iOS 15.0을 공통 배포 타깃으로 사용하도록 맞췄다.
+- 검증: 배포 버전 선언 정적 검사와 Xcode 프로젝트 구문 검사 통과, `flutter build ios --simulator --no-codesign` 성공
+- 리스크: iOS 14 이하 기기에서는 새 버전을 설치하거나 업데이트할 수 없음
+
 ## 2026-09-04 - 유료 Team용 Sign in with Apple entitlement 복구
 
 - 변경 파일: `Runner/Runner.entitlements`, `WORK_LOG.md`
