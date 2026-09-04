@@ -1,5 +1,26 @@
 # Work Log
 
+## 2026-09-04 - AdMob test device 빌드 설정 추가
+
+- 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`
+- 내용: `ADMOB_TEST_DEVICE_ID`를 공백 정규화해 Google Mobile Ads 초기화에 전달하고, 값이 없으면 운영 요청 설정을 변경하지 않게 했다. 운영 Ad Unit과 SSV custom data 경로는 유지한다.
+- 검증: 구현 전 RED 확인, 대상 Flutter 10개·전체 145개 테스트 통과, 라인 커버리지 80.32%, `flutter analyze` 통과, iOS Release build 통과
+- 리스크: Google Mobile Ads용 test device ID를 실기기 로그에서 확보해 `.env.local`에 추가해야 함
+
+## 2026-09-04 - iOS 운영 Rewarded 광고 기본값 적용
+
+- 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`
+- 내용: Xcode·Release 빌드가 `.env.local`을 읽지 않아 충전 버튼이 비활성화되던 문제를 막기 위해 공개 iOS 운영 Rewarded Ad Unit ID를 안전한 기본값으로 고정했다. 명시적 `ADMOB_IOS_REWARDED_AD_UNIT_ID`는 test ID 등으로 계속 override할 수 있다.
+- 검증: 설정 없음 RED→GREEN 테스트, `flutter analyze`, Flutter 전체 143개 테스트, `--dart-define` 없는 iOS Release build 및 바이너리 ID 포함 확인
+- 리스크: AdMob console의 SSV callback URL과 실제 광고 시청·지급 E2E는 실기기에서 확인 필요
+
+## 2026-09-03 - 법무 문서를 인앱 WebView로 전환
+
+- 변경 파일: `legal_document_launcher.dart`, `WORK_LOG.md`
+- 내용: 약관·처리방침을 외부 브라우저로 넘기지 않고 앱 내부 WebView로 열며, 정적 문서에 필요 없는 JavaScript와 DOM 저장소를 비활성화했다.
+- 검증: 전용 RED→GREEN 테스트, `flutter analyze`, 전체 143개 테스트, iOS Simulator Debug 빌드 통과
+- 리스크: iPhone 실기기에서 인앱 닫기 동작과 긴 문서 스크롤을 수동 확인해야 함
+
 ## 2026-08-19 - Review 세션 저장 경계 추가
 
 - 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`

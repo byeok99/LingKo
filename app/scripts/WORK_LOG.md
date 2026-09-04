@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-04 - AdMob test device 로컬 설정 전달
+
+- 변경 파일: `run-local.sh`, `run-local_test.sh`, `WORK_LOG.md`
+- 내용: Git에서 제외된 `.env.local`의 `ADMOB_TEST_DEVICE_ID`를 명시적 `--dart-define`으로 전달하고 shell 환경 override 우선순위를 유지했다.
+- 검증: 구현 전 인자 누락 RED 확인, `bash scripts/run-local_test.sh`·`bash -n` 통과
+- 리스크: 실제 test device ID는 개발자의 `.env.local`에 별도 입력 필요
+
 ## 2026-08-11 - 로컬 실행 설정 자동 로딩
 
 - 변경 파일: `run-local.sh`, `run-local_test.sh`, `WORK_LOG.md`

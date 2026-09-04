@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-03 - 법무 문서 표시 경계 갱신
+
+- 변경 파일: `system-architecture.md`, `WORK_LOG.md`
+- 내용: 앱 UI가 공개 법무 페이지를 외부 브라우저가 아니라 인앱 WebView로 여는 현재 흐름을 구성도에 반영했다.
+- 검증: Flutter `LegalDocumentLauncher` 구현과 대조
+- 리스크: 없음
+
 ## 2026-09-02 - 평가 진행 phase 흐름 문서화
 
 - 변경 파일: `system-architecture.md`, `evaluation-flow.md`, `WORK_LOG.md`

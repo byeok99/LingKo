@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-04 - Apple 로그인 외부 capability 상태 반영
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: FR-AUTH-008에 App ID capability와 development provisioning 완료를 반영하고 실제 로그인 E2E만 미완료로 구분했다.
+- 검증: 실기기 빌드의 서명 entitlement와 실행 프로세스 확인
+- 리스크: Apple 승인 및 Backend 세션 발급은 사용자 조작 검증 필요
+
 ## 2026-08-19 - App Review 접근 요구사항 추가
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`

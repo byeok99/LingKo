@@ -1,5 +1,33 @@
 # Work Log
 
+## 2026-09-04 - AdMob test device 로컬 설정 문서화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: Google sample Ad Unit의 UI 테스트와 LingKo 운영 Ad Unit + test device의 SSV E2E 테스트를 구분하고 `.env.local` 설정을 추가했다.
+- 검증: 광고 서비스와 `run-local.sh` 설정명 대조
+- 리스크: 실기기 test device ID 확보 필요
+
+## 2026-09-04 - iOS 운영 광고 기본값 안내
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: iOS Xcode·Release 빌드는 운영 Rewarded Ad Unit ID를 기본 사용하고 `.env.local`·dart-define은 개발용 test ID override로 동작한다는 실행 계약을 문서화했다.
+- 검증: 앱 광고 설정 코드·테스트 및 dart-define 없는 iOS Release 바이너리와 대조
+- 리스크: 운영 AdMob console callback 설정과 실기기 지급 완료는 별도 확인 필요
+
+## 2026-09-04 - Xcode 직접 빌드의 운영 API 연결
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 앱 기본 Backend가 DuckDNS 운영 HTTPS 주소이며 로컬 Backend를 쓸 때만 `LINGKO_API_BASE_URL`로 override하도록 실행 안내를 갱신했다.
+- 검증: `flutter analyze` 오류 0건, Flutter 전체 142개 테스트 통과(라인 80.35%), iOS simulator debug build 성공
+- 리스크: 기존 iPhone 설치본에는 반영되지 않으므로 앱 완전 재빌드·재설치 후 로그인 확인 필요
+
+## 2026-09-03 - 운영 HTTPS API 로컬 실행 설정
+
+- 변경 파일: `.env.local`, `WORK_LOG.md`
+- 내용: 로컬 실행 스크립트가 DuckDNS HTTPS 운영 Backend를 사용하도록 API 주소를 설정했다. 기존 OAuth·AdMob 값은 변경하지 않았다.
+- 검증: 운영 API URL 단일 설정 확인, `flutter analyze` 오류 0건, Flutter 전체 142개 테스트 통과, 공개 HTTPS health 응답 확인
+- 리스크: release artifact에는 동일 주소를 `--dart-define` 또는 CI Secret으로 별도 주입해야 함
+
 ## 2026-09-02 - 음성 평가 진행 표시 계약 갱신
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

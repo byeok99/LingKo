@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-09-04 - Apple 로그인 외부 설정 상태 갱신
+
+- 변경 파일: `mvp-release-execution-checklist.md`, `WORK_LOG.md`
+- 내용: Apple Developer App ID capability와 development provisioning 갱신 및 entitlement 포함 실기기 설치 완료를 반영하고, 실제 로그인 E2E를 별도 후속 항목으로 남겼다.
+- 검증: 실기기 Debug 서명·설치와 최종 binary entitlement 확인
+- 리스크: Apple 승인 화면부터 Backend 세션 발급까지 사용자 조작 E2E 필요
+
+## 2026-09-04 - iOS 운영 광고 출시 상태 갱신
+
+- 변경 파일: `mvp-release-execution-checklist.md`, `WORK_LOG.md`
+- 내용: Xcode·Release 빌드의 iOS 운영 Rewarded Ad Unit ID 기본값 적용을 광고 출시 범위에 반영했다.
+- 검증: 설정 없음 회귀 테스트, iOS Release build, 운영 서버 SSV allowlist와 대조
+- 리스크: AdMob console 공개 HTTPS callback과 실제 광고 E2E 미확인
+
+## 2026-09-04 - 운영 API 출시 체크리스트 갱신
+
+- 변경 파일: `mvp-release-execution-checklist.md`, `WORK_LOG.md`
+- 내용: Flutter의 기본 Backend 주소가 DuckDNS 운영 HTTPS로 고정된 구현 상태를 출시 체크리스트에 반영했다.
+- 검증: API 기본 주소 단위 테스트, Flutter 전체 테스트, iOS simulator debug build 결과와 대조
+- 리스크: release 빌드에 localhost 또는 HTTP override가 주입되면 실패시키는 별도 보호 장치는 아직 미완료
+
 ## 2026-08-19 - App Review 운영 문서 인덱스 연결
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

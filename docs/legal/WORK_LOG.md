@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-09-04 - Apple 로그인 capability 운영 상태 갱신
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: Apple Developer App ID capability와 development provisioning 완료를 반영하고, 실제 로그인 E2E와 탈퇴 revocation을 남은 출시 항목으로 구분했다.
+- 검증: 실기기 서명 binary의 Sign in with Apple entitlement 확인
+- 리스크: 실제 Apple 승인·Backend 로그인과 authorization code revocation 미검증
+
+## 2026-09-04 - iOS AdMob 운영 설정 상태 갱신
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: iOS 운영 App·Rewarded Ad Unit ID와 Backend SSV allowlist가 설정된 현재 상태를 반영하고, AdMob console callback 및 실기기 E2E를 남은 항목으로 분리했다.
+- 검증: 앱 Release 바이너리의 광고 ID 포함과 운영 Backend allowlist 일치 확인
+- 리스크: 실제 Google SSV callback 도착·지급은 실기기 광고 완료 전까지 미확인
+
+## 2026-09-03 - 법무 문서 인앱 열람 방식 반영
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 동의 화면과 Profile이 공개 법무 URL을 인앱 WebView로 표시하는 현재 구현을 법무 준비 상태에 반영했다. 스토어 제출용 공개 URL은 그대로 유지한다.
+- 검증: Flutter 문서 URL·실행 모드 테스트와 대조
+- 리스크: 법무 문서 내용의 기존 미구현 고지 항목은 별도 출시 차단 요인으로 남아 있음
+
 ## 2026-08-12 - Apple 로그인 법무 구현 상태 갱신
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

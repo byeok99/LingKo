@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-04 - 운영·로컬 API 주소 구분
+
+- 변경 파일: `api-reference.md`, `WORK_LOG.md`
+- 내용: 운영 DuckDNS HTTPS 주소와 로컬 Backend 주소를 구분하고 Flutter 앱의 무설정 기본 대상이 운영 주소임을 API 레퍼런스에 명시했다.
+- 검증: `api_client.dart` 기본값과 API 문서 주소 대조
+- 리스크: 없음
+
 ## 2026-09-02 - 평가 작업 phase API 문서화
 
 - 변경 파일: `api-reference.md`, `WORK_LOG.md`

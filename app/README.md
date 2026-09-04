@@ -104,12 +104,9 @@ flutter run
 
 ## API 주소
 
-기본값:
+기본값은 모든 플랫폼에서 운영 HTTPS인 `https://lingko-api.duckdns.org`입니다. Xcode에서 직접 실행해도 같은 주소를 사용합니다.
 
-- Android emulator: `http://10.0.2.2:8080`
-- iOS simulator, desktop, tests: `http://localhost:8080`
-
-실기기 또는 다른 백엔드 주소:
+로컬 Backend 또는 다른 주소를 사용할 때만 override합니다.
 
 ```bash
 flutter run --dart-define=LINGKO_API_BASE_URL=http://192.168.0.10:8080
@@ -119,12 +116,14 @@ Google 로그인과 광고 테스트용 로컬 값은 Git에서 제외되는 `ap
 
 ```bash
 # app/.env.local
+LINGKO_API_BASE_URL=https://lingko-api.duckdns.org
 GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID
 IOS_DEVICE_ID=Flutter-iOS-Device-ID
 ANDROID_DEVICE_ID=emulator-5554
 ANDROID_EMULATOR_ID=Flutter-Android-AVD-ID
 ADMOB_ANDROID_REWARDED_AD_UNIT_ID=Android-Rewarded-Ad-Unit-ID
 ADMOB_IOS_REWARDED_AD_UNIT_ID=iOS-Rewarded-Ad-Unit-ID
+ADMOB_TEST_DEVICE_ID=Google-Mobile-Ads-Test-Device-ID
 ```
 
 ```bash
@@ -133,13 +132,13 @@ ADMOB_IOS_REWARDED_AD_UNIT_ID=iOS-Rewarded-Ad-Unit-ID
 ```
 
 `GOOGLE_SERVER_CLIENT_ID`는 백엔드의 `GOOGLE_CLIENT_ID`와 같은 Web application Client ID를 사용합니다.
-스크립트는 iOS에서 `localhost`, Android emulator에서 `10.0.2.2`를 기본 Backend 주소로 사용합니다. 실기기는 `API_URL=http://개발-PC-IP:8080`을 함께 전달합니다.
+스크립트는 `.env.local`의 `LINGKO_API_BASE_URL`을 우선합니다. 이 값을 생략한 로컬 개발에서는 iOS에 `localhost`, Android emulator에 `10.0.2.2`를 전달하며, 로컬 Backend를 쓰는 Android 실기기는 `API_URL=http://개발-PC-IP:8080`을 함께 전달합니다.
 지정한 iOS Simulator가 꺼져 있으면 자동으로 부팅하고, Android Device ID가 연결되지 않았으면 `ANDROID_EMULATOR_ID`의 AVD를 실행한 뒤 준비될 때까지 기다립니다.
 명령 앞에 직접 지정한 환경변수는 `.env.local`보다 우선하므로 일회성 설정 변경도 가능합니다.
 
 ### AdMob 보상형 광고 테스트
 
-플랫폼별 Rewarded Ad Unit ID를 `.env.local`에 설정하면 `+` 버튼과 UMP 개인정보 동의를 테스트할 수 있습니다. 실제 지급은 Backend의 Google SSV callback이 완료된 경우에만 반영됩니다. Google 공식 test ID는 광고 UI 확인용이며 LingKo AdMob console에 SSV URL을 연결한 운영 광고 단위가 아니면 server 지급 callback은 오지 않습니다.
+iOS는 Xcode·Release 빌드에서도 LingKo 운영 Rewarded Ad Unit ID를 기본 사용하므로 별도 `--dart-define` 없이 `+` 버튼과 UMP 개인정보 동의를 사용할 수 있습니다. `.env.local`에 값을 지정하면 플랫폼 기본값보다 우선하므로 개발 중에는 Google 공식 test ID로 교체할 수 있습니다. Android는 Rewarded Ad Unit ID를 명시해야 합니다. 실제 지급은 Backend의 Google SSV callback이 완료된 경우에만 반영됩니다. Google 공식 test ID는 광고 UI 확인용이며 LingKo AdMob console에 SSV URL을 연결한 운영 광고 단위가 아니면 server 지급 callback은 오지 않습니다.
 
 ```bash
 # app/.env.local
@@ -147,7 +146,17 @@ ADMOB_ANDROID_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/5224354917
 ADMOB_IOS_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/1712485313
 ```
 
-ID가 비어 있으면 동작하지 않는 `+` 버튼과 광고 개인정보 설정 행을 노출하지 않습니다. 운영 빌드 전에는 native App ID와 Rewarded Ad Unit ID를 같은 플랫폼의 LingKo 운영 값으로 맞추고, AdMob SSV URL을 공개 HTTPS의 `/api/quota/ad-rewards/ssv`로 설정해야 합니다.
+광고 화면뿐 아니라 LingKo SSV 지급까지 검증할 때는 플랫폼의 LingKo 운영 Ad Unit ID를 유지하고,
+Google Mobile Ads SDK가 안내한 test device ID를 Git에서 제외된 `.env.local`에만 저장한다.
+이 값은 ATT/IDFA 권한을 추가하지 않고 명시한 기기의 운영 Ad Unit 요청만 Google test mode로 보낸다.
+
+```bash
+# app/.env.local
+ADMOB_IOS_REWARDED_AD_UNIT_ID=LingKo-iOS-Rewarded-Ad-Unit-ID
+ADMOB_TEST_DEVICE_ID=Google-Mobile-Ads-Test-Device-ID
+```
+
+선택된 플랫폼의 ID가 비어 있으면 동작하지 않는 `+` 버튼과 광고 개인정보 설정 행을 노출하지 않습니다. iOS 운영 기본값도 빈 `--dart-define`으로 명시하면 비활성화할 수 있습니다. 운영 빌드 전에는 native App ID와 Rewarded Ad Unit ID를 같은 플랫폼의 LingKo 운영 값으로 맞추고, AdMob SSV URL을 공개 HTTPS의 `/api/quota/ad-rewards/ssv`로 설정해야 합니다.
 
 Android Google 로그인은 Google Cloud의 Android OAuth Client에 `com.byeok.lingko` package name과 현재 Debug SHA-1이 등록되어 있어야 합니다.
 

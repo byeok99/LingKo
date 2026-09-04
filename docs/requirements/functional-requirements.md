@@ -140,7 +140,7 @@ MVP에서는 별도 관리자 웹 콘솔을 필수로 하지 않습니다. 운�
 | FR-AUTH-005 | Must | 로그아웃 | 사용자는 현재 기기에서 로그아웃할 수 있어야 한다. | 로컬 토큰 삭제, 서버 Refresh Token 폐기, 보호 API 접근 불가 | 구현됨 |
 | FR-AUTH-006 | Must | 회원 탈퇴 | 사용자는 앱 내부에서 계정 삭제를 요청할 수 있어야 한다. | 재인증 또는 확인 후 정책에 따라 개인정보 삭제·익명화 | 구현됨 · [#43](https://github.com/byeok99/LingKo/issues/43) |
 | FR-AUTH-007 | Should | 전체 기기 로그아웃 | 사용자는 모든 기기의 세션을 폐기할 수 있어야 한다. | 발급된 모든 Refresh Token이 폐기됨 | [#61](https://github.com/byeok99/LingKo/issues/61) |
-| FR-AUTH-008 | Must(iOS) | Apple 로그인 | iOS 사용자는 Apple identity token과 요청별 nonce로 LingKo에 로그인할 수 있어야 한다. | Apple 서명·issuer·audience·만료·nonce 검증, `sub` 기반 계정 귀속, 최초 이름 보존 | 코드 구현 · App ID capability·실기기 E2E 미완료 |
+| FR-AUTH-008 | Must(iOS) | Apple 로그인 | iOS 사용자는 Apple identity token과 요청별 nonce로 LingKo에 로그인할 수 있어야 한다. | Apple 서명·issuer·audience·만료·nonce 검증, `sub` 기반 계정 귀속, 최초 이름 보존 | 코드·App ID capability·development provisioning 완료 · 로그인 E2E 미완료 |
 | FR-AUTH-009 | Must(심사) | App Review 접근 | 심사자는 외부 소셜 credential·2FA 없이 전용 계정으로 제출 기능을 확인할 수 있어야 한다. | 5회 연속 wordmark 탭, 서버 Secret hash 검증, 기본 비활성화, 시도 제한, Review Notes 절차 | 구현됨 · 운영 Secret·심사 완료 후 폐기 필요 |
 
 ### 8.2 문장 선택과 발음 준비

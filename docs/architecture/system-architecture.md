@@ -36,7 +36,7 @@ flowchart LR
 
     UI --> API --> CTRL --> DOM --> JPA --> DB
     CONSENT --> API
-    UI -->|브라우저로 열기| LEGAL
+    UI -->|인앱 WebView로 열기| LEGAL
     ADS --> GOOGLE
     AUTH --> GOOGLE
     AUTH --> APPLE

@@ -1,6 +1,6 @@
 # API 레퍼런스
 
-기본 주소는 로컬 기준 `http://localhost:8080`입니다. JSON 응답은 UTF-8을 사용하며 인증 API는 `Authorization: Bearer <access-token>` 헤더를 사용합니다.
+운영 주소는 `https://lingko-api.duckdns.org`이고 로컬 Backend 주소는 `http://localhost:8080`입니다. Flutter 앱은 별도 override가 없으면 운영 HTTPS 주소를 사용합니다. JSON 응답은 UTF-8을 사용하며 인증 API는 `Authorization: Bearer <access-token>` 헤더를 사용합니다.
 
 ## 법무 문서 (인증 불필요)
 
