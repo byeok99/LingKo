@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-04 - Profile 광고 설정 연결 제거
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: Profile에서 삭제된 광고 개인정보·문의 행의 callback 주입과 UMP options SnackBar 경로를 제거했다. 광고 시청 및 SDK 초기화 계약은 유지한다.
+- 검증: Profile 대상 widget test 통과
+- 리스크: 없음
+
 ## 2026-09-03 - 공통 법무 문서 열기 설명 동기화
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`

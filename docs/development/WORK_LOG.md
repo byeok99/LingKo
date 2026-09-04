@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-04 - Profile 광고 설정 제거 반영
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: 광고 ID 유무 설명에서 제거된 Profile 광고 개인정보 설정 진입점을 제외했다.
+- 검증: 관련 문구 검색
+- 리스크: 없음
+
 ## 2026-09-04 - AdMob test device SSV 검증 절차
 
 - 변경 파일: `local-development.md`, `WORK_LOG.md`

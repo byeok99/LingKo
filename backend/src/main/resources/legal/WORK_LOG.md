@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-04 - Profile 메뉴 제거 법무 사본 동기화
+
+- 변경 파일: `privacy-policy.ko.md`, `privacy-policy.en.md`, `terms-of-service.ko.md`, `terms-of-service.en.md`, `WORK_LOG.md`
+- 내용: Profile에서 제거한 광고 개인정보 설정·문의 경로를 CMP·기기 OS 설정·이메일로 교체한 원본과 서빙 사본을 동기화했다.
+- 검증: `LegalDocumentSourceSyncTest`, `LegalConsentServiceTest` 통과
+- 리스크: 기존 동의 사용자는 개정 문서 재동의 대상이다.
+
 ## 2026-08-12 - Azure 리전 확정본으로 사본 동기화
 
 - 변경 파일: `privacy-policy.ko.md`, `privacy-policy.en.md`, `terms-of-service.ko.md`, `terms-of-service.en.md`

@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-04 - Profile 메뉴 설명 동기화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: Profile에서 광고 개인정보 설정 진입점과 문의 행을 제거한 현재 동작으로 AdMob 실행 설명을 갱신했다.
+- 검증: 관련 문구 검색
+- 리스크: 광고 개인정보 선택은 CMP·기기 OS 정책과 함께 운영 확인 필요
+
 ## 2026-09-04 - AdMob test device 로컬 설정 문서화
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

@@ -838,19 +838,6 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
-  /// Profile에서 UMP의 광고 개인정보 선택 화면을 다시 연다.
-  Future<void> openAdPrivacyOptions() async {
-    try {
-      await widget.practiceRewardAdService.showPrivacyOptions();
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to open ad privacy settings.')),
-        );
-      }
-    }
-  }
-
   // 홈에서 문장을 선택하면 Practice 탭으로 이동합니다.
   void openPractice(PracticeSentence sentence) {
     final normalizedSentence = sentence.normalizedForPractice();
@@ -1162,12 +1149,6 @@ class _LingKoShellState extends State<LingKoShell> {
         onOpenReview: () => setState(() => selectedTab = 2),
         onOpenDocument: (document) => unawaited(openLegalDocument(document)),
         onOpenSavedSentences: () => setState(() => isSavedSentencesOpen = true),
-        onOpenAdPrivacy:
-            widget.practiceRewardAdService.isConfigured
-                ? () => unawaited(openAdPrivacyOptions())
-                : null,
-        // 문의 창구는 아직 붙지 않아 연결 전까지 행을 비활성으로 둔다.
-        onOpenContact: null,
       ),
     ];
 

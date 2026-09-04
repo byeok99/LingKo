@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-04 - Profile Legal 섹션 2행으로 축소
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 제거된 광고 개인정보 설정과 문의 행을 디자인 핸드오프의 Profile 구조에서도 제외했다.
+- 검증: Profile layout 설명 확인
+- 리스크: 없음
+
 ## 2026-09-03 - Legal & privacy 표시 방식 갱신
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-04 - 현재 법무 문서 버전 갱신
+
+- 변경 파일: `LegalConsentPolicy.java`, `WORK_LOG.md`
+- 내용: 앱 설정 제공 항목이 바뀐 법무 문서 시행일과 서버의 현재 동의 버전을 `2026-09-04`로 맞췄다.
+- 검증: `LegalDocumentSourceSyncTest`, `LegalConsentServiceTest` 통과
+- 리스크: 배포 후 기존 동의 사용자는 재동의 대상이다.
+
 ## 2026-08-07 - 현재 법무 문서 동의 버전 정책 추가
 
 - 변경 파일: `LegalConsentPolicy.java`
