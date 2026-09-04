@@ -403,11 +403,11 @@ class FakePracticeRewardAdService implements PracticeRewardAdService {
 
 /// 테스트에서 Fake Audio Recorder 서비스 의존성을 결정적으로 대체한다.
 /// 실제 네트워크·저장소·플랫폼 플러그인 없이 동일한 계약과 실패 경로를 재현하기 위해 명시적 테스트 대역을 선택했다.
-/// 실제 브라우저를 띄우지 않고 어떤 문서를 요청했는지만 기록한다.
+/// 실제 인앱 WebView를 띄우지 않고 어떤 문서를 요청했는지만 기록한다.
 class FakeLegalDocumentLauncher implements LegalDocumentLauncher {
   FakeLegalDocumentLauncher({this.succeeds = true});
 
-  /// 브라우저를 열 수 없는 기기를 흉내 낸다.
+  /// 인앱 WebView를 열 수 없는 기기를 흉내 낸다.
   final bool succeeds;
 
   final List<ConsentDocument> opened = [];
@@ -2822,7 +2822,7 @@ void main() {
     await tester.tap(_navigationLabel('Profile'));
     await tester.pumpAndSettle();
 
-    // 브라우저를 열 수 없는 기기가 있다. 아무 반응이 없으면 버튼이 고장난 것으로 보인다.
+    // 인앱 WebView를 열 수 없는 기기가 있다. 아무 반응이 없으면 버튼이 고장난 것으로 보인다.
     await tester.tap(find.byKey(const ValueKey('profile-terms')));
     await tester.pump();
     expect(find.text('Could not open the document.'), findsOneWidget);

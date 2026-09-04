@@ -667,14 +667,14 @@ class _LingKoShellState extends State<LingKoShell> {
 
   /// 약관·처리방침 전문 열기 요청을 처리한다. 가입 동의 화면과 Profile 설정이 함께 쓴다.
   ///
-  /// 백엔드가 서빙하는 공개 URL을 브라우저로 연다. 두 화면이 같은 경로를 쓰므로
-  /// 문서 위치가 바뀌어도 여기만 고치면 된다.
+  /// 백엔드가 서빙하는 공개 URL을 앱 내부 WebView로 연다. 두 화면이 같은 경로를
+  /// 쓰므로 문서 위치나 표시 방식이 바뀌어도 여기만 고치면 된다.
   Future<void> openLegalDocument(ConsentDocument document) async {
     final opened = await widget.legalDocumentLauncher.open(document);
     if (opened || !mounted) {
       return;
     }
-    // 브라우저를 열 수 없는 기기가 있다. 아무 반응이 없으면 버튼이 고장난 것으로 보이므로
+    // WebView를 열 수 없는 기기가 있다. 아무 반응이 없으면 버튼이 고장난 것으로 보이므로
     // 실패를 알리고 문의 경로가 생기면 그쪽으로 안내한다.
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Could not open the document.')),
