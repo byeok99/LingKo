@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-05 - iOS 15.0 실기기 요구사항 반영
+
+- 변경 파일: `local-development.md`, `testing-and-troubleshooting.md`, `WORK_LOG.md`
+- 내용: Apple 로그인 개발·진단 절차의 실기기 기준을 앱의 최소 지원 버전인 iOS 15.0 이상으로 동기화했다.
+- 검증: 개발·트러블슈팅 문서에 이전 iOS 최소 버전 문구가 남지 않은 것을 검색으로 확인
+- 리스크: 없음
+
 ## 2026-09-04 - Profile 광고 설정 제거 반영
 
 - 변경 파일: `local-development.md`, `WORK_LOG.md`

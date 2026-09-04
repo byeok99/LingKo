@@ -160,7 +160,7 @@ ADMOB_TEST_DEVICE_ID=Google-Mobile-Ads-Test-Device-ID
 
 Android Google 로그인은 Google Cloud의 Android OAuth Client에 `com.byeok.lingko` package name과 현재 Debug SHA-1이 등록되어 있어야 합니다.
 
-iOS Apple 로그인은 iOS 13 이상, `com.byeok.lingko` App ID의 Sign in with Apple capability와 갱신된 provisioning profile,
+iOS Apple 로그인은 앱의 최소 지원 버전인 iOS 15.0 이상, `com.byeok.lingko` App ID의 Sign in with Apple capability와 갱신된 provisioning profile,
 Backend의 `APPLE_CLIENT_ID=com.byeok.lingko`가 필요합니다. Android는 Service ID·HTTPS redirect가 아직 없어
 Apple 버튼을 표시하지 않습니다.
 
