@@ -112,9 +112,9 @@ flutter pub get
 flutter run
 ```
 
-Android 에뮬레이터에서는 기본적으로 `http://10.0.2.2:8080`, iOS 시뮬레이터·데스크톱에서는 `http://localhost:8080`을 사용합니다.
+Flutter 앱의 기본 Backend는 `https://lingko-api.duckdns.org`입니다. 따라서 Xcode에서 직접 실행하거나 별도 `--dart-define` 없이 빌드해도 운영 HTTPS 서버에 연결됩니다.
 
-실기기에서 로컬 백엔드에 연결할 때는 다음처럼 주소를 지정합니다.
+로컬 Backend에 연결할 때만 플랫폼에서 접근 가능한 주소를 명시합니다.
 
 ```bash
 flutter run \

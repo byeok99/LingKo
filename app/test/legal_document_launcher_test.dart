@@ -5,6 +5,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingko_app/models/consent_selection.dart';
 import 'package:lingko_app/services/legal_document_launcher.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   test('문서 경로는 백엔드가 정의한 구간과 일치한다', () {
@@ -56,9 +57,34 @@ void main() {
       baseUrl: 'https://api.lingko.example',
     );
 
-    expect(
-      launcher.resolve(ConsentDocument.privacyPolicy).query,
-      'lang=en',
+    expect(launcher.resolve(ConsentDocument.privacyPolicy).query, 'lang=en');
+  });
+
+  test('법무 문서는 외부 앱이 아니라 제한된 인앱 WebView로 연다', () async {
+    Uri? openedUrl;
+    LaunchMode? openedMode;
+    WebViewConfiguration? openedConfiguration;
+    final launcher = UrlLauncherLegalDocumentLauncher(
+      baseUrl: 'https://api.lingko.example',
+      launch: (url, {required mode, required webViewConfiguration}) async {
+        openedUrl = url;
+        openedMode = mode;
+        openedConfiguration = webViewConfiguration;
+        return true;
+      },
     );
+
+    final opened = await launcher.open(ConsentDocument.termsOfService);
+
+    expect(opened, isTrue);
+    expect(
+      openedUrl,
+      Uri.parse('https://api.lingko.example/legal/terms?lang=en'),
+    );
+    expect(openedMode, LaunchMode.inAppWebView);
+    // 정적 법무 문서는 script나 client storage가 필요하지 않다. 불필요한 WebView
+    // 실행 권한을 켜지 않는 계약을 회귀 테스트로 고정한다.
+    expect(openedConfiguration?.enableJavaScript, isFalse);
+    expect(openedConfiguration?.enableDomStorage, isFalse);
   });
 }

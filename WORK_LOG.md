@@ -1,3 +1,10 @@
+## 2026-09-04 - Flutter 운영 API 기본 주소 문서화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: Xcode 직접 실행과 별도 설정 없는 Flutter 빌드가 DuckDNS 운영 HTTPS Backend를 기본 사용한다는 실행 계약을 루트 안내에 반영했다.
+- 검증: `flutter analyze` 오류 0건, Flutter 전체 142개 테스트 통과(라인 80.35%), iOS simulator debug build 성공
+- 리스크: 변경된 앱을 iPhone에 다시 설치한 뒤 실제 로그인을 확인해야 함
+
 ## 2026-08-24 - Spring 공통 설정의 정식 파일명 전환
 
 - 변경 파일: `.gitignore`, `WORK_LOG.md`

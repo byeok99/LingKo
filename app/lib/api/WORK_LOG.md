@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-04 - API client 운영 HTTPS 기본값 적용
+
+- 변경 파일: `api_client.dart`, `WORK_LOG.md`
+- 내용: `LINGKO_API_BASE_URL`이 없는 Xcode·release 빌드가 iPhone의 localhost 대신 `https://lingko-api.duckdns.org`를 사용하도록 기본값을 고정했다. 명시적 override는 로컬 개발과 격리 테스트를 위해 유지했다.
+- 검증: 기존 localhost 기대 테스트가 실패하는 RED 확인 후 운영 URL 기대 테스트 GREEN, `flutter analyze`, 전체 142개 테스트, iOS simulator debug build 통과
+- 리스크: 명시적으로 잘못된 `LINGKO_API_BASE_URL`을 주입한 빌드는 해당 값을 우선하므로 배포 설정 점검은 계속 필요함
+
 ## 2026-09-02 - Presigned PUT 업로드 진행률 전달
 
 - 변경 파일: `api_client.dart`, `evaluation_api.dart`, `WORK_LOG.md`

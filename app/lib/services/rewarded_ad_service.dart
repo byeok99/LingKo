@@ -12,6 +12,10 @@ enum RewardedAdPlatform { android, ios, unsupported }
 /// 광고가 닫혔을 때 실제 reward callback이 있었는지를 나타낸다.
 enum RewardedAdResult { earned, dismissed }
 
+// Ad Unit ID는 광고 요청에 포함되는 공개 식별자다. Xcode가 `.env.local`을 읽지 않아
+// 운영 iOS 빌드의 충전 버튼이 비활성화되지 않도록 앱 기본값으로 보존한다.
+const _productionIosRewardedAdUnitId = 'ca-app-pub-5081228614816629/3927267131';
+
 /// 광고 단위 ID가 설정되지 않은 빌드에서 SDK를 호출하려 할 때 발생한다.
 class RewardedAdNotConfigured implements Exception {
   const RewardedAdNotConfigured();
@@ -22,7 +26,7 @@ class RewardedAdNotConfigured implements Exception {
 
 /// 플랫폼별 Rewarded Ad Unit ID를 빌드 설정에서 읽는다.
 ///
-/// Ad Unit ID는 Secret은 아니지만 운영·테스트 값을 코드와 분리해 잘못된 광고 요청을 막는다.
+/// Ad Unit ID는 Secret이 아니며 환경 override로 운영 기본값을 test ID와 교체할 수 있다.
 class RewardedAdConfiguration {
   const RewardedAdConfiguration({
     required this.androidAdUnitId,
@@ -35,6 +39,7 @@ class RewardedAdConfiguration {
       ),
       iosAdUnitId = const String.fromEnvironment(
         'ADMOB_IOS_REWARDED_AD_UNIT_ID',
+        defaultValue: _productionIosRewardedAdUnitId,
       );
 
   final String androidAdUnitId;
@@ -67,7 +72,8 @@ abstract interface class PracticeRewardAdService {
 
 /// SDK 초기화와 광고 load를 테스트 가능한 경계로 감싼다.
 abstract interface class RewardedAdGateway {
-  Future<void> initialize();
+  /// testDeviceId가 있을 때만 해당 기기의 운영 Ad Unit 요청을 test mode로 보낸다.
+  Future<void> initialize({String? testDeviceId});
 
   Future<RewardedAdPresentation> load({
     required String adUnitId,
@@ -90,12 +96,16 @@ class GooglePracticeRewardAdService implements PracticeRewardAdService {
     this.configuration = const RewardedAdConfiguration.fromEnvironment(),
     RewardedAdPlatform? platform,
     RewardedAdGateway? gateway,
+    this.testDeviceId = const String.fromEnvironment('ADMOB_TEST_DEVICE_ID'),
   }) : platform = platform ?? _currentPlatform(),
        gateway = gateway ?? GoogleMobileAdsRewardedAdGateway();
 
   final RewardedAdConfiguration configuration;
   final RewardedAdPlatform platform;
   final RewardedAdGateway gateway;
+  // Google SDK가 출력한 test device ID는 보상 세션과 무관한 공개 요청 설정이다.
+  // 소스에 기기 식별자를 남기지 않고 로컬 빌드에서만 dart-define으로 주입한다.
+  final String testDeviceId;
   Future<void>? _initialization;
 
   @override
@@ -132,7 +142,12 @@ class GooglePracticeRewardAdService implements PracticeRewardAdService {
   Future<void> _ensureInitialized() async {
     // 성공한 초기화는 process 동안 공유하되, 네트워크·UMP의 일시 오류는 다음 요청에서
     // 다시 시도할 수 있도록 실패한 Future만 cache에서 제거한다.
-    final initialization = _initialization ??= gateway.initialize();
+    final normalizedTestDeviceId = testDeviceId.trim();
+    final initialization =
+        _initialization ??= gateway.initialize(
+          testDeviceId:
+              normalizedTestDeviceId.isEmpty ? null : normalizedTestDeviceId,
+        );
     try {
       await initialization;
     } catch (_) {
@@ -157,10 +172,17 @@ class GooglePracticeRewardAdService implements PracticeRewardAdService {
 /// UMP 개인정보 선택을 갱신한 뒤 Google Mobile Ads SDK를 초기화한다.
 class GoogleMobileAdsRewardedAdGateway implements RewardedAdGateway {
   @override
-  Future<void> initialize() async {
+  Future<void> initialize({String? testDeviceId}) async {
     await _updateConsent();
     if (!await ConsentInformation.instance.canRequestAds()) {
       throw StateError('Privacy consent does not allow ad requests');
+    }
+    // 운영 Ad Unit과 SSV 계약은 유지하고, 명시적으로 주입된 로컬 기기만
+    // Google test mode로 요청해 invalid traffic과 실수로 인한 실제 광고 클릭을 막는다.
+    if (testDeviceId != null) {
+      await MobileAds.instance.updateRequestConfiguration(
+        RequestConfiguration(testDeviceIds: [testDeviceId]),
+      );
     }
     await MobileAds.instance.initialize();
   }

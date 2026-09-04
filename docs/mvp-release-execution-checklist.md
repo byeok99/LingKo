@@ -98,7 +98,7 @@
 ### 0. 출시 채널과 기능 범위 확정
 
 - [ ] 첫 초대 MVP를 `Android closed testing`으로 시작할지, Android와 iOS를 동시에 배포할지 결정한다.
-- [x] 광고 연동을 출시 범위에 포함한다. Flutter AdMob·UMP와 Google SSV 서명·transaction 검증을 연결했다. 운영 AdMob console callback URL test는 배포 후 수행한다.
+- [x] 광고 연동을 출시 범위에 포함한다. Flutter AdMob·UMP와 Google SSV 서명·transaction 검증을 연결했고, iOS Xcode·Release 빌드의 운영 Rewarded Ad Unit ID 기본값을 고정했다. 운영 AdMob console callback URL test는 배포 후 수행한다.
 - [x] 실시간 가이드 생성 HTTP API는 기본 비활성화하고, 내부 service Secret을 설정한 환경에서만 제한적으로 연다.
 - [ ] 디자인 문서의 `weak sound/syllable` 표현을 실제 단어 중심 구현과 일치시키기로 확정한다.
 
@@ -164,7 +164,8 @@
 
 - [ ] Android 운영 OAuth client와 패키지 서명 fingerprint를 연결한다.
 - [x] iOS Apple 로그인 앱·백엔드 코드와 Sign in with Apple entitlement를 구현한다.
-- [ ] Apple Developer의 `com.byeok.lingko` App ID capability·provisioning을 갱신하고 실기기에서 검증한다.
+- [x] Apple Developer의 `com.byeok.lingko` App ID capability·development provisioning을 갱신하고 entitlement가 포함된 앱을 실기기에 설치한다.
+- [ ] 실기기에서 Apple 승인 화면부터 Backend 세션 발급까지 로그인 E2E를 검증한다.
 - [ ] Apple authorization code 교환·refresh token 보관·회원 탈퇴 revocation을 구현한다.
 - [ ] Google/Apple 로그인 취소, 네트워크 실패, 잘못된 token, 탈퇴 계정 재로그인을 검증한다.
 - [ ] [#60](https://github.com/byeok99/LingKo/issues/60) 실제 token 만료·회전·세션 복원 E2E를 완료한다.
@@ -186,7 +187,7 @@
 
 - [ ] Android debug signing을 운영 keystore로 교체하고 CI Secret으로 주입한다.
 - [ ] iOS를 포함한다면 distribution certificate와 provisioning을 구성한다.
-- [ ] `LINGKO_API_BASE_URL`을 운영 HTTPS 주소로 고정한다.
+- [x] `LINGKO_API_BASE_URL` 기본값을 운영 HTTPS 주소로 고정한다.
 - [ ] release 빌드에서 localhost 또는 HTTP 주소가 선택되면 실패하도록 검증한다.
 - [ ] 앱 이름, 설명, 버전, 빌드 번호, 아이콘, 스플래시와 Bundle ID를 확정한다.
 - [ ] 운영 환경의 로그 레벨, CORS, S3 bucket, DB, Azure, Replicate 설정을 점검한다.

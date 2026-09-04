@@ -95,9 +95,7 @@ flutter run
 
 ### API 주소
 
-- Android emulator: `http://10.0.2.2:8080`
-- iOS simulator·desktop·test: `http://localhost:8080`
-- 실기기: 개발 PC의 내부망 IP 사용
+앱 코드의 기본 주소는 모든 플랫폼에서 `https://lingko-api.duckdns.org`입니다. Xcode에서 직접 실행하거나 별도 설정 없이 빌드해도 운영 HTTPS 서버에 연결됩니다. 로컬 Backend를 사용할 때만 플랫폼에서 접근 가능한 주소를 override합니다.
 
 ```bash
 flutter run --dart-define=LINGKO_API_BASE_URL=http://192.168.0.10:8080
@@ -107,12 +105,14 @@ Google 로그인과 광고 테스트용 로컬 값은 Git에서 제외되는 `ap
 
 ```bash
 # app/.env.local
+LINGKO_API_BASE_URL=https://lingko-api.duckdns.org
 GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID
 IOS_DEVICE_ID=Flutter-iOS-Device-ID
 ANDROID_DEVICE_ID=emulator-5554
 ANDROID_EMULATOR_ID=Flutter-Android-AVD-ID
 ADMOB_ANDROID_REWARDED_AD_UNIT_ID=Android-Rewarded-Ad-Unit-ID
 ADMOB_IOS_REWARDED_AD_UNIT_ID=iOS-Rewarded-Ad-Unit-ID
+ADMOB_TEST_DEVICE_ID=Google-Mobile-Ads-Test-Device-ID
 ```
 
 ```bash
@@ -121,7 +121,7 @@ cd app
 ./scripts/run-local.sh android
 ```
 
-개발 중 보상형 광고를 확인할 때는 `.env.local`의 플랫폼별 값을 Google 공식 test Rewarded Ad Unit ID로 설정합니다.
+iOS 앱은 별도 빌드 설정이 없어도 LingKo 운영 Rewarded Ad Unit ID를 기본 사용합니다. 개발 중 보상형 광고를 확인할 때는 `.env.local`의 플랫폼별 값을 Google 공식 test Rewarded Ad Unit ID로 설정해 기본값을 override합니다. Android는 값을 명시하지 않으면 광고 기능이 비활성입니다.
 
 ```bash
 # app/.env.local
@@ -129,9 +129,19 @@ ADMOB_ANDROID_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/5224354917
 ADMOB_IOS_REWARDED_AD_UNIT_ID=ca-app-pub-3940256099942544/1712485313
 ```
 
-광고 ID가 없으면 Home의 `+`와 Profile의 광고 개인정보 설정은 비활성입니다. 광고 SDK 변경은 hot reload가 아닌 앱 완전 재빌드가 필요합니다.
+LingKo SSV 콜백과 practice 지급까지 테스트할 때는 Google sample Ad Unit ID 대신 LingKo 운영 Ad Unit ID를 사용한다.
+실기기는 Google Mobile Ads SDK가 출력한 test device ID를 `.env.local`의 `ADMOB_TEST_DEVICE_ID`로 주입한다.
+이 값은 빌드에 명시된 로컬 기기에만 적용되며 ATT/IDFA 권한을 요구하지 않는다.
 
-`run-local.sh`는 iOS에 `http://localhost:8080`, Android emulator에 `http://10.0.2.2:8080`을 자동 적용합니다. 지정한 iOS Simulator가 꺼져 있으면 부팅하고, Android Device ID가 연결되지 않았으면 `ANDROID_EMULATOR_ID`의 AVD를 실행한 뒤 준비될 때까지 기다립니다. Android 실기기는 `API_URL=http://개발-PC-IP:8080`을 추가합니다. 명령 앞에 직접 지정한 환경변수는 `.env.local`보다 우선합니다.
+```bash
+# app/.env.local
+ADMOB_IOS_REWARDED_AD_UNIT_ID=LingKo-iOS-Rewarded-Ad-Unit-ID
+ADMOB_TEST_DEVICE_ID=Google-Mobile-Ads-Test-Device-ID
+```
+
+선택된 플랫폼의 광고 ID가 없으면 Home의 `+`와 Profile의 광고 개인정보 설정은 비활성입니다. iOS 운영 기본값도 빈 `--dart-define`을 명시하면 비활성화할 수 있습니다. 광고 SDK 변경은 hot reload가 아닌 앱 완전 재빌드가 필요합니다.
+
+`run-local.sh`는 `.env.local`의 `LINGKO_API_BASE_URL`을 우선합니다. 이 값을 생략한 로컬 개발에서는 iOS에 `http://localhost:8080`, Android emulator에 `http://10.0.2.2:8080`을 적용합니다. 지정한 iOS Simulator가 꺼져 있으면 부팅하고, Android Device ID가 연결되지 않았으면 `ANDROID_EMULATOR_ID`의 AVD를 실행한 뒤 준비될 때까지 기다립니다. 로컬 Backend를 쓰는 Android 실기기는 `API_URL=http://개발-PC-IP:8080`을 추가합니다. 명령 앞에 직접 지정한 환경변수는 `.env.local`보다 우선합니다.
 
 ## Google OAuth 구성
 

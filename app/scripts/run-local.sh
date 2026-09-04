@@ -26,6 +26,8 @@ android_ad_unit_override_set="${ADMOB_ANDROID_REWARDED_AD_UNIT_ID+x}"
 android_ad_unit_override="${ADMOB_ANDROID_REWARDED_AD_UNIT_ID-}"
 ios_ad_unit_override_set="${ADMOB_IOS_REWARDED_AD_UNIT_ID+x}"
 ios_ad_unit_override="${ADMOB_IOS_REWARDED_AD_UNIT_ID-}"
+admob_test_device_override_set="${ADMOB_TEST_DEVICE_ID+x}"
+admob_test_device_override="${ADMOB_TEST_DEVICE_ID-}"
 
 if [[ -f "$env_file" ]]; then
   set -a
@@ -63,6 +65,8 @@ restore_override ADMOB_ANDROID_REWARDED_AD_UNIT_ID \
   "$android_ad_unit_override_set" "$android_ad_unit_override"
 restore_override ADMOB_IOS_REWARDED_AD_UNIT_ID \
   "$ios_ad_unit_override_set" "$ios_ad_unit_override"
+restore_override ADMOB_TEST_DEVICE_ID \
+  "$admob_test_device_override_set" "$admob_test_device_override"
 
 platform="${1:-}"
 requested_device_id="${DEVICE_ID:-${2:-}}"
@@ -70,6 +74,7 @@ google_server_client_id="${GOOGLE_SERVER_CLIENT_ID:-${GOOGLE_ID:-}}"
 api_url="${LINGKO_API_BASE_URL:-${API_URL:-}}"
 android_rewarded_ad_unit_id="${ADMOB_ANDROID_REWARDED_AD_UNIT_ID:-}"
 ios_rewarded_ad_unit_id="${ADMOB_IOS_REWARDED_AD_UNIT_ID:-}"
+admob_test_device_id="${ADMOB_TEST_DEVICE_ID:-}"
 android_emulator_id="${ANDROID_EMULATOR_ID:-}"
 
 usage() {
@@ -90,6 +95,7 @@ Optional aliases:
   ANDROID_EMULATOR_ID=<flutter-avd-id>
   ADMOB_ANDROID_REWARDED_AD_UNIT_ID=<android-rewarded-ad-unit-id>
   ADMOB_IOS_REWARDED_AD_UNIT_ID=<ios-rewarded-ad-unit-id>
+  ADMOB_TEST_DEVICE_ID=<google-mobile-ads-test-device-id>
 
 Defaults:
   ios     -> http://localhost:8080
@@ -196,6 +202,7 @@ flutter_args=(
   --dart-define="LINGKO_API_BASE_URL=$api_url" \
   --dart-define="ADMOB_ANDROID_REWARDED_AD_UNIT_ID=$android_rewarded_ad_unit_id" \
   --dart-define="ADMOB_IOS_REWARDED_AD_UNIT_ID=$ios_rewarded_ad_unit_id"
+  --dart-define="ADMOB_TEST_DEVICE_ID=$admob_test_device_id"
 )
 
 if [[ -n "$device_id" ]]; then

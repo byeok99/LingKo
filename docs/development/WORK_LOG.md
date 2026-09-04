@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-09-04 - AdMob test device SSV 검증 절차
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: ATT/IDFA 권한 추가 없이 운영 Ad Unit을 Google test mode로 요청하는 `ADMOB_TEST_DEVICE_ID` 설정과 sample Ad Unit의 SSV 제한을 문서화했다.
+- 검증: 앱 설정, 로컬 실행 스크립트, Google Mobile Ads Flutter test device 계약과 대조
+- 리스크: test device ID 확보 후 실기기 SSV E2E 재검증 필요
+
+## 2026-09-04 - iOS 광고 기본값과 test override 절차
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: iOS 운영 Rewarded ID의 앱 기본값과 `.env.local` test ID override, Android 명시 설정 책임을 구분했다.
+- 검증: `RewardedAdConfiguration`, `run-local.sh`, 앱 README와 대조
+- 리스크: 운영 광고 클릭은 invalid traffic 방지를 위해 실기기를 AdMob test device로 등록하거나 test ID로 override해야 함
+
+## 2026-09-04 - Flutter 운영 API 기본값 안내
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: 앱 코드 기본값은 운영 HTTPS이고 로컬 Backend 연결 때만 플랫폼에서 접근 가능한 주소를 override한다는 개발 절차로 갱신했다.
+- 검증: `api_client.dart`, `app/README.md`, 로컬 실행 스크립트의 역할과 대조
+- 리스크: 로컬 실행 스크립트는 개발 편의를 위해 플랫폼별 localhost 기본값을 계속 전달함
+
 ## 2026-08-24 - Backend 공통 설정 복사 절차 제거
 
 - 변경 파일: `local-development.md`, `WORK_LOG.md`

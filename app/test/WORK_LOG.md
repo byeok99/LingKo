@@ -1,5 +1,33 @@
 # Work Log
 
+## 2026-09-04 - AdMob test device 주입 회귀 테스트
+
+- 변경 파일: `rewarded_ad_service_test.dart`, `WORK_LOG.md`
+- 내용: test device ID의 공백 제거와 SDK 초기화 전달, 빈 값일 때 운영 설정 미변경 계약을 고정했다.
+- 검증: named parameter 미구현 RED 확인 후 대상 10개·전체 145개 테스트 통과, 라인 커버리지 80.32%
+- 리스크: native Google SDK의 test creative와 SSV는 실기기 검증 필요
+
+## 2026-09-04 - iOS 광고 무설정 빌드 회귀 테스트
+
+- 변경 파일: `rewarded_ad_service_test.dart`, `WORK_LOG.md`
+- 내용: 별도 dart-define이 없는 iOS 빌드에서도 운영 Rewarded 광고가 구성되어 Home의 충전 버튼이 활성화될 수 있는 계약을 고정했다.
+- 검증: 구현 전 `isConfiguredFor(iOS) == false` RED, 구현 후 대상 8개 및 전체 143개 테스트 통과(라인 80.35%)
+- 리스크: Google SDK의 실제 creative load와 SSV callback은 test double 범위 밖이므로 실기기 확인 필요
+
+## 2026-09-04 - API 기본 주소 회귀 테스트
+
+- 변경 파일: `pronunciation_api_test.dart`, `WORK_LOG.md`
+- 내용: 설정을 주입하지 않은 앱은 운영 HTTPS API를 사용하고, 명시한 `LINGKO_API_BASE_URL`은 공백을 제거해 우선하는 계약을 테스트로 고정했다.
+- 검증: 구현 전 `http://localhost:8080` 반환 RED 확인, 구현 후 대상 테스트 및 전체 142개 테스트 통과(라인 80.35%)
+- 리스크: 실제 iPhone 네트워크·OAuth 흐름은 실기기에서 별도 확인 필요
+
+## 2026-09-03 - 법무 문서 인앱 WebView 계약 테스트
+
+- 변경 파일: `legal_document_launcher_test.dart`, `widget_test.dart`, `WORK_LOG.md`
+- 내용: 문서 URL이 외부 앱이 아닌 `inAppWebView`로 열리고 JavaScript·DOM 저장소가 비활성화되는 계약을 추가했으며 테스트 대역 설명도 현재 동작과 맞췄다.
+- 검증: 구현 전 생성자 부재 RED 확인, 전용 테스트 GREEN, 전체 143개 테스트 통과, 라인 커버리지 80.35%
+- 리스크: 플랫폼 WebView 자체 표시는 widget test가 아니라 실기기 확인이 필요함
+
 ## 2026-09-02 - 평가 진행률 TDD 회귀 테스트
 
 - 변경 파일: `evaluation_api_test.dart`, `evaluation_progress_test.dart`, `evaluation_progress_panel_test.dart`, `widget_test.dart`, `WORK_LOG.md`

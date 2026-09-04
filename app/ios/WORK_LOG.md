@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-09-04 - 유료 Team용 Sign in with Apple entitlement 복구
+
+- 변경 파일: `Runner/Runner.entitlements`, `WORK_LOG.md`
+- 내용: 유료 Apple Developer Team에서 native Apple 로그인을 서명할 수 있도록 Runner에 `com.apple.developer.applesignin=Default` capability를 복구했다.
+- 검증: 변경 전 entitlement 누락과 기존 profile 실패를 재현, profile 자동 갱신 후 실기기 빌드·설치·프로세스 실행 및 최종 서명의 `Default` entitlement 확인
+- 리스크: 실제 Apple 계정 승인 화면과 Backend 로그인 완료는 사용자의 iPhone 조작으로 최종 확인 필요
+
+## 2026-09-04 - iOS Simulator 실행 Scheme 복구
+
+- 변경 파일: `Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme`, `WORK_LOG.md`
+- 내용: Runner LaunchAction을 Debug로 복구해 Flutter가 iOS Simulator를 실제 빌드 대상으로 선택할 수 있게 했다.
+- 검증: 변경 전 동일 Simulator 대상 Xcode Debug 빌드가 destination 오류로 실패함을 재현, 변경 후 `./scripts/run-local.sh ios`로 빌드·설치·실행 성공
+- 리스크: 케이블 없이 실기기 앱을 실행하려면 별도의 Release 설치가 필요함
+
 ## 2026-08-12 - Apple 로그인 iOS project 연결
 
 - 변경 파일: `Podfile`, `Runner.xcodeproj/project.pbxproj`, `Podfile.lock`, `WORK_LOG.md`

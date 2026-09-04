@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-03 - 공통 법무 문서 열기 설명 동기화
+
+- 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
+- 내용: 동의 화면과 Profile이 공유하는 문서 열기 경계의 설명과 실패 처리를 외부 브라우저에서 인앱 WebView 동작으로 맞췄다.
+- 검증: `flutter analyze`, 전체 143개 테스트, iOS Simulator Debug 빌드 통과
+- 리스크: 없음
+
 ## 2026-09-02 - 평가 업로드·polling 진행 상태 연결
 
 - 변경 파일: `lingko_app.dart`, `WORK_LOG.md`
