@@ -1,0 +1,123 @@
+spring:
+  application:
+    name: lingko
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:lingko}
+    username: ${DB_USER:lingko}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+  jpa:
+    hibernate:
+      # 운영 스키마 변경 이력은 Hibernate 자동 생성이 아니라 Flyway 마이그레이션이 소유한다.
+      ddl-auto: ${JPA_DDL_AUTO:none}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+logging:
+  file:
+    name: logs/lingko.log
+  level:
+    com.lingko.lingko: ${LOG_LEVEL:DEBUG}
+
+db:
+  host: ${DB_HOST:localhost}
+  port: ${DB_PORT:3306}
+  user: ${DB_USER:lingko}
+  password: ${DB_PASSWORD:}
+  name: ${DB_NAME:lingko}
+  driver: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+
+jwt:
+  # 비밀키는 예시 파일에 기록하지 않고 실행 환경에서만 주입한다.
+  secret-key: ${JWT_SECRET_KEY:}
+  access-token-expire-minutes: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:30}
+  refresh-token-expire-days: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS:14}
+  algorithm: ${JWT_ALGORITHM:HS256}
+
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  text-model: ${OPENAI_TEXT_MODEL:gpt-4o-mini}
+
+azure:
+  # 외부 서비스 자격 증명은 빈 기본값으로 두어 저장소에 비밀값이 포함되지 않게 한다.
+  secret-key: ${AZURE_SECRET_KEY:}
+  region: ${AZURE_REGION:}
+  language: ${AZURE_LANGUAGE:ko-KR}
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID:}
+  client-secret: ${GOOGLE_CLIENT_SECRET:}
+  redirect-uri: ${GOOGLE_REDIRECT_URI:}
+
+apple:
+  # native iOS identity token의 audience인 App ID(Bundle ID)다. 비밀값은 아니다.
+  client-id: ${APPLE_CLIENT_ID:}
+
+review-access:
+  # App Review 기간에만 활성화하며 원문 코드는 Review Notes와 운영 Secret에만 둔다.
+  enabled: ${REVIEW_ACCESS_ENABLED:false}
+  code-sha256: ${REVIEW_ACCESS_CODE_SHA256:}
+  user-id: ${REVIEW_ACCESS_USER_ID:}
+  max-attempts: ${REVIEW_ACCESS_MAX_ATTEMPTS:5}
+  window-seconds: ${REVIEW_ACCESS_WINDOW_SECONDS:300}
+
+replicate:
+  api-key: ${REPLICATE_API_KEY:}
+  version: ${REPLICATE_VERSION:}
+  max-poll-attempts: ${REPLICATE_MAX_POLL_ATTEMPTS:300}
+  poll-interval-ms: ${REPLICATE_POLL_INTERVAL_MS:1000}
+  create-max-attempts: ${REPLICATE_CREATE_MAX_ATTEMPTS:4}
+  retry-initial-delay-ms: ${REPLICATE_RETRY_INITIAL_DELAY_MS:1000}
+  retry-max-delay-ms: ${REPLICATE_RETRY_MAX_DELAY_MS:30000}
+  frame-rate: ${REPLICATE_FRAME_RATE:24}
+
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET:}
+    region: ${AWS_S3_REGION:}
+  credentials:
+    access-key: ${AWS_ACCESS_KEY:}
+    secret-key: ${AWS_SECRET_KEY:}
+
+evaluation:
+  # 신규 앱은 S3 직접 업로드와 DB Worker를 사용하며 multipart 평가 경로는 기본 비활성화한다.
+  legacy-multipart-enabled: ${EVALUATION_LEGACY_MULTIPART_ENABLED:false}
+  upload-url-expire-minutes: ${EVALUATION_UPLOAD_URL_EXPIRE_MINUTES:10}
+  worker:
+    enabled: ${EVALUATION_WORKER_ENABLED:true}
+    poll-delay-ms: ${EVALUATION_WORKER_POLL_DELAY_MS:1000}
+    # 최초 취약 음절 영상 생성이 Replicate polling을 포함할 수 있어 평가 작업 lease를 충분히 확보한다.
+    lease-seconds: ${EVALUATION_WORKER_LEASE_SECONDS:600}
+    retry-delay-seconds: ${EVALUATION_WORKER_RETRY_DELAY_SECONDS:5}
+    max-attempts: ${EVALUATION_WORKER_MAX_ATTEMPTS:3}
+  # 성공·최종 실패 작업은 재호출 응답을 위해 보존한 뒤 작은 batch로 정리한다.
+  cleanup:
+    enabled: ${EVALUATION_CLEANUP_ENABLED:true}
+    retention-days: ${EVALUATION_CLEANUP_RETENTION_DAYS:7}
+    interval-ms: ${EVALUATION_CLEANUP_INTERVAL_MS:3600000}
+    batch-size: ${EVALUATION_CLEANUP_BATCH_SIZE:1000}
+
+guide-generation:
+  jobs:
+    # 비용 작업용 HTTP surface는 기본적으로 닫고, 내부 호출이 필요할 때만 명시적으로 연다.
+    api-enabled: ${GUIDE_JOBS_API_ENABLED:false}
+    internal-token: ${GUIDE_JOBS_INTERNAL_TOKEN:}
+    requests-per-minute: ${GUIDE_JOBS_REQUESTS_PER_MINUTE:2}
+    max-concurrent: ${GUIDE_JOBS_MAX_CONCURRENT:1}
+
+ffmpeg:
+  path: ${FFMPEG_PATH:ffmpeg}
+
+admob:
+  ssv:
+    enabled: ${ADMOB_SSV_ENABLED:true}
+    # 배포 환경이 허용 값을 명시하지 않으면 보상 세션 생성이 fail-closed 된다.
+    allowed-ad-unit-ids: ${ADMOB_SSV_ALLOWED_AD_UNIT_IDS:}
+    reward-item: ${ADMOB_SSV_REWARD_ITEM:pronunciation_chance}
+    reward-amount: ${ADMOB_SSV_REWARD_AMOUNT:1}
+    session-expiry-minutes: ${ADMOB_SSV_SESSION_EXPIRY_MINUTES:15}

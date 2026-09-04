@@ -12,6 +12,11 @@ import java.sql.ResultSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Evaluation Persistence Migration Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 class EvaluationPersistenceMigrationTest {
 
     @Test
@@ -34,6 +39,13 @@ class EvaluationPersistenceMigrationTest {
                             StandardCharsets.UTF_8
                     )
             );
+            RunScript.execute(
+                    connection,
+                    new FileReader(
+                            "src/main/resources/db/migration/V15__add_evaluation_word_scores.sql",
+                            StandardCharsets.UTF_8
+                    )
+            );
 
             assertColumn(connection, "evaluation_log", "source");
             assertColumn(connection, "evaluation_log", "sentence_id");
@@ -48,10 +60,17 @@ class EvaluationPersistenceMigrationTest {
             assertColumn(connection, "evaluation_syllable", "feedback");
             assertColumn(connection, "evaluation_syllable", "mouth_guide_url");
             assertColumn(connection, "evaluation_syllable", "tongue_guide_url");
+            assertColumn(connection, "evaluation_syllable", "word_position");
+            assertColumn(connection, "evaluation_word", "evaluation_log_idx");
+            assertColumn(connection, "evaluation_word", "position_no");
+            assertColumn(connection, "evaluation_word", "word_text");
+            assertColumn(connection, "evaluation_word", "score");
 
             assertIndex(connection, "evaluation_log", "idx_evaluation_log_source_created");
             assertIndex(connection, "evaluation_log", "idx_evaluation_log_sentence_created");
             assertIndex(connection, "evaluation_syllable", "uk_evaluation_syllable_log_position");
+            assertIndex(connection, "evaluation_word", "uk_evaluation_word_log_position");
+            assertIndex(connection, "evaluation_word", "idx_evaluation_word_log");
         }
     }
 

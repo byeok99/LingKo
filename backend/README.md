@@ -2,9 +2,11 @@
 
 LingKo의 Spring Boot REST API입니다. 추천 문장, 표준 발음, 음성 평가, 사용자 인증, 학습 기록, 설정, 일일 쿼터, 가이드 생성 작업을 담당합니다.
 
+추천 문장에는 표준 발음 정답을 저장하지 않습니다. 추천·자유 문장 모두 정규화한 원문을 현재 `KoreanPhonemeUtil` 규칙으로 변환하며, 평가 기록과 비동기 작업에는 당시 평가 재현을 위한 snapshot만 저장합니다.
+
 ## 기술 스택
 
-- Java 17
+- Java 21
 - Spring Boot 3.4.1
 - Spring MVC / Validation / Data JPA / WebFlux
 - MySQL 8 / Flyway
@@ -26,8 +28,22 @@ src/main/java/com/lingko/lingko/
 
 ```bash
 cp .env.example .env
+chmod 600 .env
 docker compose up --build
 ```
+
+Spring 설정 계약은 추적되는 `src/main/resources/application.yaml`이 단일 기준입니다. Secret은
+YAML을 복사하거나 수정하지 않고 `.env`로 주입합니다.
+
+기본 Compose 구성은 API 내부 평가 Worker를 끄고 web server가 없는 DB polling Worker 컨테이너 1개를 함께 실행합니다.
+
+```bash
+docker compose up --build
+```
+
+API는 `evaluation_jobs`에 작업을 저장하고 `evaluation-worker`가 DB lock과 lease로 한 건씩 claim합니다. Worker는 `DOWNLOADING_AUDIO` → `ANALYZING_SPEECH` → `PREPARING_GUIDES` → `FINALIZING` phase를 실제 처리 경계에서 갱신하므로 앱은 완료율을 추측하지 않고 현재 작업을 안내합니다. Worker는 Azure 평가 후 결과 화면에서 열 수 있는 모든 음절의 다중 프레임 입·혀 가이드를 Replicate와 FFmpeg로 MP4화합니다. 생성 MP4 URL은 기존 `syllables` 테이블에 upsert하고 동일 음절·종류는 DB를 먼저, 동일 음절·종류·프레임 조합은 결정적 S3 cache를 다음으로 재사용합니다. 단일 프레임이나 외부 생성 실패는 PNG로 fallback합니다. 최초 cache miss 시간을 고려해 기본 lease는 600초이며, 초기 운영에서는 Worker 1개를 유지하고 실제 대기시간과 DB lock을 측정한 뒤에만 replica 확장을 검토합니다.
+
+별도의 `/api/pronunciation/guide-jobs` HTTP surface는 비용 남용을 막기 위해 기본 비활성화되어 있습니다. 내부 도구에서 사용할 때만 `GUIDE_JOBS_API_ENABLED=true`와 32자 이상의 별도 `GUIDE_JOBS_INTERNAL_TOKEN` Secret을 설정합니다. 생성 요청은 기본 분당 2회, 동시 1개로 제한하며 값은 `GUIDE_JOBS_REQUESTS_PER_MINUTE`, `GUIDE_JOBS_MAX_CONCURRENT`로 낮은 범위 안에서 조정합니다.
 
 또는 MySQL과 환경변수를 별도로 준비한 후:
 
@@ -43,7 +59,9 @@ docker compose up --build
 ./gradlew externalIntegrationTest
 ```
 
-`externalIntegrationTest`는 Azure, Replicate, S3, FFmpeg 관련 환경변수가 필요합니다.
+`externalIntegrationTest`는 Azure, Replicate, S3, FFmpeg 관련 환경변수가 필요합니다. 실제 영상 생성 E2E 전에는 `REPLICATE_*`, AWS credential·bucket, FFmpeg 실행 가능 여부를 확인해야 합니다. Replicate 생성 요청은 429·5xx에 제한된 지수 backoff를 적용하고 polling 기한을 넘긴 원격 Prediction은 취소합니다.
+
+출시 전 생성 완료된 가이드 MP4는 `src/main/resources/db/migration/R__seed_generated_syllable_guides.sql`에 누적합니다. 이 repeatable migration은 내용이 바뀌면 다시 실행되며 기존 `syllables` 행의 비어 있지 않은 입·혀 URL을 보존하면서 새 초기값을 upsert합니다.
 
 ## API 그룹
 
@@ -56,13 +74,30 @@ docker compose up --build
 
 자세한 계약은 [API 레퍼런스](../docs/api/api-reference.md)를 참고합니다.
 
+`DELETE /api/auth/account`는 현재 Access Token과 Refresh Token을 함께 재확인한 뒤 사용자 소유 S3 음성 version과 DB 데이터를 삭제합니다. 운영 버킷에는 미제출·삭제 실패 음성을 최대 1일 뒤 만료시키는 [`aws/s3-lifecycle.json`](aws/s3-lifecycle.json)을 별도로 적용해야 하며 실제 AWS 검증은 [#71](https://github.com/byeok99/LingKo/issues/71)에서 추적합니다.
+
 ## 환경변수
 
-전체 목록은 `.env.example`과 [로컬 개발 가이드](../docs/development/local-development.md)를 기준으로 합니다. 실제 비밀값은 커밋하지 않습니다.
+전체 목록은 `src/main/resources/application.yaml`, `.env.example`과
+[로컬 개발 가이드](../docs/development/local-development.md)를 기준으로 합니다. 실제 비밀값은 커밋하지 않습니다.
+
+Apple native 로그인은 `APPLE_CLIENT_ID`에 identity token audience인 iOS App ID(Bundle ID)를 설정합니다.
+Backend는 Apple 공개 JWK의 RS256 서명과 issuer·audience·만료·nonce를 확인하며 Apple private key를
+현재 로그인 검증 경로에 두지 않습니다. authorization code 교환과 계정 삭제 시 Apple token revocation은
+출시 전 후속 보안 작업입니다.
+
+App Review 전용 로그인은 기본 비활성화됩니다. 심사 기간에만 `REVIEW_ACCESS_ENABLED=true`, 기존
+review 계정의 `REVIEW_ACCESS_USER_ID`, 4~128자 심사용 코드의 SHA-256 hex인
+`REVIEW_ACCESS_CODE_SHA256`을 Secret Manager로 주입합니다. 원문 코드는 앱·저장소·로그에 넣지
+않으며 짧은 코드를 쓰는 경우 심사 기간에만 활성화하고 기본 5분 동안 원격 주소별 5회로 제한합니다. 상세 준비와 Review Notes 문안은
+[App Review 접근 Runbook](../docs/operations/app-review-access.md)을 따릅니다.
+
+AdMob 보상은 `ADMOB_SSV_ALLOWED_AD_UNIT_IDS`에 iOS·Android callback의 숫자 `ad_unit`을 설정해야 열립니다. AdMob console의 Rewarded SSV URL은 공개 HTTPS의 `https://<backend-host>/api/quota/ad-rewards/ssv`로 설정하고 reward item·amount를 Backend의 `ADMOB_SSV_REWARD_ITEM`, `ADMOB_SSV_REWARD_AMOUNT`와 일치시킵니다. 허용 광고 단위가 비어 있으면 서버는 보상 session 생성을 거부합니다.
 
 ## 현재 주의사항
 
-- 평가 업로드 API와 사용자 인증·쿼터·영속화 연결은 아직 완전하지 않습니다.
+- 현재 평가 Worker는 Queue 없이 MySQL을 polling하므로 Worker 수를 늘리기 전에 DB lock 경합을 검증해야 합니다.
 - 가이드 작업 상태는 서버 메모리에 저장됩니다.
-- Refresh Token 갱신·폐기 API는 아직 없습니다.
-- 운영 전 Actuator, 관측성, 외부 호출 복원력, 백업 정책이 필요합니다.
+- Refresh Token 갱신·폐기 API는 구현됐으며 운영 전 실제 동시 갱신 부하를 확인해야 합니다.
+- S3 Lifecycle 파일은 저장소 산출물이며 AWS 운영 버킷에는 자동 적용되지 않습니다.
+- 가이드 job 기본 지표는 Micrometer에 기록되지만 운영 전 Actuator 노출 정책·alert, 외부 호출 복원력, 백업 정책이 필요합니다.

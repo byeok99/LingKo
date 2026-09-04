@@ -8,7 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -18,13 +18,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Sentence 컨트롤러 Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 @WebMvcTest(SentenceController.class)
 class SentenceControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private SentenceService sentenceService;
 
     @Test
@@ -33,8 +38,9 @@ class SentenceControllerTest {
         PracticeSentenceResponse sentence = PracticeSentenceResponse.builder()
                 .sentenceId(1L)
                 .source("RECOMMENDED")
-                .originalText("맛있겠다.")
-                .standardPronunciation("마싯게따.")
+                .originalText("맛있겠다")
+                .standardPronunciation("마싣껟따")
+                .romanizedPronunciation("ma-sit-kket-tta")
                 .translation("It looks delicious.")
                 .categoryLabel("Food")
                 .learningPoint("Final consonant linking and tense sound")
@@ -50,7 +56,9 @@ class SentenceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].sentenceId").value(1L))
                 .andExpect(jsonPath("$.items[0].source").value("RECOMMENDED"))
-                .andExpect(jsonPath("$.items[0].originalText").value("맛있겠다."));
+                .andExpect(jsonPath("$.items[0].originalText").value("맛있겠다"))
+                .andExpect(jsonPath("$.items[0].standardPronunciation").value("마싣껟따"))
+                .andExpect(jsonPath("$.items[0].romanizedPronunciation").value("ma-sit-kket-tta"));
     }
 
     @Test
@@ -68,8 +76,9 @@ class SentenceControllerTest {
         PracticeSentenceResponse sentence = PracticeSentenceResponse.builder()
                 .sentenceId(1L)
                 .source("RECOMMENDED")
-                .originalText("맛있겠다.")
-                .standardPronunciation("마싯게따.")
+                .originalText("맛있겠다")
+                .standardPronunciation("마싣껟따")
+                .romanizedPronunciation("ma-sit-kket-tta")
                 .translation("It looks delicious.")
                 .categoryLabel("Food")
                 .learningPoint("Final consonant linking and tense sound")

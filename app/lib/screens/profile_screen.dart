@@ -1,581 +1,283 @@
+// 파일 의도: 계정 정보와 학습 환경 설정만 관리하고 기록은 Review로 분리한다.
+
 import 'package:flutter/material.dart';
 
-import '../api/evaluation_api.dart';
-import '../api/user_preferences_api.dart';
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/auth_session.dart';
-import '../models/practice_history.dart';
-import '../models/practice_sentence.dart';
-import '../models/user_preferences.dart';
+import '../models/consent_selection.dart';
 import '../services/app_auth_service.dart';
-import '../widgets/settings_row.dart';
 import '../widgets/shared_widgets.dart';
 
+/// 현재 계정 정보, 법무 문서, 개인정보 동작과 세션 종료를 한곳에서 제공한다.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     super.key,
-    required this.evaluationApi,
-    required this.userPreferencesApi,
     required this.authService,
-    required this.onRetryPractice,
+    required this.session,
+    required this.onSessionChanged,
+    required this.onOpenReview,
+    required this.onOpenDocument,
+    this.onOpenSavedSentences,
+    this.onOpenAdPrivacy,
+    this.onOpenContact,
   });
 
-  final EvaluationApi evaluationApi;
-  final UserPreferencesApi userPreferencesApi;
   final AppAuthService authService;
-  final ValueChanged<PracticeSentence> onRetryPractice;
+  final AuthSession session;
+  final ValueChanged<AuthSession?> onSessionChanged;
+  final VoidCallback onOpenReview;
+
+  /// 약관·처리방침 전문을 여는 요청이다. 동의 화면과 같은 처리로 이어진다.
+  ///
+  /// 가입할 때 동의한 문서를 나중에 다시 읽을 수 없으면 동의 자체가 형식적인 절차가 된다.
+  /// 그래서 가입 화면과 설정 화면 양쪽에서 같은 문서로 갈 수 있게 둔다.
+  final void Function(ConsentDocument document) onOpenDocument;
+
+  final VoidCallback? onOpenSavedSentences;
+
+  /// 개인 맞춤 광고 사용 여부를 바꾸는 화면을 여는 요청이다.
+  /// null이면 현재 빌드에 광고 ID가 없다는 뜻이며 행을 눌리지 않게 표시한다.
+  final VoidCallback? onOpenAdPrivacy;
+
+  /// 문의 창구를 여는 요청이다. null이면 연결된 창구가 없어 행을 눌리지 않게 표시한다.
+  final VoidCallback? onOpenContact;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  PracticeHistory? history;
-  UserPreferences? preferences;
-  AuthSession? session;
-  bool isLoading = true;
-  bool isLoadingPreferences = false;
-  bool isAuthenticating = true;
+  bool isDeletingAccount = false;
   String? errorText;
-  String? preferencesErrorText;
-  String? authErrorText;
-
-  @override
-  void initState() {
-    super.initState();
-    restoreSession();
-  }
-
-  Future<void> restoreSession() async {
-    try {
-      final restoredSession = await widget.authService.restoreSession();
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        session = restoredSession;
-      });
-      await Future.wait([
-        loadHistory(restoredSession),
-        loadPreferences(restoredSession),
-      ]);
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        authErrorText = error.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          isAuthenticating = false;
-        });
-      }
-    }
-  }
-
-  Future<void> signInWithGoogle() async {
-    setState(() {
-      isAuthenticating = true;
-      authErrorText = null;
-    });
-
-    try {
-      final nextSession = await widget.authService.signInWithGoogle();
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        session = nextSession;
-      });
-      await Future.wait([
-        loadHistory(nextSession),
-        loadPreferences(nextSession),
-      ]);
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        authErrorText = error.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          isAuthenticating = false;
-        });
-      }
-    }
-  }
 
   Future<void> signOut() async {
-    await widget.authService.signOut();
-
-    if (!mounted) {
-      return;
+    try {
+      await widget.authService.signOut();
+    } finally {
+      widget.onSessionChanged(null);
     }
-
-    setState(() {
-      session = null;
-      history = null;
-      preferences = null;
-      isLoading = false;
-      isLoadingPreferences = false;
-      authErrorText = null;
-      preferencesErrorText = null;
-    });
   }
 
-  Future<void> loadHistory([AuthSession? authSession]) async {
-    final currentSession = authSession ?? session;
-    if (currentSession == null) {
-      setState(() {
-        history = null;
-        isLoading = false;
-        errorText = null;
-      });
+  Future<void> deleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete your account?'),
+            content: const Text(
+              'Your profile, sessions, practice history, quota, and uploaded audio will be deleted.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Delete account'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed != true || !mounted) {
       return;
     }
 
     setState(() {
-      isLoading = true;
+      isDeletingAccount = true;
       errorText = null;
     });
-
     try {
-      final nextHistory = await widget.evaluationApi.fetchHistory(
-        accessToken: currentSession.accessToken,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        history = nextHistory;
-      });
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        history = null;
-        errorText = error.toString();
-      });
-    } finally {
+      await widget.authService.deleteAccount();
+      widget.onSessionChanged(null);
+    } catch (_) {
       if (mounted) {
         setState(() {
-          isLoading = false;
+          errorText =
+              'Account could not be deleted. Check your connection and try again.';
         });
       }
-    }
-  }
-
-  Future<void> loadPreferences([AuthSession? authSession]) async {
-    final currentSession = authSession ?? session;
-    if (currentSession == null) {
-      setState(() {
-        preferences = null;
-        isLoadingPreferences = false;
-        preferencesErrorText = null;
-      });
-      return;
-    }
-
-    setState(() {
-      isLoadingPreferences = true;
-      preferencesErrorText = null;
-    });
-
-    try {
-      final nextPreferences = await widget.userPreferencesApi.fetchPreferences(
-        accessToken: currentSession.accessToken,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        preferences = nextPreferences;
-      });
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        preferencesErrorText = error.toString();
-      });
     } finally {
       if (mounted) {
-        setState(() {
-          isLoadingPreferences = false;
-        });
+        setState(() => isDeletingAccount = false);
       }
     }
-  }
-
-  Future<void> updatePreferences(UserPreferences nextPreferences) async {
-    final currentSession = session;
-    if (currentSession == null) {
-      return;
-    }
-
-    setState(() {
-      isLoadingPreferences = true;
-      preferencesErrorText = null;
-    });
-
-    try {
-      final savedPreferences = await widget.userPreferencesApi
-          .updatePreferences(
-            accessToken: currentSession.accessToken,
-            preferences: nextPreferences,
-          );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        preferences = savedPreferences;
-      });
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        preferencesErrorText = error.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoadingPreferences = false;
-        });
-      }
-    }
-  }
-
-  Future<void> selectLanguage({required bool isDisplayLanguage}) async {
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      builder: (context) {
-        return _OptionSheet<String>(
-          title: isDisplayLanguage ? 'Display language' : 'Native language',
-          options: _languageOptions,
-          labelFor: languageLabel,
-        );
-      },
-    );
-
-    if (selected == null) {
-      return;
-    }
-
-    final currentPreferences = preferences ?? UserPreferences.defaults;
-    await updatePreferences(
-      isDisplayLanguage
-          ? currentPreferences.copyWith(displayLanguage: selected)
-          : currentPreferences.copyWith(nativeLanguage: selected),
-    );
-  }
-
-  Future<void> selectTargetLevel() async {
-    final selected = await showModalBottomSheet<LearningLevel>(
-      context: context,
-      builder: (context) {
-        return _OptionSheet<LearningLevel>(
-          title: 'Target level',
-          options: LearningLevel.values,
-          labelFor: (level) => level.label,
-        );
-      },
-    );
-
-    if (selected == null) {
-      return;
-    }
-
-    await updatePreferences(
-      (preferences ?? UserPreferences.defaults).copyWith(targetLevel: selected),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-      children: [
-        const TopBar(title: 'Profile'),
-        const SizedBox(height: 24),
-        _AccountPanel(
-          session: session,
-          isLoading: isAuthenticating,
-          errorText: authErrorText,
-          onSignIn: signInWithGoogle,
-          onSignOut: signOut,
-        ),
-        const SizedBox(height: 24),
-        const SectionHeader(title: 'Practice history'),
-        const SizedBox(height: 12),
-        _HistorySummaryCard(history: history),
-        const SizedBox(height: 12),
-        if (isLoading)
-          const _HistoryMessage(
-            icon: Icons.history,
-            label: 'Loading practice history',
-          )
-        else if (errorText != null)
-          _HistoryMessage(
-            icon: Icons.error_outline,
-            label: errorText!,
-            action: TextButton.icon(
-              onPressed: () => loadHistory(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          )
-        else if (history == null || history!.items.isEmpty)
-          const _HistoryMessage(
-            icon: Icons.history_toggle_off,
-            label: 'No practice history yet.',
-          )
-        else
-          for (final item in history!.items) ...[
-            _PracticeHistoryTile(
-              item: item,
-              onRetry: () => widget.onRetryPractice(item.toPracticeSentence()),
-            ),
-            const SizedBox(height: 10),
-          ],
-        const SizedBox(height: 24),
-        Text('Settings', style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 16),
-        if (preferencesErrorText != null) ...[
-          _HistoryMessage(
-            icon: Icons.error_outline,
-            label: preferencesErrorText!,
-            action: TextButton.icon(
-              onPressed: () => loadPreferences(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-        SettingsRow(
-          label: 'Display language',
-          value:
-              isLoadingPreferences
-                  ? 'Loading'
-                  : languageLabel(
-                    (preferences ?? UserPreferences.defaults).displayLanguage,
-                  ),
-          onTap:
-              session == null
-                  ? null
-                  : () => selectLanguage(isDisplayLanguage: true),
-        ),
-        SettingsRow(
-          label: 'Native language',
-          value:
-              isLoadingPreferences
-                  ? 'Loading'
-                  : languageLabel(
-                    (preferences ?? UserPreferences.defaults).nativeLanguage,
-                  ),
-          onTap:
-              session == null
-                  ? null
-                  : () => selectLanguage(isDisplayLanguage: false),
-        ),
-        SettingsRow(
-          label: 'Target level',
-          value:
-              isLoadingPreferences
-                  ? 'Loading'
-                  : (preferences ?? UserPreferences.defaults).targetLevel.label,
-          onTap: session == null ? null : selectTargetLevel,
-        ),
-      ],
-    );
-  }
-}
-
-const _languageOptions = ['en', 'ko', 'ja'];
-
-String languageLabel(String value) {
-  return switch (value) {
-    'ko' => 'Korean',
-    'ja' => 'Japanese',
-    _ => 'English',
-  };
-}
-
-class _AccountPanel extends StatelessWidget {
-  const _AccountPanel({
-    required this.session,
-    required this.isLoading,
-    required this.errorText,
-    required this.onSignIn,
-    required this.onSignOut,
-  });
-
-  final AuthSession? session;
-  final bool isLoading;
-  final String? errorText;
-  final VoidCallback onSignIn;
-  final VoidCallback onSignOut;
-
-  @override
-  Widget build(BuildContext context) {
-    final user = session?.user;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.account_circle_outlined, color: AppColors.info),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  user == null ? 'Account' : user.name,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-            ],
-          ),
-          if (user != null) ...[
-            const SizedBox(height: 6),
-            Text(user.email, style: Theme.of(context).textTheme.bodyMedium),
-          ],
-          if (errorText != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              errorText!,
-              style: const TextStyle(
-                color: Color(0xFFB3261E),
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
+          const TopBar(title: 'Profile'),
+          const SizedBox(height: 18),
+          _AccountBlock(session: widget.session),
+          const SizedBox(height: 20),
+          const SectionHeader(title: 'Your content'),
+          const SizedBox(height: 10),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: _SettingsLinkRow(
+              key: const ValueKey('profile-saved-sentences'),
+              icon: Icons.bookmark_border,
+              label: 'Saved sentences',
+              onTap: widget.onOpenSavedSentences,
+              showDivider: false,
             ),
-          ],
-          const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 20),
+          const SectionHeader(title: 'Legal & privacy'),
+          const SizedBox(height: 10),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _SettingsLinkRow(
+                  key: const ValueKey('profile-terms'),
+                  icon: Icons.description_outlined,
+                  label: 'Terms of Service',
+                  onTap:
+                      () =>
+                          widget.onOpenDocument(ConsentDocument.termsOfService),
+                ),
+                _SettingsLinkRow(
+                  key: const ValueKey('profile-privacy'),
+                  icon: Icons.privacy_tip_outlined,
+                  label: 'Privacy Policy',
+                  onTap:
+                      () =>
+                          widget.onOpenDocument(ConsentDocument.privacyPolicy),
+                ),
+                // 광고 설정은 UMP가, 문의는 향후 문의 창구가 각각 callback을 제공한다.
+                // callback이 없는 빌드에서는 눌러도 아무 일이 없는 행을 만들지 않는다.
+                _SettingsLinkRow(
+                  key: const ValueKey('profile-ad-privacy'),
+                  icon: Icons.ads_click_outlined,
+                  label: 'Ad privacy settings',
+                  onTap: widget.onOpenAdPrivacy,
+                ),
+                _SettingsLinkRow(
+                  key: const ValueKey('profile-contact'),
+                  icon: Icons.mail_outline_rounded,
+                  label: 'Contact us',
+                  onTap: widget.onOpenContact,
+                  showDivider: false,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const SectionHeader(title: 'About'),
+          const SizedBox(height: 10),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: _SettingsLinkRow(
+              icon: Icons.info_outline_rounded,
+              label: 'About LingKo 1.0.0',
+              onTap: null,
+              showDivider: false,
+            ),
+          ),
+          const SizedBox(height: 28),
+          // 로그아웃은 되돌릴 수 있어 선으로만 두고, 탈퇴는 채우지 않는다.
+          // 파괴적 동작을 채우면 실수로 누르기 쉬운 무게를 갖게 된다.
+          SecondaryButton(
+            label: 'Sign out',
+            onPressed: isDeletingAccount ? null : signOut,
+          ),
+          const SizedBox(height: AppSpacing.sm),
           SizedBox(
-            width: double.infinity,
-            child:
-                user == null
-                    ? FilledButton.icon(
-                      onPressed: isLoading ? null : onSignIn,
-                      icon:
-                          isLoading
-                              ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : const Icon(Icons.login),
-                      label: const Text('Sign in with Google'),
-                    )
-                    : OutlinedButton.icon(
-                      onPressed: isLoading ? null : onSignOut,
-                      icon: const Icon(Icons.logout),
-                      label: const Text('Sign out'),
-                    ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OptionSheet<T> extends StatelessWidget {
-  const _OptionSheet({
-    required this.title,
-    required this.options,
-    required this.labelFor,
-  });
-
-  final String title;
-  final List<T> options;
-  final String Function(T option) labelFor;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 12),
-              for (final option in options)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(labelFor(option)),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).pop(option),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HistorySummaryCard extends StatelessWidget {
-  const _HistorySummaryCard({required this.history});
-
-  final PracticeHistory? history;
-
-  @override
-  Widget build(BuildContext context) {
-    final bestScore = history?.bestScore;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.emoji_events_outlined, color: AppColors.info),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Best score',
-              style: Theme.of(context).textTheme.titleMedium,
+            height: AppSizes.buttonHeight,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: context.palette.error,
+                side: BorderSide(color: context.palette.errorBorder),
+              ),
+              onPressed: isDeletingAccount ? null : deleteAccount,
+              child: Text(
+                isDeletingAccount ? 'Deleting account' : 'Delete account',
+                style: TextStyle(color: context.palette.error),
+              ),
             ),
           ),
-          Text(
-            bestScore == null ? '-' : '$bestScore',
-            style: Theme.of(context).textTheme.headlineMedium,
+        ],
+      ),
+    );
+  }
+}
+
+/// 계정 정보 블록이다. 설정 목록과 같은 카드 재질로 묶어 프로필의 시작점을 만든다.
+class _AccountBlock extends StatelessWidget {
+  const _AccountBlock({required this.session});
+
+  final AuthSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = session.user;
+    final initial =
+        user.name.trim().isEmpty ? '?' : user.name.trim().characters.first;
+    return AppCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: context.palette.softBlue,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              initial.toUpperCase(),
+              style: TextStyle(
+                color: context.palette.primaryDark,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user.name,
+                  style: TextStyle(
+                    color: context.palette.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.36,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(user.email, style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: 7),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.palette.softBlue,
+                    borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+                  ),
+                  child: Text(
+                    'Google',
+                    style: TextStyle(
+                      color: context.palette.primaryDark,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -583,119 +285,60 @@ class _HistorySummaryCard extends StatelessWidget {
   }
 }
 
-class _HistoryMessage extends StatelessWidget {
-  const _HistoryMessage({required this.icon, required this.label, this.action});
+/// 설정 목록의 한 행이다. 아직 연결되지 않은 항목은 눌리지 않게 흐리게 둔다.
+class _SettingsLinkRow extends StatelessWidget {
+  const _SettingsLinkRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.showDivider = true,
+  });
 
   final IconData icon;
   final String label;
-  final Widget? action;
+  final VoidCallback? onTap;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.textSecondary),
-          const SizedBox(height: 8),
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          if (action != null) ...[const SizedBox(height: 8), action!],
-        ],
-      ),
-    );
-  }
-}
-
-class _PracticeHistoryTile extends StatelessWidget {
-  const _PracticeHistoryTile({required this.item, required this.onRetry});
-
-  final PracticeHistoryItem item;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  item.originalText,
-                  style: Theme.of(context).textTheme.titleLarge,
+    final enabled = onTap != null;
+    final color =
+        enabled ? context.palette.textPrimary : context.palette.textMuted;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        // 부모 카드는 divider를 끝까지 긋기 위해 padding이 없으므로 행에서 도안 여백을 둔다.
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        constraints: const BoxConstraints(minHeight: 52),
+        decoration: BoxDecoration(
+          border:
+              showDivider
+                  ? Border(
+                    bottom: BorderSide(color: context.palette.lineSubtle),
+                  )
+                  : null,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(width: 12),
-              _ScoreBadge(score: item.overallScore),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            item.standardPronunciation,
-            style: const TextStyle(
-              color: AppColors.info,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
             ),
-          ),
-          if (item.recognizedText.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              'Recognized: ${item.recognizedText}',
-              style: Theme.of(context).textTheme.bodyMedium,
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: context.palette.textMuted,
             ),
           ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: MetaPill(label: item.gradeLabel)),
-              TextButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.replay),
-                label: const Text('Practice again'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ScoreBadge extends StatelessWidget {
-  const _ScoreBadge({required this.score});
-
-  final int score;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: AppColors.brandSoft,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Center(
-        child: Text(
-          '$score',
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-          ),
         ),
       ),
     );

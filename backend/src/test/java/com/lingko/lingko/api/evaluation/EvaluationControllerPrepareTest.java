@@ -6,8 +6,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -17,13 +17,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Evaluation 컨트롤러 Prepare Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 @WebMvcTest(EvaluationController.class)
 class EvaluationControllerPrepareTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private EvaluationService evaluationService;
 
     @Test
@@ -32,8 +37,9 @@ class EvaluationControllerPrepareTest {
         PronunciationPrepareResponse response = PronunciationPrepareResponse.builder()
                 .sentence(PronunciationPrepareResponse.SentenceResponse.builder()
                         .source("CUSTOM")
-                        .originalText("한국어를 배우고 있어요.")
-                        .standardPronunciation("한구거를 배우고 이써요.")
+                        .originalText("한국어를 배우고 있어요")
+                        .standardPronunciation("한구거를 배우고 이써요")
+                        .romanizedPronunciation("han-gu-geo-reul bae-u-go i-sseo-yo")
                         .translation("Practice with your own sentence.")
                         .categoryLabel("Free practice")
                         .learningPoint("Linking across syllables")
@@ -49,7 +55,9 @@ class EvaluationControllerPrepareTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.practiceToken").doesNotExist())
                 .andExpect(jsonPath("$.sentence.source").value("CUSTOM"))
-                .andExpect(jsonPath("$.sentence.standardPronunciation").value("한구거를 배우고 이써요."));
+                .andExpect(jsonPath("$.sentence.standardPronunciation").value("한구거를 배우고 이써요"))
+                .andExpect(jsonPath("$.sentence.romanizedPronunciation")
+                        .value("han-gu-geo-reul bae-u-go i-sseo-yo"));
     }
 
     @Test

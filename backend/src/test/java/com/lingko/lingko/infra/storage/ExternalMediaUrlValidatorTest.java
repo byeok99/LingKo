@@ -14,6 +14,11 @@ import java.net.URL;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * External Media Url Validator Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 class ExternalMediaUrlValidatorTest {
 
     @Test
@@ -38,13 +43,30 @@ class ExternalMediaUrlValidatorTest {
     }
 
     @Test
+    @DisplayName("비어 있거나 파싱할 수 없는 URL은 원문을 노출하지 않고 거부한다")
+    void validateRejectsBlankOrMalformedUrlWithoutLeakingIt() {
+        ExternalMediaUrlValidator validator = validatorWithPublicAddress();
+        String malformedUrl = "https://replicate.delivery/%zz?token=must-not-leak";
+
+        assertThatThrownBy(() -> validator.validate(" "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("비어있음");
+        assertThatThrownBy(() -> validator.validate(malformedUrl))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("유효하지 않은 외부 미디어 URL")
+                .hasMessageNotContaining("must-not-leak");
+    }
+
+    @Test
     @DisplayName("allowlist 밖 host는 거부한다")
     void validateRejectsUnknownHost() {
         ExternalMediaUrlValidator validator = validatorWithPublicAddress();
+        String sensitiveUrl = "https://example.com/video.mp4?token=must-not-leak";
 
-        assertThatThrownBy(() -> validator.validate("https://example.com/video.mp4"))
+        assertThatThrownBy(() -> validator.validate(sensitiveUrl))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("허용되지 않은 외부 미디어 host");
+                .hasMessageContaining("허용되지 않은 외부 미디어 host")
+                .hasMessageNotContaining("must-not-leak");
     }
 
     @Test
@@ -98,6 +120,27 @@ class ExternalMediaUrlValidatorTest {
         assertThatThrownBy(() -> validator.openConnection("https://replicate.delivery/output/video.mp4"))
                 .isInstanceOf(VideoGenerationException.class)
                 .hasMessageContaining("크기 제한 초과");
+    }
+
+    @Test
+    @DisplayName("성공 응답만 다운로드 연결로 반환하고 공급자 오류는 거부한다")
+    void openConnectionAcceptsSuccessAndRejectsProviderError() {
+        ExternalMediaUrlValidator successValidator = new ExternalMediaUrlValidator(
+                awsSettings("lingko", "ap-northeast-2"),
+                host -> new InetAddress[]{uncheckedAddress("203.0.113.10")},
+                url -> new FakeHttpURLConnection(url, 200, 1024)
+        );
+        ExternalMediaUrlValidator errorValidator = new ExternalMediaUrlValidator(
+                awsSettings("lingko", "ap-northeast-2"),
+                host -> new InetAddress[]{uncheckedAddress("203.0.113.10")},
+                url -> new FakeHttpURLConnection(url, 503, 0)
+        );
+
+        assertThatCode(() -> successValidator.openConnection("https://replicate.delivery/output/video.mp4"))
+                .doesNotThrowAnyException();
+        assertThatThrownBy(() -> errorValidator.openConnection("https://replicate.delivery/output/video.mp4"))
+                .isInstanceOf(VideoGenerationException.class)
+                .hasMessageContaining("HTTP 503");
     }
 
     private ExternalMediaUrlValidator validatorWithPublicAddress() {

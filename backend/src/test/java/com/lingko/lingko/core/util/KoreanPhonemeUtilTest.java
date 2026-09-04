@@ -6,6 +6,11 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.*;
 
+/**
+ * Korean Phoneme Util Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 class KoreanPhonemeUtilTest {
 
     @ParameterizedTest
@@ -92,6 +97,12 @@ class KoreanPhonemeUtilTest {
     void testToPronunciation_종성7음(String input, String expected) {
         assertThat(KoreanPhonemeUtil.toPronunciation(input))
                 .isEqualTo(expected);
+    }
+
+    @Test
+    void testToPronunciation_맛있겠다는대표음과경음화를적용한다() {
+        assertThat(KoreanPhonemeUtil.toPronunciation("맛있겠다"))
+                .isEqualTo("마싣껟따");
     }
 
     @Test

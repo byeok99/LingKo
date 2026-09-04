@@ -1,0 +1,128 @@
+# Work Log
+
+## 2026-09-04 - AdMob test device 빌드 설정 추가
+
+- 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`
+- 내용: `ADMOB_TEST_DEVICE_ID`를 공백 정규화해 Google Mobile Ads 초기화에 전달하고, 값이 없으면 운영 요청 설정을 변경하지 않게 했다. 운영 Ad Unit과 SSV custom data 경로는 유지한다.
+- 검증: 구현 전 RED 확인, 대상 Flutter 10개·전체 145개 테스트 통과, 라인 커버리지 80.32%, `flutter analyze` 통과, iOS Release build 통과
+- 리스크: Google Mobile Ads용 test device ID를 실기기 로그에서 확보해 `.env.local`에 추가해야 함
+
+## 2026-09-04 - iOS 운영 Rewarded 광고 기본값 적용
+
+- 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`
+- 내용: Xcode·Release 빌드가 `.env.local`을 읽지 않아 충전 버튼이 비활성화되던 문제를 막기 위해 공개 iOS 운영 Rewarded Ad Unit ID를 안전한 기본값으로 고정했다. 명시적 `ADMOB_IOS_REWARDED_AD_UNIT_ID`는 test ID 등으로 계속 override할 수 있다.
+- 검증: 설정 없음 RED→GREEN 테스트, `flutter analyze`, Flutter 전체 143개 테스트, `--dart-define` 없는 iOS Release build 및 바이너리 ID 포함 확인
+- 리스크: AdMob console의 SSV callback URL과 실제 광고 시청·지급 E2E는 실기기에서 확인 필요
+
+## 2026-09-03 - 법무 문서를 인앱 WebView로 전환
+
+- 변경 파일: `legal_document_launcher.dart`, `WORK_LOG.md`
+- 내용: 약관·처리방침을 외부 브라우저로 넘기지 않고 앱 내부 WebView로 열며, 정적 문서에 필요 없는 JavaScript와 DOM 저장소를 비활성화했다.
+- 검증: 전용 RED→GREEN 테스트, `flutter analyze`, 전체 143개 테스트, iOS Simulator Debug 빌드 통과
+- 리스크: iPhone 실기기에서 인앱 닫기 동작과 긴 문서 스크롤을 수동 확인해야 함
+
+## 2026-08-19 - Review 세션 저장 경계 추가
+
+- 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`
+- 내용: Backend가 발급한 review 세션을 기존 revision 경합 방지와 secure storage 흐름으로 저장한다.
+- 검증: `app_auth_service_test.dart`, Flutter 전체 138개 테스트 통과
+- 리스크: 없음
+
+## 2026-08-18 - Apple 인증 service 계약 주석 보강
+
+- 변경 파일: `app_auth_service.dart`, `apple_identity_service.dart`, `WORK_LOG.md`
+- 내용: 공개 로그인 method, nonce 생성·전달 경계, nullable Apple credential field와 예외 의미를 Dartdoc에 명시했다.
+- 검증: `flutter analyze` 통과, Flutter 전체 테스트 132개 통과
+- 리스크: 동작 변경 없음
+
+## 2026-08-12 - Apple native identity service 구현
+
+- 변경 파일: `apple_identity_service.dart`, `app_auth_service.dart`, `WORK_LOG.md`
+- 내용: cryptographic raw nonce를 만들고 SHA-256만 Apple에 전달한 뒤 Backend 세션 교환·저장을 연결했다.
+- 검증: nonce hash·빈 token·세션 저장 테스트와 Flutter 전체 테스트 통과
+- 리스크: authorization code·Apple refresh token은 아직 처리하지 않음
+
+## 2026-08-12 - Rewarded Ad customData 전달
+
+- 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`
+- 내용: 광고 표시 전에 server session token을 `ServerSideVerificationOptions.customData`에 설정한다.
+- 검증: `rewarded_ad_service_test.dart` 통과
+- 리스크: 실제 SSV 도착은 공개 Backend에서만 검증 가능
+
+## 2026-08-08 - AdMob 보상형 광고 서비스 추가
+
+- 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`
+- 내용: 플랫폼별 ID 선택, UMP 동의, SDK 초기화, Rewarded Ad load/show/dispose와 초기화 실패 재시도를 화면에서 분리했다.
+- 검증: `flutter test test/rewarded_ad_service_test.dart`, Flutter 전체 테스트 및 analyze 통과
+- 리스크: 운영 보상 신뢰성은 별도 Google SSV 서버 검증이 필요하다
+
+## 2026-08-07 - 인증 갱신 경계에 법무 동의 요청 연결
+
+- 변경 파일: `app_auth_service.dart`
+- 내용: 동의 상태 조회·제출도 기존 401 refresh와 1회 재시도 경계를 사용하도록 연결했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 113개 통과(라인 81.26%)
+- 리스크: 없음
+
+## 2026-08-07 - 문서 열기 실패 원인을 개발 빌드에서 확인 가능하게 수정
+
+- 변경 파일: `legal_document_launcher.dart`
+- 내용: 실패를 bool로만 돌려주고 예외를 통째로 삼켜 원인을 알 수 없었다. 개발 빌드에서만 대상 URL과 가장 흔한 원인(Android `<queries>`, iOS `LSApplicationQueriesSchemes`)을 함께 남기도록 했다. 호출자에게 주는 계약(bool)은 바꾸지 않았다.
+- 검증: `flutter analyze`, `flutter test` 106개 통과
+- 리스크: 없음
+
+## 2026-08-07 - 법무 문서 열기 서비스 추가
+
+- 변경 파일: `legal_document_launcher.dart`
+- 내용: 백엔드가 서빙하는 공개 URL을 외부 브라우저로 여는 경계를 추가했다. 앱 안에서 문서를 렌더링하지 않는 이유는 약관 개정 시 앱 업데이트를 기다리지 않고 최신본이 보여야 하기 때문이고, 같은 URL이 스토어 심사용 공개 주소로도 쓰인다. 브라우저가 없는 기기를 앱 오류로 다루지 않고 false를 돌려줘 호출자가 대체 안내를 하게 했다.
+- 검증: `flutter analyze`, `flutter test --coverage` 106개 통과(라인 81.22%)
+- 리스크: 문서 경로 구간이 백엔드 `LegalDocument`의 path와 문자열로만 맞춰져 있다. 어긋나면 404가 되므로 테스트로 고정했다
+
+## 2026-08-04 - 마이크 입력 레벨 스트림 노출
+
+- 변경 파일: `audio_recorder_service.dart`
+- 내용: 화면이 실제 입력 레벨을 보여줄 수 있도록 amplitudeStream을 서비스 계약에 추가했다. dBFS 원값 대신 0~1 표시용 비율로 변환해 UI가 플러그인 단위에 결합되지 않게 했다.
+- 검증: `flutter analyze`, `flutter test` 81개 통과
+- 리스크: 촉각 피드백과 실제 마이크 레벨은 시뮬레이터가 아닌 실기기 확인이 필요함
+
+## 2026-07-30 - 한국어 문장 TTS 서비스 추가
+
+- 변경 파일: `sentence_speech_service.dart`, `WORK_LOG.md`
+- 내용: `ko-KR` 기기 TTS 초기화, Normal·Slow 속도, 중복 발화 방지와 재시도 가능한 오류 처리를 UI에서 분리했다.
+- 검증: `flutter analyze`, `flutter test` 전체 63개 통과, iOS·Android Debug build
+- 리스크: 제조사·설치 음성별 실제 발화 속도와 품질 차이는 실기기 확인 필요
+
+## 2026-07-29 - 계정 삭제 성공 후 로컬 세션 정리
+
+- 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`
+- 내용: 서버 탈퇴 성공 때만 Secure Storage 세션을 삭제하고 실패 시 동일 세션으로 재시도할 수 있게 보존했다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 네트워크 중단 실기기 재시도 UX는 수동 확인 필요
+
+## 2026-07-24 - 한국어 의도 중심 주석 보강
+
+- 변경 파일: `app_auth_service.dart`, `audio_recorder_service.dart`, `auth_session_store.dart`, `google_identity_service.dart`, `WORK_LOG.md`
+- 내용: 해당 폴더의 코드에 의도, 업무 의미, 구현 이유, 선택 기준을 설명하는 한국어 주석을 보강했다.
+- 검증: `flutter analyze`, `flutter test` 통과
+- 리스크: 동작 변경 없음
+
+
+## 2026-07-23 - 인증 동시성 코드 목적 주석 보완
+
+- 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`
+- 내용: single-flight refresh와 세션 revision 경쟁 조건 방어의 목적을 Dartdoc과 블록 주석으로 명시했다.
+- 검증: `flutter analyze`, `flutter test`
+- 리스크: 동작 변경 없음
+
+## 2026-07-23 - 동시 요청 안전 Refresh Token 자동 갱신
+
+- 변경 파일: `app_auth_service.dart`, `WORK_LOG.md`
+- 내용: 401 후 refresh와 1회 재시도, 동시 refresh single-flight, 회전 완료 후 늦은 401 경합 처리, 실패 시 Secure Storage 삭제를 구현했다. 세션 revision으로 로그아웃 중 늦은 refresh 응답이 세션을 복원하는 경쟁 조건도 차단했다.
+- 검증: 인증 서비스 단위 테스트 및 Flutter 전체 테스트
+- 리스크: refresh 실패는 보안상 재로그인을 요구하므로 일시적 서버 장애에도 로그인 화면으로 전환됨
+
+## 2026-07-20 - 작업 이력 파일 초기화
+
+- 변경 파일: `WORK_LOG.md`
+- 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
+- 검증: 파일 생성 여부 확인
+- 리스크: 없음

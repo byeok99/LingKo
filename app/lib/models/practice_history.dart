@@ -1,6 +1,11 @@
+// 파일 의도: practice history의 앱 내부 데이터 의미와 API 매핑을 정의한다.
+// 선택 이유: 동적 JSON을 형식이 지정된 model로 변환해 잘못된 응답을 UI 경계 전에 차단한다.
+
 import 'practice_result.dart';
 import 'practice_sentence.dart';
 
+/// Practice History 값의 의미와 불변 데이터 구조를 나타낸다.
+/// UI가 Map key나 nullable JSON 세부사항을 직접 다루지 않도록 형식이 지정된 model을 선택했다.
 class PracticeHistory {
   const PracticeHistory({
     required this.items,
@@ -41,6 +46,8 @@ class PracticeHistory {
   final int? bestScore;
 }
 
+/// Practice History Item 값의 의미와 불변 데이터 구조를 나타낸다.
+/// UI가 Map key나 nullable JSON 세부사항을 직접 다루지 않도록 형식이 지정된 model을 선택했다.
 class PracticeHistoryItem {
   const PracticeHistoryItem({
     required this.evaluationLogId,
@@ -48,18 +55,21 @@ class PracticeHistoryItem {
     required this.source,
     required this.originalText,
     required this.standardPronunciation,
+    this.romanizedPronunciation = '',
     required this.recognizedText,
     required this.overallScore,
     required this.gradeLabel,
     required this.summary,
     required this.scoreBreakdown,
     required this.characters,
+    this.words = const [],
     this.createdAt,
   });
 
   factory PracticeHistoryItem.fromJson(Map<String, Object?> json) {
     final scoreBreakdownJson = json['scoreBreakdown'];
     final charactersJson = json['characters'];
+    final wordsJson = json['words'];
 
     return PracticeHistoryItem(
       evaluationLogId: _intValue(json['evaluationLogId']),
@@ -67,6 +77,8 @@ class PracticeHistoryItem {
       source: _stringValue(json['source'], fallback: 'CUSTOM'),
       originalText: _stringValue(json['originalText']),
       standardPronunciation: _stringValue(json['standardPronunciation']),
+      romanizedPronunciation:
+          _stringValue(json['romanizedPronunciation']).trim(),
       recognizedText: _stringValue(json['recognizedText']),
       overallScore: _intValue(json['overallScore']),
       gradeLabel: _stringValue(json['gradeLabel']),
@@ -83,8 +95,15 @@ class PracticeHistoryItem {
           charactersJson is List
               ? charactersJson
                   .whereType<Map<String, Object?>>()
-                  .map(CharacterResult.fromResultJson)
+                  .map(CharacterResult.fromHistoryJson)
                   .toList()
+              : const [],
+      words:
+          wordsJson is List
+              ? wordsJson
+                  .whereType<Map<String, Object?>>()
+                  .map(PracticeWordResult.fromHistoryJson)
+                  .toList(growable: false)
               : const [],
       createdAt: _dateTimeValue(json['createdAt']),
     );
@@ -96,6 +115,7 @@ class PracticeHistoryItem {
       source: source,
       text: originalText,
       pronunciation: standardPronunciation,
+      romanizedPronunciation: romanizedPronunciation,
       translation: 'Practice this sentence again.',
       level: source,
       category: 'History',
@@ -110,12 +130,16 @@ class PracticeHistoryItem {
   final String source;
   final String originalText;
   final String standardPronunciation;
+
+  /// 조회 시 표준 발음에서 파생된 음절 단위 로마자 읽기 가이드다.
+  final String romanizedPronunciation;
   final String recognizedText;
   final int overallScore;
   final String gradeLabel;
   final String summary;
   final PracticeScoreBreakdown scoreBreakdown;
   final List<CharacterResult> characters;
+  final List<PracticeWordResult> words;
   final DateTime? createdAt;
 }
 

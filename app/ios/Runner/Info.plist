@@ -5,15 +5,26 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Lingko App</string>
+	<string>LingKo</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.717500111241-kem934dspf99954d5oalnfj93pucolut</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleName</key>
-	<string>lingko_app</string>
+	<string>LingKo</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -22,10 +33,31 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>717500111241-kem934dspf99954d5oalnfj93pucolut.apps.googleusercontent.com</string>
+	<key>GIDServerClientID</key>
+	<string>717500111241-rbs3khdg04duemkftocl1p1ekevjl759.apps.googleusercontent.com</string>
+	<!-- iOS 광고 요청이 LingKo의 AdMob 앱으로 귀속되도록 플랫폼 전용 App ID를 사용한다. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-5081228614816629~4037967839</string>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>LingKo records your pronunciation so it can score your Korean speaking practice.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- 약관·개인정보 처리방침을 브라우저로 열기 위해 조회할 URL scheme이다.
+	     선언하지 않으면 canLaunchUrl이 항상 false를 돌려줘 열기 요청이 실패한다. -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

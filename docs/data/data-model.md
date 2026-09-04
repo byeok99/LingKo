@@ -5,9 +5,31 @@
 ```mermaid
  erDiagram
     USERS ||--o{ EVALUATION_LOG : records
+    USERS ||--o{ EVALUATION_JOBS : submits
     USERS ||--o{ DAILY_PRACTICE_QUOTA : owns
+    USERS ||--o{ AUTH_REFRESH_SESSIONS : authenticates
+    USERS ||--o{ SAVED_SENTENCE : bookmarks
+    USERS ||--o{ LEGAL_CONSENTS : accepts
+    USERS ||--o{ AD_REWARD_RECEIPTS : redeems
+    USERS ||--o{ AD_REWARD_SESSIONS : opens
     EVALUATION_LOG ||--o{ EVALUATION_SYLLABLE : contains
+    EVALUATION_LOG ||--o{ EVALUATION_WORD : contains
     SYLLABLES ||--o{ EVALUATION_SYLLABLE : references
+    RECOMMENDED_SENTENCES ||--o{ SAVED_SENTENCE : references
+
+    RECOMMENDED_SENTENCES {
+      bigint sentence_id PK
+      varchar original_text
+      varchar translation
+      varchar level_label
+      varchar category_code
+      varchar category_label
+      varchar learning_point
+      boolean active
+      int sort_order
+      datetime created_at
+      datetime updated_at
+    }
 
     USERS {
       bigint user_idx PK
@@ -16,9 +38,6 @@
       varchar email
       varchar name
       varchar profile_image_url
-      varchar display_language
-      varchar native_language
-      varchar target_level
       datetime created_at
       datetime last_login_at
     }
@@ -44,11 +63,43 @@
       bigint evaluation_syllables_idx PK
       bigint evaluation_log_idx FK
       varchar syllable_char FK
-      int score
+      int score nullable
       int position_no
+      int word_position nullable
       varchar feedback
       varchar mouth_guide_url
       varchar tongue_guide_url
+    }
+
+    EVALUATION_WORD {
+      bigint evaluation_word_idx PK
+      bigint evaluation_log_idx FK
+      int position_no
+      varchar word_text
+      int score nullable
+    }
+
+    EVALUATION_JOBS {
+      char job_id PK
+      bigint user_idx FK
+      varchar idempotency_key
+      char request_hash
+      varchar audio_object_key
+      varchar source
+      bigint sentence_id
+      varchar original_text
+      varchar standard_pronunciation
+      date quota_date
+      varchar quota_source
+      varchar status
+      int attempt_count
+      datetime next_attempt_at
+      datetime lease_expires_at
+      longtext result_payload
+      varchar error_code
+      datetime completed_at
+      datetime created_at
+      datetime updated_at
     }
 
     SYLLABLES {
@@ -63,35 +114,120 @@
       date quota_date
       int free_limit
       int free_used
+      int free_reserved
       int rewarded_available
+      int rewarded_reserved
+      datetime next_refill_at
       datetime created_at
       datetime updated_at
+    }
+
+    AUTH_REFRESH_SESSIONS {
+      char session_id PK
+      bigint user_idx FK
+      char current_token_hash UK
+      datetime expires_at
+      datetime revoked_at
+      datetime created_at
+      datetime updated_at
+    }
+
+    SAVED_SENTENCE {
+      bigint saved_sentence_idx PK
+      bigint user_idx FK
+      bigint sentence_id
+      datetime created_at
+    }
+
+    LEGAL_CONSENTS {
+      bigint legal_consent_idx PK
+      bigint user_idx FK
+      varchar document_version
+      boolean terms_agreed
+      boolean privacy_acknowledged
+      boolean marketing_opt_in
+      datetime client_agreed_at
+      datetime recorded_at
+    }
+
+    AD_REWARD_RECEIPTS {
+      bigint ad_reward_receipt_id PK
+      bigint user_idx FK
+      varchar reward_event_id
+      varchar provider_transaction_id UK
+      timestamp created_at
+    }
+
+    AD_REWARD_SESSIONS {
+      bigint ad_reward_session_id PK
+      bigint user_idx FK
+      char session_token_hash UK
+      varchar status
+      varchar transaction_id UK
+      boolean credited
+      timestamp expires_at
+      timestamp completed_at
     }
 ```
 
 ## 주요 제약
 
 - `users`: `(social_id, social_type)` 유일
+- `recommended_sentences`: 표준 발음을 저장하지 않고 원문을 현재 음운 규칙으로 변환
 - `evaluation_log`: `(user_idx, created_at)` 조회 인덱스
 - `evaluation_syllable`: `(evaluation_log_idx, position_no)` 유일
+- `evaluation_word`: `(evaluation_log_idx, position_no)` 유일
+- `evaluation_syllable.word_position`: 같은 평가의 `evaluation_word.position_no`를 논리적으로 가리키며 과거 기록 호환을 위해 nullable
+- `evaluation_jobs`: `(user_idx, idempotency_key)`, `audio_object_key` 유일
+- `evaluation_jobs`: `(status, next_attempt_at, lease_expires_at, created_at)` Worker claim 인덱스
+- `evaluation_jobs`: `(status, completed_at)` 완료 작업 정리 인덱스
+- `evaluation_jobs.status`: `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`
+- `evaluation_jobs.phase`: `QUEUED`, `DOWNLOADING_AUDIO`, `ANALYZING_SPEECH`, `PREPARING_GUIDES`, `FINALIZING`; 완료율 추정값이 아니라 Worker가 실제 진입한 처리 경계
 - `daily_practice_quota`: `(user_idx, quota_date)` 유일
 - `daily_practice_quota.quota_date` 인덱스
+- 물리 테이블명과 `quota_date`는 기존 평가 job reservation token·migration 호환을 위해 유지하며, 서비스는 사용자별 최신 행 하나를 현재 시간 충전형 에너지로 사용
+- `free_reserved`, `rewarded_reserved`는 외부 평가 중 확보한 횟수이며 성공 시 사용량으로 확정하고 실패 시 복구
+- `next_refill_at`은 최초 예약 시 설정되고 1시간 경과 구간마다 `free_used`를 1씩 복구하며 최대 5회에서 `NULL`
+- `auth_refresh_sessions.current_token_hash` 유일
+- `auth_refresh_sessions`: `(user_idx, revoked_at)`, `expires_at` 조회 인덱스
+- `saved_sentence`: `(user_idx, sentence_id)` 유일. 같은 문장을 두 번 저장할 수 없습니다
+- `saved_sentence`: `(user_idx, created_at DESC)` 최근 저장 순 목록 인덱스
+- `legal_consents`: `(user_idx, document_version)` 유일. 같은 사용자·버전의 재시도가 새 행을 만들지 않는 idempotent 기록입니다
+- `legal_consents`: `(user_idx, recorded_at DESC)` 최신 기록 순 조회 인덱스
+- `legal_consents.client_agreed_at`은 기기 시각 참고값이고 `recorded_at`이 서버 기준 감사 시각입니다. 기기 시각은 사용자가 바꿀 수 있어 단독 근거로 쓰지 않습니다
+- `legal_consents.document_version`은 문서 시행일(`docs/legal/`)과 앱의 `consentDocumentVersion` 상수와 같은 값을 유지합니다
+- `ad_reward_receipts`: 기존 `(user_idx, reward_event_id)` 호환 제약과 nullable `provider_transaction_id` 전역 유일 제약. Google SSV transaction이 quota를 두 번 지급하지 못하게 막습니다
+- `ad_reward_sessions`: 원본을 저장하지 않는 `session_token_hash` 유일 제약, 상태·만료·transaction·실제 지급 여부를 보관합니다
+- `ad_reward_receipts`: `(user_idx, created_at)` 조회 인덱스
+- `legal_consents`, `ad_reward_receipts`, `ad_reward_sessions`의 사용자 FK는 `ON DELETE CASCADE`입니다
 
 ## 데이터 소유권
 
 | 데이터 | 소유자 | 삭제 기준 |
 |---|---|---|
-| 사용자 프로필 | 사용자 | 회원 탈퇴 정책 필요 |
+| 사용자 프로필 | 사용자 | 현재 Access·Refresh Token 재확인 후 회원 탈퇴 시 삭제 |
 | 학습 설정 | 사용자 | 사용자와 함께 삭제 |
-| 평가 기록 | 사용자 | 사용자 삭제·보존 정책 필요 |
-| 음성 URL | 사용자 평가 | 실제 S3 객체와 동기 삭제 필요 |
+| 평가 기록 | 사용자 | 회원 탈퇴 DB transaction에서 단어 점수와 음절 가이드 함께 삭제 |
+| 평가 작업 | 사용자 | 회원 탈퇴 시 삭제, 그 외 성공·최종 실패 후 기본 7일 보존 |
+| 평가 원본 음성 | 사용자 평가 작업 | 성공·최종 실패 후 삭제, 미제출·삭제 실패 객체는 1일 Lifecycle 만료 |
 | 음절 가이드 | 서비스 공용 | 콘텐츠 관리 정책 적용 |
-| 일일 쿼터 | 사용자·날짜 | 운영상 보존 기간 결정 필요 |
+| 평가 기회 | 사용자 | 회원 탈퇴 시 삭제 |
+| Refresh 세션 | 사용자·기기 | 로그아웃·만료·회원 탈퇴 시 폐기 또는 삭제 |
+| 저장 문장 | 사용자 | 회원 탈퇴 시 삭제. 참조하는 추천 문장 자체는 공용 콘텐츠라 보존 |
+| 약관 동의 기록 | 사용자 | 회원 탈퇴 시 FK `ON DELETE CASCADE`로 삭제. 문서 개정 시 과거 버전 기록은 지우지 않고 새 버전 행을 추가 |
+| 광고 보상 영수증 | 사용자 | 회원 탈퇴 시 FK `ON DELETE CASCADE`로 삭제 |
+| 광고 보상 세션 | 사용자 | 회원 탈퇴 시 FK `ON DELETE CASCADE`로 삭제 |
 
 ## 주의사항
 
 - 엔티티와 실제 Flyway 스키마가 항상 일치하도록 테스트합니다.
 - `sentence_id`는 추천 문장 참조지만 현재 엔티티 연관관계가 아닌 값으로 저장됩니다.
+- `evaluation_log`와 `evaluation_jobs`의 `standard_pronunciation`은 평가 당시 기준을 재현하기 위한 snapshot이며 추천 콘텐츠의 정답 원천이 아닙니다.
 - 가이드 생성 작업은 DB 모델이 없으며 현재 메모리에만 저장됩니다.
-- Refresh Token 저장 모델은 없습니다.
-- 사용자 삭제 cascade 및 S3 객체 삭제 정책은 아직 명확하지 않습니다.
+- Refresh Token 원문은 저장하지 않고 현재 토큰의 SHA-256 해시만 저장합니다.
+- 평가 작업은 MySQL을 상태의 원본으로 사용하며 Worker 재시작 후에도 재시도할 수 있습니다.
+- 평가 성공 시 결과는 `evaluation_log`와 `evaluation_jobs.result_payload`에 저장되고 원본 S3 객체는 삭제합니다.
+- 완료된 평가 작업은 Idempotency 응답 재사용을 위해 기본 7일 보존한 뒤 batch 삭제하며 진행 중 작업은 자동 삭제하지 않습니다.
+- 작업 생성 전 업로드됐지만 제출되지 않은 객체나 삭제 실패 객체는 `evaluation-audio/` 1일 Lifecycle로 정리합니다.
+- 회원 탈퇴는 현재 object와 모든 S3 version·delete marker를 먼저 삭제하고, 성공한 경우에만 Refresh 세션 → 평가 작업 → 평가 음절·단어·기록 → 쿼터 → 사용자 순서의 DB transaction을 실행합니다.
+- 공용 `syllables` 기준 데이터는 특정 사용자가 소유하지 않으므로 회원 탈퇴 시 보존합니다.

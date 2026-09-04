@@ -42,11 +42,20 @@ out/
 .vscode/
 
 application.yaml
+!backend/src/main/resources/application.yaml
 .env
 .env.*
 !.env.example
+backend/.local/
+
+# Local app reference docs
+app/docs/
+!app/docs/
+app/docs/*
+!app/docs/WORK_LOG.md
 
 # Local agent/runtime files
 .dmux/
 .dumx-hooks
-AGENTS.md
+
+docs/design/lingko-blue-wireframe.png

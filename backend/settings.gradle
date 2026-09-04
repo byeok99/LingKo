@@ -1,5 +1,6 @@
 pluginManagement {
 	repositories {
+		// Spring 플러그인과 Gradle 플러그인을 프로젝트 설정 단계에서 해석하는 저장소다.
 		maven { url = 'https://repo.spring.io/snapshot' }
 		gradlePluginPortal()
 	}

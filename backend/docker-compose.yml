@@ -8,6 +8,7 @@ services:
     ports:
       - "${DB_PORT:-3306}:3306"
     environment:
+      # root는 컨테이너 초기화에만 쓰고 애플리케이션은 DB_USER의 일반 계정으로 접속한다.
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required in .env}"
       MYSQL_DATABASE: "${DB_NAME:-lingko}"
       MYSQL_USER: "${DB_USER:-lingko}"
@@ -24,6 +25,7 @@ services:
       retries: 10
       start_period: 30s
     volumes:
+      # 컨테이너를 다시 만들어도 개발 데이터가 유지되도록 Docker 관리 볼륨을 사용한다.
       - mysql_data:/var/lib/mysql
 
   backend:
@@ -35,11 +37,13 @@ services:
     env_file:
       - .env
     depends_on:
+      # 포트가 열리는 시점이 아니라 MySQL healthcheck가 성공한 뒤 백엔드를 시작한다.
       mysql:
         condition: service_healthy
     ports:
       - "${APP_PORT:-8080}:8080"
     environment:
+      # 컨테이너 내부에서는 localhost가 아닌 Compose 서비스 이름으로 MySQL을 찾는다.
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: "${DB_NAME:-lingko}"
@@ -47,6 +51,47 @@ services:
       DB_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required in .env}"
       DB_DRIVER: "${DB_DRIVER:-com.mysql.cj.jdbc.Driver}"
       FFMPEG_PATH: ffmpeg
+      # 평가 작업은 별도 evaluation-worker가 처리해 API 프로세스의 외부 호출·임시 파일 부하를 격리한다.
+      EVALUATION_WORKER_ENABLED: "${EVALUATION_API_WORKER_ENABLED:-false}"
+      # 외부 비용 작업 endpoint는 명시적으로 활성화한 환경에서만 등록한다.
+      GUIDE_JOBS_API_ENABLED: "${GUIDE_JOBS_API_ENABLED:-false}"
+      GUIDE_JOBS_INTERNAL_TOKEN: "${GUIDE_JOBS_INTERNAL_TOKEN:-}"
+      GUIDE_JOBS_REQUESTS_PER_MINUTE: "${GUIDE_JOBS_REQUESTS_PER_MINUTE:-2}"
+      GUIDE_JOBS_MAX_CONCURRENT: "${GUIDE_JOBS_MAX_CONCURRENT:-1}"
+      # App Review 전용 인증은 기본 비활성화하며 운영 환경이 명시적으로 설정할 때만 열린다.
+      REVIEW_ACCESS_ENABLED: "${REVIEW_ACCESS_ENABLED:-false}"
+      REVIEW_ACCESS_CODE_SHA256: "${REVIEW_ACCESS_CODE_SHA256:-}"
+      REVIEW_ACCESS_USER_ID: "${REVIEW_ACCESS_USER_ID:-}"
+      REVIEW_ACCESS_MAX_ATTEMPTS: "${REVIEW_ACCESS_MAX_ATTEMPTS:-5}"
+      REVIEW_ACCESS_WINDOW_SECONDS: "${REVIEW_ACCESS_WINDOW_SECONDS:-300}"
+      # SSV ad_unit allowlist가 없으면 광고 보상 session endpoint는 fail-closed 된다.
+      ADMOB_SSV_ENABLED: "${ADMOB_SSV_ENABLED:-true}"
+      ADMOB_SSV_ALLOWED_AD_UNIT_IDS: "${ADMOB_SSV_ALLOWED_AD_UNIT_IDS:-}"
+      ADMOB_SSV_REWARD_ITEM: "${ADMOB_SSV_REWARD_ITEM:-pronunciation_chance}"
+      ADMOB_SSV_REWARD_AMOUNT: "${ADMOB_SSV_REWARD_AMOUNT:-1}"
+
+  evaluation-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # 같은 image를 web server 없이 실행해 평가 부하와 프로세스 장애를 API에서 분리한다.
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: "${DB_NAME:-lingko}"
+      DB_USER: "${DB_USER:-lingko}"
+      DB_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required in .env}"
+      DB_DRIVER: "${DB_DRIVER:-com.mysql.cj.jdbc.Driver}"
+      FFMPEG_PATH: ffmpeg
+      EVALUATION_WORKER_ENABLED: "true"
+      EVALUATION_CLEANUP_ENABLED: "false"
 
 volumes:
   mysql_data:

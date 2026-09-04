@@ -8,6 +8,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 /**
  * AWS S3 설정
@@ -24,14 +25,25 @@ public class S3Config {
                 awsSettings.getS3().getRegion(),
                 awsSettings.getS3().getBucket());
 
+        return S3Client.builder()
+                .region(Region.of(awsSettings.getS3().getRegion()))
+                .credentialsProvider(credentialsProvider())
+                .build();
+    }
+
+    @Bean
+    public S3Presigner s3Presigner() {
+        return S3Presigner.builder()
+                .region(Region.of(awsSettings.getS3().getRegion()))
+                .credentialsProvider(credentialsProvider())
+                .build();
+    }
+
+    private StaticCredentialsProvider credentialsProvider() {
         AwsBasicCredentials credentials = AwsBasicCredentials.create(
                 awsSettings.getCredentials().getAccessKey(),
                 awsSettings.getCredentials().getSecretKey()
         );
-
-        return S3Client.builder()
-                .region(Region.of(awsSettings.getS3().getRegion()))
-                .credentialsProvider(StaticCredentialsProvider.create(credentials))
-                .build();
+        return StaticCredentialsProvider.create(credentials);
     }
 }

@@ -25,6 +25,9 @@ replicate:
   version: integration-test-model-version
   max-poll-attempts: 1
   poll-interval-ms: 1
+  create-max-attempts: 1
+  retry-initial-delay-ms: 1
+  retry-max-delay-ms: 1
   frame-rate: 24
 
 aws:
@@ -32,8 +35,13 @@ aws:
     bucket: integration-test-bucket
     region: ap-northeast-2
   credentials:
-    access-key: integration-test-access-key
-    secret-key: integration-test-secret-key
+    access-key: ${AWS_ACCESS_KEY:integration-test-access-key}
+    secret-key: ${AWS_SECRET_KEY:integration-test-secret-key}
+
+evaluation:
+  legacy-multipart-enabled: true
+  worker:
+    enabled: false
 
 ffmpeg:
   path: ffmpeg

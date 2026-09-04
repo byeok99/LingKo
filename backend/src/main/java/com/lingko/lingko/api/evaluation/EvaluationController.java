@@ -5,12 +5,18 @@ import com.lingko.lingko.api.evaluation.dto.StandardPronunciationResponse;
 import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareRequest;
 import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareResponse;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
+import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+/**
+ * Evaluation 기능의 HTTP 진입점을 제공한다.
+ *
+ * 컨트롤러는 전송 형식 검증과 응답 변환만 담당하고 업무 결정은 도메인 서비스에 위임한다.
+ */
 @RestController
 @RequestMapping("/api/pronunciation")
 @RequiredArgsConstructor
@@ -28,10 +34,11 @@ public class EvaluationController {
     ) {
         log.info("표준발음 변환 요청: {}", request.getText());
 
-        String standardPronunciation = service.convertToStandardPronunciation(request.getText());
+        String originalText = PracticeSentenceNormalizer.normalize(request.getText());
+        String standardPronunciation = service.convertToStandardPronunciation(originalText);
 
         StandardPronunciationResponse response = StandardPronunciationResponse.builder()
-                .originalText(request.getText())
+                .originalText(originalText)
                 .standardPronunciation(standardPronunciation)
                 .build();
 

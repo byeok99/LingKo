@@ -12,11 +12,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Azure Speech 평가 응답을 LingKo 발음 평가 결과로 변환한다.
+ *
+ * 공급자 요청·점수 매핑을 도메인 평가 규칙에서 분리하기 위해 어댑터로 구현했다.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AzureSpeechEvaluator implements SpeechEvaluator {
     private final AzureSettings settings;
+    private final AzurePronunciationResultParser resultParser;
 
     @Override
     public AssessmentResult evaluate(String audioPath, String referenceText) {
@@ -28,13 +34,19 @@ public class AzureSpeechEvaluator implements SpeechEvaluator {
                      PronunciationAssessmentGradingSystem.HundredMark,
                      PronunciationAssessmentGranularity.Phoneme,
                      false
-             )) {
+            )) {
             speechConfig.setSpeechRecognitionLanguage(settings.getLanguage());
+            // 단어 정확도는 고수준 Result API에 없으므로 detailed JSON을 명시적으로 요청한다.
+            speechConfig.setOutputFormat(OutputFormat.Detailed);
             try (SpeechRecognizer recognizer = createRecognizer(speechConfig, audioConfig)) {
                 pronConfig.applyTo(recognizer);
                 try (SpeechRecognitionResult result = recognizer.recognizeOnceAsync().get()) {
                     if (result.getReason() == ResultReason.RecognizedSpeech) {
                         PronunciationAssessmentResult pronResult = PronunciationAssessmentResult.fromResult(result);
+                        List<AssessmentResult.WordScore> wordScores = resultParser.parseReliableWordScores(
+                                result.getProperties().getProperty(PropertyId.SpeechServiceResponse_JsonResult),
+                                referenceText
+                        );
 
                         return AssessmentResult.builder()
                                 .accuracyScore(pronResult.getAccuracyScore())
@@ -42,10 +54,12 @@ public class AzureSpeechEvaluator implements SpeechEvaluator {
                                 .completenessScore(pronResult.getCompletenessScore())
                                 .pronunciationScore(pronResult.getPronunciationScore())
                                 .recognizedText(result.getText())
-                                // Azure only documents reliable syllable grouping for en-US.
-                                // Never present full-text/word scores as Korean character scores.
+                                // Azure가 신뢰할 수 있는 음절 grouping을 문서화한 locale이 en-US뿐이므로 해당 값을 선택한다.
+                                // 전체 문장·단어 점수는 한국어 문자 점수로 신뢰할 수 없어 제공하지 않는다.
                                 .characterScoresAvailable(false)
                                 .characterScores(List.of())
+                                .wordScoresAvailable(!wordScores.isEmpty())
+                                .wordScores(wordScores)
                                 .build();
                     }
                     throw new IllegalStateException("음성 인식에 실패했습니다: " + result.getReason());

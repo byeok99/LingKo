@@ -1,0 +1,30 @@
+# 작업 이력
+
+## 2026-08-18 - Apple verifier 생성 경계 주석 보강
+
+- 변경 파일: `AppleOAuthIdentityVerifier.java`, `WORK_LOG.md`
+- 내용: 운영 생성자가 원격 JWK cache·rotation과 UTC clock을 선택하는 이유 및 audience 설정 책임을 Javadoc에 명시했다.
+- 검증: Backend 단위 테스트 293개·통합 테스트 16개 통과
+- 리스크: 동작 변경 없음
+
+## 2026-08-12 - Apple identity token verifier 구현
+
+- 변경 파일: `AppleOAuthIdentityVerifier.java`, `GoogleOAuthIdentityVerifier.java`, `WORK_LOG.md`
+- 내용: Apple JWK 서명·RS256·issuer·audience·만료·subject·nonce·email 검증과 provider 식별 계약을 구현했다.
+- 검증: verifier 보안 테스트, Spring 생성자 주입, Backend 전체 테스트 통과
+- 리스크: 원격 Apple JWK endpoint 장애 시 신규 key 검증 실패 가능
+
+## 2026-07-24 - 한국어 의도 중심 주석 보강
+
+- 변경 파일: `GoogleOAuthIdentityVerifier.java`, `WORK_LOG.md`
+- 내용: 해당 폴더의 코드에 의도, 업무 의미, 구현 이유, 선택 기준을 설명하는 한국어 주석을 보강했다.
+- 검증: Java 21에서 `./gradlew test integrationTest` 통과
+- 리스크: 동작 변경 없음
+
+
+## 2026-07-20 - 작업 이력 파일 초기화
+
+- 변경 파일: `WORK_LOG.md`
+- 내용: 이 디렉터리에서 수행한 변경과 검증 이력을 최소 경로 단위로 관리하기 위해 작업 이력 파일을 생성했다.
+- 검증: 파일 생성 여부 확인
+- 리스크: 없음

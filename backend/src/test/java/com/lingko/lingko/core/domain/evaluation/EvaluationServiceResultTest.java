@@ -1,8 +1,11 @@
 package com.lingko.lingko.core.domain.evaluation;
 
+import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.domain.evaluation.dto.AssessmentResult;
+import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
+import com.lingko.lingko.core.domain.evaluation.service.GuideMediaResolver;
 import com.lingko.lingko.core.domain.evaluation.service.SpeechEvaluator;
 import com.lingko.lingko.core.domain.sentence.entity.RecommendedSentence;
 import com.lingko.lingko.core.domain.sentence.repository.RecommendedSentenceRepository;
@@ -24,6 +27,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Evaluation 서비스 Result Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 class EvaluationServiceResultTest {
 
     private final SyllableMappingUtil mappingUtil = mock(SyllableMappingUtil.class);
@@ -34,7 +42,7 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("text 입력은 표준 발음으로 변환한 뒤 SpeechEvaluator 기준 문장으로 사용한다")
     void evaluateWithTextReference() {
-        when(speechEvaluator.evaluate(anyString(), eq("바블 머거써요."))).thenReturn(assessmentResult());
+        when(speechEvaluator.evaluate(anyString(), eq("바블 머거써요"))).thenReturn(assessmentResult());
         MockMultipartFile audio = wavAudio();
 
         PracticeResultResponse response = service.evaluatePronunciation(audio, null, "밥을 먹었어요.");
@@ -43,7 +51,10 @@ class EvaluationServiceResultTest {
         assertThat(response.getGradeLabel()).isEqualTo("Good");
         assertThat(response.getScoreBreakdown().getAccuracy()).isEqualTo(88);
         assertThat(response.getRecognizedText()).isEqualTo("바블 머거써요.");
-        assertThat(response.getSummary()).contains("바블 머거써요.");
+        // 판정 문구는 점수와 어절 목록 사이에 놓이는 한 줄이다. 인식된 발음을 붙이면
+        // 사용자가 실제로 낸 소리로 오해하고, 문장이 길어져 다음 단계로 가는 길을 가로막는다.
+        assertThat(response.getSummary()).isEqualTo("Understandable — one sound to refine");
+        assertThat(response.getSummary()).doesNotContain("바블 머거써요.");
     }
 
     @Test
@@ -51,10 +62,10 @@ class EvaluationServiceResultTest {
     void evaluateWithSentenceReference() {
         RecommendedSentence sentence = RecommendedSentence.builder()
                 .sentenceId(1L)
-                .standardPronunciation("마싯게따.")
+                .originalText("맛있겠다.")
                 .build();
         when(sentenceRepository.findBySentenceIdAndActiveTrue(1L)).thenReturn(Optional.of(sentence));
-        when(speechEvaluator.evaluate(anyString(), eq("마싯게따."))).thenReturn(assessmentResult());
+        when(speechEvaluator.evaluate(anyString(), eq("마싣껟따"))).thenReturn(assessmentResult());
         MockMultipartFile audio = wavAudio();
 
         PracticeResultResponse response = service.evaluatePronunciation(audio, 1L, null);
@@ -105,10 +116,13 @@ class EvaluationServiceResultTest {
 
         PracticeResultResponse response = service.evaluatePronunciation(wavAudio(), null, "가나");
 
-        assertThat(response.getCharacterScoreStatus()).isEqualTo("AVAILABLE");
+        assertThat(response.getCharacterScoreStatus()).isEqualTo(ScoreStatus.AVAILABLE);
         assertThat(response.getCharacters()).extracting("score").containsExactly(92, 55);
-        assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly("AVAILABLE");
+        assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly(ScoreStatus.AVAILABLE);
         assertThat(response.getWeakCharacters()).extracting("text").containsExactly("나");
+        assertThat(response.getWords()).singleElement().satisfies(word ->
+                assertThat(word.getSyllables()).extracting("score").containsOnlyNulls()
+        );
     }
 
     @Test
@@ -118,10 +132,99 @@ class EvaluationServiceResultTest {
 
         PracticeResultResponse response = service.evaluatePronunciation(wavAudio(), null, "가나");
 
-        assertThat(response.getCharacterScoreStatus()).isEqualTo("UNAVAILABLE");
+        assertThat(response.getCharacterScoreStatus()).isEqualTo(ScoreStatus.UNAVAILABLE);
         assertThat(response.getCharacters()).extracting("score").containsOnlyNulls();
-        assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly("UNAVAILABLE");
+        assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly(ScoreStatus.UNAVAILABLE);
         assertThat(response.getWeakCharacters()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("신뢰할 수 있는 단어 점수를 기준 공백 단위로 묶고 음절은 가이드로만 제공한다")
+    void groupsWordScoresWithSyllableGuides() {
+        AssessmentResult result = AssessmentResult.builder()
+                .accuracyScore(82.0)
+                .fluencyScore(84.0)
+                .completenessScore(90.0)
+                .pronunciationScore(85.0)
+                .recognizedText("김치찌개 하나 주세요")
+                .characterScoresAvailable(false)
+                .characterScores(List.of())
+                .wordScoresAvailable(true)
+                .wordScores(List.of(
+                        new AssessmentResult.WordScore(0, "김치찌개", 82.0),
+                        new AssessmentResult.WordScore(1, "하나", 91.0),
+                        new AssessmentResult.WordScore(2, "주세요", 77.0)
+                ))
+                .build();
+        when(speechEvaluator.evaluate(anyString(), eq("김치찌개 하나 주세요"))).thenReturn(result);
+
+        PracticeResultResponse response = service.evaluatePronunciation(
+                wavAudio(),
+                null,
+                "김치찌개 하나 주세요"
+        );
+
+        assertThat(response.getWordScoreStatus()).isEqualTo(ScoreStatus.AVAILABLE);
+        // 화면이 어절·음절마다 로마자를 병기하므로 응답에 함께 실려야 한다.
+        assertThat(response.getWords())
+                .allSatisfy(word -> assertThat(word.getRomanization()).isNotBlank());
+        assertThat(response.getCharacters())
+                .allSatisfy(character -> assertThat(character.getRomanization()).isNotBlank());
+        assertThat(response.getWords()).extracting("text").containsExactly("김치찌개", "하나", "주세요");
+        assertThat(response.getWords()).extracting("score").containsExactly(82, 91, 77);
+        assertThat(response.getWords()).extracting(word -> word.getSyllables().size())
+                .containsExactly(4, 2, 3);
+        assertThat(response.getWords().get(0).getSyllables())
+                .extracting("text")
+                .containsExactly("김", "치", "찌", "개");
+        assertThat(response.getWords().get(0).getSyllables())
+                .extracting("score")
+                .containsOnlyNulls();
+    }
+
+    @Test
+    @DisplayName("글자 점수가 없어도 평가 결과의 김 가이드는 초중종성 이동 영상 URL을 사용한다")
+    void usesTransitionVideosForKimResultWithoutCharacterScores() {
+        GuideMediaResolver guideMediaResolver = mock(GuideMediaResolver.class);
+        EvaluationService videoGuideService = new EvaluationService(
+                mappingUtil,
+                speechEvaluator,
+                sentenceRepository,
+                guideMediaResolver
+        );
+        AssessmentResult result = AssessmentResult.builder()
+                .accuracyScore(70.0)
+                .fluencyScore(75.0)
+                .completenessScore(80.0)
+                .pronunciationScore(74.0)
+                .recognizedText("김")
+                .characterScoresAvailable(false)
+                .characterScores(List.of())
+                .build();
+        when(speechEvaluator.evaluate(anyString(), eq("김"))).thenReturn(result);
+        when(guideMediaResolver.resolveForEvaluation(
+                "김",
+                List.of("ㄱ", "ㅣ", "ㅁ"),
+                VideoType.MOUTH
+        )).thenReturn("https://guides/videos/mouth-kim.mp4");
+        when(guideMediaResolver.resolveForEvaluation(
+                "김",
+                List.of("ㄱ", "ㅣ", "ㅁ"),
+                VideoType.TONGUE
+        )).thenReturn("https://guides/videos/tongue-kim.mp4");
+
+        PracticeResultResponse response = videoGuideService.evaluatePronunciation(
+                wavAudio(),
+                null,
+                "김"
+        );
+
+        assertThat(response.getCharacters()).singleElement().satisfies(character -> {
+            assertThat(character.getScoreStatus()).isEqualTo(ScoreStatus.UNAVAILABLE);
+            assertThat(character.getPhonemes()).containsExactly("ㄱ", "ㅣ", "ㅁ");
+            assertThat(character.getMouthGuideUrl()).endsWith("mouth-kim.mp4");
+            assertThat(character.getTongueGuideUrl()).endsWith("tongue-kim.mp4");
+        });
     }
 
     @Test

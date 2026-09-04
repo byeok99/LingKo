@@ -2,6 +2,7 @@ package com.lingko.lingko.infra.storage;
 
 import com.lingko.lingko.core.config.AwsSettings;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
+import com.lingko.lingko.core.domain.evaluation.service.GuideSourceUrlPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,8 +15,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
+/**
+ * 외부 media URL을 애플리케이션이 사용하기 전에 검증하고 정규화한다.
+ *
+ * scheme·host·내부망 차단 정책을 호출부마다 반복하지 않도록 보안 경계로 분리했다.
+ */
 @Component
-public class ExternalMediaUrlValidator {
+public class ExternalMediaUrlValidator implements GuideSourceUrlPolicy {
 
     public static final int CONNECT_TIMEOUT_MS = 5_000;
     public static final int READ_TIMEOUT_MS = 10_000;
@@ -49,10 +55,12 @@ public class ExternalMediaUrlValidator {
         this.connectionFactory = connectionFactory;
     }
 
+    @Override
     public void validate(String rawUrl) {
         URI uri = parse(rawUrl);
         validateScheme(uri);
         validateHost(uri.getHost());
+        // 허용된 형태의 host도 DNS에서 내부 주소로 해석될 수 있어 host allowlist만으로는 충분하지 않다.
         validateResolvedAddresses(uri.getHost());
     }
 
@@ -63,10 +71,11 @@ public class ExternalMediaUrlValidator {
             HttpURLConnection connection = connectionFactory.apply(url);
             connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
             connection.setReadTimeout(READ_TIMEOUT_MS);
+            // 허용 host가 downloader를 내부망으로 redirect하지 못하도록 redirect를 비활성화한다.
             connection.setInstanceFollowRedirects(false);
             int responseCode = connection.getResponseCode();
             if (responseCode >= 300 && responseCode < 400) {
-                throw new VideoGenerationException("외부 미디어 URL 리다이렉트는 허용되지 않음: " + rawUrl);
+                throw new VideoGenerationException("외부 미디어 URL 리다이렉트는 허용되지 않음");
             }
             if (responseCode < 200 || responseCode >= 300) {
                 throw new VideoGenerationException("외부 미디어 다운로드 실패: HTTP " + responseCode);
@@ -77,7 +86,7 @@ public class ExternalMediaUrlValidator {
             }
             return connection;
         } catch (IOException e) {
-            throw new VideoGenerationException("외부 미디어 URL 연결 실패: " + rawUrl, e);
+            throw new VideoGenerationException("외부 미디어 URL 연결 실패", e);
         }
     }
 
@@ -88,13 +97,13 @@ public class ExternalMediaUrlValidator {
         try {
             return URI.create(rawUrl);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("유효하지 않은 URL: " + rawUrl, e);
+            throw new IllegalArgumentException("유효하지 않은 외부 미디어 URL", e);
         }
     }
 
     private void validateScheme(URI uri) {
         if (!"https".equalsIgnoreCase(uri.getScheme())) {
-            throw new IllegalArgumentException("HTTPS URL만 허용됨: " + uri);
+            throw new IllegalArgumentException("HTTPS URL만 허용됨");
         }
     }
 
@@ -106,16 +115,17 @@ public class ExternalMediaUrlValidator {
         if (getExactAllowedHosts().contains(normalizedHost)) {
             return;
         }
+        // Replicate는 동적 하위 도메인을 사용하므로 통제된 이 접미사에만 와일드카드를 허용한다.
         if (normalizedHost.endsWith(".replicate.delivery")) {
             return;
         }
-        throw new IllegalArgumentException("허용되지 않은 외부 미디어 host: " + host);
+        throw new IllegalArgumentException("허용되지 않은 외부 미디어 host");
     }
 
     private void validateResolvedAddresses(String host) {
         for (InetAddress address : addressResolver.apply(host)) {
             if (isPrivateAddress(address)) {
-                throw new IllegalArgumentException("내부망 외부 미디어 URL은 허용되지 않음: " + host);
+                throw new IllegalArgumentException("내부망 외부 미디어 URL은 허용되지 않음");
             }
         }
     }
@@ -152,7 +162,7 @@ public class ExternalMediaUrlValidator {
         try {
             return InetAddress.getAllByName(host);
         } catch (IOException e) {
-            throw new IllegalArgumentException("URL host를 확인할 수 없음: " + host, e);
+            throw new IllegalArgumentException("외부 미디어 URL host를 확인할 수 없음", e);
         }
     }
 
@@ -160,11 +170,12 @@ public class ExternalMediaUrlValidator {
         try {
             return (HttpURLConnection) url.openConnection();
         } catch (IOException e) {
-            throw new VideoGenerationException("외부 미디어 URL 연결 실패: " + url, e);
+            throw new VideoGenerationException("외부 미디어 URL 연결 실패", e);
         }
     }
 
     private boolean isPrivateAddress(InetAddress address) {
+        // SSRF 변형을 차단하기 위해 IPv4 local range와 IPv6 unique-local 주소를 모두 거부한다.
         if (address.isAnyLocalAddress()
                 || address.isLoopbackAddress()
                 || address.isLinkLocalAddress()

@@ -4,12 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.api.auth.dto.AuthTokenResponse;
 import com.lingko.lingko.api.auth.dto.OAuthLoginRequest;
+import com.lingko.lingko.api.auth.dto.RefreshTokenRequest;
 import com.lingko.lingko.core.config.JwtSettings;
+import com.lingko.lingko.core.domain.auth.entity.RefreshTokenSession;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.auth.repository.RefreshTokenSessionRepository;
 import com.lingko.lingko.core.domain.auth.service.AuthService;
+import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.auth.service.JwtTokenProvider;
 import com.lingko.lingko.core.domain.auth.service.OAuthIdentity;
 import com.lingko.lingko.core.domain.auth.service.OAuthIdentityVerifier;
+import com.lingko.lingko.core.domain.auth.service.RefreshTokenHasher;
 import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -28,6 +33,11 @@ import java.util.Base64;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * Auth 서비스 Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 @DataJpaTest(properties = {
         "spring.datasource.url=jdbc:h2:mem=auth_service;MODE=MySQL;DATABASE_TO_UPPER=false",
         "spring.datasource.driver-class-name=org.h2.Driver",
@@ -39,7 +49,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "jwt.refresh-token-expire-days=14",
         "jwt.algorithm=HS256"
 })
-@Import({AuthService.class, AuthServiceTest.TestAuthConfig.class})
+@Import({
+        AuthService.class,
+        ActiveSessionAuthenticator.class,
+        RefreshTokenHasher.class,
+        AuthServiceTest.TestAuthConfig.class
+})
 class AuthServiceTest {
 
     @Autowired
@@ -53,6 +68,15 @@ class AuthServiceTest {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private RefreshTokenSessionRepository refreshTokenSessionRepository;
+
+    @Autowired
+    private RefreshTokenHasher refreshTokenHasher;
+
+    @Autowired
+    private ActiveSessionAuthenticator activeSessionAuthenticator;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -74,6 +98,40 @@ class AuthServiceTest {
         JsonNode accessPayload = jwtPayload(response.getAccessToken());
         assertThat(accessPayload.get("sub").asText()).isEqualTo(String.valueOf(user.getUserIdx()));
         assertThat(accessPayload.get("typ").asText()).isEqualTo("access");
+
+        RefreshTokenSession refreshSession = refreshTokenSessionRepository.findAll().getFirst();
+        assertThat(accessPayload.get("sid").asText()).isEqualTo(refreshSession.getSessionId());
+        assertThat(refreshSession.getCurrentTokenHash())
+                .isEqualTo(refreshTokenHasher.hash(response.getRefreshToken()))
+                .doesNotContain(response.getRefreshToken());
+    }
+
+    @Test
+    @DisplayName("심사용 로그인은 미리 저장된 사용자에 새 세션을 발급하고 계정을 만들지 않는다")
+    void loginReviewUserIssuesSessionForExistingAccount() {
+        User reviewUser = User.builder()
+                .socialId("review-google-subject")
+                .socialType(User.SocialType.GOOGLE)
+                .email("review@example.invalid")
+                .name("App Review")
+                .build();
+        entityManager.persist(reviewUser);
+        entityManager.flush();
+
+        AuthTokenResponse response = authService.loginReviewUser(reviewUser.getUserIdx());
+
+        assertThat(response.getUser().getUserId()).isEqualTo(reviewUser.getUserIdx());
+        assertThat(response.getAccessToken()).isNotBlank();
+        assertThat(response.getRefreshToken()).isNotBlank();
+        assertThat(userRepository.count()).isEqualTo(1);
+        assertThat(refreshTokenSessionRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("설정된 심사용 사용자가 없으면 인증 정보 노출 없이 로그인을 거부한다")
+    void loginReviewUserRejectsMissingAccount() {
+        assertThatThrownBy(() -> authService.loginReviewUser(999L))
+                .isInstanceOf(AuthException.class);
     }
 
     @Test
@@ -99,10 +157,67 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Apple 로그인은 검증된 subject와 최초 제공 이름으로 사용자를 생성한다")
+    void loginWithAppleCreatesUserFromVerifiedIdentity() {
+        AuthTokenResponse response = authService.loginWithOAuth(new OAuthLoginRequest(
+                " apple ",
+                " apple-token ",
+                "raw-nonce-012345678901234567890123",
+                "  Apple   Learner  "
+        ));
+
+        User user = userRepository.findBySocialIdAndSocialType(
+                "apple-sub-456",
+                User.SocialType.APPLE
+        ).orElseThrow();
+        assertThat(response.getUser().getUserId()).isEqualTo(user.getUserIdx());
+        assertThat(user.getEmail()).isEqualTo("relay@privaterelay.appleid.com");
+        assertThat(user.getName()).isEqualTo("Apple Learner");
+    }
+
+    @Test
+    @DisplayName("Apple 재로그인에서 이름이 다시 오지 않아도 기존 profile 이름을 보존한다")
+    void loginWithApplePreservesExistingNameWhenAppleOmitsIt() {
+        User existing = User.builder()
+                .socialId("apple-sub-456")
+                .socialType(User.SocialType.APPLE)
+                .email("old-relay@privaterelay.appleid.com")
+                .name("First Login Name")
+                .build();
+        entityManager.persist(existing);
+        entityManager.flush();
+        entityManager.clear();
+
+        authService.loginWithOAuth(new OAuthLoginRequest(
+                "APPLE",
+                "apple-token",
+                "raw-nonce-012345678901234567890123",
+                null
+        ));
+
+        User updated = userRepository.findById(existing.getUserIdx()).orElseThrow();
+        assertThat(updated.getEmail()).isEqualTo("relay@privaterelay.appleid.com");
+        assertThat(updated.getName()).isEqualTo("First Login Name");
+    }
+
+    @Test
+    @DisplayName("Google 로그인은 Apple 전용 client display name을 신뢰하지 않는다")
+    void loginWithGoogleIgnoresClientDisplayName() {
+        AuthTokenResponse response = authService.loginWithOAuth(new OAuthLoginRequest(
+                "GOOGLE",
+                "nameless-google-token",
+                null,
+                "Untrusted Client Name"
+        ));
+
+        assertThat(response.getUser().getName()).isNull();
+    }
+
+    @Test
     @DisplayName("지원하지 않는 OAuth provider는 거부한다")
     void unsupportedProviderIsRejected() {
-        assertThatThrownBy(() -> authService.loginWithOAuth(new OAuthLoginRequest("APPLE", "valid-token")))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> authService.loginWithOAuth(new OAuthLoginRequest("KAKAO", "valid-token")))
+                .isInstanceOf(AuthException.class)
                 .hasMessage("Unsupported OAuth provider");
     }
 
@@ -120,6 +235,109 @@ class AuthServiceTest {
         JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(7L);
 
         assertThatThrownBy(() -> jwtTokenProvider.parseAccessTokenUserId(tokens.refreshToken()))
+                .isInstanceOf(AuthException.class);
+    }
+
+    @Test
+    @DisplayName("Refresh Token 갱신은 같은 세션에서 token pair를 회전한다")
+    void refreshRotatesTokenPair() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+        JwtTokenProvider.RefreshTokenClaims originalClaims =
+                jwtTokenProvider.parseRefreshToken(login.getRefreshToken());
+
+        AuthTokenResponse refreshed = authService.refresh(new RefreshTokenRequest(login.getRefreshToken()));
+        JwtTokenProvider.RefreshTokenClaims refreshedClaims =
+                jwtTokenProvider.parseRefreshToken(refreshed.getRefreshToken());
+
+        assertThat(refreshed.getAccessToken()).isNotEqualTo(login.getAccessToken());
+        assertThat(refreshed.getRefreshToken()).isNotEqualTo(login.getRefreshToken());
+        assertThat(refreshedClaims.sessionId()).isEqualTo(originalClaims.sessionId());
+        assertThat(refreshedClaims.tokenId()).isNotEqualTo(originalClaims.tokenId());
+        assertThat(refreshedClaims.expiresAt()).isEqualTo(originalClaims.expiresAt());
+
+        RefreshTokenSession session = refreshTokenSessionRepository.findById(originalClaims.sessionId()).orElseThrow();
+        assertThat(session.getCurrentTokenHash()).isEqualTo(refreshTokenHasher.hash(refreshed.getRefreshToken()));
+        assertThat(session.isRevoked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("회전 전 Refresh Token 재사용은 세션 전체를 폐기한다")
+    void reusedRefreshTokenRevokesSession() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+        AuthTokenResponse refreshed = authService.refresh(new RefreshTokenRequest(login.getRefreshToken()));
+        String sessionId = jwtTokenProvider.parseRefreshToken(login.getRefreshToken()).sessionId();
+
+        assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(login.getRefreshToken())))
+                .isInstanceOf(AuthException.class);
+
+        RefreshTokenSession session = refreshTokenSessionRepository.findById(sessionId).orElseThrow();
+        assertThat(session.isRevoked()).isTrue();
+        assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(refreshed.getRefreshToken())))
+                .isInstanceOf(AuthException.class);
+    }
+
+    @Test
+    @DisplayName("로그아웃은 현재 Refresh Token 세션을 폐기한다")
+    void logoutRevokesRefreshSession() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+        String sessionId = jwtTokenProvider.parseRefreshToken(login.getRefreshToken()).sessionId();
+
+        assertThat(activeSessionAuthenticator.authenticateBearer("Bearer " + login.getAccessToken()))
+                .isEqualTo(login.getUser().getUserId());
+        authService.logout(new RefreshTokenRequest(login.getRefreshToken()));
+
+        RefreshTokenSession session = refreshTokenSessionRepository.findById(sessionId).orElseThrow();
+        assertThat(session.isRevoked()).isTrue();
+        assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(login.getRefreshToken())))
+                .isInstanceOf(AuthException.class);
+        assertThatThrownBy(() -> activeSessionAuthenticator.authenticateBearer(
+                "Bearer " + login.getAccessToken()
+        )).isInstanceOf(AuthException.class);
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴 재확인은 Access Token 사용자와 현재 Refresh Token 소유자가 같아야 한다")
+    void validatesCurrentRefreshTokenForAccountDeletion() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+
+        authService.validateCurrentRefreshToken(
+                login.getUser().getUserId(),
+                new RefreshTokenRequest(login.getRefreshToken())
+        );
+
+        assertThatThrownBy(() -> authService.validateCurrentRefreshToken(
+                login.getUser().getUserId() + 1,
+                new RefreshTokenRequest(login.getRefreshToken())
+        )).isInstanceOf(AuthException.class);
+    }
+
+    @Test
+    @DisplayName("회전 전 Refresh Token으로는 회원 탈퇴를 승인하지 않는다")
+    void rejectsStaleRefreshTokenForAccountDeletion() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+        authService.refresh(new RefreshTokenRequest(login.getRefreshToken()));
+
+        assertThatThrownBy(() -> authService.validateCurrentRefreshToken(
+                login.getUser().getUserId(),
+                new RefreshTokenRequest(login.getRefreshToken())
+        )).isInstanceOf(AuthException.class);
+    }
+
+    @Test
+    @DisplayName("DB 세션 절대 만료가 지나면 유효한 JWT도 갱신할 수 없다")
+    void expiredDatabaseSessionIsRejected() {
+        AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
+        String sessionId = jwtTokenProvider.parseRefreshToken(login.getRefreshToken()).sessionId();
+        entityManager.createNativeQuery("""
+                        UPDATE auth_refresh_sessions
+                        SET expires_at = DATEADD('DAY', -1, CURRENT_TIMESTAMP)
+                        WHERE session_id = :sessionId
+                        """)
+                .setParameter("sessionId", sessionId)
+                .executeUpdate();
+        entityManager.clear();
+
+        assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(login.getRefreshToken())))
                 .isInstanceOf(AuthException.class);
     }
 
@@ -156,17 +374,50 @@ class AuthServiceTest {
 
         @Bean
         OAuthIdentityVerifier googleIdentityVerifier() {
-            return idToken -> {
-                if (!"valid-token".equals(idToken)) {
-                    throw new IllegalArgumentException("invalid token");
+            return new OAuthIdentityVerifier() {
+                @Override
+                public String provider() {
+                    return "GOOGLE";
                 }
 
-                return new OAuthIdentity(
-                        "google-sub-123",
-                        "user@example.com",
-                        "LingKo User",
-                        "https://example.com/profile.png"
-                );
+                @Override
+                public OAuthIdentity verify(String idToken, String rawNonce) {
+                    if (!"valid-token".equals(idToken) && !"nameless-google-token".equals(idToken)) {
+                        throw new IllegalArgumentException("invalid token");
+                    }
+
+                    return new OAuthIdentity(
+                            "google-sub-123",
+                            "user@example.com",
+                            "nameless-google-token".equals(idToken) ? null : "LingKo User",
+                            "https://example.com/profile.png"
+                    );
+                }
+            };
+        }
+
+        @Bean
+        OAuthIdentityVerifier appleIdentityVerifier() {
+            return new OAuthIdentityVerifier() {
+                @Override
+                public String provider() {
+                    return "APPLE";
+                }
+
+                @Override
+                public OAuthIdentity verify(String idToken, String rawNonce) {
+                    if (!"apple-token".equals(idToken)
+                            || !"raw-nonce-012345678901234567890123".equals(rawNonce)) {
+                        throw new IllegalArgumentException("invalid token");
+                    }
+
+                    return new OAuthIdentity(
+                            "apple-sub-456",
+                            "relay@privaterelay.appleid.com",
+                            null,
+                            null
+                    );
+                }
             };
         }
     }

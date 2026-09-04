@@ -1,0 +1,63 @@
+// 파일 의도: practice 할당량 api 백엔드 통신 경계를 정의한다.
+// 선택 이유: HTTP 전송과 JSON 매핑을 UI에서 분리해 API 변경 영향을 한곳에서 관리한다.
+
+import '../models/practice_quota.dart';
+import '../models/ad_reward_session.dart';
+import 'api_client.dart';
+
+/// Practice 할당량 Api 백엔드 통신 계약을 정의한다.
+/// 화면과 서비스가 HTTP 구현이 아닌 추상 계약에 의존하도록 인터페이스 역할의 추상 클래스를 선택했다.
+abstract class PracticeQuotaApi {
+  Future<PracticeQuota> fetchTodayQuota({required String accessToken});
+
+  /// 광고를 열기 전에 signed callback과 사용자를 연결할 1회성 token을 만든다.
+  Future<AdRewardSession> createAdRewardSession({required String accessToken});
+
+  Future<AdRewardSessionStatus> fetchAdRewardSessionStatus({
+    required String accessToken,
+    required String sessionToken,
+  });
+}
+
+/// Dart Io Practice 할당량 Api 백엔드 요청·응답 매핑을 구현한다.
+/// 전송 실패와 JSON 형식 오류를 API 경계에서 정규화해 UI에는 형식이 지정된 결과만 전달한다.
+class DartIoPracticeQuotaApi implements PracticeQuotaApi {
+  DartIoPracticeQuotaApi({ApiClient? client}) : _client = client ?? ApiClient();
+
+  final ApiClient _client;
+
+  @override
+  Future<PracticeQuota> fetchTodayQuota({required String accessToken}) async {
+    final json = await _client.getJson('/api/quota/today', const {}, {
+      'Authorization': 'Bearer ${accessToken.trim()}',
+    });
+
+    return PracticeQuota.fromJson(json);
+  }
+
+  @override
+  Future<AdRewardSession> createAdRewardSession({
+    required String accessToken,
+  }) async {
+    final json = await _client.postJsonWithHeaders(
+      '/api/quota/ad-reward-sessions',
+      const {},
+      {'Authorization': 'Bearer ${accessToken.trim()}'},
+    );
+    return AdRewardSession.fromJson(json);
+  }
+
+  @override
+  Future<AdRewardSessionStatus> fetchAdRewardSessionStatus({
+    required String accessToken,
+    required String sessionToken,
+  }) async {
+    final encodedToken = Uri.encodeComponent(sessionToken.trim());
+    final json = await _client.getJson(
+      '/api/quota/ad-reward-sessions/$encodedToken',
+      const {},
+      {'Authorization': 'Bearer ${accessToken.trim()}'},
+    );
+    return AdRewardSessionStatus.fromJson(json);
+  }
+}

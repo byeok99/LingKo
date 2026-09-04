@@ -13,7 +13,7 @@ LingKo는 한국어 학습자가 자신의 발음을 녹음하고, 표준 발음
 - 한국어 표준 발음 변환과 글자별 발음 가이드 조회
 - WAV 음성 녹음 및 발음 평가
 - 정확도·유창성·완성도 점수와 취약 글자 표시
-- Google OAuth 로그인과 JWT 세션 저장
+- Google OAuth·iOS Apple 로그인과 JWT 세션 저장
 - 개인별 학습 설정과 연습 기록 조회
 - 일일 무료 연습 횟수 조회
 - 입·혀 가이드 이미지 및 비동기 영상 생성 작업
@@ -24,6 +24,7 @@ LingKo는 한국어 학습자가 자신의 발음을 녹음하고, 표준 발음
 flowchart LR
     U[사용자] --> A[Flutter App]
     A --> G[Google Sign-In]
+    A --> P[Sign in with Apple]
     A -->|REST / JSON / Multipart| B[Spring Boot API]
     B --> D[(MySQL)]
     B --> Z[Azure Speech]
@@ -42,11 +43,12 @@ flowchart LR
 - Material 3
 - `record`
 - `google_sign_in`
+- `sign_in_with_apple`
 - `flutter_secure_storage`
 
 ### Backend
 
-- Java 17
+- Java 21
 - Spring Boot 3.4.1
 - Spring MVC / Validation / Data JPA / WebFlux
 - MySQL 8
@@ -110,9 +112,9 @@ flutter pub get
 flutter run
 ```
 
-Android 에뮬레이터에서는 기본적으로 `http://10.0.2.2:8080`, iOS 시뮬레이터·데스크톱에서는 `http://localhost:8080`을 사용합니다.
+Flutter 앱의 기본 Backend는 `https://lingko-api.duckdns.org`입니다. 따라서 Xcode에서 직접 실행하거나 별도 `--dart-define` 없이 빌드해도 운영 HTTPS 서버에 연결됩니다.
 
-실기기에서 로컬 백엔드에 연결할 때는 다음처럼 주소를 지정합니다.
+로컬 Backend에 연결할 때만 플랫폼에서 접근 가능한 주소를 명시합니다.
 
 ```bash
 flutter run \

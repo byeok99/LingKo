@@ -5,8 +5,10 @@ import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationExcepti
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
@@ -18,6 +20,7 @@ import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 /**
  * S3 업로더
@@ -69,10 +72,9 @@ public class S3Uploader {
                     RequestBody.fromFile(path)
             );
 
-            String s3Url = String.format("https://%s.s3.%s.amazonaws.com/%s",
-                    bucketName, region, s3Key);
+            String s3Url = publicUrl(s3Key);
 
-            log.info("S3 업로드 완료: {}", s3Url);
+            log.info("S3 업로드 완료: key={}", s3Key);
             return s3Url;
 
         } catch (S3Exception e) {
@@ -96,6 +98,43 @@ public class S3Uploader {
     }
 
     /**
+     * 결정적 key의 생성 가이드가 이미 존재하면 외부 생성 없이 재사용할 공개 URL을 반환한다.
+     *
+     * <p>조회에 실패해도 예외를 던지지 않고 "캐시 없음"으로 답한다. 이 호출은 생성을 건너뛸 수
+     * 있는지 묻는 최적화이지 생성의 전제 조건이 아니다. 실패를 위로 올리면 호출자가 이를 생성
+     * 실패로 처리해 정적 이미지로 강등하므로, 캐시 조회 한 번이 실제 가이드 생성을 막는다.
+     *
+     * <p>특히 IAM 정책에 {@code s3:ListBucket}이 없으면 S3는 없는 key에 404가 아니라 403을
+     * 돌려준다. 404만 "없음"으로 보면 이 환경에서 캐시가 빈 순간부터 영상이 영영 만들어지지
+     * 않으면서 오류도 드러나지 않는다. 잘못 판단했을 때의 대가는 이미 있는 파일을 다시 만드는
+     * 비용뿐이라, 관대하게 처리하고 원인은 로그로 남긴다.
+     */
+    public Optional<String> findPublicUrl(String s3Key) {
+        try {
+            s3Client.headObject(HeadObjectRequest.builder()
+                    .bucket(awsSettings.getS3().getBucket())
+                    .key(s3Key)
+                    .build());
+            return Optional.of(publicUrl(s3Key));
+        } catch (S3Exception exception) {
+            // 404는 캐시가 없는 정상 상태다. 로그를 남기지 않는다.
+            if (exception.statusCode() != 404) {
+                log.warn(
+                        "S3 guide cache lookup failed; regenerating: key={}, status={}",
+                        s3Key,
+                        exception.statusCode(),
+                        exception
+                );
+            }
+            return Optional.empty();
+        } catch (SdkException exception) {
+            // 자격증명·네트워크 문제도 같은 이유로 생성을 막지 않는다.
+            log.warn("S3 guide cache lookup failed; regenerating: key={}", s3Key, exception);
+            return Optional.empty();
+        }
+    }
+
+    /**
      * URL에서 다운로드 후 S3에 업로드
      *
      * @param sourceUrl 다운로드할 URL
@@ -106,7 +145,8 @@ public class S3Uploader {
         Path tempFile = null;
 
         try {
-            log.info("URL → S3 업로드: {} -> {}", sourceUrl, s3Key);
+            // presigned URL의 query에는 credential이 포함될 수 있어 URL 원문을 기록하지 않는다.
+            log.info("외부 미디어 → S3 업로드 시작: key={}", s3Key);
 
             // 1. URL에서 임시 파일로 다운로드
             tempFile = downloadFromUrl(sourceUrl);
@@ -114,7 +154,7 @@ public class S3Uploader {
             // 2. 임시 파일을 S3에 업로드
             String s3Url = upload(tempFile.toString(), s3Key);
 
-            log.info("URL → S3 완료: {}", s3Url);
+            log.info("외부 미디어 → S3 업로드 완료: key={}", s3Key);
             return s3Url;
 
         } finally {
@@ -138,7 +178,7 @@ public class S3Uploader {
      */
     private Path downloadFromUrl(String url) {
         try {
-            log.debug("다운로드 시작: {}", url);
+            log.debug("외부 미디어 다운로드 시작");
 
             // 확장자 추출
             String extension = extractExtension(url);
@@ -160,8 +200,8 @@ public class S3Uploader {
             return tempFile;
 
         } catch (IOException e) {
-            log.error("URL 다운로드 실패: {}", url, e);
-            throw new VideoGenerationException("URL 다운로드 실패: " + url, e);
+            log.error("외부 미디어 다운로드 실패", e);
+            throw new VideoGenerationException("외부 미디어 다운로드 실패", e);
         }
     }
 
@@ -224,5 +264,14 @@ public class S3Uploader {
         }
 
         return "application/octet-stream";  // 기본값
+    }
+
+    private String publicUrl(String s3Key) {
+        return String.format(
+                "https://%s.s3.%s.amazonaws.com/%s",
+                awsSettings.getS3().getBucket(),
+                awsSettings.getS3().getRegion(),
+                s3Key
+        );
     }
 }

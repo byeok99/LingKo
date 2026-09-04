@@ -1,13 +1,17 @@
 package com.lingko.lingko.api.evaluation;
 
+import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
+import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
+import com.lingko.lingko.core.domain.evaluation.service.EvaluationApplicationService;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -19,14 +23,28 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(EvaluationResultController.class)
+/**
+ * Evaluation Result 컨트롤러 Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
+@WebMvcTest(
+        value = EvaluationResultController.class,
+        properties = "evaluation.legacy-multipart-enabled=true"
+)
 class EvaluationResultControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private EvaluationService evaluationService;
+
+    @MockitoBean
+    private EvaluationApplicationService evaluationApplicationService;
+
+    @MockitoBean
+    private ActiveSessionAuthenticator activeSessionAuthenticator;
 
     @Test
     @DisplayName("multipart audio와 text를 받아 발음 평가 결과를 반환한다")
@@ -42,7 +60,7 @@ class EvaluationResultControllerTest {
                 .gradeLabel("Good")
                 .summary("Good pronunciation.")
                 .recognizedText("안녕하세요.")
-                .characterScoreStatus("UNAVAILABLE")
+                .characterScoreStatus(ScoreStatus.UNAVAILABLE)
                 .scoreBreakdown(PracticeResultResponse.ScoreBreakdownResponse.builder()
                         .accuracy(88)
                         .fluency(86)
@@ -53,11 +71,14 @@ class EvaluationResultControllerTest {
                 .build();
         when(evaluationService.validateAudio(any()))
                 .thenReturn(EvaluationService.AudioValidationStatus.VALID);
-        when(evaluationService.evaluatePronunciation(any(), eq(null), eq("안녕하세요."))).thenReturn(response);
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
+        when(evaluationApplicationService.evaluate(eq(7L), any(), eq(null), eq("안녕하세요.")))
+                .thenReturn(response);
 
         mockMvc.perform(multipart("/api/evaluations")
                         .file(audio)
-                        .param("text", "안녕하세요."))
+                        .param("text", "안녕하세요.")
+                        .header("Authorization", "Bearer valid-access-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.overallScore").value(87))
                 .andExpect(jsonPath("$.gradeLabel").value("Good"))
@@ -69,8 +90,11 @@ class EvaluationResultControllerTest {
     @Test
     @DisplayName("audio가 없으면 400을 반환한다")
     void audioIsRequired() throws Exception {
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
+
         mockMvc.perform(multipart("/api/evaluations")
-                        .param("text", "안녕하세요."))
+                        .param("text", "안녕하세요.")
+                        .header("Authorization", "Bearer valid-access-token"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
     }
@@ -85,8 +109,11 @@ class EvaluationResultControllerTest {
                 wavBytes(1)
         );
 
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
+
         mockMvc.perform(multipart("/api/evaluations")
-                        .file(audio))
+                        .file(audio)
+                        .header("Authorization", "Bearer valid-access-token"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.message").value("sentenceId or text is required"))
@@ -102,12 +129,14 @@ class EvaluationResultControllerTest {
                 "audio/mpeg",
                 new byte[]{1, 2, 3}
         );
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(evaluationService.validateAudio(any()))
                 .thenReturn(EvaluationService.AudioValidationStatus.UNSUPPORTED_TYPE);
 
         mockMvc.perform(multipart("/api/evaluations")
                         .file(audio)
-                        .param("text", "안녕하세요."))
+                        .param("text", "안녕하세요.")
+                        .header("Authorization", "Bearer valid-access-token"))
                 .andExpect(status().isUnsupportedMediaType())
                 .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"));
     }
@@ -118,12 +147,14 @@ class EvaluationResultControllerTest {
         MockMultipartFile audio = new MockMultipartFile(
                 "audio", "recording.wav", "audio/wav", new byte[]{1, 2, 3}
         );
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(evaluationService.validateAudio(any()))
                 .thenReturn(EvaluationService.AudioValidationStatus.INVALID_WAV);
 
         mockMvc.perform(multipart("/api/evaluations")
                         .file(audio)
-                        .param("text", "안녕하세요."))
+                        .param("text", "안녕하세요.")
+                        .header("Authorization", "Bearer valid-access-token"))
                 .andExpect(status().isUnsupportedMediaType())
                 .andExpect(jsonPath("$.code").value("INVALID_WAV"));
     }
@@ -138,11 +169,33 @@ class EvaluationResultControllerTest {
                 new byte[(int) EvaluationService.MAX_AUDIO_BYTES + 1]
         );
 
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
+
+        mockMvc.perform(multipart("/api/evaluations")
+                        .file(audio)
+                        .param("text", "안녕하세요.")
+                        .header("Authorization", "Bearer valid-access-token"))
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(jsonPath("$.code").value("AUDIO_TOO_LARGE"));
+    }
+
+    @Test
+    @DisplayName("평가 생성은 Authorization bearer token이 필요하다")
+    void authorizationIsRequired() throws Exception {
+        MockMultipartFile audio = new MockMultipartFile(
+                "audio",
+                "recording.wav",
+                "audio/wav",
+                wavBytes(1)
+        );
+        when(activeSessionAuthenticator.authenticateBearer(null))
+                .thenThrow(new AuthException("Authorization header is required"));
+
         mockMvc.perform(multipart("/api/evaluations")
                         .file(audio)
                         .param("text", "안녕하세요."))
-                .andExpect(status().isPayloadTooLarge())
-                .andExpect(jsonPath("$.code").value("AUDIO_TOO_LARGE"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
     }
 
     private byte[] wavBytes(int dataLength) {

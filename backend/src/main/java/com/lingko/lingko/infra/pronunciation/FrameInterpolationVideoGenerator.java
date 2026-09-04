@@ -13,11 +13,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 /**
  * Frame Interpolation 영상 생성기
@@ -26,17 +31,25 @@ import java.util.UUID;
  * 1. 정적 이미지 처리 (단일 프레임)
  * 2. 영상 생성 (Frame Interpolation)
  * 3. 세그먼트 병합
- * 4. S3 업로드
+ * 4. 모바일 재생 호환 보정
+ * 5. S3 업로드
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class FrameInterpolationVideoGenerator implements VideoGenerator {
 
+    private static final int GENERATION_LOCK_STRIPES = 64;
+
     private final ReplicateApiClient replicateApiClient;
     private final VideoMerger videoMerger;
     private final S3Uploader s3Uploader;
     private final ExternalMediaUrlValidator externalMediaUrlValidator;
+    private final VideoPlaybackNormalizer videoPlaybackNormalizer;
+    private final List<Object> generationLocks = IntStream
+            .range(0, GENERATION_LOCK_STRIPES)
+            .mapToObj(ignored -> new Object())
+            .toList();
 
     @Override
     public String generate(List<List<String>> urlPairs, String syllable, VideoType type) {
@@ -71,7 +84,8 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
      * 영상 변환 없이 이미지를 S3에 업로드
      */
     private String handleStaticImage(String imageUrl, String syllable, VideoType type) {
-        log.info("정적 이미지 처리: {}", imageUrl);
+        // 외부 URL은 query credential을 포함할 수 있어 syllable과 type만 감사 정보로 남긴다.
+        log.info("정적 이미지 처리: syllable={}, type={}", syllable, type);
 
         externalMediaUrlValidator.validate(imageUrl);
 
@@ -83,7 +97,7 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
         // URL → S3 업로드
         String s3Url = s3Uploader.uploadFromUrl(imageUrl, s3Key);
 
-        log.info("정적 이미지 완료: {} -> {}", syllable, s3Url);
+        log.info("정적 이미지 완료: syllable={}, type={}", syllable, type);
         return s3Url;
     }
 
@@ -94,6 +108,29 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
      */
     private String handleVideoGeneration(List<List<String>> urlPairs, String syllable, VideoType type) {
         log.info("영상 생성 처리: {}개 세그먼트", urlPairs.size());
+
+        String fileName = generateVideoFileName(syllable, type, urlPairs);
+        String s3Key = "videos/" + type.getPrefix() + "/" + fileName;
+        Object generationLock = generationLocks.get(
+                Math.floorMod(s3Key.hashCode(), GENERATION_LOCK_STRIPES)
+        );
+        // 제거되는 key별 lock의 대기자 경쟁을 피하고 메모리를 제한하기 위해 고정 stripe를 사용한다.
+        synchronized (generationLock) {
+            return generateOrReuseVideo(urlPairs, syllable, type, s3Key);
+        }
+    }
+
+    private String generateOrReuseVideo(
+            List<List<String>> urlPairs,
+            String syllable,
+            VideoType type,
+            String s3Key
+    ) {
+        String cachedUrl = s3Uploader.findPublicUrl(s3Key).orElse(null);
+        if (cachedUrl != null) {
+            log.info("기존 가이드 영상 재사용: {} {}", syllable, type);
+            return cachedUrl;
+        }
 
         List<Path> tempFiles = new ArrayList<>();
 
@@ -113,16 +150,22 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
                 log.info("세그먼트 {}개 병합 완료", segmentPaths.size());
             }
 
-            // 3. 최종 영상을 S3에 업로드
-            String fileName = generateVideoFileName(syllable, type);
-            String s3Key = "videos/" + type.getPrefix() + "/" + fileName;
-            String s3Url = s3Uploader.upload(finalVideoPath.toString(), s3Key);
+            // 3. 모바일이 디코딩할 수 있는 형식으로 보정한다.
+            //    병합을 건너뛰거나(-세그먼트 1개) 병합하더라도 -c copy라 재인코딩이 없어,
+            //    여기가 픽셀 포맷을 바로잡을 수 있는 유일한 지점이다.
+            Path uploadPath = videoPlaybackNormalizer.normalize(finalVideoPath);
+            if (!uploadPath.equals(finalVideoPath)) {
+                tempFiles.add(uploadPath);
+            }
 
-            log.info("영상 생성 완료: {} -> {}", syllable, s3Url);
+            // 4. 최종 영상을 S3에 업로드
+            String s3Url = s3Uploader.upload(uploadPath.toString(), s3Key);
+
+            log.info("영상 생성 완료: syllable={}, type={}", syllable, type);
             return s3Url;
 
         } finally {
-            // 4. 모든 임시 파일 삭제
+            // 5. 모든 임시 파일 삭제
             cleanupTempFiles(tempFiles);
         }
     }
@@ -137,9 +180,8 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
             List<String> pair = urlPairs.get(i);
 
             if (pair.size() != 2) {
-                throw new IllegalArgumentException(
-                        "영상 생성은 2개 프레임 쌍이 필요함: " + pair
-                );
+                // URL 원문을 예외·로그에 섞지 않고 구조 오류만 알린다.
+                throw new IllegalArgumentException("영상 생성은 세그먼트당 2개 프레임이 필요함");
             }
 
             log.info("세그먼트 {}/{} 생성", i + 1, urlPairs.size());
@@ -168,7 +210,8 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
      */
     private Path downloadFromUrl(String url) {
         try {
-            log.debug("다운로드 시작: {}", url);
+            // 공급자 출력 URL도 query credential을 포함할 수 있어 로그에 기록하지 않는다.
+            log.debug("생성 영상 다운로드 시작");
 
             // 확장자 추출
             String extension = extractExtension(url);
@@ -190,8 +233,8 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
             return tempFile;
 
         } catch (IOException e) {
-            log.error("다운로드 실패: {}", url, e);
-            throw new VideoGenerationException("다운로드 실패: " + url, e);
+            log.error("생성 영상 다운로드 실패", e);
+            throw new VideoGenerationException("생성 영상 다운로드 실패", e);
         }
     }
 
@@ -245,11 +288,30 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
     /**
      * 영상 파일명 생성
      *
-     * 형식: {type}_{syllable}_{uuid}.mp4
+     * 동일 음절·타입·프레임은 재시작 후에도 같은 S3 object를 조회하도록 내용 기반 파일명을 사용한다.
      */
-    private String generateVideoFileName(String syllable, VideoType type) {
-        String uuid = UUID.randomUUID().toString().substring(0, 8);
-        return String.format("%s_%s_%s.mp4", type.getPrefix(), syllable, uuid);
+    private String generateVideoFileName(
+            String syllable,
+            VideoType type,
+            List<List<String>> urlPairs
+    ) {
+        StringBuilder source = new StringBuilder()
+                .append(type.name())
+                .append('|')
+                .append(syllable);
+        urlPairs.forEach(pair -> source.append('|').append(String.join(",", pair)));
+
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(source.toString().getBytes(StandardCharsets.UTF_8));
+            return String.format(
+                    "%s_%s.mp4",
+                    type.getPrefix(),
+                    HexFormat.of().formatHex(digest, 0, 12)
+            );
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
     }
 
     /**

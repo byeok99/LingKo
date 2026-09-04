@@ -1,10 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- API와 Mobile Ads 모두 release build에서도 network 접근이 필요하다. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
-        android:label="lingko_app"
+        android:label="LingKo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Android 광고 요청이 LingKo의 AdMob 앱으로 귀속되도록 플랫폼 전용 App ID를 사용한다. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-5081228614816629~7955011592" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -40,8 +46,22 @@
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
         <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
+        </intent>
+        <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Android 11(API 30)부터는 여기에 선언한 intent에 응답하는 앱만 조회할 수 있다.
+             약관·개인정보 처리방침을 브라우저로 열려면 http/https VIEW 선언이 필요하며,
+             없으면 설치된 브라우저를 찾지 못해 열기 요청이 실패한다. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="http"/>
         </intent>
     </queries>
 </manifest>

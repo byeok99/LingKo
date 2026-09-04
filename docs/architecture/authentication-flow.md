@@ -6,20 +6,52 @@
 sequenceDiagram
     participant U as User
     participant A as Flutter App
-    participant G as Google
+    participant P as Google / Apple
     participant B as Backend
     participant D as MySQL
 
-    U->>A: Google 로그인 선택
-    A->>G: Google Sign-In
-    G-->>A: ID Token
+    U->>A: 로그인 수단 선택
+    A->>U: 동의 화면 표시 (필수 2건·선택 1건)
+    U->>A: 동의
+    A->>P: 선택한 provider 인증
+    P-->>A: ID Token
     A->>B: POST /api/auth/oauth/login
-    B->>G: ID Token 검증
-    G-->>B: 사용자 식별 정보
+    B->>P: provider별 ID Token 검증
+    P-->>B: 사용자 식별 정보
     B->>D: 사용자 생성 또는 프로필 갱신
+    B->>D: Refresh Token 해시 세션 저장
     B-->>A: Access/Refresh JWT + 사용자 정보
     A->>A: Secure Storage 저장
+    A->>B: POST /api/legal/consent
+    B->>D: 문서 버전별 동의 기록
+    B-->>A: required=false
 ```
+
+동의는 **계정이 만들어지기 전에** 받습니다. 계정 생성 후에 받으면 거부한 사용자의 개인정보가 이미 서버에 생긴 상태가 되어 즉시 삭제하는 경로를 따로 만들어야 합니다. 기록 자체는 사용자에게 귀속되어야 하므로 로그인 성공 직후에 전송합니다.
+
+### App Review 전용 흐름
+
+```mermaid
+sequenceDiagram
+    participant R as Reviewer
+    participant A as Flutter App
+    participant B as Backend
+    participant D as MySQL
+
+    R->>A: LingKo wordmark 5회 탭
+    A->>R: 접근 코드 입력창
+    R->>A: Review Notes의 코드 입력
+    A->>B: POST /api/auth/review/login
+    B->>B: 활성화·Rate Limit·SHA-256 hash 검증
+    B->>D: 설정된 기존 review 사용자 조회
+    B->>D: Refresh Token 해시 세션 저장
+    B-->>A: Access/Refresh JWT + 사용자 정보
+    A->>A: Secure Storage 저장
+    A->>B: 현재 동의 상태 확인
+```
+
+원문 코드는 앱과 DB에 저장하지 않습니다. 기능은 기본 비활성화이며 서버 Secret의 hash와 기존 사용자
+ID가 함께 설정된 심사 기간에만 열립니다. review 세션도 일반 세션과 동일하게 회전·폐기됩니다.
 
 ## 요청 계약
 
@@ -32,6 +64,11 @@ sequenceDiagram
 }
 ```
 
+Apple 요청은 `provider=APPLE`, `idToken`, `rawNonce`, 선택 `displayName`을 사용합니다. 앱은
+cryptographically secure raw nonce를 만들고 SHA-256 값만 Apple 요청에 전달합니다. Backend는 Apple
+공개 JWK로 RS256 서명을 확인하고 issuer, App ID audience, 만료, subject, token nonce를 검증합니다.
+Apple 이름은 최초 승인 응답에만 있으므로 이후 null 응답은 저장된 이름을 지우지 않습니다.
+
 응답에는 `tokenType`, `accessToken`, `refreshToken`, `expiresInSeconds`, `user`가 포함됩니다.
 
 ## 인증 API 사용
@@ -40,30 +77,59 @@ sequenceDiagram
 
 - `GET /api/evaluations/me`
 - `GET /api/quota/today`
-- `GET /api/users/me/preferences`
-- `PATCH /api/users/me/preferences`
+- `GET /api/sentences/saved`, `PATCH /api/sentences/saved/{sentenceId}`
+- `GET /api/legal/consent`, `POST /api/legal/consent`
 
 토큰이 없거나 형식이 올바르지 않거나 검증에 실패하면 `401 AUTHENTICATION_FAILED`를 반환합니다.
+
+`GET /legal/{document}`는 예외로 인증을 요구하지 않습니다. 아직 계정이 없는 가입 화면 사용자와 스토어 심사자가 같은 문서를 열어야 하기 때문이며, 문서에는 사용자 데이터가 없습니다.
 
 ## 모바일 세션
 
 - 세션은 `flutter_secure_storage`에 저장합니다.
-- 앱 시작 시 저장된 세션을 복원합니다.
-- 로그아웃 시 로컬 세션을 삭제합니다.
-- 현재 Refresh Token 자동 갱신과 서버 측 폐기 목록은 완성되지 않았습니다.
+- 앱 시작 시 저장된 세션을 복원한 뒤 `GET /api/legal/consent`로 현재 문서 버전의 동의 여부를 확인합니다. 재동의가 필요하거나 상태를 확인할 수 없으면 Home을 열지 않고 동의 화면을 유지하는 fail-closed로 처리합니다.
+- 보호 API가 `401`을 반환하면 Refresh Token으로 한 번 갱신하고 원 요청을 한 번만 재시도합니다.
+- 동시에 여러 요청이 `401`을 받아도 앱은 하나의 refresh 요청만 실행합니다.
+- refresh가 실패하거나 재시도도 `401`이면 로컬 세션을 삭제하고 로그인 화면으로 이동합니다.
+- 로그아웃 시 현재 기기의 서버 세션을 폐기하고 로컬 세션을 삭제합니다.
+
+## Refresh Token 회전과 폐기
+
+```mermaid
+sequenceDiagram
+    participant A as Flutter App
+    participant B as Backend
+    participant D as MySQL
+
+    A->>B: POST /api/auth/token/refresh
+    B->>B: JWT 서명·typ·sid·sub·exp 검증
+    B->>D: sid 세션 행 비관적 잠금
+    B->>D: 현재 token hash 일치 확인
+    B->>D: 새 token hash로 원자적 교체
+    B-->>A: 회전된 Access/Refresh Token
+    A->>A: Secure Storage 교체
+```
+
+- 서버는 Refresh Token 원문이 아니라 SHA-256 해시만 저장합니다.
+- 각 로그인은 독립적인 기기 세션 `sid`를 생성합니다.
+- Access Token도 같은 `sid`를 포함하며 보호 API는 DB 세션이 활성 상태인지 확인합니다.
+- 회전 전 토큰이 다시 사용되면 재사용 공격으로 간주하고 해당 `sid` 세션 전체를 폐기합니다.
+- 로그아웃 또는 재사용 탐지로 세션이 폐기되면 해당 세션의 Access Token도 남은 만료 시간과 관계없이 보호 API에서 거부됩니다.
+- Refresh Token 절대 만료는 로그인 시점부터 기본 14일이며 회전으로 연장하지 않습니다.
+- 현재 로그아웃은 현재 기기 세션만 폐기합니다. 전체 기기 로그아웃은 별도 후속 기능입니다.
 
 ## 운영 전 보완
 
-- Refresh Token 전용 API와 회전 정책
-- 탈취 감지와 서버 측 토큰 폐기
 - JWT 키 버전과 안전한 키 회전
 - Google 검증 호출의 타임아웃·재시도
 - 인증이 필요한 모든 사용자 기능에 공통 필터 적용
 - 가이드 작업 관리자 권한
 - 로그인·실패 이벤트 감사 로그
+- Apple authorization code 교환·refresh token 보관과 회원 탈퇴 시 Apple token revocation
 
 ## 금지 사항
 
 - ID Token, Access Token, Refresh Token, JWT 비밀키를 로그에 남기지 않습니다.
 - `.env` 또는 실제 OAuth 비밀값을 커밋하지 않습니다.
 - 모바일 앱에 서버 JWT 비밀키나 Google Client Secret을 포함하지 않습니다.
+- 모바일 앱과 저장소에 심사용 접근 코드, review 계정 비밀번호, 고정 JWT를 포함하지 않습니다.

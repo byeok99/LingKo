@@ -12,6 +12,11 @@ import java.sql.ResultSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Recommended Sentence Migration Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 class RecommendedSentenceMigrationTest {
 
     @Test
@@ -27,6 +32,13 @@ class RecommendedSentenceMigrationTest {
                             StandardCharsets.UTF_8
                     )
             );
+            RunScript.execute(
+                    connection,
+                    new FileReader(
+                            "src/main/resources/db/migration/V12__remove_recommended_pronunciation.sql",
+                            StandardCharsets.UTF_8
+                    )
+            );
 
             try (ResultSet resultSet = connection.createStatement()
                     .executeQuery("SELECT COUNT(*) FROM recommended_sentences WHERE active = TRUE")) {
@@ -35,11 +47,18 @@ class RecommendedSentenceMigrationTest {
             }
 
             try (ResultSet resultSet = connection.createStatement()
-                    .executeQuery("SELECT category_code, standard_pronunciation FROM recommended_sentences WHERE sentence_id = 1")) {
+                    .executeQuery("SELECT category_code, original_text FROM recommended_sentences WHERE sentence_id = 1")) {
                 resultSet.next();
                 assertThat(resultSet.getString("category_code")).isEqualTo("FOOD");
-                assertThat(resultSet.getString("standard_pronunciation")).isNotBlank();
+                assertThat(resultSet.getString("original_text")).isEqualTo("맛있겠다.");
             }
+
+            assertThat(connection.getMetaData().getColumns(
+                    null,
+                    null,
+                    "recommended_sentences",
+                    "standard_pronunciation"
+            ).next()).isFalse();
         }
     }
 }

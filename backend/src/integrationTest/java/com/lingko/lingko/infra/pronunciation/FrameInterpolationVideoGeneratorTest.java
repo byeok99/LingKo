@@ -119,7 +119,7 @@ class FrameInterpolationVideoGeneratorTest {
 
         System.out.println("S3 URL: " + s3Url);
         assertThat(s3Url).contains("videos/mouth");
-        assertThat(s3Url).contains("바");
+        assertThat(s3Url).endsWith(".mp4");
     }
 
     @Test

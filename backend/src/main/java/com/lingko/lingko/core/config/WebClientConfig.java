@@ -13,7 +13,11 @@ import reactor.netty.http.client.HttpClient;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-
+/**
+ * 외부 연동에서 공유할 reactive HTTP client 정책을 설정한다.
+ *
+ * 공급자 어댑터마다 서로 다른 codec·메모리 제한을 선택하지 않도록 공통 설정으로 관리한다.
+ */
 @Configuration
 public class WebClientConfig {
     @Bean

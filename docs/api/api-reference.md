@@ -1,12 +1,68 @@
 # API 레퍼런스
 
-기본 주소는 로컬 기준 `http://localhost:8080`입니다. JSON 응답은 UTF-8을 사용하며 인증 API는 `Authorization: Bearer <access-token>` 헤더를 사용합니다.
+운영 주소는 `https://lingko-api.duckdns.org`이고 로컬 Backend 주소는 `http://localhost:8080`입니다. Flutter 앱은 별도 override가 없으면 운영 HTTPS 주소를 사용합니다. JSON 응답은 UTF-8을 사용하며 인증 API는 `Authorization: Bearer <access-token>` 헤더를 사용합니다.
+
+## 법무 문서 (인증 불필요)
+
+### `GET /legal/{document}`
+
+약관과 개인정보 처리방침을 브라우저에서 읽을 수 있는 HTML로 반환합니다. **인증이 필요 없습니다.** 아직 계정이 없는 가입 화면 사용자와 스토어 심사자가 같은 문서를 열 수 있어야 하기 때문입니다.
+
+| 항목 | 값 |
+|---|---|
+| `document` | `terms` 또는 `privacy`. 그 밖의 값은 `404` |
+| `lang` (선택) | `ko` 또는 `en`. 생략하거나 지원하지 않는 값이면 `ko`로 되돌립니다. 잘못된 언어 때문에 약관을 못 읽는 상황을 막기 위해 `400`을 반환하지 않습니다 |
+
+응답은 `text/html; charset=UTF-8`이며 `Cache-Control: public, max-age=300`, `X-Content-Type-Options: nosniff`, 외부 자원을 차단하는 `Content-Security-Policy`를 함께 반환합니다.
+
+문서 원본은 `docs/legal/*.md`이고 `backend/src/main/resources/legal/`의 사본을 서빙 시점에 HTML로 변환합니다. 두 벌이 어긋나면 `LegalDocumentSourceSyncTest`가 실패합니다. **`docs/legal/`의 문서를 고치면 리소스로 복사해야 합니다.**
+
+예: `GET /legal/privacy?lang=en`
+
+## 법무 동의 (인증 필요)
+
+법무 문서의 공개 열람 URL과 달리 동의 상태는 사용자별 개인정보이므로 모든 endpoint가
+`Authorization: Bearer <access-token>`을 요구합니다. 사용자 ID는 요청 body나 query로 받지 않고
+Access Token의 subject에서만 결정합니다.
+
+### `GET /api/legal/consent`
+
+현재 서버 문서 버전에 대한 로그인 사용자의 동의 필요 여부를 반환합니다.
+
+```json
+{
+  "required": true,
+  "documentVersion": "2026-08-07"
+}
+```
+
+앱은 세션 복원 직후 이 값을 확인하며, `required=true`이거나 상태를 확인할 수 없으면 Home을
+표시하지 않고 동의 화면을 유지합니다.
+
+### `POST /api/legal/consent`
+
+현재 문서 버전의 필수 동의와 선택 마케팅 수신 값을 기록합니다.
+
+```json
+{
+  "termsAgreed": true,
+  "privacyAcknowledged": true,
+  "marketingOptIn": false,
+  "documentVersion": "2026-08-07",
+  "agreedAt": "2026-08-07T01:02:03Z"
+}
+```
+
+`termsAgreed`와 `privacyAcknowledged`는 반드시 `true`여야 하며, `documentVersion`은 서버의 현재
+버전과 정확히 같아야 합니다. `agreedAt`은 기기 시각 참고값이고 감사 기준 시각은 서버가 별도로
+기록합니다. 같은 사용자·버전의 재시도는 새 행을 만들지 않는 idempotent 요청입니다. 성공 응답은
+같은 상태 구조에서 `required=false`를 반환합니다.
 
 ## 인증
 
 ### `POST /api/auth/oauth/login`
 
-Google ID Token을 검증하고 LingKo JWT를 발급합니다.
+Google 또는 Apple identity token을 검증하고 LingKo JWT를 발급합니다.
 
 ```json
 {
@@ -15,11 +71,83 @@ Google ID Token을 검증하고 LingKo JWT를 발급합니다.
 }
 ```
 
+iOS Apple 로그인은 앱이 매 요청 생성한 원 nonce와 최초 승인 때만 제공될 수 있는 이름을 함께 보냅니다.
+
+```json
+{
+  "provider": "APPLE",
+  "idToken": "...",
+  "rawNonce": "32~128자의 요청별 nonce",
+  "displayName": "Apple Learner"
+}
+```
+
+`displayName`은 선택이며 100자 이하로 정규화합니다. Backend는 Apple 공개 JWK의 RS256 서명,
+`iss=https://appleid.apple.com`, `aud=APPLE_CLIENT_ID`, `exp`, `sub`, SHA-256 nonce와 이메일 검증
+상태를 확인합니다. 계정 키는 이메일이 아니라 Apple `sub`입니다. 잘못된 token·nonce·audience는
+`401 AUTHENTICATION_FAILED`, Apple 요청의 nonce 누락은 `400 VALIDATION_FAILED`입니다.
+
 응답 필드:
 
 ```text
 tokenType, accessToken, refreshToken, expiresInSeconds, user
 ```
+
+### `POST /api/auth/review/login`
+
+App Review 기간에만 활성화하는 전용 endpoint입니다. 앱은 Review Notes로 전달된 코드를 사용자가 직접
+입력했을 때만 전송하며 credential을 저장하거나 build에 포함하지 않습니다.
+
+```json
+{
+  "accessCode": "4~128자의 심사용 코드"
+}
+```
+
+Backend는 원문이 아닌 운영 환경의 SHA-256 hash와 상수 시간 비교하고, 성공하면
+`REVIEW_ACCESS_USER_ID`로 지정된 기존 사용자에게 일반 로그인과 같은 token 응답을 발급합니다.
+기능 비활성화·코드 불일치·계정 없음은 모두 `401 AUTHENTICATION_FAILED`입니다. 서버가 관찰한 같은
+원격 주소의 기본 5분 5회 제한을 넘으면 `429 REVIEW_ACCESS_RATE_LIMITED`와 `Retry-After`를 반환합니다.
+
+### `POST /api/auth/token/refresh`
+
+현재 Refresh Token을 검증하고 새로운 Access/Refresh Token 쌍으로 회전합니다.
+
+```json
+{
+  "refreshToken": "..."
+}
+```
+
+응답 필드는 OAuth 로그인 응답과 같습니다. 만료·폐기·재사용 토큰은 `401 AUTHENTICATION_FAILED`를 반환합니다.
+
+### `POST /api/auth/logout`
+
+현재 기기의 Refresh Token 세션을 폐기합니다.
+
+```json
+{
+  "refreshToken": "..."
+}
+```
+
+성공하면 본문 없이 `204 No Content`를 반환합니다.
+
+### `DELETE /api/auth/account`
+
+현재 Access Token의 사용자와 현재 Refresh Token의 세션 소유자가 같은지 재확인한 뒤 계정과 사용자 소유 데이터를 삭제합니다.
+
+```http
+Authorization: Bearer <access-token>
+```
+
+```json
+{
+  "refreshToken": "..."
+}
+```
+
+성공하면 본문 없이 `204 No Content`를 반환하고 앱은 로컬 토큰을 제거합니다. 서버는 `evaluation-audio/{userId}/`의 현재 object, 과거 version과 delete marker를 먼저 삭제한 뒤 Refresh 세션, 평가 작업·기록, 쿼터와 사용자 프로필을 삭제합니다. S3 정리가 실패하면 DB 계정과 로컬 세션을 보존하고 `503 ACCOUNT_DELETION_UNAVAILABLE`을 반환하므로 사용자는 동일 세션으로 재시도할 수 있습니다.
 
 ## 문장
 
@@ -34,6 +162,34 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 
 추천 문장 단건을 조회합니다.
 
+추천 문장 응답의 `standardPronunciation`은 DB에 저장한 정답을 반환하지 않습니다. 서버가 `originalText`를 Unicode 문장부호·기호 제거와 공백 정규화한 뒤 현재 한국어 음운 규칙으로 매 요청 계산합니다. `romanizedPronunciation`은 이 표준 발음에서 파생하며 음절은 하이픈, 단어는 공백으로 구분합니다.
+
+### `GET /api/sentences/saved`
+
+인증 필요. 사용자가 저장한 문장을 최근 저장 순으로 반환합니다.
+
+```json
+{
+  "items": [],
+  "totalCount": 0
+}
+```
+
+`items`는 추천 문장 단건 조회와 같은 형식입니다. `totalCount`를 따로 두는 이유는 화면 머리말의 개수가 목록 길이와 반드시 일치해야 하기 때문이며, 이후 페이지네이션이 붙어도 조용히 어긋나지 않게 하기 위함입니다.
+
+### `PATCH /api/sentences/saved/{sentenceId}`
+
+인증 필요. 저장 상태를 뒤집습니다.
+
+```json
+{
+  "sentenceId": 12,
+  "saved": true
+}
+```
+
+화면이 원하는 상태를 보내지 않고 **서버가 실제 상태를 뒤집습니다.** 두 기기에서 동시에 누를 때 뒤늦게 도착한 요청이 이전 상태를 되살리는 것을 막기 위한 계약입니다. 앱은 응답의 `saved`를 최종 상태로 삼아야 합니다.
+
 ## 발음 준비
 
 ### `POST /api/pronunciation/convert`
@@ -46,6 +202,8 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 
 원문과 표준 발음을 반환합니다.
 
+`text`는 Unicode 문장부호·기호를 제거하고 연속 공백을 하나로 합친 뒤 변환합니다. 정규화 결과가 비어 있으면 `400 INVALID_REQUEST`를 반환합니다.
+
 ### `POST /api/pronunciation/prepare`
 
 현재 자유 문장 요청만 지원합니다.
@@ -57,40 +215,129 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 }
 ```
 
-응답에는 문장 원문, 표준 발음, 번역·학습 정보, 글자별 가이드가 포함됩니다.
+응답에는 문장 원문, 표준 발음, `romanizedPronunciation`, 번역·학습 정보, 글자별 가이드가 포함됩니다. 로마자 가이드는 저장하지 않고 현재 표준 발음에서 결정적으로 파생합니다.
+
+`mouthGuideUrl`과 `tongueGuideUrl`은 제공된 매체 URL입니다. 문장 준비 응답은 빠른 입력 피드백을 위해 정적 PNG mapping을 반환합니다. 평가가 완료되면 글자 점수 제공 여부와 관계없이 프레임 전환이 필요한 모든 음절의 입·혀 가이드를 Worker가 MP4로 생성하고, 앱은 영상 확장자를 영상으로 재생합니다. 단일 프레임이거나 영상 생성에 실패하면 첫 PNG를 정적 fallback으로 표시합니다. 동일 음절·가이드 종류·프레임 조합의 MP4는 결정적 S3 key로 재사용합니다.
 
 ## 발음 평가
 
-### `POST /api/evaluations`
+### `POST /api/evaluations/uploads`
 
-`multipart/form-data`
-
-| 필드 | 필수 | 설명 |
-|---|---:|---|
-| `audio` | 예 | 10MiB 이하 16-bit mono PCM WAV |
-| `sentenceId` | 조건부 | 추천 문장 ID |
-| `text` | 조건부 | 자유 문장 원문 |
-
-`sentenceId`와 `text` 중 하나는 필요합니다.
-
-대표 응답:
+인증 필요. 앱이 API 서버를 거치지 않고 비공개 S3에 직접 PUT할 URL을 발급합니다.
 
 ```json
 {
-  "overallScore": 82,
-  "gradeLabel": "Good",
-  "summary": "...",
-  "recognizedText": "...",
-  "characterScoreStatus": "AVAILABLE",
-  "scoreBreakdown": {
-    "accuracy": 84,
-    "fluency": 80,
-    "completeness": 83
-  },
-  "weakCharacters": [],
-  "characters": []
+  "fileName": "recording.wav",
+  "contentType": "audio/wav",
+  "contentLength": 32044
 }
 ```
+
+응답 `201 Created`:
+
+```json
+{
+  "objectKey": "evaluation-audio/7/uuid.wav",
+  "uploadUrl": "https://signed-s3-url",
+  "expiresAt": "2026-07-27T01:10:00Z"
+}
+```
+
+앱은 `uploadUrl`에 `Content-Type: audio/wav`와 발급 요청과 같은 길이로 WAV를 PUT합니다. URL 전체는 로그에 기록하지 않습니다.
+
+### `POST /api/evaluations/jobs`
+
+인증과 `Idempotency-Key` header가 필요합니다.
+
+```json
+{
+  "objectKey": "evaluation-audio/7/uuid.wav",
+  "sentenceId": 12
+}
+```
+
+자유 문장은 `sentenceId` 대신 `text`를 사용하며, 표준 발음 준비와 동일하게 100자 이하여야 합니다. 서버는 object 소유권과 metadata를 확인한 뒤 쿼터 예약과 `PENDING` 작업 생성을 하나의 transaction으로 처리합니다.
+
+응답 `202 Accepted`:
+
+```json
+{
+  "jobId": "uuid",
+  "status": "PENDING",
+  "phase": "QUEUED",
+  "result": null,
+  "errorCode": null,
+  "createdAt": "2026-07-27T01:00:00Z",
+  "updatedAt": "2026-07-27T01:00:00Z"
+}
+```
+
+동일 사용자·동일 Key·동일 payload 재호출은 기존 작업을 반환하며 다른 payload는 `409 IDEMPOTENCY_CONFLICT`입니다. 성공·최종 실패 작업은 완료 시점부터 기본 7일 동안 이 응답 재사용을 위해 보존합니다. 보존 기간이 지난 작업은 설정된 batch 단위로 삭제되며, `PENDING`·`PROCESSING` 작업은 자동 정리 대상이 아닙니다.
+
+### `GET /api/evaluations/jobs/{jobId}`
+
+인증 필요. 상태는 `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`입니다. `phase`는 실제 Worker 처리 경계를 나타내며 `QUEUED`, `DOWNLOADING_AUDIO`, `ANALYZING_SPEECH`, `PREPARING_GUIDES`, `FINALIZING` 중 하나입니다. 이는 단계 순서만 나타내고 단계별 소요 시간이 달라질 수 있으므로 백분율로 환산하지 않습니다. 성공 시 `result`에 기존 평가 결과 계약을 반환합니다.
+
+대표 성공 결과:
+
+```json
+{
+  "jobId": "uuid",
+  "status": "SUCCEEDED",
+  "phase": "FINALIZING",
+  "result": {
+    "overallScore": 82,
+    "gradeLabel": "Good",
+    "summary": "...",
+    "recognizedText": "...",
+    "characterScoreStatus": "UNAVAILABLE",
+    "wordScoreStatus": "AVAILABLE",
+    "scoreBreakdown": {
+      "accuracy": 84,
+      "fluency": 80,
+      "completeness": 83
+    },
+    "weakCharacters": [],
+    "characters": [],
+    "words": [
+      {
+        "position": 0,
+        "text": "김치찌개",
+        "score": 82,
+        "scoreStatus": "AVAILABLE",
+        "syllables": [
+          {
+            "position": 0,
+            "text": "김",
+            "score": null,
+            "scoreStatus": "UNAVAILABLE",
+            "mouthGuideUrl": "...",
+            "tongueGuideUrl": "..."
+          }
+        ]
+      }
+    ]
+  },
+  "errorCode": null
+}
+```
+
+`words[].score`는 Azure detailed 결과의 단어 수·정규화 텍스트·위치가 기준 문장과 모두 일치할 때만 제공됩니다. `words[].syllables`는 입·혀 가이드 탐색 단위이며 단어 점수를 복제하지 않으므로 `score`가 `null`입니다. 단어 정렬을 신뢰할 수 없으면 `wordScoreStatus`와 각 단어의 `scoreStatus`는 `UNAVAILABLE`입니다.
+
+#### 상태값 계약
+
+`scoreStatus`, `characterScoreStatus`, `wordScoreStatus`는 다음 두 값만 사용합니다.
+
+| 값 | 의미 | 동반 `score` |
+|---|---|---|
+| `AVAILABLE` | 점수가 실제 측정값이며 노출해도 됩니다. | 숫자 |
+| `UNAVAILABLE` | 점수를 신뢰할 수 없습니다. **0점이 아니라 "모름"입니다.** | 항상 `null` |
+
+`guideStatus`는 의미 축이 다른 별도 상태값이며 `AVAILABLE`과 `MISSING`을 사용합니다. 점수를 신뢰할 수 없어도 가이드는 제공될 수 있으므로 두 값을 함께 판단하지 마십시오.
+
+클라이언트는 위 목록에 없는 값을 받으면 `UNAVAILABLE`로 처리해야 합니다. 서버가 상태값을 추가하더라도 배포되지 않은 구버전 앱이 신뢰할 수 없는 점수를 노출하지 않게 하기 위한 규칙입니다.
+
+기존 `POST /api/evaluations` multipart endpoint는 기본 비활성화되며 임시 호환이 필요할 때만 `EVALUATION_LEGACY_MULTIPART_ENABLED=true`로 활성화합니다.
 
 ## 사용자 연습 기록
 
@@ -103,45 +350,117 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 - `page`: 기본 0, 0 이상
 - `size`: 기본 10, 범위 1~50
 
-## 일일 쿼터
+각 `items[]`는 평가 당시 저장한 `words[]`와 그 하위 `syllables[]`를 반환합니다. `romanizedPronunciation`은 저장된 표준 발음 snapshot에서 조회 시점에 파생합니다. 신규 기록은 단어 점수를 snapshot으로 보존하며, 단어 snapshot이 없는 과거 기록은 표준 발음의 공백과 저장된 음절 순서로 점수 없는 그룹을 복원합니다.
 
-### `GET /api/quota/today`
+### `GET /api/evaluations/me/weak-sounds`
 
-인증 필요. Asia/Seoul 기준 오늘의 무료·보상·잔여 횟수와 다음 갱신 시각을 반환합니다.
+인증 필요. 반복해서 틀리는 **음절**을 평균 점수가 낮은 순으로 반환합니다.
 
-현재 평가 업로드와 쿼터 차감은 연결되지 않았습니다.
+쿼리:
 
-## 사용자 설정
-
-### `GET /api/users/me/preferences`
-
-인증 필요. 표시 언어, 모국어, 목표 레벨을 반환합니다.
-
-### `PATCH /api/users/me/preferences`
-
-인증 필요.
+- `limit`: 기본 3, 범위 1~20
 
 ```json
 {
-  "displayLanguage": "en",
-  "nativeLanguage": "ko",
-  "targetLevel": "BEGINNER_2"
+  "items": [
+    { "text": "씨", "romanization": "ssi", "averageScore": 62, "attemptCount": 8 }
+  ]
 }
 ```
 
-지원 레벨:
+`averageScore`는 **해당 음절이 들어간 어절 점수들의 가중 평균**이며, 음절 자체를 측정한 점수가 아닙니다. 공급자가 한국어 음절 점수를 신뢰할 수 있게 제공하지 않아 `evaluation_syllable.score`는 항상 `null`이고, 서버는 측정된 최소 단위인 어절 점수를 그 어절의 음절들에 귀속시켜 집계합니다. 어절마다 시도 횟수가 달라 단순 평균 대신 횟수로 가중합니다. 한 어절 안에서 같은 음절이 반복돼도 시도는 한 번으로 셉니다.
 
-- `BEGINNER_1`
-- `BEGINNER_2`
-- `INTERMEDIATE_1`
-- `INTERMEDIATE_2`
-- `ADVANCED`
+`attemptCount`는 그 음절이 들어간 어절을 연습한 총 횟수이며, 2회 미만인 음절은 표본이 부족해 목록에서 제외합니다. 한글 완성형 음절이 아닌 문자(자모·구두점·공백·영문)는 집계하지 않습니다.
+
+### `GET /api/evaluations/me/sounds/{character}`
+
+인증 필요. 음절 하나의 누적 성적과 과거 시도·다음 후보를 한 응답으로 반환합니다. 세 자료를 따로 조회하면 시점이 어긋나 머리말의 평균·횟수와 아래 목록이 맞지 않게 보입니다.
+
+```json
+{
+  "text": "씨",
+  "romanization": "ssi",
+  "averageScore": 62,
+  "attemptCount": 8,
+  "practiced": [
+    {
+      "evaluationLogId": 10,
+      "originalText": "날씨가 좋아요.",
+      "standardPronunciation": "날씨가 조아요.",
+      "romanization": "nal-ssi-ga jo-a-yo",
+      "score": 58,
+      "createdAt": "2026-06-26T09:30:00"
+    }
+  ],
+  "suggested": [
+    {
+      "sentenceId": 12,
+      "originalText": "씨앗을 심어요.",
+      "standardPronunciation": "씨아츨 시머요.",
+      "romanization": "ssi-a-cheul si-meo-yo",
+      "translation": "I plant a seed."
+    }
+  ]
+}
+```
+
+`practiced[].score`는 음절이 아니라 그 음절이 속한 어절의 점수입니다. `null`이면 해당 어절에 신뢰할 수 있는 점수가 없었다는 뜻이며 0점과 구분합니다. 아직 연습한 적이 없으면 `averageScore`와 `attemptCount`는 0이고 `practiced`는 비지만, `suggested`는 채워 진입 즉시 다음 행동을 고를 수 있게 합니다.
+
+`suggested`는 추천 문장 **원문**에 해당 음절이 들어있고 아직 연습하지 않은 것만 고릅니다. 표준 발음으로 찾으면 원문에 없는 글자로 문장을 고르게 되어 사용자가 왜 이 문장이 나왔는지 알 수 없습니다.
+
+## 발음 평가 기회
+
+### `GET /api/quota/today`
+
+인증 필요. endpoint 경로는 호환성을 위해 유지하며 현재·최대 평가 기회와 서버 기준 다음 자연 충전 시각을 반환합니다. 과거 자정 초기화용 `resetAt`은 응답 계약에서 제거했습니다.
+
+```json
+{
+  "date": "2026-08-03",
+  "freeLimit": 5,
+  "freeUsed": 2,
+  "rewardedAvailable": 0,
+  "remainingPractices": 3,
+  "nextRefillAt": "2026-08-03T17:30:00+09:00",
+  "serverTime": "2026-08-03T16:47:42+09:00"
+}
+```
+
+평가 진행 중 예약된 횟수는 `remainingPractices`에서 즉시 제외되고 최초 예약 시 1시간 timer가 시작됩니다. 평가 성공 시 사용량으로 확정되고 시스템 오류 시 복구되며, 다시 최대치가 되면 timer도 제거됩니다. 자연 충전은 API 접근 시 서버가 경과 구간을 계산하는 lazy refill 방식입니다.
+
+### `POST /api/quota/ad-reward-sessions`
+
+인증 필요. 광고를 열기 전에 앱이 호출하며 Google SSV callback과 로그인 사용자를 연결할 15분짜리 1회성 token을 반환합니다.
+
+```json
+{
+  "sessionToken": "server-generated-url-safe-token",
+  "expiresAt": "2026-08-12T14:30:00+09:00"
+}
+```
+
+- 앱은 token을 Rewarded Ad의 `customData`로 설정합니다. 원본 token은 DB에 저장하지 않고 SHA-256 hash만 보관합니다.
+- 허용 광고 단위가 설정되지 않았거나 현재 기회가 5회이면 `503 AD_REWARD_UNAVAILABLE`입니다.
+
+### `GET /api/quota/ad-reward-sessions/{sessionToken}`
+
+인증 필요. `PENDING`, `COMPLETED`, `EXPIRED`와 실제 지급 여부인 `credited`를 반환합니다. 앱은 client reward callback 이후 `COMPLETED`를 확인한 경우에만 `/api/quota/today`를 다시 조회합니다.
+
+### `GET /api/quota/ad-rewards/ssv`
+
+Google AdMob 전용 공개 callback입니다. query 원문의 ECDSA-SHA256 서명을 Google rotating public key로 검증한 뒤 `ad_unit`, `reward_item`, `reward_amount`, `custom_data`, 전역 고유 `transaction_id`를 확인합니다. 같은 transaction은 한 번만 처리하며 기존 `nextRefillAt`은 바꾸지 않습니다. 클라이언트가 직접 지급하는 과거 `POST /api/quota/ad-rewards`는 지급 로직을 제거하고 `410 Gone`만 반환합니다.
 
 ## 가이드 생성 작업
 
 ### `POST /api/pronunciation/guide-jobs`
 
-현재 인증되지 않은 비동기 작업 생성 API입니다.
+비용이 발생하는 내부 운영용 비동기 작업 생성 API입니다. 기본 설정에서는 Controller 자체가 등록되지 않으며, `GUIDE_JOBS_API_ENABLED=true`와 32자 이상의 `GUIDE_JOBS_INTERNAL_TOKEN`이 함께 설정된 환경에서만 열립니다.
+
+요청 헤더:
+
+```http
+X-LingKo-Internal-Token: <service-secret>
+```
 
 ```json
 {
@@ -155,7 +474,15 @@ tokenType, accessToken, refreshToken, expiresInSeconds, user
 
 성공 시 `202 Accepted`와 작업 ID, 상태, 캐시 키를 반환합니다.
 
+- 일반 사용자 Bearer Token에는 생성 권한이 없으며 `403 GUIDE_JOB_FORBIDDEN`을 반환합니다.
+- 내부 호출자는 기본 분당 2회로 제한되며 초과 시 `429 GUIDE_JOB_RATE_LIMITED`와 `Retry-After`를 반환합니다.
+- 서로 다른 생성 작업은 기본 동시 1개만 실행하며 슬롯이 차면 `429 GUIDE_JOB_CAPACITY_EXCEEDED`를 반환합니다.
+- `syllable`은 한글 음절 1자, `urlPairs`는 최대 10쌍, URL은 항목당 최대 2,048자입니다.
+- 외부 미디어는 HTTPS와 허용된 S3·Replicate host만 허용하며 DNS 결과의 사설·loopback 주소, redirect, 25MiB 초과 응답을 거부합니다.
+
 ### `GET /api/pronunciation/guide-jobs/{jobId}`
+
+생성과 같은 내부 service token이 필요합니다. 상태 조회는 외부 생성 비용을 만들지 않으므로 생성 요청의 분당 한도를 소비하지 않습니다.
 
 상태 후보:
 

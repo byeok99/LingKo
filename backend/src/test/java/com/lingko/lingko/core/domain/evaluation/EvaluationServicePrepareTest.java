@@ -1,5 +1,6 @@
 package com.lingko.lingko.core.domain.evaluation;
 
+import com.lingko.lingko.api.evaluation.dto.GuideStatus;
 import com.lingko.lingko.api.evaluation.dto.GuideCharacterResponse;
 import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareResponse;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
@@ -12,6 +13,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Evaluation 서비스 Prepare Test의 성공·실패 경로와 회귀 계약을 검증한다.
+ *
+ * 보장하려는 동작을 테스트 경계에 명시해 구현 변경이 계약을 깨뜨리면 자동 검증에서 드러나게 한다.
+ */
 class EvaluationServicePrepareTest {
 
     @Test
@@ -23,11 +29,12 @@ class EvaluationServicePrepareTest {
         when(mappingUtil.getImageUrl("ㅏ", VideoType.MOUTH)).thenReturn("https://guides/mouth/a.png");
         EvaluationService service = new EvaluationService(mappingUtil);
 
-        PronunciationPrepareResponse response = service.prepareCustomSentence("맛있겠다.");
+        PronunciationPrepareResponse response = service.prepareCustomSentence("  맛있겠다.!?  ");
 
         assertThat(response.getSentence().getSource()).isEqualTo("CUSTOM");
-        assertThat(response.getSentence().getOriginalText()).isEqualTo("맛있겠다.");
-        assertThat(response.getSentence().getStandardPronunciation()).isEqualTo("마싰겠다.");
+        assertThat(response.getSentence().getOriginalText()).isEqualTo("맛있겠다");
+        assertThat(response.getSentence().getStandardPronunciation()).isEqualTo("마싣껟따");
+        assertThat(response.getSentence().getRomanizedPronunciation()).isEqualTo("ma-sit-kket-tta");
         assertThat(response.getSentence().getCharacters()).isNotEmpty();
 
         GuideCharacterResponse first = response.getSentence().getCharacters().get(0);
@@ -36,8 +43,25 @@ class EvaluationServicePrepareTest {
         assertThat(first.getPronunciationText()).isEqualTo("마");
         assertThat(first.getPhonemes()).containsExactly("ㅁ", "ㅏ");
         assertThat(first.getGuideType()).isEqualTo("TONGUE");
-        assertThat(first.getGuideStatus()).isEqualTo("AVAILABLE");
+        assertThat(first.getGuideStatus()).isEqualTo(GuideStatus.AVAILABLE);
         assertThat(first.getMouthGuideUrl()).isEqualTo("https://guides/mouth/m.png");
         assertThat(first.getTongueGuideUrl()).isEqualTo("https://guides/tongue/m.png");
+        assertThat(first.getNote()).isEqualTo("Focus on where your tongue touches.");
+    }
+
+    @Test
+    @DisplayName("가이드가 없는 글자에는 안내 문구를 만들지 않는다")
+    void omitsArticulationNoteWhenNoGuideExists() {
+        // 이전 구현은 guideType을 그대로 문장에 끼워 넣어 사용자에게
+        // "Focus on none placement"라는 문구를 노출했다.
+        SyllableMappingUtil mappingUtil = mock(SyllableMappingUtil.class);
+        EvaluationService service = new EvaluationService(mappingUtil);
+
+        PronunciationPrepareResponse response = service.prepareCustomSentence("마");
+
+        GuideCharacterResponse first = response.getSentence().getCharacters().get(0);
+        assertThat(first.getGuideType()).isEqualTo("NONE");
+        assertThat(first.getGuideStatus()).isEqualTo(GuideStatus.MISSING);
+        assertThat(first.getNote()).isEmpty();
     }
 }

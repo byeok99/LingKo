@@ -34,8 +34,13 @@ AWS_SECRET_KEY
 ```
 
 ```bash
+set -a
+source .env
+set +a
 ./gradlew externalIntegrationTest
 ```
+
+Replicate 429는 생성 요청에 지수 backoff를 적용하며 polling timeout 시 원격 Prediction 취소를 시도합니다. 출시 전 외부 테스트로 새 MP4가 생성되면 검증된 S3 URL을 `backend/src/main/resources/db/migration/R__seed_generated_syllable_guides.sql`에 추가해 초기 배포 데이터로 누적합니다. 실행 중 생성된 URL은 `syllables` 테이블에 즉시 upsert되므로 서버 재시작만으로 사라지지 않습니다.
 
 JaCoCo HTML 결과는 일반적으로 `backend/build/reports/jacoco/test/html/index.html`에서 확인합니다.
 
@@ -59,7 +64,7 @@ flutter build apk --debug
 - 권한 거부 후 재시도 UX
 - 실제 WAV 업로드와 평가 성공
 - 녹음 중 화면 이동·앱 백그라운드 전환
-- Google 로그인·로그아웃·앱 재실행 후 세션 복원
+- Google·iOS Apple 로그인, 취소, 로그아웃, 앱 재실행 후 세션 복원
 - 만료되거나 잘못된 JWT 처리
 - 느린 네트워크와 서버 오류 표시
 - 추천 문장·자유 문장 평가
@@ -93,6 +98,33 @@ flutter run
 - Google Cloud의 Web application Client ID
 
 세 값이 같은 서버 Client ID를 가리키는지 확인합니다.
+
+### Android Google 계정 선택 후 진행되지 않음
+
+Android Credential Manager는 OAuth 설정 오류를 사용자 취소처럼 반환할 수 있습니다. 다음 순서로 확인합니다.
+
+1. `GOOGLE_SERVER_CLIENT_ID`가 Web application Client ID인지 확인
+2. Google Cloud Android OAuth Client의 package name이 `com.byeok.lingko`인지 확인
+3. `cd app/android && ./gradlew signingReport`의 Debug SHA-1이 등록됐는지 확인
+4. Android emulator에서는 Backend 주소로 `http://10.0.2.2:8080` 사용
+5. 설정 변경 후 기존 앱을 삭제하고 다시 설치
+
+```bash
+cd app
+GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
+DEVICE_ID=emulator-5554 \
+./scripts/run-local.sh android
+```
+
+### iOS Apple 로그인 창이 열리지 않음
+
+1. Apple Developer App ID `com.byeok.lingko`에 Sign in with Apple이 활성인지 확인
+2. Xcode Runner target의 Signing & Capabilities와 `Runner.entitlements` 확인
+3. capability 변경 뒤 provisioning profile이 갱신됐는지 확인
+4. Backend `APPLE_CLIENT_ID`가 token audience인 Bundle ID와 같은지 확인
+5. iOS 13 이상 실기기에서 Apple 계정 로그인·2단계 인증 상태 확인
+
+identity token과 raw nonce는 로그·이슈·스크린샷에 남기지 않습니다.
 
 ### WAV 415 오류
 

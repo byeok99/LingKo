@@ -1,30 +1,88 @@
+// 파일 의도: LingKo의 공통 정보 계층, 버튼, 카드, 상태 표현을 제공한다.
+
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
+import '../app/app_palette.dart';
 import '../models/practice_sentence.dart';
 
+/// 장식용 액션을 만들지 않고 부모 폭 전체에 제목과 실제 동작만 배치하는 공통 상단 바다.
 class TopBar extends StatelessWidget {
-  const TopBar({super.key, required this.title});
+  const TopBar({
+    super.key,
+    required this.title,
+    this.leading,
+    this.trailing,
+    this.subtitle,
+    this.centered = false,
+  });
 
   final String title;
+  final Widget? leading;
+  final Widget? trailing;
+  final String? subtitle;
+  final bool centered;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final titleBlock = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment:
+          centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.headlineMedium),
+        Text(
+          title,
+          textAlign: centered ? TextAlign.center : TextAlign.start,
+          style: Theme.of(context).textTheme.headlineMedium,
         ),
-        IconButton.outlined(
-          onPressed: () {},
-          icon: const Icon(Icons.more_horiz),
-          tooltip: 'More',
-        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            subtitle!,
+            textAlign: centered ? TextAlign.center : TextAlign.start,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
       ],
+    );
+    return SizedBox(
+      // centered Stack이 제목의 intrinsic width로 줄면 Positioned action도
+      // 제목 옆에 붙으므로, 항상 부모 폭을 채워 양끝 slot을 고정한다.
+      width: double.infinity,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 47),
+        child:
+            centered
+                ? Stack(
+                  alignment: Alignment.topCenter,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 48),
+                      child: titleBlock,
+                    ),
+                    if (leading != null)
+                      Positioned(left: 0, top: 0, child: leading!),
+                    if (trailing != null)
+                      Positioned(right: 0, top: 0, child: trailing!),
+                  ],
+                )
+                : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (leading != null) ...[
+                      leading!,
+                      SizedBox(width: AppSpacing.sm),
+                    ],
+                    Expanded(child: titleBlock),
+                    if (trailing != null) trailing!,
+                  ],
+                ),
+      ),
     );
   }
 }
 
+/// 섹션 제목과 선택적인 우측 동작을 같은 수평 기준선에 배치한다.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({super.key, required this.title, this.trailing});
 
@@ -44,34 +102,308 @@ class SectionHeader extends StatelessWidget {
   }
 }
 
-class ActionButton extends StatelessWidget {
-  const ActionButton({
+/// 기본 카드의 배경, 테두리, 얕은 깊이감과 여백을 한곳에서 유지한다.
+class AppCard extends StatelessWidget {
+  const AppCard({
     super.key,
-    required this.icon,
-    required this.label,
-    required this.onPressed,
+    required this.child,
+    this.padding = const EdgeInsets.all(AppSpacing.lg),
+    this.color,
   });
 
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  /// 지정하지 않으면 현재 테마의 카드 배경을 쓴다.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.textPrimary,
-        minimumSize: const Size.fromHeight(50),
-        side: const BorderSide(color: AppColors.border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: color ?? context.palette.card,
+        borderRadius: BorderRadius.circular(AppSizes.radius),
+        border: Border.all(color: context.palette.border),
+        boxShadow: [
+          BoxShadow(
+            color: context.palette.shadow,
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+/// 핵심 CTA의 gradient·진행 상태·접근성 label을 화면마다 동일하게 유지한다.
+class PrimaryButton extends StatelessWidget {
+  const PrimaryButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.isLoading = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    // 채움 여부는 "누를 수 있는가"가 아니라 "동작이 붙어 있는가"로 정한다.
+    // 진행 중에는 누를 수 없지만 버튼은 여전히 살아 있는 상태이므로 채움을 유지한다.
+    // 이 둘을 묶으면 로딩 중에 버튼이 비활성 회색으로 떨어지고, 그 위의 흰 spinner가
+    // 대비 1.12:1이 되어 사용자에게는 빈 회색 버튼으로 보인다.
+    final isFilled = onPressed != null;
+    // 전경색은 실제로 깔린 면을 따라간다. 채움이면 onPrimary, 비활성 채움이면 disabled.
+    final foreground =
+        isFilled ? context.palette.onPrimary : context.palette.disabled;
+    final child =
+        isLoading
+            ? SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: foreground,
+              ),
+            )
+            : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                Flexible(child: Text(label, textAlign: TextAlign.center)),
+              ],
+            );
+    final gradientColors =
+        Theme.of(context).brightness == Brightness.light
+            ? const [AppColors.ctaGradientStart, AppColors.ctaGradientEnd]
+            : [context.palette.primaryLight, context.palette.primary];
+    return DecoratedBox(
+      key: const ValueKey('primary-button-gradient'),
+      decoration: BoxDecoration(
+        color: isFilled ? null : context.palette.neutralFill,
+        gradient: isFilled ? LinearGradient(colors: gradientColors) : null,
+        borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+        boxShadow:
+            isFilled
+                ? [
+                  BoxShadow(
+                    color: context.palette.primary.withValues(alpha: 0.23),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+                : const [],
+      ),
+      child: SizedBox(
+        height: AppSizes.buttonHeight,
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+          ),
+          onPressed: isLoading ? null : onPressed,
+          child: Semantics(
+            label: isLoading ? '$label in progress' : label,
+            child: child,
+          ),
+        ),
       ),
     );
   }
 }
 
+/// 주 동작과 경쟁하지 않는 outline 형태의 보조 동작을 제공한다.
+class SecondaryButton extends StatelessWidget {
+  const SecondaryButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final currentIcon = icon;
+    return SizedBox(
+      height: AppSizes.buttonHeight,
+      child:
+          currentIcon == null
+              // 라벨만 있는 형태가 기본이다. 아이콘을 강제로 붙이면 동등한 선택지
+              // 두 개를 나란히 뒀을 때 한쪽이 더 무거워 보인다.
+              ? OutlinedButton(onPressed: onPressed, child: Text(label))
+              : OutlinedButton.icon(
+                onPressed: onPressed,
+                icon: Icon(currentIcon, size: 19),
+                label: Text(label),
+              ),
+    );
+  }
+}
+
+/// 상태 의미를 테마별 전경·배경색 조합으로 변환하기 위한 의미 기반 tone이다.
+enum StatusTone { info, success, warning, error, neutral }
+
+/// [StatusTone]에 맞는 저강도 배경과 강조색으로 짧은 상태를 표시한다.
+class StatusBadge extends StatelessWidget {
+  const StatusBadge({
+    super.key,
+    required this.label,
+    this.tone = StatusTone.info,
+  });
+
+  final String label;
+  final StatusTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (tone) {
+      StatusTone.success => context.palette.success,
+      StatusTone.warning => context.palette.warning,
+      StatusTone.error => context.palette.error,
+      StatusTone.neutral => context.palette.textSecondary,
+      StatusTone.info => context.palette.primary,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppSizes.pillRadius),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+/// 0~100 종합 점수를 원형 진행률과 접근성 문구로 함께 표현한다.
+class ScoreRing extends StatelessWidget {
+  const ScoreRing({super.key, required this.score, this.size = 118});
+
+  final int score;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = score.clamp(0, 100) / 100;
+    return Semantics(
+      label: 'Overall score $score out of 100',
+      child: SizedBox.square(
+        dimension: size,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            CircularProgressIndicator(
+              value: normalized,
+              strokeWidth: 10,
+              backgroundColor: context.palette.border,
+              color: context.palette.primary,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$score',
+                      style: Theme.of(context).textTheme.headlineLarge,
+                    ),
+                    Text(
+                      '/100',
+                      style: TextStyle(
+                        color: context.palette.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// loading·empty·error 상태와 선택적인 복구 동작을 같은 카드 구조로 표시한다.
+class StatePanel extends StatelessWidget {
+  const StatePanel({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.message,
+    this.actionLabel,
+    this.onAction,
+    this.isLoading = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        children: [
+          if (isLoading)
+            const CircularProgressIndicator()
+          else
+            Icon(icon, color: context.palette.primary, size: 30),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          if (message != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              message!,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            TextButton(onPressed: onAction, child: Text(actionLabel!)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 평가 문자의 발음 오류 종류를 작은 보조 정보로 함께 보여준다.
 class CharacterChip extends StatelessWidget {
   const CharacterChip({super.key, required this.result});
 
@@ -80,39 +412,38 @@ class CharacterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 70,
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      constraints: const BoxConstraints(minHeight: 38),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 11,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+        color: context.palette.card,
+        border: Border.all(color: context.palette.border),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             result.character,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
           ),
-          const SizedBox(height: 4),
-          Text(
-            result.kind,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+          if (result.kind.isNotEmpty && result.kind != 'NONE')
+            Text(
+              result.kind,
+              style: TextStyle(
+                color: context.palette.textSecondary,
+                fontSize: 10,
+              ),
             ),
-          ),
         ],
       ),
     );
   }
 }
 
+/// 한글 음절을 목록과 상세 화면에서 일관된 강조 면으로 표시한다.
 class CharacterBadge extends StatelessWidget {
   const CharacterBadge({super.key, required this.text, this.large = false});
 
@@ -125,44 +456,112 @@ class CharacterBadge extends StatelessWidget {
     return Container(
       width: size,
       height: size,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.brandSoft,
-        borderRadius: BorderRadius.circular(8),
+        color: context.palette.softBlue,
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
-      child: Center(
-        child: Text(
-          text,
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: large ? 24 : 19,
-            fontWeight: FontWeight.w900,
-          ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: large ? 24 : 19,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
   }
 }
 
-class MetaPill extends StatelessWidget {
-  const MetaPill({super.key, required this.label});
+/// 제품명 표기다. 화면마다 크기·자간이 갈리지 않도록 한곳에서 정의한다.
+class Wordmark extends StatelessWidget {
+  const Wordmark({super.key, this.fontSize = 25});
 
-  final String label;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.brandSoft,
-        borderRadius: BorderRadius.circular(999),
+    return Text(
+      'LingKo',
+      style: TextStyle(
+        color: context.palette.textPrimary,
+        fontSize: fontSize,
+        fontWeight: FontWeight.w900,
+        letterSpacing: -fontSize * 0.045,
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: AppColors.info,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-        ),
+    );
+  }
+}
+
+/// 한국어 옆에 붙는 로마자 표기다.
+///
+/// 대상 사용자가 한글을 아직 읽지 못하므로 모든 한국어에 병기한다. 자간을 넓게 두는 이유는
+/// 하이픈으로 이어진 음절 경계를 눈으로 끊어 읽을 수 있게 하기 위해서다.
+class RomanizationText extends StatelessWidget {
+  const RomanizationText(
+    this.text, {
+    super.key,
+    this.fontSize = 12,
+    this.highlight,
+  });
+
+  final String text;
+  final double fontSize;
+
+  /// 이 부분만 강조한다. 취약 어절이 문장 어디에 있는지 짚어줄 때 쓴다.
+  final String? highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = TextStyle(
+      color: context.palette.textSecondary,
+      fontSize: fontSize,
+      fontWeight: FontWeight.w900,
+      letterSpacing: fontSize * 0.12,
+      height: 1.4,
+    );
+    final target = highlight;
+    if (target == null || target.isEmpty || !text.contains(target)) {
+      return Text(text, style: base);
+    }
+
+    final index = text.indexOf(target);
+    return Text.rich(
+      TextSpan(
+        style: base,
+        children: [
+          TextSpan(text: text.substring(0, index)),
+          TextSpan(
+            text: target,
+            style: TextStyle(
+              color: context.palette.error,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          TextSpan(text: text.substring(index + target.length)),
+        ],
+      ),
+    );
+  }
+}
+
+/// 섹션을 여는 작은 라벨이다.
+///
+/// 큰 제목 대신 이 라벨을 쓰는 이유는, 화면에서 가장 크게 읽혀야 할 것이 한국어 문장과
+/// 점수이지 섹션 이름이 아니기 때문이다. 자간을 넓히고 대문자로 눌러 구분만 하게 한다.
+class EyebrowLabel extends StatelessWidget {
+  const EyebrowLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        color: context.palette.textSecondary,
+        fontSize: 10.5,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.68,
       ),
     );
   }

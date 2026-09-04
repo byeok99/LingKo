@@ -3,34 +3,150 @@ package com.lingko.lingko.core.domain.auth.service;
 import com.lingko.lingko.api.auth.dto.AuthTokenResponse;
 import com.lingko.lingko.api.auth.dto.AuthUserResponse;
 import com.lingko.lingko.api.auth.dto.OAuthLoginRequest;
+import com.lingko.lingko.api.auth.dto.RefreshTokenRequest;
+import com.lingko.lingko.core.domain.auth.entity.RefreshTokenSession;
+import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.auth.exception.RefreshTokenReuseException;
+import com.lingko.lingko.core.domain.auth.repository.RefreshTokenSessionRepository;
 import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.List;
+
+/**
+ * 외부 신원 검증과 LingKo 토큰 세션 생명주기를 조율한다.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private static final String GOOGLE_PROVIDER = "GOOGLE";
-
     private final UserRepository userRepository;
-    private final OAuthIdentityVerifier googleIdentityVerifier;
+    private final List<OAuthIdentityVerifier> identityVerifiers;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenSessionRepository refreshTokenSessionRepository;
+    private final RefreshTokenHasher refreshTokenHasher;
 
+    /**
+     * 검증된 소셜 사용자를 생성·갱신하고 독립적으로 폐기 가능한 새 세션을 시작한다.
+     *
+     * <p>provider별 verifier가 검증한 신원만 신뢰한다. 예외적으로 Apple이 최초 승인에만
+     * 제공하는 이름은 Apple 로그인이고 token 신원에 이름이 없을 때만 보완한다.</p>
+     */
     @Transactional
     public AuthTokenResponse loginWithOAuth(OAuthLoginRequest request) {
-        if (!GOOGLE_PROVIDER.equals(request.normalizedProvider())) {
-            throw new IllegalArgumentException("Unsupported OAuth provider");
+        String provider = request.normalizedProvider();
+        OAuthIdentityVerifier verifier = identityVerifiers.stream()
+                .filter(candidate -> candidate.provider().equals(provider))
+                .findFirst()
+                .orElseThrow(() -> new AuthException("Unsupported OAuth provider"));
+        User.SocialType socialType = User.SocialType.valueOf(provider);
+        OAuthIdentity verifiedIdentity = verifier.verify(
+                request.trimmedIdToken(),
+                request.trimmedRawNonce()
+        );
+        OAuthIdentity identity = withFirstPartyDisplayName(
+                verifiedIdentity,
+                request.normalizedDisplayName(),
+                socialType
+        );
+        User user = userRepository.findBySocialIdAndSocialType(identity.socialId(), socialType)
+                .map(existing -> updateUser(existing, identity))
+                .orElseGet(() -> createUser(identity, socialType));
+        return startSession(user);
+    }
+
+    /** 코드 검증을 이미 통과한 기존 review 계정에만 일반 사용자와 동일한 폐기 가능한 세션을 발급한다. */
+    @Transactional
+    public AuthTokenResponse loginReviewUser(Long reviewUserId) {
+        if (reviewUserId == null) {
+            throw new AuthException("Review access denied");
+        }
+        User reviewUser = userRepository.findById(reviewUserId)
+                .orElseThrow(() -> new AuthException("Review access denied"));
+        return startSession(reviewUser);
+    }
+
+    /**
+     * 절대 만료를 유지하면서 유효한 갱신 토큰을 원자적으로 회전한다.
+     *
+     * <p>요청이 실패해도 재사용 탐지에 따른 폐기는 커밋되어야 하므로
+     * {@link RefreshTokenReuseException}에 명시적인 no-rollback 규칙을 적용한다.</p>
+     */
+    @Transactional(noRollbackFor = RefreshTokenReuseException.class)
+    public AuthTokenResponse refresh(RefreshTokenRequest request) {
+        String refreshToken = request.trimmedRefreshToken();
+        JwtTokenProvider.RefreshTokenClaims claims = jwtTokenProvider.parseRefreshToken(refreshToken);
+        RefreshTokenSession session = findSessionForUpdate(claims.sessionId());
+        validateSessionOwner(session, claims.userId());
+
+        Instant now = Instant.now();
+        if (session.isRevoked() || session.isExpired(now)) {
+            throw new AuthException("Refresh session unavailable");
+        }
+        if (!refreshTokenHasher.matches(refreshToken, session.getCurrentTokenHash())) {
+            // 해시 불일치는 같은 계열의 이전 토큰이 재사용됐다는 의미다.
+            session.revoke(now);
+            throw new RefreshTokenReuseException();
         }
 
-        OAuthIdentity identity = googleIdentityVerifier.verify(request.trimmedIdToken());
-        User user = userRepository.findBySocialIdAndSocialType(identity.socialId(), User.SocialType.GOOGLE)
-                .map(existing -> updateUser(existing, identity))
-                .orElseGet(() -> createUser(identity));
-        JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(user.getUserIdx());
+        JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(
+                claims.userId(),
+                claims.sessionId(),
+                session.getExpiresAt()
+        );
+        session.rotate(refreshTokenHasher.hash(tokens.refreshToken()));
 
+        return toTokenResponse(session.getUser(), tokens);
+    }
+
+    /**
+     * 제출된 갱신 토큰이 식별하는 현재 기기 세션만 폐기한다.
+     */
+    @Transactional
+    public void logout(RefreshTokenRequest request) {
+        String refreshToken = request.trimmedRefreshToken();
+        JwtTokenProvider.RefreshTokenClaims claims = jwtTokenProvider.parseRefreshToken(refreshToken);
+        RefreshTokenSession session = findSessionForUpdate(claims.sessionId());
+        validateSessionOwner(session, claims.userId());
+        session.revoke(Instant.now());
+    }
+
+    /**
+     * 되돌릴 수 없는 회원 탈퇴 전에 현재 Refresh Token과 Access Token 사용자가 같은지 재확인한다.
+     */
+    @Transactional(readOnly = true)
+    public void validateCurrentRefreshToken(Long authenticatedUserId, RefreshTokenRequest request) {
+        String refreshToken = request.trimmedRefreshToken();
+        JwtTokenProvider.RefreshTokenClaims claims = jwtTokenProvider.parseRefreshToken(refreshToken);
+        RefreshTokenSession session = refreshTokenSessionRepository.findById(claims.sessionId())
+                .orElseThrow(() -> new AuthException("Refresh session not found"));
+        validateSessionOwner(session, claims.userId());
+
+        Instant now = Instant.now();
+        if (!claims.userId().equals(authenticatedUserId)
+                || session.isRevoked()
+                || session.isExpired(now)
+                || !refreshTokenHasher.matches(refreshToken, session.getCurrentTokenHash())) {
+            throw new AuthException("Current refresh token required");
+        }
+    }
+
+    private RefreshTokenSession findSessionForUpdate(String sessionId) {
+        return refreshTokenSessionRepository.findBySessionIdForUpdate(sessionId)
+                .orElseThrow(() -> new AuthException("Refresh session not found"));
+    }
+
+    private void validateSessionOwner(RefreshTokenSession session, Long userId) {
+        if (!session.getUser().getUserIdx().equals(userId)) {
+            throw new AuthException("Refresh session owner mismatch");
+        }
+    }
+
+    private AuthTokenResponse toTokenResponse(User user, JwtTokenProvider.TokenPair tokens) {
         return AuthTokenResponse.builder()
                 .tokenType("Bearer")
                 .accessToken(tokens.accessToken())
@@ -40,22 +156,50 @@ public class AuthService {
                 .build();
     }
 
+    private AuthTokenResponse startSession(User user) {
+        JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(user.getUserIdx());
+        refreshTokenSessionRepository.save(RefreshTokenSession.create(
+                tokens.refreshSessionId(),
+                user,
+                refreshTokenHasher.hash(tokens.refreshToken()),
+                tokens.refreshExpiresAt()
+        ));
+        return toTokenResponse(user, tokens);
+    }
+
     private User updateUser(User user, OAuthIdentity identity) {
         user.updateOAuthProfile(identity.email(), identity.name(), identity.profileImageUrl());
 
         return user;
     }
 
-    private User createUser(OAuthIdentity identity) {
+    private User createUser(OAuthIdentity identity, User.SocialType socialType) {
         User user = User.builder()
                 .socialId(identity.socialId())
-                .socialType(User.SocialType.GOOGLE)
+                .socialType(socialType)
                 .email(identity.email())
                 .name(identity.name())
                 .profileImageUrl(identity.profileImageUrl())
                 .build();
 
         return userRepository.save(user);
+    }
+
+    private OAuthIdentity withFirstPartyDisplayName(
+            OAuthIdentity identity,
+            String displayName,
+            User.SocialType socialType
+    ) {
+        if (socialType != User.SocialType.APPLE || identity.name() != null || displayName == null) {
+            return identity;
+        }
+        // Apple 이름은 최초 승인 응답에만 있고 token claim에는 없으므로 검증·정규화된 요청값을 보완한다.
+        return new OAuthIdentity(
+                identity.socialId(),
+                identity.email(),
+                displayName,
+                identity.profileImageUrl()
+        );
     }
 
     private AuthUserResponse toUserResponse(User user) {

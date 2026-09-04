@@ -4,13 +4,14 @@ import com.lingko.lingko.api.evaluation.dto.PracticeHistoryItemResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeHistoryResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
-import com.lingko.lingko.core.domain.auth.service.JwtTokenProvider;
+import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationHistoryService;
+import com.lingko.lingko.core.domain.evaluation.service.WeakSoundService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -21,17 +22,23 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * 활성 세션 인증을 통한 평가 기록 소유권을 검증한다.
+ */
 @WebMvcTest(EvaluationHistoryController.class)
 class EvaluationHistoryControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private EvaluationHistoryService historyService;
 
-    @MockBean
-    private JwtTokenProvider jwtTokenProvider;
+    @MockitoBean
+    private WeakSoundService weakSoundService;
+
+    @MockitoBean
+    private ActiveSessionAuthenticator activeSessionAuthenticator;
 
     @Test
     @DisplayName("GET /api/evaluations/me는 JWT principal 기준 학습 기록 page를 반환한다")
@@ -43,6 +50,7 @@ class EvaluationHistoryControllerTest {
                         .source("RECOMMENDED")
                         .originalText("맛있겠다.")
                         .standardPronunciation("마싯게따.")
+                        .romanizedPronunciation("ma-sit-ge-tta")
                         .recognizedText("마싣게따")
                         .overallScore(82)
                         .gradeLabel("Good")
@@ -61,7 +69,7 @@ class EvaluationHistoryControllerTest {
                 .hasNext(false)
                 .bestScore(82)
                 .build();
-        when(jwtTokenProvider.parseAccessTokenUserId("valid-access-token")).thenReturn(7L);
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(historyService.findHistory(7L, 0, 10)).thenReturn(response);
 
         mockMvc.perform(get("/api/evaluations/me")
@@ -71,6 +79,7 @@ class EvaluationHistoryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].evaluationLogId").value(10L))
                 .andExpect(jsonPath("$.items[0].source").value("RECOMMENDED"))
+                .andExpect(jsonPath("$.items[0].romanizedPronunciation").value("ma-sit-ge-tta"))
                 .andExpect(jsonPath("$.items[0].overallScore").value(82))
                 .andExpect(jsonPath("$.items[0].scoreBreakdown.accuracy").value(84))
                 .andExpect(jsonPath("$.page").value(0))
@@ -83,6 +92,9 @@ class EvaluationHistoryControllerTest {
     @Test
     @DisplayName("학습 기록은 Authorization bearer token이 필요하다")
     void authorizationHeaderIsRequired() throws Exception {
+        when(activeSessionAuthenticator.authenticateBearer(null))
+                .thenThrow(new AuthException("Missing bearer token"));
+
         mockMvc.perform(get("/api/evaluations/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
@@ -91,7 +103,8 @@ class EvaluationHistoryControllerTest {
     @Test
     @DisplayName("유효하지 않은 bearer token은 401을 반환한다")
     void invalidBearerTokenReturnsUnauthorized() throws Exception {
-        when(jwtTokenProvider.parseAccessTokenUserId("invalid-token")).thenThrow(new AuthException("Invalid access token"));
+        when(activeSessionAuthenticator.authenticateBearer("Bearer invalid-token"))
+                .thenThrow(new AuthException("Invalid access token"));
 
         mockMvc.perform(get("/api/evaluations/me")
                         .header("Authorization", "Bearer invalid-token"))
@@ -102,7 +115,7 @@ class EvaluationHistoryControllerTest {
     @Test
     @DisplayName("학습 기록 page size는 50 이하로 제한한다")
     void sizeMustBeAtMost50() throws Exception {
-        when(jwtTokenProvider.parseAccessTokenUserId("valid-access-token")).thenReturn(7L);
+        when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
 
         mockMvc.perform(get("/api/evaluations/me")
                         .header("Authorization", "Bearer valid-access-token")

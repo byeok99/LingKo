@@ -1,3 +1,6 @@
+// 파일 의도: pronunciation api test 기능의 사용자·API 계약과 회귀 조건을 검증한다.
+// 선택 이유: 네트워크·플랫폼 의존성을 테스트 대역로 통제해 결과를 결정적으로 유지한다.
+
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -5,19 +8,15 @@ import 'package:lingko_app/api/api_client.dart';
 import 'package:lingko_app/api/pronunciation_api.dart';
 
 void main() {
-  test('ApiClient defaults to Android emulator host on Android', () {
-    expect(resolveLingKoApiBaseUrl(isAndroid: true), 'http://10.0.2.2:8080');
-  });
-
-  test('ApiClient defaults to localhost outside Android emulator', () {
-    expect(resolveLingKoApiBaseUrl(isAndroid: false), 'http://localhost:8080');
+  test('ApiClient defaults to the production HTTPS API', () {
+    // Xcode에서 직접 실행해도 iPhone의 localhost로 연결되지 않아야 한다.
+    expect(resolveLingKoApiBaseUrl(), 'https://lingko-api.duckdns.org');
   });
 
   test('ApiClient uses LINGKO_API_BASE_URL override when provided', () {
     expect(
       resolveLingKoApiBaseUrl(
         environmentOverride: ' http://192.168.0.10:8080 ',
-        isAndroid: true,
       ),
       'http://192.168.0.10:8080',
     );
@@ -42,6 +41,8 @@ void main() {
                   'source': 'CUSTOM',
                   'originalText': '한국어를 배우고 있어요.',
                   'standardPronunciation': '한구거를 배우고 이써요.',
+                  'romanizedPronunciation':
+                      'han-gu-geo-reul bae-u-go i-sseo-yo',
                   'translation': 'Practice with your own sentence.',
                   'categoryLabel': 'Free practice',
                   'learningPoint': 'Linking across syllables',
@@ -66,15 +67,19 @@ void main() {
         ),
       );
 
-      final sentence = await api.prepareCustomSentence('한국어를 배우고 있어요.');
+      final sentence = await api.prepareCustomSentence('한국어를 배우고 있어요.!?');
 
       expect(
         requestedUri.toString(),
         'http://localhost:8080/api/pronunciation/prepare',
       );
-      expect(requestedBody, {'source': 'CUSTOM', 'text': '한국어를 배우고 있어요.'});
-      expect(sentence.text, '한국어를 배우고 있어요.');
-      expect(sentence.pronunciation, '한구거를 배우고 이써요.');
+      expect(requestedBody, {'source': 'CUSTOM', 'text': '한국어를 배우고 있어요'});
+      expect(sentence.text, '한국어를 배우고 있어요');
+      expect(sentence.pronunciation, '한구거를 배우고 이써요');
+      expect(
+        sentence.romanizedPronunciation,
+        'han-gu-geo-reul bae-u-go i-sseo-yo',
+      );
       expect(sentence.characters.single.kind, 'TONGUE');
       expect(
         sentence.characters.single.tongueGuideUrl,

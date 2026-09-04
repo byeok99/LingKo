@@ -7,6 +7,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * User 상태를 영속화하고 불변 조건를 지키는 상태 전이를 소유한다.
+ *
+ * 어떤 서비스가 호출해도 동일한 규칙이 유지되어야 하는 동작이므로 데이터를 가진 엔티티에 배치했다.
+ */
 @Entity
 @Table(
         name = "users",
@@ -41,19 +46,6 @@ public class User {
     @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
-    @Builder.Default
-    @Column(name = "display_language", nullable = false, length = 20)
-    private String displayLanguage = "en";
-
-    @Builder.Default
-    @Column(name = "native_language", nullable = false, length = 20)
-    private String nativeLanguage = "en";
-
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_level", nullable = false, length = 30)
-    private LearningLevel targetLevel = LearningLevel.BEGINNER_2;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -62,27 +54,27 @@ public class User {
     @Column(name = "last_login_at", nullable = false)
     private LocalDateTime lastLoginAt;
 
+    /**
+     * 공급자가 이번 로그인에서 실제로 반환한 profile 값만 최신 snapshot에 반영한다.
+     *
+     * <p>null은 값을 지우라는 요청이 아니라 공급자가 이번 응답에서 제공하지 않았다는 뜻이다.
+     * 특히 Apple 재로그인은 이름을 생략하므로 기존 이름을 보존해야 한다.</p>
+     */
     public void updateOAuthProfile(String email, String name, String profileImageUrl) {
-        this.email = email;
-        this.name = name;
-        this.profileImageUrl = profileImageUrl;
+        // Apple은 이름을 최초 승인 때만 전달하므로 null 응답이 기존 profile snapshot을 지우지 않게 한다.
+        if (email != null) {
+            this.email = email;
+        }
+        if (name != null) {
+            this.name = name;
+        }
+        if (profileImageUrl != null) {
+            this.profileImageUrl = profileImageUrl;
+        }
     }
 
-    public void updateLearningPreferences(String displayLanguage, String nativeLanguage, LearningLevel targetLevel) {
-        this.displayLanguage = displayLanguage;
-        this.nativeLanguage = nativeLanguage;
-        this.targetLevel = targetLevel;
-    }
-
+    /** 사용자 계정을 외부 공급자 subject와 함께 유일하게 식별하는 공급자 종류다. */
     public enum SocialType {
         GOOGLE, APPLE, KAKAO
-    }
-
-    public enum LearningLevel {
-        BEGINNER_1,
-        BEGINNER_2,
-        INTERMEDIATE_1,
-        INTERMEDIATE_2,
-        ADVANCED
     }
 }
