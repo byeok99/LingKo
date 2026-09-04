@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-04 - 법무 문서 동의 버전 갱신
+
+- 변경 파일: `consent_selection.dart`, `WORK_LOG.md`
+- 내용: Profile 제공 항목과 광고 개인정보 선택 경로를 개정한 법무 문서 시행일에 맞춰 앱 동의 버전을 `2026-09-04`로 올렸다.
+- 검증: Flutter 전체 테스트·문서 버전 검색
+- 리스크: 기존 동의 사용자는 새 문서에 재동의해야 한다.
+
 ## 2026-09-02 - 평가 phase 앱 상태 모델 추가
 
 - 변경 파일: `evaluation_job.dart`, `evaluation_progress.dart`, `WORK_LOG.md`

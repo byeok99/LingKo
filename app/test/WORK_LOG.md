@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-04 - Profile 메뉴 제거 회귀 테스트
+
+- 변경 파일: `widget_test.dart`, `consent_screen_test.dart`, `WORK_LOG.md`
+- 내용: 이용약관·개인정보처리방침·회원 탈퇴는 유지하면서 광고 개인정보 설정과 문의 행은 노출하지 않는 계약으로 갱신하고, 개정 문서 버전 기대값을 맞췄다.
+- 검증: 구현 전 1개 행 발견으로 RED, 구현 후 대상 테스트와 전체 143개 테스트 통과(라인 80.52%)
+- 리스크: 없음
+
 ## 2026-09-04 - AdMob test device 주입 회귀 테스트
 
 - 변경 파일: `rewarded_ad_service_test.dart`, `WORK_LOG.md`

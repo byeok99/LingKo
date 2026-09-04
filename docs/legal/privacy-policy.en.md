@@ -6,8 +6,8 @@ LEE SANG BYEOK ("we", "us", "our") explains below how we handle personal data wh
 
 The Service is operated by an **individual**, not a company. We keep no business premises or telephone line and receive every enquiry at a single email address.
 
-- Effective Date 2026-08-07
-- Last Updated 2026-08-07
+- Effective Date 2026-09-04
+- Last Updated 2026-09-04
 
 ---
 
@@ -127,7 +127,7 @@ We are established in the Republic of Korea, so data is transferred outside the 
 
 A copy of the Standard Contractual Clauses is available on request at maplebyeok@gmail.com.
 
-You may object to international transfers. For advertising, you can limit them by turning off personalised ads in **Settings › Ad privacy settings**; for anything else, contact us using Section 11.
+You may object to international transfers. For advertising, you can limit them through the CMP and your device operating system's advertising and tracking settings; for anything else, contact us using Section 11.
 
 ---
 
@@ -149,7 +149,6 @@ For details of Google's advertising practices see the Google Privacy Policy (htt
 
 You can opt out of personalised advertising at any time. Ads will still appear, but they will not be tailored to your interests.
 
-- **In the app**: Settings › Ad privacy settings
 - **iOS**: Settings › Privacy & Security › Tracking — turn off "Allow Apps to Request to Track"
 - **Android**: Settings › Privacy › Ads — delete or reset your advertising ID
 
@@ -157,7 +156,7 @@ You can opt out of personalised advertising at any time. Ads will still appear, 
 
 - **Where local law requires prior consent**: on first launch, a Consent Management Platform (CMP) lets you choose **in advance** whether your data may be used for advertising purposes. You can use the Service without consenting; you will simply receive non-personalised ads.
 - **iOS**: turning off Settings › Privacy & Security › Tracking stops the advertising identifier from being collected.
-- **Elsewhere**: use Settings › Ad privacy settings to control personalised advertising.
+- **Elsewhere**: use your device operating system's advertising and tracking settings to limit identifiers used for personalised advertising.
 
 ### Cookies
 
@@ -170,7 +169,7 @@ LingKo is a mobile application and does not use web cookies. Your login session 
 If you **opt in** at sign-up, we send news about events, benefits, and new features by email or push notification.
 
 - Marketing consent is **optional**. Declining places no restriction on your use of the Service.
-- You may withdraw consent at any time, in the app's settings screen, via the unsubscribe link in any marketing email, or using the contact details in Section 11.
+- You may withdraw consent at any time via the unsubscribe link in any marketing email or using the contact details in Section 11.
 - Even after withdrawal, we continue to send operational messages such as contract, security, and policy notices.
 
 ---
@@ -196,11 +195,11 @@ You may at any time:
 3. Request erasure
 4. Request restriction of processing
 5. Request portability of your data
-6. Change or withdraw your marketing consent and your ad privacy settings
+6. Change or withdraw your marketing consent
 
 **How**
 
-- **In the app** — Settings gives you Terms of Service, Privacy Policy, Ad privacy settings, Account deletion (which erases everything), and Contact
+- **In the app** — Settings gives you Terms of Service, Privacy Policy, and Account deletion (which erases everything)
 - Email maplebyeok@gmail.com
 
 The Service is run by an individual with no business premises or telephone line. All requests are received by email.
@@ -293,10 +292,11 @@ We announce changes in the app at least **7 days** before they take effect, and 
 
 **Revision history**
 
+- 2026-09-04 — Changed advertising privacy choice paths and the items available in app settings
 - 2026-08-07 — Initial version
 
 ---
 
-This Privacy Policy takes effect on 2026-08-07.
+This Privacy Policy takes effect on 2026-09-04.
 
 [한국어](./privacy-policy.ko.md) · [Terms of Service](./terms-of-service.en.md)

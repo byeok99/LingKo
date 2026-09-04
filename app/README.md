@@ -156,7 +156,7 @@ ADMOB_IOS_REWARDED_AD_UNIT_ID=LingKo-iOS-Rewarded-Ad-Unit-ID
 ADMOB_TEST_DEVICE_ID=Google-Mobile-Ads-Test-Device-ID
 ```
 
-선택된 플랫폼의 ID가 비어 있으면 동작하지 않는 `+` 버튼과 광고 개인정보 설정 행을 노출하지 않습니다. iOS 운영 기본값도 빈 `--dart-define`으로 명시하면 비활성화할 수 있습니다. 운영 빌드 전에는 native App ID와 Rewarded Ad Unit ID를 같은 플랫폼의 LingKo 운영 값으로 맞추고, AdMob SSV URL을 공개 HTTPS의 `/api/quota/ad-rewards/ssv`로 설정해야 합니다.
+선택된 플랫폼의 ID가 비어 있으면 동작하지 않는 `+` 버튼을 노출하지 않습니다. Profile에는 광고 개인정보 설정 진입점을 두지 않습니다. iOS 운영 기본값도 빈 `--dart-define`으로 명시하면 비활성화할 수 있습니다. 운영 빌드 전에는 native App ID와 Rewarded Ad Unit ID를 같은 플랫폼의 LingKo 운영 값으로 맞추고, AdMob SSV URL을 공개 HTTPS의 `/api/quota/ad-rewards/ssv`로 설정해야 합니다.
 
 Android Google 로그인은 Google Cloud의 Android OAuth Client에 `com.byeok.lingko` package name과 현재 Debug SHA-1이 등록되어 있어야 합니다.
 

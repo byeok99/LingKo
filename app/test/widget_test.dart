@@ -385,7 +385,6 @@ class FakePracticeRewardAdService implements PracticeRewardAdService {
   final bool isConfigured;
 
   int showCount = 0;
-  int privacyOptionsCount = 0;
   String? lastCustomData;
 
   @override
@@ -393,11 +392,6 @@ class FakePracticeRewardAdService implements PracticeRewardAdService {
     showCount++;
     lastCustomData = customData;
     return result;
-  }
-
-  @override
-  Future<void> showPrivacyOptions() async {
-    privacyOptionsCount++;
   }
 }
 
@@ -2721,7 +2715,7 @@ void main() {
   });
 
   testWidgets(
-    'Profile always exposes the legal documents and account deletion',
+    'Profile exposes legal documents without ad settings or contact rows',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         LingKoApp(
@@ -2741,8 +2735,9 @@ void main() {
       // 스토어 심사도 앱 안에서 정책에 닿을 수 있는지를 본다.
       expect(find.byKey(const ValueKey('profile-terms')), findsOneWidget);
       expect(find.byKey(const ValueKey('profile-privacy')), findsOneWidget);
-      expect(find.byKey(const ValueKey('profile-ad-privacy')), findsOneWidget);
-      expect(find.byKey(const ValueKey('profile-contact')), findsOneWidget);
+      // 운영하지 않는 광고 설정·문의 진입점은 비활성 행으로 남기지 않는다.
+      expect(find.byKey(const ValueKey('profile-ad-privacy')), findsNothing);
+      expect(find.byKey(const ValueKey('profile-contact')), findsNothing);
       expect(find.text('Delete account'), findsOneWidget);
     },
   );
@@ -2779,30 +2774,6 @@ void main() {
     ]);
   });
 
-  testWidgets('Profile opens UMP ad privacy options when ads are configured', (
-    WidgetTester tester,
-  ) async {
-    final adService = FakePracticeRewardAdService();
-    await tester.pumpWidget(
-      LingKoApp(
-        pronunciationApi: FakePronunciationApi(),
-        sentenceApi: FakeSentenceApi(),
-        evaluationApi: FakeEvaluationApi(),
-        authService: FakeAppAuthService(restoreExistingSession: true),
-        audioRecorderService: FakeAudioRecorderService(),
-        practiceRewardAdService: adService,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(_navigationLabel('Profile'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('profile-ad-privacy')));
-    await tester.pumpAndSettle();
-
-    expect(adService.privacyOptionsCount, 1);
-  });
-
   testWidgets('Profile reports when the document cannot be opened', (
     WidgetTester tester,
   ) async {
@@ -2826,36 +2797,6 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('profile-terms')));
     await tester.pump();
     expect(find.text('Could not open the document.'), findsOneWidget);
-  });
-
-  testWidgets('Profile keeps unconnected settings rows untappable', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      LingKoApp(
-        pronunciationApi: FakePronunciationApi(),
-        sentenceApi: FakeSentenceApi(),
-        evaluationApi: FakeEvaluationApi(),
-        authService: FakeAppAuthService(restoreExistingSession: true),
-        audioRecorderService: FakeAudioRecorderService(),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(_navigationLabel('Profile'));
-    await tester.pumpAndSettle();
-
-    // 기본 test build에는 광고 ID와 문의 callback이 없다. 눌러도 아무 일이 없는 행은
-    // 고장으로 보이므로, 설정이 제공되기 전에는 비활성이어야 한다.
-    for (final key in const [
-      ValueKey('profile-ad-privacy'),
-      ValueKey('profile-contact'),
-    ]) {
-      final row = tester.widget<InkWell>(
-        find.descendant(of: find.byKey(key), matching: find.byType(InkWell)),
-      );
-      expect(row.onTap, isNull, reason: '$key should stay untappable');
-    }
   });
 
   testWidgets('leaving Practice tab deletes a stopped temporary recording', (

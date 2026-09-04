@@ -19,8 +19,6 @@ class ProfileScreen extends StatefulWidget {
     required this.onOpenReview,
     required this.onOpenDocument,
     this.onOpenSavedSentences,
-    this.onOpenAdPrivacy,
-    this.onOpenContact,
   });
 
   final AppAuthService authService;
@@ -35,13 +33,6 @@ class ProfileScreen extends StatefulWidget {
   final void Function(ConsentDocument document) onOpenDocument;
 
   final VoidCallback? onOpenSavedSentences;
-
-  /// 개인 맞춤 광고 사용 여부를 바꾸는 화면을 여는 요청이다.
-  /// null이면 현재 빌드에 광고 ID가 없다는 뜻이며 행을 눌리지 않게 표시한다.
-  final VoidCallback? onOpenAdPrivacy;
-
-  /// 문의 창구를 여는 요청이다. null이면 연결된 창구가 없어 행을 눌리지 않게 표시한다.
-  final VoidCallback? onOpenContact;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -150,20 +141,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap:
                       () =>
                           widget.onOpenDocument(ConsentDocument.privacyPolicy),
-                ),
-                // 광고 설정은 UMP가, 문의는 향후 문의 창구가 각각 callback을 제공한다.
-                // callback이 없는 빌드에서는 눌러도 아무 일이 없는 행을 만들지 않는다.
-                _SettingsLinkRow(
-                  key: const ValueKey('profile-ad-privacy'),
-                  icon: Icons.ads_click_outlined,
-                  label: 'Ad privacy settings',
-                  onTap: widget.onOpenAdPrivacy,
-                ),
-                _SettingsLinkRow(
-                  key: const ValueKey('profile-contact'),
-                  icon: Icons.mail_outline_rounded,
-                  label: 'Contact us',
-                  onTap: widget.onOpenContact,
                   showDivider: false,
                 ),
               ],

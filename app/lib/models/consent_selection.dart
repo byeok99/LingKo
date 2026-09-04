@@ -71,4 +71,4 @@ class ConsentSelection {
 ///
 /// `docs/legal/`의 네 문서에 적힌 시행일과 같은 값을 유지한다.
 /// 문서를 개정하면 이 상수도 같은 작업에서 올려야 재동의 대상을 가릴 수 있다.
-const String consentDocumentVersion = '2026-08-07';
+const String consentDocumentVersion = '2026-09-04';

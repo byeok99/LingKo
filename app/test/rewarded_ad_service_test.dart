@@ -232,9 +232,6 @@ class FakeRewardedAdGateway implements RewardedAdGateway {
     loadedCustomData.add(customData);
     return presentation;
   }
-
-  @override
-  Future<void> showPrivacyOptions() async {}
 }
 
 class FakeRewardedAdPresentation implements RewardedAdPresentation {

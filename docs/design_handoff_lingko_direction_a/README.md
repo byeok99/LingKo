@@ -179,7 +179,7 @@ LingKo는 Flutter 앱이므로, 이 HTML을 그대로 옮기지 말고 `app/lib/
 
 ### 09 Profile (탭)
 - **Purpose**: 계정 확인, 정책 열람, 로그아웃·탈퇴. **아직 학습 환경설정 기능은 없다.**
-- **Layout**: "Profile" 22px → 계정 블록(58px 반경 16 이니셜 타일 `#EDF6FD`/`#245F9B` + 이름 18px + 이메일 + Google 배지 pill) → "Your content" 섹션 → "Legal & privacy" 섹션 4행(Terms of Service / Privacy Policy / Ad privacy settings / Contact us) → "About" 섹션 1행(About LingKo 1.0.0) → 하단 secondary "Sign out" + destructive "Delete account" → 탭바. 각 행 우측 `›`.
+- **Layout**: "Profile" 22px → 계정 블록(58px 반경 16 이니셜 타일 `#EDF6FD`/`#245F9B` + 이름 18px + 이메일 + Google 배지 pill) → "Your content" 섹션 → "Legal & privacy" 섹션 2행(Terms of Service / Privacy Policy) → "About" 섹션 1행(About LingKo 1.0.0) → 하단 secondary "Sign out" + destructive "Delete account" → 탭바. 각 행 우측 `›`.
 - **Legal & privacy**: 약관·처리방침은 백엔드가 서빙하는 공개 URL을 앱 내부 WebView로 연다. 광고 설정과 문의는 아직 연결할 기능이 없어 눌리지 않는 흐린 상태로 둔다. 원래 시안의 "Audio & privacy" 행은 실제 처리방침 행으로 대체됐다.
 - "Your content" 섹션에 **Saved sentences** 행(북마크 아이콘 + 개수 + `›`)을 두고 11로 연결한다.
 - Language preferences 섹션은 넣지 않는다 (계획 없음). 저장만 되고 읽는 코드가 없어 `V16`에서 컬럼과 API까지 제거했다.

@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-04 - Profile 설정 요구사항 상태 갱신
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: 광고 개인정보 설정과 문의 행 제거를 반영하고 대체 경로를 CMP·기기 OS 설정 및 정책 문서 이메일로 기록했다.
+- 검증: 관련 요구사항 표 확인
+- 리스크: 광고 개인정보 선택 경로의 스토어·지역 정책 확인 필요
+
 ## 2026-09-04 - Apple 로그인 외부 capability 상태 반영
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`

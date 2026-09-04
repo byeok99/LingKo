@@ -65,9 +65,6 @@ abstract interface class PracticeRewardAdService {
   bool get isConfigured;
 
   Future<RewardedAdResult> show({required String customData});
-
-  /// UMP가 제공하는 광고 개인정보 선택 화면을 다시 연다.
-  Future<void> showPrivacyOptions();
 }
 
 /// SDK 초기화와 광고 load를 테스트 가능한 경계로 감싼다.
@@ -79,8 +76,6 @@ abstract interface class RewardedAdGateway {
     required String adUnitId,
     required String customData,
   });
-
-  Future<void> showPrivacyOptions();
 }
 
 /// 한 번만 표시할 수 있는 RewardedAd의 수명주기다.
@@ -128,15 +123,6 @@ class GooglePracticeRewardAdService implements PracticeRewardAdService {
     } finally {
       presentation.dispose();
     }
-  }
-
-  @override
-  Future<void> showPrivacyOptions() async {
-    if (!isConfigured) {
-      throw const RewardedAdNotConfigured();
-    }
-    await _ensureInitialized();
-    await gateway.showPrivacyOptions();
   }
 
   Future<void> _ensureInitialized() async {
@@ -245,21 +231,6 @@ class GoogleMobileAdsRewardedAdGateway implements RewardedAdGateway {
       ),
     );
     return loaded.future;
-  }
-
-  @override
-  Future<void> showPrivacyOptions() {
-    final result = Completer<void>();
-    ConsentForm.showPrivacyOptionsForm((error) {
-      if (error == null) {
-        result.complete();
-      } else {
-        result.completeError(
-          StateError('Unable to show ad privacy options: ${error.errorCode}'),
-        );
-      }
-    });
-    return result.future;
   }
 }
 
