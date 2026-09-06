@@ -40,6 +40,10 @@
 	<!-- iOS 광고 요청이 LingKo의 AdMob 앱으로 귀속되도록 플랫폼 전용 App ID를 사용한다. -->
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-5081228614816629~4037967839</string>
+	<!-- LingKo는 HTTPS·Keychain 등 수출 규정상 면제되는 표준 보안 기능만 사용하고
+	     자체 암호화 기능은 제공하지 않으므로 비면제 암호화를 사용하지 않는다고 선언한다. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

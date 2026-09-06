@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-06 - 현재 iOS 배포 설정 커밋 준비
+
+- 변경 파일: `Runner.xcodeproj/project.pbxproj`, `WORK_LOG.md`
+- 내용: 기존 작업의 iPhone 전용 대상, Mac·XR 호환 비활성화, marketing version 1.0.0 및 CocoaPods script phase 설정을 반영한다.
+- 검증: diff 확인, 사용자 요청으로 이번 작업의 테스트·빌드 생략
+- 리스크: 실제 배포 서명과 지원 기기 동작 미검증
+
 ## 2026-09-05 - iOS 최소 지원 버전 15.0 적용
 
 - 변경 파일: `Podfile`, `Podfile.lock`, `Runner.xcodeproj/project.pbxproj`, `WORK_LOG.md`

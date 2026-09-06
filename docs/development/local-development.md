@@ -165,7 +165,7 @@ Google Cloud의 Android OAuth Client에는 package name `com.byeok.lingko`와 `V
 - Apple Developer의 Identifiers에서 `com.byeok.lingko` App ID에 **Sign in with Apple**을 primary App ID로 활성화합니다.
 - capability 변경 후 automatic signing으로 provisioning profile을 다시 받습니다.
 - Backend에 `APPLE_CLIENT_ID=com.byeok.lingko`를 설정합니다. 이는 비밀값이 아니라 identity token의 허용 audience입니다.
-- 앱의 `Runner.entitlements`와 Debug/Profile/Release build setting은 `com.apple.developer.applesignin = Default`를 사용합니다.
+- 현재 `Runner.entitlements`는 빈 dictionary이며 Sign in with Apple entitlement가 선언되어 있지 않습니다. Apple 로그인을 배포하려면 `com.apple.developer.applesignin = Default` 설정과 최종 앱 서명 포함 여부를 확인해야 합니다.
 - Apple 계정과 2단계 인증이 설정된 iOS 15.0 이상 실기기에서 최초 로그인, 이메일 가리기, 재로그인, 취소를 확인합니다.
 
 Android·Web Apple 로그인은 Service ID, 도메인과 HTTPS Return URL, callback 검증이 필요해 현재 앱에서 노출하지 않습니다.

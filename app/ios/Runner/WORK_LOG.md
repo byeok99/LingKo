@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-09-06 - 현재 entitlement 설정 커밋 준비
+
+- 변경 파일: `Runner.entitlements`, `WORK_LOG.md`
+- 내용: 기존 작업에서 Sign in with Apple entitlement가 제거되어 빈 dictionary인 현재 상태를 반영한다. 제거 의도는 이번 작업에서 확인되지 않았으며 관련 활성 문서에 현재 제한을 기록한다.
+- 검증: diff 확인, 사용자 요청으로 이번 작업의 테스트·빌드 생략
+- 리스크: Apple 로그인 서명 capability가 누락될 수 있어 출시 전 entitlement와 실기기 로그인 확인 필요
+
+## 2026-09-06 - App Store 암호화 수출 규정 선언 추가
+
+- 변경 파일: `Info.plist`, `WORK_LOG.md`
+- 내용: HTTPS·Keychain 등 면제되는 표준 보안 기능만 사용하는 현재 앱 범위에 맞춰 `ITSAppUsesNonExemptEncryption`을 `false`로 선언했다. 이후 업로드 빌드에서 암호화 문서 질문이 반복되지 않도록 한다.
+- 검증: `plutil -lint` 통과, `flutter build ios --release --no-codesign` 성공, 최종 `Runner.app/Info.plist` 값 `false` 확인
+- 리스크: 향후 자체 암호화, VPN, 종단간 암호화 또는 비면제 암호화 라이브러리를 추가하면 선언을 다시 검토해야 함
+
 ## 2026-08-12 - Sign in with Apple entitlement 추가
 
 - 변경 파일: `Runner.entitlements`, `WORK_LOG.md`
