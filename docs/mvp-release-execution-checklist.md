@@ -163,8 +163,8 @@
 ### 4. 플랫폼 인증과 소셜 로그인 완결
 
 - [ ] Android 운영 OAuth client와 패키지 서명 fingerprint를 연결한다.
-- [x] iOS Apple 로그인 앱·백엔드 코드와 Sign in with Apple entitlement를 구현한다.
-- [x] Apple Developer의 `com.byeok.lingko` App ID capability·development provisioning을 갱신하고 entitlement가 포함된 앱을 실기기에 설치한다.
+- [ ] iOS Apple 로그인 앱·백엔드 코드는 구현되어 있으나, 현재 비어 있는 `Runner.entitlements`의 Sign in with Apple 설정을 확인한다.
+- [ ] 현재 빌드의 App ID capability·provisioning과 최종 서명 entitlement를 다시 확인한다. 이전 실기기 검증 이후 entitlement가 제거되었다.
 - [ ] 실기기에서 Apple 승인 화면부터 Backend 세션 발급까지 로그인 E2E를 검증한다.
 - [ ] Apple authorization code 교환·refresh token 보관·회원 탈퇴 revocation을 구현한다.
 - [ ] Google/Apple 로그인 취소, 네트워크 실패, 잘못된 token, 탈퇴 계정 재로그인을 검증한다.

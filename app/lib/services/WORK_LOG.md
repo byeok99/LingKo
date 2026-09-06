@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-04 - 미사용 광고 개인정보 재진입 API 제거
+
+- 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`
+- 내용: Profile 행 삭제로 호출되지 않는 `showPrivacyOptions` 계약과 native wrapper를 제거했다. 광고 요청 전 UMP consent update·필수 form 표시는 유지한다.
+- 검증: `flutter analyze`, Flutter 전체 143개 테스트 통과(라인 80.52%)
+- 리스크: UMP가 별도 privacy options 진입점을 요구하는 배포 지역은 출시 범위에 포함하기 전 다시 제공해야 한다.
+
 ## 2026-09-04 - AdMob test device 빌드 설정 추가
 
 - 변경 파일: `rewarded_ad_service.dart`, `WORK_LOG.md`

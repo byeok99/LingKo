@@ -139,7 +139,7 @@ ADMOB_IOS_REWARDED_AD_UNIT_ID=LingKo-iOS-Rewarded-Ad-Unit-ID
 ADMOB_TEST_DEVICE_ID=Google-Mobile-Ads-Test-Device-ID
 ```
 
-선택된 플랫폼의 광고 ID가 없으면 Home의 `+`와 Profile의 광고 개인정보 설정은 비활성입니다. iOS 운영 기본값도 빈 `--dart-define`을 명시하면 비활성화할 수 있습니다. 광고 SDK 변경은 hot reload가 아닌 앱 완전 재빌드가 필요합니다.
+선택된 플랫폼의 광고 ID가 없으면 Home의 `+`가 비활성입니다. Profile에는 광고 개인정보 설정 진입점을 두지 않습니다. iOS 운영 기본값도 빈 `--dart-define`을 명시하면 비활성화할 수 있습니다. 광고 SDK 변경은 hot reload가 아닌 앱 완전 재빌드가 필요합니다.
 
 `run-local.sh`는 `.env.local`의 `LINGKO_API_BASE_URL`을 우선합니다. 이 값을 생략한 로컬 개발에서는 iOS에 `http://localhost:8080`, Android emulator에 `http://10.0.2.2:8080`을 적용합니다. 지정한 iOS Simulator가 꺼져 있으면 부팅하고, Android Device ID가 연결되지 않았으면 `ANDROID_EMULATOR_ID`의 AVD를 실행한 뒤 준비될 때까지 기다립니다. 로컬 Backend를 쓰는 Android 실기기는 `API_URL=http://개발-PC-IP:8080`을 추가합니다. 명령 앞에 직접 지정한 환경변수는 `.env.local`보다 우선합니다.
 
@@ -165,8 +165,8 @@ Google Cloud의 Android OAuth Client에는 package name `com.byeok.lingko`와 `V
 - Apple Developer의 Identifiers에서 `com.byeok.lingko` App ID에 **Sign in with Apple**을 primary App ID로 활성화합니다.
 - capability 변경 후 automatic signing으로 provisioning profile을 다시 받습니다.
 - Backend에 `APPLE_CLIENT_ID=com.byeok.lingko`를 설정합니다. 이는 비밀값이 아니라 identity token의 허용 audience입니다.
-- 앱의 `Runner.entitlements`와 Debug/Profile/Release build setting은 `com.apple.developer.applesignin = Default`를 사용합니다.
-- Apple 계정과 2단계 인증이 설정된 iOS 13 이상 실기기에서 최초 로그인, 이메일 가리기, 재로그인, 취소를 확인합니다.
+- 현재 `Runner.entitlements`는 빈 dictionary이며 Sign in with Apple entitlement가 선언되어 있지 않습니다. Apple 로그인을 배포하려면 `com.apple.developer.applesignin = Default` 설정과 최종 앱 서명 포함 여부를 확인해야 합니다.
+- Apple 계정과 2단계 인증이 설정된 iOS 15.0 이상 실기기에서 최초 로그인, 이메일 가리기, 재로그인, 취소를 확인합니다.
 
 Android·Web Apple 로그인은 Service ID, 도메인과 HTTPS Return URL, callback 검증이 필요해 현재 앱에서 노출하지 않습니다.
 

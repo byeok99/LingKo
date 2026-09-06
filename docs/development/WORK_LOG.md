@@ -1,5 +1,26 @@
 # 작업 이력
 
+## 2026-09-06 - 현재 Apple 로그인 entitlement 상태 동기화
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: 빈 Runner entitlement와 출시 전 서명 확인 필요 사항을 반영했다.
+- 검증: 설정 diff와 문서 대조, 사용자 요청으로 테스트 생략
+- 리스크: Apple 로그인 실기기 미검증
+
+## 2026-09-05 - iOS 15.0 실기기 요구사항 반영
+
+- 변경 파일: `local-development.md`, `testing-and-troubleshooting.md`, `WORK_LOG.md`
+- 내용: Apple 로그인 개발·진단 절차의 실기기 기준을 앱의 최소 지원 버전인 iOS 15.0 이상으로 동기화했다.
+- 검증: 개발·트러블슈팅 문서에 이전 iOS 최소 버전 문구가 남지 않은 것을 검색으로 확인
+- 리스크: 없음
+
+## 2026-09-04 - Profile 광고 설정 제거 반영
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: 광고 ID 유무 설명에서 제거된 Profile 광고 개인정보 설정 진입점을 제외했다.
+- 검증: 관련 문구 검색
+- 리스크: 없음
+
 ## 2026-09-04 - AdMob test device SSV 검증 절차
 
 - 변경 파일: `local-development.md`, `WORK_LOG.md`

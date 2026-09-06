@@ -1,6 +1,6 @@
 # Uncomment this line to define a global platform for your project
-# Sign in with Apple의 native AuthenticationServices 계약에 맞춰 최소 iOS를 고정한다.
-platform :ios, '13.0'
+# 앱과 모든 CocoaPods가 같은 배포 경계를 사용하도록 최소 iOS를 고정한다.
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'

@@ -8,7 +8,7 @@ package com.lingko.lingko.core.domain.legal;
  */
 public final class LegalConsentPolicy {
 
-    public static final String CURRENT_DOCUMENT_VERSION = "2026-08-07";
+    public static final String CURRENT_DOCUMENT_VERSION = "2026-09-04";
 
     private LegalConsentPolicy() {
     }

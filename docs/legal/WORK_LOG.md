@@ -1,5 +1,19 @@
 # 작업 이력
 
+## 2026-09-06 - Apple 로그인 구현 상태 동기화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 현재 entitlement 미선언과 서명 재확인 필요 사항을 구현 현황에 반영했다.
+- 검증: 설정 diff와 문서 대조, 사용자 요청으로 테스트 생략
+- 리스크: Apple 로그인 실기기 미검증
+
+## 2026-09-04 - Profile 설정 구현 현황 갱신
+
+- 변경 파일: `README.md`, `privacy-policy.ko.md`, `privacy-policy.en.md`, `terms-of-service.ko.md`, `terms-of-service.en.md`, `WORK_LOG.md`
+- 내용: Profile에는 약관·처리방침·회원 탈퇴만 남기고, 광고 개인정보 선택은 CMP·기기 OS 설정으로, 문의와 마케팅 동의 변경은 이메일로 안내하도록 한·영 약관과 처리방침을 개정했다.
+- 검증: 앱 구현·서빙 사본·동의 버전 대조
+- 리스크: 기존 동의 사용자는 개정 문서 재동의 대상이다.
+
 ## 2026-09-04 - Apple 로그인 capability 운영 상태 갱신
 
 - 변경 파일: `README.md`, `WORK_LOG.md`

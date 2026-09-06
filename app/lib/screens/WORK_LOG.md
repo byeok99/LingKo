@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-04 - Profile 광고 설정·문의 행 제거
+
+- 변경 파일: `profile_screen.dart`, `WORK_LOG.md`
+- 내용: 운영하지 않는 `Ad privacy settings`와 `Contact us` 행 및 화면 callback을 제거하고, 이용약관·개인정보처리방침은 그대로 유지했다.
+- 검증: 메뉴 미노출 widget test RED→GREEN
+- 리스크: 광고 동의 변경 경로는 CMP와 기기 OS 설정 정책을 별도로 유지해야 한다.
+
 ## 2026-08-19 - 로그인 wordmark 심사용 진입점
 
 - 변경 파일: `auth_gate_screen.dart`, `WORK_LOG.md`

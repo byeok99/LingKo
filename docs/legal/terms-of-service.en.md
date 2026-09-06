@@ -2,7 +2,7 @@
 
 > **All values in this document are confirmed.** No placeholders remain. It has not been reviewed by a lawyer. See [README.md](./README.md) for details.
 
-- Effective Date 2026-08-07
+- Effective Date 2026-09-04
 
 ---
 
@@ -42,7 +42,7 @@ These Terms govern the rights, obligations, and responsibilities between LEE SAN
 | **Required** | Acknowledgement of personal data processing | Confirmation of how personal data is handled under the [Privacy Policy](./privacy-policy.en.md) |
 | **Optional** | Marketing communications | Receiving news about events, benefits, and new features |
 
-2. Registration is not possible without the required items. **Declining the optional item places no restriction on your use of the Service**, and you can change that choice at any time in the app's settings screen.
+2. Registration is not possible without the required items. **Declining the optional item places no restriction on your use of the Service**, and after registration you may request a change by email under Article 18.
 
 3. The Company may refuse an application, or terminate the contract afterwards, where:
    - the applicant is **under 16**;
@@ -91,7 +91,7 @@ The Service may be used only by persons aged **16 or over**. The Company applies
 
 2. In the course of ad serving, advertising identifiers, IP address, device information, and ad interaction records may be transmitted to Google LLC. Details are set out in Section 6 of the [Privacy Policy](./privacy-policy.en.md).
 
-3. You can change whether personalised advertising is used at **Settings › Ad privacy settings** in the app. Turning off personalisation does not remove advertising; you will receive ads unrelated to your interests.
+3. You can change whether personalised advertising is used through the Consent Management Platform (CMP), when shown in your region, and through your device operating system's advertising and tracking settings. Turning off personalisation does not remove advertising; you will receive ads unrelated to your interests.
 
 4. Depending on where you live, a separate consent step applies to advertising-related processing. Members in the European Economic Area, the United Kingdom, and Switzerland are presented with a Consent Management Platform (CMP) on first launch, and members using iOS are shown the App Tracking Transparency (ATT) prompt. **You may use the Service without consenting.**
 
@@ -202,7 +202,7 @@ You must not:
 
 ## Article 18 (Contact and Dispute Resolution)
 
-1. Enquiries about the Service may be submitted at **Settings › Contact** in the app or to maplebyeok@gmail.com.
+1. Enquiries about the Service may be submitted to maplebyeok@gmail.com.
 
 2. In the event of a dispute you may apply for mediation to the Korea Consumer Agency, the Consumer Dispute Mediation Committee, the Personal Information Dispute Mediation Committee, or an alternative dispute resolution (ADR) body in your country of residence.
 
@@ -216,10 +216,11 @@ You must not:
 
 ## Supplementary Provisions
 
-These Terms take effect on 2026-08-07.
+These Terms take effect on 2026-09-04.
 
 **Revision history**
 
+- 2026-09-04 — Changed the advertising privacy choice path to the CMP and device settings
 - 2026-08-07 — Initial version
 
 ## Provider Information
