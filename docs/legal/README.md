@@ -69,7 +69,7 @@
 | 가입 시 필수 2건·선택 1건 동의 | **구현 완료.** 앱 화면에서 선택한 값을 인증 사용자에게 귀속해 `POST /api/legal/consent`로 저장하고, 복원 세션도 `GET /api/legal/consent`에서 현재 버전 미동의를 확인하면 Home 대신 동의 화면을 표시한다 |
 | 약관·처리방침 전문 열람 | **구현 완료.** 백엔드가 `GET /legal/terms`, `GET /legal/privacy`로 서빙하고(`?lang=ko\|en`), 앱의 동의 화면과 Profile이 이 URL을 인앱 WebView로 연다. 스토어 심사에 제출할 공개 URL도 이 주소를 쓴다 |
 | 만 16세 이상 | 동의 화면에 안내 문구만 있고 실제 연령 확인 수단이 없다 |
-| Apple 로그인 | **iOS 앱·Backend token 검증 코드와 Apple Developer App ID capability·development provisioning 설정 완료.** Apple 이메일 relay 주소는 검증된 token email로 저장한다. 실제 로그인 E2E와 authorization code 기반 token revocation은 출시 전 남아 있다 |
+| Apple 로그인 | **iOS 앱·Backend token 검증 코드 구현, 현재 Runner entitlement 미선언.** 이전 App ID capability·development provisioning 검증 이후 entitlement가 제거되어 최종 서명 재확인이 필요하다. Apple 이메일 relay 주소는 검증된 token email로 저장한다. 실제 로그인 E2E와 authorization code 기반 token revocation은 출시 전 남아 있다 |
 | Google AdMob 광고 | **SSV 검증 구현 완료.** 앱이 1회성 session token을 `customData`로 전달하고 Backend가 Google 서명·광고 정책·전역 transaction을 검증한 뒤 지급한다. iOS 운영 App/Rewarded Ad Unit ID와 서버 allowlist는 설정됐으며, AdMob console의 공개 HTTPS callback 설정 확인과 실제 광고 E2E가 남아 있다 |
 | CMP(EEA 사전 동의) · ATT(iOS) | Google UMP의 consent update·필수 form·privacy options 재진입을 연결했다. ATT prompt는 미구현 |
 | 앱 내 설정 화면 | Profile에서 이용약관·개인정보처리방침을 공개 URL로 열고 회원 탈퇴를 제공한다. 광고 개인정보 설정과 문의 행은 제거했으며 문의는 정책 문서의 이메일을 이용한다 |

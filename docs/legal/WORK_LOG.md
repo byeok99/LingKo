@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-06 - Apple 로그인 구현 상태 동기화
+
+- 변경 파일: `README.md`, `WORK_LOG.md`
+- 내용: 현재 entitlement 미선언과 서명 재확인 필요 사항을 구현 현황에 반영했다.
+- 검증: 설정 diff와 문서 대조, 사용자 요청으로 테스트 생략
+- 리스크: Apple 로그인 실기기 미검증
+
 ## 2026-09-04 - Profile 설정 구현 현황 갱신
 
 - 변경 파일: `README.md`, `privacy-policy.ko.md`, `privacy-policy.en.md`, `terms-of-service.ko.md`, `terms-of-service.en.md`, `WORK_LOG.md`

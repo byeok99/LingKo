@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-06 - Apple 로그인 요구사항 현재 제한 반영
+
+- 변경 파일: `functional-requirements.md`, `WORK_LOG.md`
+- 내용: FR-AUTH-008에 entitlement 미선언과 서명 재확인 필요 상태를 기록했다.
+- 검증: 설정 diff와 문서 대조, 사용자 요청으로 테스트 생략
+- 리스크: Apple 로그인 실기기 미검증
+
 ## 2026-09-04 - Profile 설정 요구사항 상태 갱신
 
 - 변경 파일: `functional-requirements.md`, `WORK_LOG.md`

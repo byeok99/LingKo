@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-06 - 현재 Apple 로그인 entitlement 상태 동기화
+
+- 변경 파일: `local-development.md`, `WORK_LOG.md`
+- 내용: 빈 Runner entitlement와 출시 전 서명 확인 필요 사항을 반영했다.
+- 검증: 설정 diff와 문서 대조, 사용자 요청으로 테스트 생략
+- 리스크: Apple 로그인 실기기 미검증
+
 ## 2026-09-05 - iOS 15.0 실기기 요구사항 반영
 
 - 변경 파일: `local-development.md`, `testing-and-troubleshooting.md`, `WORK_LOG.md`

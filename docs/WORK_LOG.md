@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-06 - Apple 로그인 출시 체크리스트 현재 상태 반영
+
+- 변경 파일: `mvp-release-execution-checklist.md`, `WORK_LOG.md`
+- 내용: entitlement 제거 이후 서명과 실기기 재확인이 필요하도록 체크리스트를 갱신했다.
+- 검증: 설정 diff와 문서 대조, 사용자 요청으로 테스트 생략
+- 리스크: Apple 로그인 실기기 미검증
+
 ## 2026-09-04 - Apple 로그인 외부 설정 상태 갱신
 
 - 변경 파일: `mvp-release-execution-checklist.md`, `WORK_LOG.md`
