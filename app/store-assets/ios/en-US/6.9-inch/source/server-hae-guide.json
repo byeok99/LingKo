@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-09-05",
+  "endpoint": "https://lingko-api.duckdns.org/api/pronunciation/prepare",
+  "request": {
+    "source": "CUSTOM",
+    "text": "저는 한국어를 공부해요"
+  },
+  "standardPronunciation": "저는 한구거를 공부해요",
+  "guide": {
+    "character": "해",
+    "romanization": "hae",
+    "phonemes": ["ㅎ", "ㅐ"],
+    "guideStatus": "AVAILABLE",
+    "mouthGuideUrl": "https://lingko.s3.ap-northeast-2.amazonaws.com/guides/mouth/semi-vowel-y.png",
+    "tongueGuideUrl": "https://lingko.s3.ap-northeast-2.amazonaws.com/guides/tongue/vowel-e-ae.png",
+    "note": "Focus on where your tongue touches."
+  }
+}
