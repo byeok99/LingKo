@@ -6,7 +6,7 @@
 - 심각도: SEV-2
 - 영역: Backend / Flutter / Operations
 - 관련 Issue: [#111](https://github.com/byeok99/LingKo/issues/111)
-- 관련 PR: 생성 후 연결
+- 관련 PR: [#112](https://github.com/byeok99/LingKo/pull/112)
 
 ## 문제 현상
 
