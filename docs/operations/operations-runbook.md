@@ -16,6 +16,21 @@
 
 ## 백엔드 Docker 배포
 
+### 약관 버전 변경 배포
+
+앱을 배포하기 전에 Backend의 `LegalConsentPolicy.CURRENT_DOCUMENT_VERSION`과 공개 약관·처리방침을 같은 버전으로 배포한다. Git push·PR 병합만으로 실행 중인 서버 이미지가 갱신되지는 않는다.
+
+1. 서버 checkout의 commit, 미커밋 변경과 실행 중인 API image ID를 확인한다.
+2. 앱 `consentDocumentVersion`, Backend 정책 상수와 법무 문서 시행일이 일치하는지 확인한다.
+3. 약관 서비스·Controller·문서 사본 일치 테스트를 실행하고, 기존 API 이미지를 별도 rollback tag로 보관한다.
+4. 승인된 commit을 checkout한 뒤 `docker compose build backend`로 빌드한다. 약관만 변경됐고 migration·Worker 계약 변경이 없는 경우 `docker compose up -d --no-deps backend`로 API만 교체한다.
+5. 공개 `/legal/terms?lang=en`, `/legal/privacy?lang=en`의 시행일, 추천 문장 API와 API 시작 로그를 확인한다. 공개 문서 확인만으로 인증 사용자의 동의 저장 성공을 확정하지 않는다.
+6. 실제 앱에서 동의를 제출하고 `POST /api/legal/consent`가 현재 `documentVersion`과 `required=false`를 반환하는지 확인한다. 토큰·사용자 정보는 로그나 문서에 복사하지 않는다.
+
+긴급 rollback은 보관한 API 이미지를 Compose 서비스 이미지 태그로 다시 지정하고 `up -d --no-deps backend`로 수행한다. 이전 이미지의 약관 버전이 최신 앱과 다르면 가입 문제가 다시 발생할 수 있으므로 호환성을 먼저 확인한다. DB volume이나 기존 동의 기록은 삭제하지 않는다.
+
+관련 사례: [약관 버전 배포 불일치](../troubleshooting/2026-09-07-consent-deployment-version-mismatch.md).
+
 ```bash
 cd backend
 docker build -t lingko-backend:<version> .
