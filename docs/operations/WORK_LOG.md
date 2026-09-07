@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-07 - 약관 버전 배포 확인 절차 추가
+
+- 변경 파일: `operations-runbook.md`, `WORK_LOG.md`
+- 내용: 앱 배포 전 서버 정책·공개 문서 버전 확인, API 단독 교체와 rollback 절차를 추가했다.
+- 검증: 약관 관련 테스트 9개와 bootJar 빌드 통과, 운영 재배포 결과는 연결된 사고 노트에서 관리
+- 리스크: 실제 사용자 동의 제출 성공은 기기에서 확인 필요
+
 ## 2026-08-19 - App Review 접근·Review Notes Runbook
 
 - 변경 파일: `app-review-access.md`, `WORK_LOG.md`
