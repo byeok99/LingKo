@@ -220,6 +220,9 @@
 
 ## 주의사항
 
+- 기본 추천 문장은 V2의 21개를 보존하고 V22에서 27개를 추가해 총 48개다. FOOD·DAILY·TRAVEL·STUDY·WORK·HEALTH 각 8개이며, 영문 번역과 학습 포인트를 포함한다. 현재 앱의 `limit=50` 조회에 전체 기본 문장이 포함된다. 운영에서 별도로 추가한 콘텐츠는 이 기본 개수와 별개다.
+- 추천 문장 확장은 새 versioned migration으로 추가한다. 기존 ID·문장·sort order는 저장 문장과 평가 이력의 참조를 위해 보존하며, 표준 발음과 로마자는 현재 규칙으로 파생한다.
+
 - 엔티티와 실제 Flyway 스키마가 항상 일치하도록 테스트합니다.
 - `sentence_id`는 추천 문장 참조지만 현재 엔티티 연관관계가 아닌 값으로 저장됩니다.
 - `evaluation_log`와 `evaluation_jobs`의 `standard_pronunciation`은 평가 당시 기준을 재현하기 위한 snapshot이며 추천 콘텐츠의 정답 원천이 아닙니다.

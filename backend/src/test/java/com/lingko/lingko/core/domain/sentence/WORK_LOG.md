@@ -1,5 +1,12 @@
 # 작업 이력
 
+## 2026-09-08 - 추천 문장 확장 데이터 계약 검증
+
+- 변경 파일: `RecommendedSentenceMigrationTest.java`, `WORK_LOG.md`
+- 내용: 기존 행 전체 보존, 정규화 후 중복 없음, 6개 주제별 8개, 필수 콘텐츠·정렬 순서와 현재 조회 한도 내 포함을 검증한다.
+- 검증: V22 파일 부재로 RED 확인, 구현 후 RecommendedSentenceMigrationTest·SentenceServiceTest·SentenceControllerTest 및 해당 선택 패턴에 포함된 저장 문장 테스트 통과
+- 리스크: H2 MySQL mode 테스트로 실제 운영 MySQL 검증을 대체하지 않음
+
 ## 2026-08-05 - 추천 로마자 파생 테스트
 
 - 변경 파일: `SentenceServiceTest.java`, `WORK_LOG.md`
