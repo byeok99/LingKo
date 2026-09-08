@@ -1,5 +1,12 @@
 # Work Log
 
+## 2026-09-08 - 기본 추천 문장 48개로 확장
+
+- 변경 파일: `V22__expand_recommended_sentences.sql`, `WORK_LOG.md`
+- 내용: 기존 21개는 보존하고 초급 생활 문장 27개를 추가해 6개 주제별 8개로 맞췄다. 번역·학습 포인트를 포함하며 API·앱의 기존 조회 한도를 유지한다.
+- 검증: H2 MySQL mode V2→V12→V22 적용, 기존 행 보존·중복·주제 균형 테스트 및 추천 문장 서비스·Controller 테스트 통과, git diff --check 통과
+- 리스크: 운영에는 V22 배포·적용 후 반영됨. 별도 운영 콘텐츠가 있으면 전체 개수는 48개보다 많을 수 있음
+
 ## 2026-09-02 - 평가 작업 phase 컬럼 추가
 
 - 변경 파일: `V21__add_evaluation_job_phase.sql`, `WORK_LOG.md`
