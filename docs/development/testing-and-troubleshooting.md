@@ -1,153 +1,37 @@
-# 테스트 전략과 트러블슈팅
+# 테스트 구성과 재현 범위
 
-## 테스트 계층
+## 기본 검증
 
-| 계층 | 명령 | 외부 서비스 | 실행 시점 |
-|---|---|---:|---|
-| Backend 단위·Controller | `./gradlew test` | 없음 | 모든 PR |
-| Backend 내부 통합 | `./gradlew integrationTest` | 없음 | 모든 PR |
-| Backend 외부 통합 | `./gradlew externalIntegrationTest` | Azure·Replicate·S3·FFmpeg | 수동·야간·릴리스 전 |
-| Flutter 정적 분석 | `flutter analyze` | 없음 | 모든 PR |
-| Flutter 테스트 | `flutter test` | 없음 | 모든 PR |
-| Android Debug 빌드 | `flutter build apk --debug` | 없음 | 네이티브 설정 변경 시 |
-| 실기기 점검 | 수동 | OAuth·마이크·백엔드 | 릴리스 전 |
-
-## Backend
+백엔드 디렉터리:
 
 ```bash
-cd backend
+./gradlew compileJava
 ./gradlew test
 ./gradlew integrationTest
 ```
 
-외부 통합 테스트는 다음 환경변수가 필요합니다.
-
-```text
-AZURE_SECRET_KEY
-AZURE_REGION
-REPLICATE_API_KEY
-REPLICATE_VERSION
-AWS_S3_BUCKET
-AWS_S3_REGION
-AWS_ACCESS_KEY
-AWS_SECRET_KEY
-```
+앱 디렉터리:
 
 ```bash
-set -a
-source .env
-set +a
-./gradlew externalIntegrationTest
-```
-
-Replicate 429는 생성 요청에 지수 backoff를 적용하며 polling timeout 시 원격 Prediction 취소를 시도합니다. 출시 전 외부 테스트로 새 MP4가 생성되면 검증된 S3 URL을 `backend/src/main/resources/db/migration/R__seed_generated_syllable_guides.sql`에 추가해 초기 배포 데이터로 누적합니다. 실행 중 생성된 URL은 `syllables` 테이블에 즉시 upsert되므로 서버 재시작만으로 사라지지 않습니다.
-
-JaCoCo HTML 결과는 일반적으로 `backend/build/reports/jacoco/test/html/index.html`에서 확인합니다.
-
-## Flutter
-
-```bash
-cd app
 flutter analyze
 flutter test
 ```
 
-네이티브 녹음 설정 변경 시:
+명령 목록은 실행 결과가 아닙니다. 변경마다 실제 수행한 범위와 결과를 구분합니다.
 
-```bash
-flutter build apk --debug
-```
+## 테스트 경계
 
-## 릴리스 전 수동 체크리스트
+- 단위 테스트: 입력 검증, 변환 규칙, 응답 파싱과 서비스 상태 전이
+- Spring/JPA 테스트: 작업 생성의 멱등성, 쿼터 경쟁, 결과 저장과 상태 전이
+- Flutter 테스트: 화면 동작, API 계약, 세션과 폴링 처리
+- 외부 통합 테스트: 실제 외부 서비스와의 연결. 별도 `externalIntegrationTest` 작업을 사용하며 자격증명과 비용을 확인한 뒤 실행합니다.
 
-- Android와 iOS에서 첫 마이크 권한 팝업
-- 권한 거부 후 재시도 UX
-- 실제 WAV 업로드와 평가 성공
-- 녹음 중 화면 이동·앱 백그라운드 전환
-- Google·iOS Apple 로그인, 취소, 로그아웃, 앱 재실행 후 세션 복원
-- 만료되거나 잘못된 JWT 처리
-- 느린 네트워크와 서버 오류 표시
-- 추천 문장·자유 문장 평가
-- 연습 기록·사용자 설정 조회와 변경
-- S3 가이드 이미지 로딩 실패 fallback
-- 외부 가이드 작업 실패와 polling 종료
+H2와 외부 서비스 대역을 사용하는 테스트는 MySQL의 실제 잠금·실행 계획이나 Azure·S3 응답시간을 검증한 것으로 해석하지 않습니다. JaCoCo 보고서가 존재하는 것과 커버리지 임계값을 강제하는 것은 별개입니다.
 
-## 자주 발생하는 문제
+법무 문서를 변경할 때 `LegalDocumentSourceSyncTest`로 문서 원본과 서버 제공 리소스의 일치를 확인합니다. 기기 녹음·Presigned PUT·로그인 capability는 해당 플랫폼에서 별도 실행 확인이 필요합니다.
 
-### Flutter에서 백엔드 연결 실패
+## 문제를 재현할 때
 
-- Android 에뮬레이터는 `localhost` 대신 `10.0.2.2` 사용
-- 실기기는 PC와 같은 네트워크인지 확인
-- 백엔드가 `0.0.0.0:8080` 또는 접근 가능한 인터페이스에 열렸는지 확인
-- OS 방화벽에서 8080 포트 허용 여부 확인
+실패 명령, 재현 조건, 비밀값을 제거한 핵심 오류, 실행 환경을 먼저 구분합니다. 외부 서비스 장애와 입력 오류를 섞지 않고 동일 조건의 회귀 테스트로 확인합니다.
 
-### `No pubspec.yaml file found`
-
-`app/` 디렉터리에서 실행합니다.
-
-```bash
-cd app
-flutter pub get
-flutter run
-```
-
-### Google 로그인 audience 오류
-
-- Flutter의 `GOOGLE_SERVER_CLIENT_ID`
-- 백엔드의 `GOOGLE_CLIENT_ID`
-- Google Cloud의 Web application Client ID
-
-세 값이 같은 서버 Client ID를 가리키는지 확인합니다.
-
-### Android Google 계정 선택 후 진행되지 않음
-
-Android Credential Manager는 OAuth 설정 오류를 사용자 취소처럼 반환할 수 있습니다. 다음 순서로 확인합니다.
-
-1. `GOOGLE_SERVER_CLIENT_ID`가 Web application Client ID인지 확인
-2. Google Cloud Android OAuth Client의 package name이 `com.byeok.lingko`인지 확인
-3. `cd app/android && ./gradlew signingReport`의 Debug SHA-1이 등록됐는지 확인
-4. Android emulator에서는 Backend 주소로 `http://10.0.2.2:8080` 사용
-5. 설정 변경 후 기존 앱을 삭제하고 다시 설치
-
-```bash
-cd app
-GOOGLE_SERVER_CLIENT_ID=Google-Web-Client-ID \
-DEVICE_ID=emulator-5554 \
-./scripts/run-local.sh android
-```
-
-### iOS Apple 로그인 창이 열리지 않음
-
-1. Apple Developer App ID `com.byeok.lingko`에 Sign in with Apple이 활성인지 확인
-2. Xcode Runner target의 Signing & Capabilities와 `Runner.entitlements` 확인
-3. capability 변경 뒤 provisioning profile이 갱신됐는지 확인
-4. Backend `APPLE_CLIENT_ID`가 token audience인 Bundle ID와 같은지 확인
-5. 앱의 최소 지원 버전인 iOS 15.0 이상 실기기에서 Apple 계정 로그인·2단계 인증 상태 확인
-
-identity token과 raw nonce는 로그·이슈·스크린샷에 남기지 않습니다.
-
-### WAV 415 오류
-
-- 확장자가 `.wav`인지 확인
-- 16-bit mono PCM인지 확인
-- 실제 WAV 헤더의 byte rate와 block align이 일치하는지 확인
-- 파일이 44바이트보다 크고 data chunk가 존재하는지 확인
-
-### Docker MySQL이 시작되지 않음
-
-- `.env`의 `DB_PASSWORD`가 비어 있지 않은지 확인
-- 기존 3306 포트 사용 프로세스 확인
-- `docker compose logs mysql` 확인
-- 테스트 데이터가 필요 없으면 `docker compose down -v` 후 재시작
-
-### 외부 통합 테스트가 즉시 실패
-
-필수 환경변수 누락 시 의도적으로 테스트 시작 전에 실패합니다. `.env`를 shell 환경으로 export한 뒤 실행합니다.
-
-## 테스트 작성 원칙
-
-- 기능 성공 경로와 실패 경로를 함께 작성합니다.
-- 외부 네트워크를 호출하는 테스트에는 `external` 태그를 사용합니다.
-- 테스트가 실제 비밀값과 운영 리소스를 기본적으로 요구하지 않게 합니다.
-- API 계약 변경 시 Flutter API 테스트와 Backend Controller 테스트를 함께 수정합니다.
-- 시간·날짜 로직은 주입 가능한 `Clock`을 사용합니다.
+[문제 해결 사례](../engineering/case-studies.md) · [오류 코드](../api/error-codes.md)

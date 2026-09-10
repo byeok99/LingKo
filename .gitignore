@@ -59,3 +59,7 @@ app/docs/*
 .dumx-hooks
 
 docs/design/lingko-blue-wireframe.png
+
+# 개인 운영 메모·과거 문서·작업 이력은 로컬에서만 관리한다.
+/docs/private/
+**/WORK_LOG.md

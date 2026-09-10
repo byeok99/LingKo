@@ -29,30 +29,6 @@ sequenceDiagram
 
 동의는 **계정이 만들어지기 전에** 받습니다. 계정 생성 후에 받으면 거부한 사용자의 개인정보가 이미 서버에 생긴 상태가 되어 즉시 삭제하는 경로를 따로 만들어야 합니다. 기록 자체는 사용자에게 귀속되어야 하므로 로그인 성공 직후에 전송합니다.
 
-### App Review 전용 흐름
-
-```mermaid
-sequenceDiagram
-    participant R as Reviewer
-    participant A as Flutter App
-    participant B as Backend
-    participant D as MySQL
-
-    R->>A: LingKo wordmark 5회 탭
-    A->>R: 접근 코드 입력창
-    R->>A: Review Notes의 코드 입력
-    A->>B: POST /api/auth/review/login
-    B->>B: 활성화·Rate Limit·SHA-256 hash 검증
-    B->>D: 설정된 기존 review 사용자 조회
-    B->>D: Refresh Token 해시 세션 저장
-    B-->>A: Access/Refresh JWT + 사용자 정보
-    A->>A: Secure Storage 저장
-    A->>B: 현재 동의 상태 확인
-```
-
-원문 코드는 앱과 DB에 저장하지 않습니다. 기능은 기본 비활성화이며 서버 Secret의 hash와 기존 사용자
-ID가 함께 설정된 심사 기간에만 열립니다. review 세션도 일반 세션과 동일하게 회전·폐기됩니다.
-
 ## 요청 계약
 
 `POST /api/auth/oauth/login`
@@ -73,8 +49,9 @@ Apple 이름은 최초 승인 응답에만 있으므로 이후 null 응답은 �
 
 ## 인증 API 사용
 
-다음 API는 `Authorization: Bearer <access-token>`이 필요합니다.
+대표적으로 다음 API는 `Authorization: Bearer <access-token>`이 필요합니다.
 
+- `POST /api/evaluations/uploads`, `POST /api/evaluations/jobs`, `GET /api/evaluations/jobs/{jobId}`
 - `GET /api/evaluations/me`
 - `GET /api/quota/today`
 - `GET /api/sentences/saved`, `PATCH /api/sentences/saved/{sentenceId}`
@@ -116,16 +93,7 @@ sequenceDiagram
 - 회전 전 토큰이 다시 사용되면 재사용 공격으로 간주하고 해당 `sid` 세션 전체를 폐기합니다.
 - 로그아웃 또는 재사용 탐지로 세션이 폐기되면 해당 세션의 Access Token도 남은 만료 시간과 관계없이 보호 API에서 거부됩니다.
 - Refresh Token 절대 만료는 로그인 시점부터 기본 14일이며 회전으로 연장하지 않습니다.
-- 현재 로그아웃은 현재 기기 세션만 폐기합니다. 전체 기기 로그아웃은 별도 후속 기능입니다.
-
-## 운영 전 보완
-
-- JWT 키 버전과 안전한 키 회전
-- Google 검증 호출의 타임아웃·재시도
-- 인증이 필요한 모든 사용자 기능에 공통 필터 적용
-- 가이드 작업 관리자 권한
-- 로그인·실패 이벤트 감사 로그
-- Apple authorization code 교환·refresh token 보관과 회원 탈퇴 시 Apple token revocation
+- 현재 로그아웃은 현재 기기 세션만 폐기합니다. 다른 기기 세션에는 영향을 주지 않습니다.
 
 ## 금지 사항
 

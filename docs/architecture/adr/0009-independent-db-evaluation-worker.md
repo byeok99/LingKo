@@ -3,9 +3,7 @@
 - 상태: 승인
 - 날짜: 2026-07-29
 - 관련 Issue: [#47](https://github.com/byeok99/LingKo/issues/47)
-- 후속 검증 Issue: [#69](https://github.com/byeok99/LingKo/issues/69)
 - 관련 PR: [#70](https://github.com/byeok99/LingKo/pull/70)
-- 대체 대상: [ADR-0008](0008-sqs-independent-evaluation-workers.md)
 
 ## 배경
 
@@ -32,7 +30,7 @@
 
 ### SQS 독립 Worker
 
-다중 Worker와 관리형 메시지 전달에는 적합하지만 초기 운영에 필요한 인프라보다 복잡합니다. 구현 시도는 ADR-0008에 기록하고 현재 코드에서는 제거합니다.
+다중 Worker와 관리형 메시지 전달에는 적합하지만 초기 운영에 필요한 인프라보다 복잡합니다. 현재 구성에서는 사용하지 않습니다.
 
 ### Redis Streams
 
@@ -43,12 +41,5 @@ Redis가 캐시나 Rate Limit 용도로 이미 운영될 때 재검토할 수 �
 - API와 평가 Worker의 프로세스 장애·재시작 경계가 분리됩니다.
 - 같은 Docker 호스트에서는 CPU, 메모리, 디스크와 네트워크를 공유하므로 완전한 성능 격리는 아닙니다.
 - Queue 서비스 없이도 DB 작업과 lease로 Worker 재시작 후 처리를 복구할 수 있습니다.
-- 단일 Worker가 40개 작업을 모두 성공 처리하고 결과·쿼터를 한 번씩 확정하는 Spring/JPA 통합 테스트를 유지합니다.
+- 단일 Worker의 40개 작업 순차 처리와 결과·쿼터 정합성을 확인하는 Spring/JPA 통합 테스트가 있습니다. H2와 외부 평가 대역을 사용하므로 운영 처리량 측정이 아닙니다.
 - Worker replica를 늘리면 DB claim lock 경합이 증가할 수 있으므로 측정 없이 확장하지 않습니다.
-
-## 후속 작업
-
-- 운영 backlog와 oldest pending age 측정
-- Worker CPU, 메모리, 임시 디스크, 처리시간과 Azure 오류율 관측
-- 실제 MySQL에서 Worker 강제 종료·lease 만료 복구 검증
-- 단일 Worker 용량이 부족할 때 Redis Streams, SQS 또는 DB 다중 Worker 비교
