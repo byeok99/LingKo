@@ -92,6 +92,7 @@
       date quota_date
       varchar quota_source
       varchar status
+      varchar phase
       int attempt_count
       datetime next_attempt_at
       datetime lease_expires_at
@@ -206,7 +207,6 @@
 | 데이터 | 소유자 | 삭제 기준 |
 |---|---|---|
 | 사용자 프로필 | 사용자 | 현재 Access·Refresh Token 재확인 후 회원 탈퇴 시 삭제 |
-| 학습 설정 | 사용자 | 사용자와 함께 삭제 |
 | 평가 기록 | 사용자 | 회원 탈퇴 DB transaction에서 단어 점수와 음절 가이드 함께 삭제 |
 | 평가 작업 | 사용자 | 회원 탈퇴 시 삭제, 그 외 성공·최종 실패 후 기본 7일 보존 |
 | 평가 원본 음성 | 사용자 평가 작업 | 성공·최종 실패 후 삭제, 미제출·삭제 실패 객체는 1일 Lifecycle 만료 |
@@ -218,7 +218,7 @@
 | 광고 보상 영수증 | 사용자 | 회원 탈퇴 시 FK `ON DELETE CASCADE`로 삭제 |
 | 광고 보상 세션 | 사용자 | 회원 탈퇴 시 FK `ON DELETE CASCADE`로 삭제 |
 
-## 주의사항
+## 저장 의미와 데이터 수명
 
 - 기본 추천 문장은 V2의 21개를 보존하고 V22에서 27개를 추가해 총 48개다. FOOD·DAILY·TRAVEL·STUDY·WORK·HEALTH 각 8개이며, 영문 번역과 학습 포인트를 포함한다. 현재 앱의 `limit=50` 조회에 전체 기본 문장이 포함된다. 운영에서 별도로 추가한 콘텐츠는 이 기본 개수와 별개다.
 - 추천 문장 확장은 새 versioned migration으로 추가한다. 기존 ID·문장·sort order는 저장 문장과 평가 이력의 참조를 위해 보존하며, 표준 발음과 로마자는 현재 규칙으로 파생한다.

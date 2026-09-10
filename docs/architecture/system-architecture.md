@@ -1,125 +1,46 @@
 # 시스템 아키텍처
 
-## 전체 구성
+## 책임 분리
 
 ```mermaid
-flowchart LR
-    subgraph Mobile[Flutter App]
-      UI[Home / Practice / Result / Profile]
-      CONSENT[Consent Gate]
-      API[API Clients]
-      AUTH[Google / Apple Identity + Secure Storage]
-      REC[Audio Recorder]
-      ADS[Rewarded Ads + UMP]
-    end
-
-    subgraph APIBackend[Spring Boot API]
-      CTRL[REST Controllers]
-      LEGAL[Legal Document Pages]
-      DOM[Domain Services]
-      JPA[JPA Repositories]
-      JOB[Guide Job Service]
-      EXT[External Adapters]
-    end
-
-    subgraph WorkerBackend[Spring Boot Worker]
-      EJOB[Evaluation DB Worker]
-    end
-
-    DB[(MySQL 8)]
-    GOOGLE[Google OAuth]
-    APPLE[Sign in with Apple]
-    AZURE[Azure Speech]
-    REP[Replicate]
-    S3[AWS S3]
-    FFMPEG[FFmpeg]
-
-    UI --> API --> CTRL --> DOM --> JPA --> DB
-    CONSENT --> API
-    UI -->|인앱 WebView로 열기| LEGAL
-    ADS --> GOOGLE
-    AUTH --> GOOGLE
-    AUTH --> APPLE
-    AUTH --> API
-    REC -->|Presigned PUT| S3
-    API --> CTRL
-    EJOB --> DB
-    EJOB --> S3
-    EJOB --> AZURE
-    DOM --> EXT
-    JOB --> EXT
-    EXT --> AZURE
-    EXT --> REP
-    EXT --> S3
-    EXT --> FFMPEG
+flowchart TD
+    App[Flutter] --> API[Spring Boot API]
+    App -->|음성 직접 업로드| S3[Private S3]
+    API --> DB[(MySQL)]
+    Worker[독립 평가 Worker] -->|작업 claim · 상태 · 결과| DB
+    Worker -->|음성 조회 · 삭제| S3
+    Worker --> Azure[Azure Speech]
+    Worker --> Guide[가이드 미디어 해석]
+    Guide --> DB
+    Guide --> Cache[S3 캐시]
+    Guide --> Generate[Replicate · FFmpeg]
 ```
 
-## 컴포넌트 책임
-
-| 컴포넌트 | 책임 |
+| 경계 | 책임 |
 |---|---|
-| Flutter UI | 사용자 흐름, 로딩·오류 상태, 녹음 제어, 결과 표시 |
-| Flutter API 계층 | JSON 요청, Presigned S3 PUT, 작업 Polling, 응답 모델 변환 |
-| 인증 서비스 | Google·Apple identity token 획득, nonce 결합, 백엔드 로그인, 세션 저장·삭제 |
-| REST Controller | HTTP 계약·입력 검증·인증 토큰 해석 |
-| Domain Service | 표준 발음, 평가, 기록, 설정, 쿼터, 작업 규칙 |
-| JPA/Flyway | 영속 모델과 스키마 버전 관리 |
-| Evaluation DB Worker | DB polling과 lease claim, S3 다운로드, Azure 평가, 결과·쿼터 완료 |
-| 외부 어댑터 | Azure Speech, Replicate, S3, FFmpeg 호출 |
+| Flutter | 세션 복원, 동의 gate, 녹음, 업로드, 상태 조회, 학습 UI |
+| API | 인증·소유권·입력 검증, 티켓 발급, 작업 등록과 조회 |
+| Domain | 쿼터 예약·확정·복구, 작업 상태 전이, 결과 영속화 |
+| Worker | DB 작업 획득, 외부 평가·미디어 처리, 성공·실패 반영 |
+| Infra | 외부 응답 파싱, S3 객체 처리, 미디어 생성·캐시 |
+| MySQL / Flyway | 사용자 데이터, 영속 작업, 평가 결과, 스키마 버전 |
 
-## 배포 단위
+## 비동기 작업과 트랜잭션
 
-현재 저장소 기준 배포 단위는 세 개입니다.
+API는 장시간 평가를 직접 기다리는 대신 DB에 작업을 등록합니다. 사용자별 Idempotency 키와 쿼터 예약을 작업 생성 트랜잭션에 묶어 재시도 시 중복 작업을 억제합니다.
 
-1. Flutter 앱: Android/iOS 빌드 산출물
-2. Spring Boot API: Java 21 JAR 또는 Docker 이미지
-3. Spring Boot 평가 Worker: API와 같은 image를 web server 없이 실행
+Worker는 작업을 claim하고 상태·lease를 기록합니다. 외부 호출 전체에 DB 트랜잭션을 유지하지 않습니다. 완료 시 결과와 작업 상태, 쿼터를 반영합니다. DB의 상태 전이와 외부 서비스 실행은 서로 다른 경계이므로 외부 호출의 exactly-once를 보장한다고 해석해서는 안 됩니다.
 
-백엔드 Docker 이미지는 빌드 단계와 실행 단계를 분리하며 실행 이미지에 FFmpeg를 설치합니다. Compose는 API 내부 Worker를 끄고 web 없는 `evaluation-worker` 한 개를 별도 프로세스로 실행합니다.
+## 가이드 캐시
 
-## 동기·비동기 경계
+저장된 음절·전이 유형의 MP4를 DB에서 먼저 조회하고, 필요한 경우 프레임 쌍을 해석해 결정적인 S3 키를 조회합니다. 캐시가 없으면 Replicate와 FFmpeg로 생성합니다. 실패 시 이미지 가이드가 대안이 됩니다.
 
-### 동기
+사용자 평가의 영속 `evaluation_jobs`와 내부 가이드 생성 HTTP API의 작업 저장소는 다릅니다. 후자는 프로세스 메모리 기반이므로 재시작 후 작업 상태 조회를 지속하는 용도가 아닙니다. 기본 비활성화와 내부 토큰·요청 제한으로 접근을 구분합니다.
 
-- 로그인
-- 추천 문장 조회
-- 자유 문장 준비
-- 기록·설정·쿼터 조회
+## 구성의 경계
 
-### 비동기
+기본 실행 구성은 API, MySQL, 독립 DB polling Worker 한 개입니다. 다중 Worker 처리량이나 장애 복구 성능을 측정한 결과로 간주하지 않습니다. Worker 확장은 작업 소유권, lease 만료와 중복 외부 호출을 함께 검토해야 합니다.
 
-- S3 직접 업로드 후 영속 DB 작업을 사용하는 발음 평가
-- 가이드 영상 생성 작업
+인증은 JWT 서명뿐 아니라 기기 세션의 활성 상태를 확인합니다. S3는 비공개 객체와 사용자별 업로드 권한을 사용합니다. 실제 외부 서비스 설정과 코드상 보호 장치는 구분합니다.
 
-평가 작업은 MySQL에 영속화되고 독립 Worker 한 개가 DB를 polling합니다. claim 시 DB lock과 lease를 기록하므로 Worker 재시작 후 만료 작업을 복구할 수 있습니다. Worker는 S3 다운로드, Azure 분석, 가이드 준비, 결과 마무리 경계마다 영속 phase를 갱신하며 앱은 이를 백분율로 환산하지 않고 표시합니다. 가이드 작업은 여전히 `ConcurrentHashMap`과 프로세스 내 Executor를 사용하므로 서버 재시작 시 상태가 사라집니다.
-
-## 신뢰 경계
-
-- 모바일에서 전달된 Google·Apple identity token은 백엔드가 공급자별 audience와 서명·만료를 검증한 후 자체 JWT를 발급합니다. Apple은 요청별 nonce도 검증합니다.
-- Bearer JWT가 필요한 API는 기록, 사용자 설정, 쿼터 조회입니다.
-- 평가 업로드·작업 API는 활성 Bearer 세션과 사용자별 S3 prefix를 검증합니다. 가이드 작업 API는 아직 인증 경계가 충분하지 않습니다.
-- 외부 URL과 업로드 파일은 서버에서 형식과 크기를 검증해야 합니다.
-
-## 주요 실패 지점
-
-| 지점 | 영향 | 현재 대응 | 운영 전 보완 |
-|---|---|---|---|
-| MySQL 연결 실패 | 대부분 API 실패 | Docker healthcheck | 재시도, 알림, 백업 |
-| Azure 실패 | 평가 지연·실패 | Worker 제한 재시도·최종 쿼터 복구 | 타임아웃·회로 차단기 |
-| Replicate 실패 | 영상 생성 실패 | 작업 FAILED | 영속 큐·백오프 |
-| S3 실패 | 미디어 저장 실패 | 예외 처리 | 재시도·수명주기 정책 |
-| FFmpeg 실패 | 영상 합성 실패 | 작업 FAILED | 리소스 제한·관측성 |
-| API 재시작 | 작업 생성 일시 중단 | 기존 DB 작업은 Worker가 계속 처리 | API 상태 메트릭 |
-| Worker 재시작 | 처리 중 작업 중단 | DB lease 만료 후 재claim | Worker 상태·oldest pending 메트릭 |
-| JWT 키 변경 | 기존 토큰 무효 | 수동 | 키 회전 절차 |
-
-## 확장 방향
-
-운영 단계에서는 다음 순서를 권장합니다.
-
-1. 운영 S3 Lifecycle과 Presigned PUT E2E 검증
-2. Azure 타임아웃·Circuit Breaker·작업 메트릭 도입
-3. 독립 DB Worker 한 개의 처리량과 강제 종료 복구 검증
-4. 가이드 작업을 DB 또는 메시지 큐로 이전
-5. CI/CD와 환경별 설정 분리
-6. 로그·메트릭·트레이싱과 장애 알림 추가
+[평가 흐름](evaluation-flow.md) · [인증 흐름](authentication-flow.md) · [ADR](adr/README.md)

@@ -53,7 +53,8 @@ sequenceDiagram
     W->>Z: 기준 문장과 WAV 평가
     Z-->>W: 발음 점수·인식 결과
     W->>D: phase = PREPARING_GUIDES
-    W->>S: 평가 음절 가이드 MP4 cache 조회
+    W->>D: 음절·유형별 저장 MP4 우선 조회
+    W->>S: 저장 미디어가 없으면 결정적 MP4 cache 조회
     alt 다중 프레임 cache miss
         W->>R: 입·혀 프레임 보간
         R-->>W: 구간별 영상
@@ -75,7 +76,7 @@ sequenceDiagram
 - 작업 생성 요청은 사용자 소유 `objectKey`와 `sentenceId` 또는 `text`를 전달합니다.
 - 작업 생성은 8~100자의 `Idempotency-Key`가 필요합니다.
 - 앱은 S3 PUT 동안 실제 byte 비율만 표시하고, 작업 생성 후에는 서버 phase를 단계 안내로 사용합니다. 각 단계 소요 시간이 다르므로 phase를 균등 백분율로 환산하지 않습니다.
-- `sentenceId`와 `text` 중 하나는 반드시 필요
+- `sentenceId`와 `text` 중 정확히 하나만 전달
 - 최대 크기: 10MiB
 - 형식: 16-bit mono PCM WAV
 - 허용 샘플링 레이트: 48kHz 이하
@@ -98,7 +99,7 @@ sequenceDiagram
 - `words[].position`, `words[].text`, `words[].score`, `words[].scoreStatus`
 - `words[].syllables[]` (점수를 복제하지 않는 입·혀 가이드 단위)
 
-## 현재 데이터 연결 상태
+## 작업 생명주기
 
 평가 작업 생성과 Worker는 다음 흐름을 수행합니다.
 
@@ -123,7 +124,7 @@ sequenceDiagram
 
 Compose 운영에서는 API 내부 Worker를 끄고 web server가 없는 `evaluation-worker` 한 개가 MySQL을 polling합니다. DB가 작업 상태와 대기열의 원본이므로 별도 Queue가 없으며, 프로세스가 종료되면 lease가 만료된 `PROCESSING` 작업을 다시 claim합니다. 같은 Docker 호스트에서는 자원을 공유하지만 평가 작업의 프로세스 장애와 재시작 경계는 API와 분리됩니다.
 
-가이드 영상은 문장 준비 단계가 아니라 평가 완료 결과를 조립할 때 모든 음절에 생성합니다. 글자 점수가 없더라도 Result에서 각 음절 가이드를 열 수 있으므로 점수가 아닌 프레임 전환 유무로 영상 여부를 결정합니다. 동일 음절·가이드 종류·프레임 조합은 결정적 S3 key로 cache하고 같은 프로세스의 동시 최초 요청도 직렬화합니다. 단일 프레임과 외부 생성 실패는 기존 PNG로 fallback하므로 평가 결과 자체를 잃지 않습니다. 최초 cache miss에는 Replicate polling과 FFmpeg 병합 시간이 포함될 수 있어 기본 Worker lease와 앱 polling 범위는 600초로 맞춥니다.
+가이드 영상은 문장 준비 단계가 아니라 평가 완료 결과를 조립할 때 모든 음절에 생성합니다. 글자 점수가 없더라도 Result에서 각 음절 가이드를 열 수 있으므로 점수가 아닌 프레임 전환 유무로 영상 여부를 결정합니다. DB의 음절·유형별 저장 MP4를 먼저 조회한 뒤, 동일 음절·가이드 종류·프레임 조합은 결정적 S3 key로 cache하고 같은 프로세스의 동시 최초 요청도 직렬화합니다. 단일 프레임과 외부 생성 실패는 기존 PNG로 fallback하므로 평가 결과 자체를 잃지 않습니다. 최초 cache miss에는 Replicate polling과 FFmpeg 병합 시간이 포함될 수 있어 기본 Worker lease와 앱 polling 범위는 600초로 맞춥니다.
 
 단어 점수는 공급자 token과 기준 문장의 공백 단위가 개수·텍스트·위치에서 모두 일치할 때만 사용합니다. 점수는 `evaluation_word`에 단어당 한 번 저장하고 `evaluation_syllable.word_position`으로 가이드 음절을 연결합니다. 한국어 음절 점수는 신뢰 단위로 사용하지 않으며 단어 점수를 음절 행이나 API 하위 항목에 복제하지 않습니다.
 
@@ -141,13 +142,3 @@ Compose 운영에서는 API 내부 Worker를 끄고 web server가 없는 `evalua
 | 같은 Idempotency Key의 다른 요청 | 409 `IDEMPOTENCY_CONFLICT` |
 | 평가 기회 소진 | 429 `QUOTA_EXCEEDED` |
 | Worker 최종 실패 | 작업 상태 `FAILED`, `errorCode=EVALUATION_FAILED` |
-
-## 운영 전 개선
-
-- Azure 호출 타임아웃과 재시도 정책
-- 요청 ID를 통한 앱·백엔드·외부 호출 추적
-- 평가 지연시간과 실패율 메트릭
-- S3 Lifecycle과 삭제 실패 재처리
-- 실제 기기의 Presigned PUT·Polling E2E
-- 실제 MySQL에서 Worker 강제 종료와 lease 만료 복구 검증
-- backlog와 DB lock을 측정한 뒤에만 Worker replica 또는 Queue 도입 검토

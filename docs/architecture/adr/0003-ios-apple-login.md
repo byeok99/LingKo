@@ -1,6 +1,6 @@
 # ADR-0003 iOS native Apple 로그인과 nonce 검증
 
-- 상태: 승인 — 코드 구현, 운영 capability·실기기 검증 미완료
+- 상태: 승인 — native identity token 검증 방식
 - 날짜: 2026-08-12
 
 ## 배경
@@ -20,9 +20,6 @@ iOS에서도 Google 로그인을 제공하므로 Apple 계정 로그인 경로�
 - 계정 고유 키는 변경·가리기가 가능한 이메일이 아니라 Apple `sub`와 `APPLE` provider 조합입니다.
 - 최초 이름이 이후 로그인에서 null이면 기존 이름을 보존합니다.
 
-## 결과와 남은 작업
+## 결과와 적용 범위
 
-App ID `com.byeok.lingko`의 Sign in with Apple capability와 갱신된 provisioning profile이 필요합니다.
-이번 구현은 native identity token 검증까지이며, Apple authorization code를 `/auth/token`에서 교환해
-refresh token을 보관하고 회원 탈퇴 시 승인 token을 revoke하는 서버 흐름은 출시 전에 완료해야 합니다.
-Android·Web 지원에는 별도 Service ID와 HTTPS Return URL이 필요합니다.
+이 결정은 iOS native identity token 검증을 다룹니다. 플랫폼 capability와 provisioning 설정이 필요하며, authorization code 교환·서버 refresh token 보관·Apple 승인 철회까지 구현한 것으로 해석하지 않습니다. Android·Web의 Service ID 기반 흐름과도 구분합니다.
