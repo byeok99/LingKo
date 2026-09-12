@@ -64,7 +64,8 @@ class EvaluationJobServiceTest {
                 creationService,
                 sentenceRepository,
                 evaluationService,
-                new ObjectMapper().findAndRegisterModules()
+                new ObjectMapper().findAndRegisterModules(),
+                org.mockito.Mockito.mock(com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService.class)
         );
     }
 

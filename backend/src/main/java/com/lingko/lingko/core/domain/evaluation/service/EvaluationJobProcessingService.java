@@ -83,8 +83,10 @@ public class EvaluationJobProcessingService {
     @Transactional
     public boolean fail(EvaluationJob claimedJob, RuntimeException failure) {
         EvaluationJob job = requireProcessingJob(claimedJob.getJobId());
-        String errorCode = "EVALUATION_FAILED";
-        if (job.getAttemptCount() >= settings.getWorker().getMaxAttempts()) {
+        boolean consentDenied = failure instanceof com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException;
+        String errorCode = consentDenied ? "AI_CONSENT_REQUIRED" : "EVALUATION_FAILED";
+        // 철회는 일시적 외부 장애가 아니므로 즉시 종료하고 예약을 복구한다.
+        if (consentDenied || job.getAttemptCount() >= settings.getWorker().getMaxAttempts()) {
             job.fail(errorCode, clock.instant());
             // 예약 복구 native UPDATE 전에 FAILED를 기록해 clear 이후 상태 변경 유실을 막는다.
             boolean quotaReleased = quotaService.releasePracticeIfReserved(job.reservation());

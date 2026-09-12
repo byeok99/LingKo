@@ -25,6 +25,7 @@ public class EvaluationJobCreationService {
     private final UserRepository userRepository;
     private final PracticeQuotaService quotaService;
     private final Clock clock;
+    private final com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService aiConsentService;
 
     @Transactional
     public EvaluationJob create(
@@ -36,6 +37,8 @@ public class EvaluationJobCreationService {
     ) {
         User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new AuthException("Authenticated user not found"));
+        // 철회와 같은 사용자 lock 아래에서 동의를 확정한 뒤에만 기회를 예약한다.
+        Long consentId = aiConsentService.requireGranted(userId);
         EvaluationJob existing = jobRepository
                 .findByUserUserIdxAndIdempotencyKey(userId, idempotencyKey)
                 .orElse(null);
@@ -48,7 +51,7 @@ public class EvaluationJobCreationService {
 
         PracticeQuotaService.PracticeQuotaReservation reservation =
                 quotaService.reservePractice(userId);
-        return jobRepository.save(EvaluationJob.create(
+        EvaluationJob job = EvaluationJob.create(
                 UUID.randomUUID().toString(),
                 user,
                 idempotencyKey,
@@ -61,6 +64,8 @@ public class EvaluationJobCreationService {
                 reservation.quotaDate(),
                 reservation.source(),
                 clock.instant()
-        ));
+        );
+        job.recordAiConsent(consentId);
+        return jobRepository.save(job);
     }
 }

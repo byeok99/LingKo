@@ -26,19 +26,22 @@ public class EvaluationApplicationService {
     private final PracticeQuotaService quotaService;
     private final UserRepository userRepository;
     private final RecommendedSentenceRepository sentenceRepository;
+    private final com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService aiConsentService;
 
     public EvaluationApplicationService(
             EvaluationService evaluationService,
             EvaluationCompletionService completionService,
             PracticeQuotaService quotaService,
             UserRepository userRepository,
-            RecommendedSentenceRepository sentenceRepository
+            RecommendedSentenceRepository sentenceRepository,
+            com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService aiConsentService
     ) {
         this.evaluationService = evaluationService;
         this.completionService = completionService;
         this.quotaService = quotaService;
         this.userRepository = userRepository;
         this.sentenceRepository = sentenceRepository;
+        this.aiConsentService = aiConsentService;
     }
 
     public PracticeResultResponse evaluate(
@@ -47,12 +50,15 @@ public class EvaluationApplicationService {
             Long sentenceId,
             String text
     ) {
+        // 구버전 multipart 경로도 동의·철회를 우회해 Azure로 전송할 수 없다.
+        Long consentId = aiConsentService.requireGranted(userId);
         User user = findAuthenticatedUser(userId);
         EvaluationTarget target = resolveTarget(sentenceId, text);
         PracticeQuotaService.PracticeQuotaReservation reservation =
                 quotaService.reservePractice(userId);
 
         try {
+            aiConsentService.requireJobConsent(userId, consentId);
             PracticeResultResponse result =
                     evaluationService.evaluatePronunciation(audio, target.standardPronunciation());
             completionService.complete(toSaveCommand(user, target, result), reservation);

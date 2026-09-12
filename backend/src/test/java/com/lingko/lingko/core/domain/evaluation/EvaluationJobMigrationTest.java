@@ -13,7 +13,7 @@ import java.sql.ResultSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 비동기 평가 작업 migration이 재시작·중복 방지에 필요한 구조를 생성하는지 검증한다.
+ * 비동기 평가 작업 migration이 재시작·중복 방지와 AI 전송 근거에 필요한 구조를 생성하는지 검증한다.
  */
 class EvaluationJobMigrationTest {
 
@@ -29,11 +29,15 @@ class EvaluationJobMigrationTest {
             runMigration(connection, "V10__add_evaluation_job_queue_dispatch.sql");
             runMigration(connection, "V11__remove_evaluation_job_queue_dispatch.sql");
             runMigration(connection, "V21__add_evaluation_job_phase.sql");
+            runMigration(connection, "V23__add_ai_processing_consents.sql");
 
             assertColumn(connection, "evaluation_jobs", "status");
             assertColumn(connection, "evaluation_jobs", "phase");
             assertColumn(connection, "evaluation_jobs", "lease_expires_at");
             assertColumn(connection, "evaluation_jobs", "result_payload");
+            assertColumn(connection, "evaluation_jobs", "ai_consent_id");
+            assertColumn(connection, "ai_processing_consents", "notice_version");
+            assertColumn(connection, "ai_processing_consents", "granted");
             assertColumnMissing(connection, "evaluation_jobs", "enqueued_at");
             assertUniqueConstraint(
                     connection,
@@ -47,6 +51,7 @@ class EvaluationJobMigrationTest {
             );
             assertIndex(connection, "evaluation_jobs", "idx_evaluation_jobs_claim");
             assertIndex(connection, "evaluation_jobs", "idx_evaluation_jobs_cleanup");
+            assertIndex(connection, "ai_processing_consents", "idx_ai_consent_user_id");
             assertIndexMissing(connection, "evaluation_jobs", "idx_evaluation_jobs_dispatch");
         }
     }

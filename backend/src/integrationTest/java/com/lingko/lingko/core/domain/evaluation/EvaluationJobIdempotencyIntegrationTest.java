@@ -72,6 +72,8 @@ class EvaluationJobIdempotencyIntegrationTest {
     private DailyPracticeQuotaRepository quotaRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService aiConsentService;
 
     @MockitoBean
     private EvaluationAudioStorage audioStorage;
@@ -122,6 +124,8 @@ class EvaluationJobIdempotencyIntegrationTest {
     @DisplayName("동일 사용자의 같은 Idempotency 요청 10개는 작업과 quota 예약을 한 번만 생성한다")
     void createsOneJobAndOneQuotaReservationForConcurrentDuplicates() throws Exception {
         User user = saveUser("idempotency-concurrent-user");
+        aiConsentService.record(user.getUserIdx(), true,
+                com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService.CURRENT_VERSION);
         EvaluationJobRequest request = new EvaluationJobRequest(
                 "evaluation-audio/" + user.getUserIdx() + "/recording.wav",
                 null,
@@ -173,6 +177,28 @@ class EvaluationJobIdempotencyIntegrationTest {
         assertThat(jobRepository.findById(expiredFailure.getJobId())).isEmpty();
         assertThat(jobRepository.findById(recentSuccess.getJobId())).isPresent();
         assertThat(jobRepository.findById(pending.getJobId())).isPresent();
+    }
+
+    @Test
+    void consentHistoryBlocksUploadAndOldJobsAfterRegrant() {
+        User user = saveUser("consent-history-user");
+        Long id = user.getUserIdx();
+        var upload = new com.lingko.lingko.api.evaluation.dto.EvaluationUploadRequest("audio.wav", "audio/wav", 44);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> jobService.prepareUpload(id, upload))
+                .isInstanceOf(com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException.class);
+        org.mockito.Mockito.verifyNoInteractions(audioStorage);
+        assertThat(quotaRepository.count()).isZero();
+        assertThat(aiConsentService.getStatus(id).granted()).isFalse();
+        aiConsentService.record(id, true, aiConsentService.CURRENT_VERSION);
+        Long first = aiConsentService.requireGranted(id);
+        aiConsentService.record(id, true, aiConsentService.CURRENT_VERSION);
+        assertThat(aiConsentService.requireGranted(id)).isEqualTo(first);
+        aiConsentService.record(id, false, "older-client");
+        assertThat(aiConsentService.getStatus(id).granted()).isFalse();
+        aiConsentService.record(id, true, aiConsentService.CURRENT_VERSION);
+        assertThat(aiConsentService.requireGranted(id)).isNotEqualTo(first);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> aiConsentService.requireJobConsent(id, first))
+                .isInstanceOf(com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException.class);
     }
 
     private EvaluationJob saveJob(User user, String suffix, String objectName) {

@@ -32,7 +32,7 @@ public class EvaluationController {
     public ResponseEntity<StandardPronunciationResponse> convertToStandardPronunciation(
             @Valid @RequestBody StandardPronunciationRequest request
     ) {
-        log.info("표준발음 변환 요청: {}", request.getText());
+        log.debug("표준발음 변환 요청");
 
         String originalText = PracticeSentenceNormalizer.normalize(request.getText());
         String standardPronunciation = service.convertToStandardPronunciation(originalText);
@@ -42,7 +42,7 @@ public class EvaluationController {
                 .standardPronunciation(standardPronunciation)
                 .build();
 
-        log.info("표준발음 변환 완료: {} -> {}", request.getText(), standardPronunciation);
+        log.debug("표준발음 변환 완료");
 
         return ResponseEntity.ok(response);
     }
@@ -56,7 +56,7 @@ public class EvaluationController {
         }
 
         PronunciationPrepareResponse response = service.prepareCustomSentence(request.trimmedText());
-        log.info("발음 연습 준비 완료: {}", request.trimmedText());
+        log.debug("발음 연습 준비 완료");
 
         return ResponseEntity.ok(response);
     }

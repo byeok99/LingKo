@@ -59,7 +59,8 @@ class EvaluationApplicationServiceTest {
                 completionService,
                 quotaService,
                 userRepository,
-                sentenceRepository
+                sentenceRepository,
+                org.mockito.Mockito.mock(com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService.class)
         );
     }
 

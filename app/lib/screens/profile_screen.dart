@@ -19,6 +19,7 @@ class ProfileScreen extends StatefulWidget {
     required this.onOpenReview,
     required this.onOpenDocument,
     this.onOpenSavedSentences,
+    this.onManageAiConsent,
   });
 
   final AppAuthService authService;
@@ -33,6 +34,7 @@ class ProfileScreen extends StatefulWidget {
   final void Function(ConsentDocument document) onOpenDocument;
 
   final VoidCallback? onOpenSavedSentences;
+  final VoidCallback? onManageAiConsent;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -133,6 +135,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap:
                       () =>
                           widget.onOpenDocument(ConsentDocument.termsOfService),
+                ),
+                _SettingsLinkRow(
+                  key: const ValueKey('profile-ai-consent'),
+                  icon: Icons.record_voice_over_outlined,
+                  label: 'AI assessment privacy',
+                  onTap: widget.onManageAiConsent,
                 ),
                 _SettingsLinkRow(
                   key: const ValueKey('profile-privacy'),

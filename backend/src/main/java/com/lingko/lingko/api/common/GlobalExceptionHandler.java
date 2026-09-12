@@ -38,6 +38,13 @@ import java.util.List;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    /** 기존 앱과 직접 호출도 동의 누락을 인증 실패와 구분해 처리하게 한다. */
+    @ExceptionHandler(com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleAiConsentRequired(Exception exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of("AI_CONSENT_REQUIRED", "Allow AI assessment before sending your recording"));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
         List<ErrorResponse.FieldErrorDetail> details = exception.getBindingResult()

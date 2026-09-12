@@ -11,6 +11,9 @@ import 'package:flutter/services.dart';
 import 'app_palette.dart';
 
 import '../api/api_client.dart';
+import '../api/ai_processing_consent_api.dart';
+import '../models/ai_processing_consent.dart';
+import '../screens/ai_processing_consent_screen.dart';
 import '../api/evaluation_api.dart';
 import '../api/practice_content_api.dart';
 import '../api/practice_quota_api.dart';
@@ -37,6 +40,7 @@ import '../screens/result_screen.dart';
 import '../services/audio_recorder_service.dart';
 import '../services/legal_document_launcher.dart';
 import '../services/app_auth_service.dart';
+import '../services/apple_identity_service.dart';
 import '../services/sentence_speech_service.dart';
 import '../services/rewarded_ad_service.dart';
 import 'app_theme.dart';
@@ -54,6 +58,7 @@ class LingKoApp extends StatelessWidget {
     this.pronunciationApi,
     this.sentenceApi,
     this.evaluationApi,
+    this.aiProcessingConsentApi,
     this.practiceQuotaApi,
     this.practiceContentApi,
     this.authService,
@@ -67,6 +72,7 @@ class LingKoApp extends StatelessWidget {
   final PronunciationApi? pronunciationApi;
   final SentenceApi? sentenceApi;
   final EvaluationApi? evaluationApi;
+  final AiProcessingConsentApi? aiProcessingConsentApi;
   final PracticeQuotaApi? practiceQuotaApi;
   final PracticeContentApi? practiceContentApi;
   final AppAuthService? authService;
@@ -93,6 +99,8 @@ class LingKoApp extends StatelessWidget {
         pronunciationApi: pronunciationApi ?? DartIoPronunciationApi(),
         sentenceApi: sentenceApi ?? DartIoSentenceApi(),
         evaluationApi: evaluationApi ?? DartIoEvaluationApi(),
+        aiProcessingConsentApi:
+            aiProcessingConsentApi ?? DartIoAiProcessingConsentApi(),
         practiceQuotaApi: practiceQuotaApi ?? DartIoPracticeQuotaApi(),
         practiceContentApi: practiceContentApi ?? DartIoPracticeContentApi(),
         authService: authService ?? DefaultAppAuthService(),
@@ -118,6 +126,7 @@ class LingKoShell extends StatefulWidget {
     required this.pronunciationApi,
     required this.sentenceApi,
     required this.evaluationApi,
+    required this.aiProcessingConsentApi,
     required this.practiceQuotaApi,
     required this.practiceContentApi,
     required this.authService,
@@ -131,6 +140,7 @@ class LingKoShell extends StatefulWidget {
   final PronunciationApi pronunciationApi;
   final SentenceApi sentenceApi;
   final EvaluationApi evaluationApi;
+  final AiProcessingConsentApi aiProcessingConsentApi;
   final PracticeQuotaApi practiceQuotaApi;
   final PracticeContentApi practiceContentApi;
   final AppAuthService authService;
@@ -160,6 +170,8 @@ class _LingKoShellState extends State<LingKoShell> {
   String? recommendedSentenceError;
   PracticeResult? latestResult;
   AuthSession? session;
+  // 같은 계정으로 재로그인해도 이전 화면의 전송 선택을 재사용하지 않는다.
+  int sessionGeneration = 0;
   bool isRestoringSession = true;
   bool isSigningIn = false;
   String? authErrorText;
@@ -371,6 +383,7 @@ class _LingKoShellState extends State<LingKoShell> {
         return;
       }
 
+      sessionGeneration++;
       setState(() {
         session = restoredSession;
         authErrorText = null;
@@ -413,6 +426,7 @@ class _LingKoShellState extends State<LingKoShell> {
       if (!mounted) {
         return;
       }
+      sessionGeneration++;
 
       setState(() {
         session = null;
@@ -457,6 +471,7 @@ class _LingKoShellState extends State<LingKoShell> {
       if (!mounted) {
         return;
       }
+      sessionGeneration++;
       setState(() {
         session = activeSession;
       });
@@ -548,10 +563,11 @@ class _LingKoShellState extends State<LingKoShell> {
         if (!mounted) {
           return;
         }
+        sessionGeneration++;
         setState(() {
           session = activeSession;
         });
-      } catch (_) {
+      } catch (error) {
         if (!mounted) {
           return;
         }
@@ -561,11 +577,14 @@ class _LingKoShellState extends State<LingKoShell> {
           pendingSignInProvider = null;
           isConsentOpen = false;
           isSubmittingConsent = false;
-          authErrorText = switch (failedProvider) {
-            _SignInProvider.apple =>
-              'Unable to sign in with Apple. Please try again.',
-            _ => 'Unable to sign in with Google. Please try again.',
-          };
+          authErrorText =
+              error is AppleSignInCanceledException
+                  ? null
+                  : switch (failedProvider) {
+                    _SignInProvider.apple =>
+                      'Unable to sign in with Apple. Please try again.',
+                    _ => 'Unable to sign in with Google. Please try again.',
+                  };
         });
         return;
       } finally {
@@ -682,6 +701,7 @@ class _LingKoShellState extends State<LingKoShell> {
   }
 
   Future<void> handleSessionChanged(AuthSession? nextSession) async {
+    sessionGeneration++;
     if (nextSession == null) {
       // 다른 사용자의 문장·평가·할당량가 다음 로그인에 노출되지 않도록 사용자 종속 상태를 함께 비운다.
       setState(() {
@@ -887,10 +907,79 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
+  /// 계정 전환 중 도착한 동의 응답은 버리고, 전송 전 서버 상태를 새로 조회한다.
+  Future<bool> ensureAiConsent({bool manage = false}) async {
+    final owner = session?.user.userId;
+    final generation = sessionGeneration;
+    if (owner == null) return false;
+    bool isCurrent() =>
+        mounted &&
+        session?.user.userId == owner &&
+        sessionGeneration == generation;
+    final status = await widget.authService.runAuthenticated(
+      (token) => widget.aiProcessingConsentApi.fetchStatus(accessToken: token),
+    );
+    if (!mounted || !isCurrent()) return false;
+    if (!manage && status.granted && status.isSupported) return true;
+    final allowed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder:
+            (_) => AiProcessingConsentScreen(
+              status: status,
+              onOpenPrivacy:
+                  () => unawaited(
+                    openLegalDocument(ConsentDocument.privacyPolicy),
+                  ),
+              onSave: (granted) async {
+                if (!isCurrent()) throw StateError('Session changed');
+                final result = await widget.authService.runAuthenticated((
+                  token,
+                ) {
+                  if (!isCurrent()) throw StateError('Session changed');
+                  return widget.aiProcessingConsentApi.record(
+                    accessToken: token,
+                    granted: granted,
+                  );
+                });
+                if (!isCurrent()) throw StateError('Session changed');
+                return result;
+              },
+            ),
+      ),
+    );
+    return isCurrent() && allowed == true;
+  }
+
+  Future<void> manageAiConsent() async {
+    try {
+      await ensureAiConsent(manage: true);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not load AI permission. Please try again.'),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> evaluateRecording(
     PracticeSentence sentence,
     String audioPath,
   ) async {
+    final generation = sessionGeneration;
+    final owner = session?.user.userId;
+    void requireCurrentSession() {
+      if (!mounted ||
+          generation != sessionGeneration ||
+          owner != session?.user.userId) {
+        throw AiProcessingConsentDeclined();
+      }
+    }
+
+    if (!await ensureAiConsent()) throw AiProcessingConsentDeclined();
+    requireCurrentSession();
     setState(() {
       selectedSentence = sentence;
       latestResult = null;
@@ -903,12 +992,14 @@ class _LingKoShellState extends State<LingKoShell> {
     });
 
     try {
-      final upload = await widget.authService.runAuthenticated(
-        (accessToken) => widget.evaluationApi.prepareUpload(
+      final upload = await widget.authService.runAuthenticated((accessToken) {
+        requireCurrentSession();
+        return widget.evaluationApi.prepareUpload(
           accessToken: accessToken,
           audioPath: audioPath,
-        ),
-      );
+        );
+      });
+      requireCurrentSession();
       await widget.evaluationApi.uploadAudio(
         upload: upload,
         audioPath: audioPath,
@@ -936,16 +1027,19 @@ class _LingKoShellState extends State<LingKoShell> {
       }
 
       final idempotencyKey = _newEvaluationIdempotencyKey();
-      EvaluationJob job = await widget.authService.runAuthenticated(
-        (accessToken) => widget.evaluationApi.createJob(
+      EvaluationJob job = await widget.authService.runAuthenticated((
+        accessToken,
+      ) {
+        requireCurrentSession();
+        return widget.evaluationApi.createJob(
           accessToken: accessToken,
           idempotencyKey: idempotencyKey,
           objectKey: upload.objectKey,
           sentenceId:
               sentence.source == 'RECOMMENDED' ? sentence.sentenceId : null,
           text: sentence.source == 'RECOMMENDED' ? null : sentence.text,
-        ),
-      );
+        );
+      });
 
       if (mounted) {
         setState(() {
@@ -1143,6 +1237,7 @@ class _LingKoShellState extends State<LingKoShell> {
         onSessionExpired: () => handleSessionChanged(null),
       ),
       ProfileScreen(
+        onManageAiConsent: () => unawaited(manageAiConsent()),
         authService: widget.authService,
         session: session!,
         onSessionChanged: handleSessionChanged,

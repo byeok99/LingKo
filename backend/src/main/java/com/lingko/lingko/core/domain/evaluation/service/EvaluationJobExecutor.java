@@ -19,12 +19,16 @@ public class EvaluationJobExecutor {
     private final EvaluationJobProcessingService processingService;
     private final EvaluationAudioStorage audioStorage;
     private final EvaluationService evaluationService;
+    private final com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService aiConsentService;
 
     public ExecutionResult execute(EvaluationJob job) {
         Path localAudio = null;
         try {
+            aiConsentService.requireJobConsent(job.getUser().getUserIdx(), job.getAiConsentId());
             localAudio = audioStorage.download(job.getAudioObjectKey());
             processingService.advancePhase(job, EvaluationJob.Phase.ANALYZING_SPEECH);
+            // 다운로드 중 철회도 반영한다. 이 검사 뒤 시작한 전송은 이미 진행 중인 요청으로 취급한다.
+            aiConsentService.requireJobConsent(job.getUser().getUserIdx(), job.getAiConsentId());
             PracticeResultResponse result = evaluationService.evaluatePronunciation(
                     localAudio,
                     job.getStandardPronunciation(),

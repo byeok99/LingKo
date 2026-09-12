@@ -41,8 +41,10 @@ public class EvaluationJobService {
     private final RecommendedSentenceRepository sentenceRepository;
     private final EvaluationService evaluationService;
     private final ObjectMapper objectMapper;
+    private final com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService aiConsentService;
 
     public EvaluationUploadResponse prepareUpload(Long userId, EvaluationUploadRequest request) {
+        aiConsentService.requireGranted(userId);
         EvaluationAudioStorage.UploadTicket ticket = audioStorage.prepareUpload(
                 userId,
                 request.fileName(),
@@ -62,6 +64,7 @@ public class EvaluationJobService {
             EvaluationJobRequest request
     ) {
         validateIdempotencyKey(idempotencyKey);
+        aiConsentService.requireGranted(userId);
         validateTarget(request);
         String requestHash = requestHash(request);
 

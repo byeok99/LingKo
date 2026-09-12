@@ -94,6 +94,35 @@ tasks.register('integrationTest', Test) {
 	}
 }
 
+// 단위·통합 테스트를 별도 실행하되 제품 코드 기준 커버리지는 두 실행 결과를 함께 계산한다.
+tasks.register('jacocoCombinedTestReport', JacocoReport) {
+	dependsOn tasks.named('test'), tasks.named('integrationTest')
+	executionData.from(fileTree(layout.buildDirectory.dir('jacoco')) {
+		include 'test.exec', 'integrationTest.exec'
+	})
+	sourceDirectories.from(sourceSets.main.allSource.srcDirs)
+	classDirectories.from(sourceSets.main.output)
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
+
+tasks.register('jacocoCombinedTestCoverageVerification', JacocoCoverageVerification) {
+	dependsOn tasks.named('jacocoCombinedTestReport')
+	executionData.from(tasks.named('jacocoCombinedTestReport').get().executionData)
+	sourceDirectories.from(sourceSets.main.allSource.srcDirs)
+	classDirectories.from(sourceSets.main.output)
+	violationRules {
+		rule {
+			limit {
+				counter = 'LINE'
+				minimum = 0.80
+			}
+		}
+	}
+}
+
 tasks.register('externalIntegrationTest', Test) {
 	description = 'Runs integration tests that call external services such as Azure, Replicate, S3, or FFmpeg.'
 	group = 'verification'

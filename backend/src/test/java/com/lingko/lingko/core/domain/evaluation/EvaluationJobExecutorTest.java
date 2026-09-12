@@ -34,18 +34,21 @@ class EvaluationJobExecutorTest {
     private EvaluationAudioStorage audioStorage;
     @Mock
     private EvaluationService evaluationService;
+    @Mock
+    private com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService aiConsentService;
 
     private EvaluationJobExecutor executor;
 
     @BeforeEach
     void setUp() {
-        executor = new EvaluationJobExecutor(processingService, audioStorage, evaluationService);
+        executor = new EvaluationJobExecutor(processingService, audioStorage, evaluationService, aiConsentService);
     }
 
     @Test
     @DisplayName("평가 성공 시 결과를 완료 처리하고 S3 원본과 로컬 임시 파일을 삭제한다")
     void completesAndDeletesAudio() {
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
+        when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
         Path audioPath = Path.of("/tmp/audio.wav");
         PracticeResultResponse result = PracticeResultResponse.builder().overallScore(91).build();
         when(job.getAudioObjectKey()).thenReturn("evaluation-audio/7/audio.wav");
@@ -83,6 +86,7 @@ class EvaluationJobExecutorTest {
     @DisplayName("재시도 실패는 S3 원본을 유지하고 로컬 임시 파일만 삭제한다")
     void keepsSourceForRetry() {
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
+        when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
         Path audioPath = Path.of("/tmp/audio.wav");
         RuntimeException failure = new IllegalStateException("Azure unavailable");
         when(job.getAudioObjectKey()).thenReturn("evaluation-audio/7/audio.wav");
@@ -103,9 +107,41 @@ class EvaluationJobExecutorTest {
     }
 
     @Test
+    void withdrawalDuringDownloadPreventsExternalTransmission() {
+        EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
+        when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
+        when(job.getAiConsentId()).thenReturn(21L);
+        when(job.getAudioObjectKey()).thenReturn("evaluation-audio/7/audio.wav");
+        Path audio = Path.of("/tmp/audio.wav");
+        when(audioStorage.download("evaluation-audio/7/audio.wav")).thenReturn(audio);
+        var failure = new com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException();
+        org.mockito.Mockito.doNothing().doThrow(failure).when(aiConsentService).requireJobConsent(7L, 21L);
+        when(processingService.fail(job, failure)).thenReturn(true);
+
+        assertThat(executor.execute(job)).isEqualTo(EvaluationJobExecutor.ExecutionResult.TERMINAL_FAILURE);
+        org.mockito.Mockito.verifyNoInteractions(evaluationService);
+        verify(audioStorage).delete("evaluation-audio/7/audio.wav");
+        verify(audioStorage).deleteLocal(audio);
+    }
+
+    @Test
+    void missingJobConsentPreventsDownloadAndTransmission() {
+        EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
+        when(job.getAiConsentId()).thenReturn(null);
+        when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
+        var failure = new com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException();
+        org.mockito.Mockito.doThrow(failure).when(aiConsentService).requireJobConsent(7L, null);
+        when(processingService.fail(job, failure)).thenReturn(true);
+        assertThat(executor.execute(job)).isEqualTo(EvaluationJobExecutor.ExecutionResult.TERMINAL_FAILURE);
+        verify(audioStorage, never()).download(org.mockito.ArgumentMatchers.any());
+        org.mockito.Mockito.verifyNoInteractions(evaluationService);
+    }
+
+    @Test
     @DisplayName("최종 실패는 쿼터 보상 후 S3 원본을 삭제한다")
     void deletesSourceAfterTerminalFailure() {
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
+        when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
         RuntimeException failure = new IllegalStateException("Azure unavailable");
         when(job.getAudioObjectKey()).thenReturn("evaluation-audio/7/audio.wav");
         when(audioStorage.download("evaluation-audio/7/audio.wav")).thenThrow(failure);

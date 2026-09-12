@@ -60,6 +60,8 @@ class IndependentEvaluationWorkerIntegrationTest {
     private DailyPracticeQuotaRepository quotaRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService aiConsentService;
 
     @MockitoBean
     private EvaluationAudioStorage audioStorage;
@@ -144,6 +146,8 @@ class IndependentEvaluationWorkerIntegrationTest {
                         .socialId("worker-load-user-" + userIndex)
                         .socialType(User.SocialType.GOOGLE)
                         .build()));
+        aiConsentService.record(user.getUserIdx(), true,
+                com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService.CURRENT_VERSION);
         EvaluationJob job = creationService.create(
                 user.getUserIdx(),
                 "worker-key-" + userIndex + "-" + jobIndex,
@@ -158,7 +162,8 @@ class IndependentEvaluationWorkerIntegrationTest {
         EvaluationJobExecutor executor = new EvaluationJobExecutor(
                 processingService,
                 audioStorage,
-                evaluationService
+                evaluationService,
+                aiConsentService
         );
         return new EvaluationJobWorker(processingService, executor);
     }
