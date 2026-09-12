@@ -6,9 +6,25 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingko_app/services/apple_identity_service.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 // raw nonce 자체가 Apple에 노출되지 않고 hash만 전달되며 결과가 다시 Backend 검증값과 묶이는지 보장한다.
 void main() {
+  test('maps user cancellation to a non-error sign-in outcome', () async {
+    final service = SignInWithAppleIdentityService(
+      requestCredential:
+          (_) async =>
+              throw const SignInWithAppleAuthorizationException(
+                code: AuthorizationErrorCode.canceled,
+                message: 'User canceled',
+              ),
+    );
+    await expectLater(
+      service.signIn(),
+      throwsA(isA<AppleSignInCanceledException>()),
+    );
+  });
+
   test(
     'hashes a fresh nonce and returns the raw nonce with identity token',
     () async {

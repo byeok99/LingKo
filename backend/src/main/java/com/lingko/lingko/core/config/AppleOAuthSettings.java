@@ -10,9 +10,11 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConfigurationProperties(prefix = "apple")
+@org.springframework.validation.annotation.Validated
 @Getter
 @Setter
 public class AppleOAuthSettings {
     /** Apple token의 {@code aud} claim과 일치해야 하는 공개 iOS bundle identifier다. */
+    @jakarta.validation.constraints.NotBlank
     private String clientId;
 }

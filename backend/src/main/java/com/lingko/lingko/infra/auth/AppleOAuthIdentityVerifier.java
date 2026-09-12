@@ -33,6 +33,7 @@ import java.util.HexFormat;
  * 모두 확인한 뒤에만 공급자 중립 신원으로 변환한다.</p>
  */
 @Component
+@lombok.extern.slf4j.Slf4j
 public class AppleOAuthIdentityVerifier implements OAuthIdentityVerifier {
 
     private static final String APPLE_ISSUER = "https://appleid.apple.com";
@@ -80,6 +81,8 @@ public class AppleOAuthIdentityVerifier implements OAuthIdentityVerifier {
                     null
             );
         } catch (ParseException | JOSEException | BadJOSEException | RuntimeException exception) {
+            // 예외 본문에는 token/claim이 섞일 수 있어 유형만 남긴다.
+            log.warn("Apple identity verification rejected: {}", exception.getClass().getSimpleName());
             throw new AuthException("Invalid Apple identity token");
         }
     }

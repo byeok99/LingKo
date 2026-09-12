@@ -56,7 +56,7 @@ google:
 
 apple:
   # native iOS identity token의 audience인 App ID(Bundle ID)다. 비밀값은 아니다.
-  client-id: ${APPLE_CLIENT_ID:}
+  client-id: ${APPLE_CLIENT_ID:com.byeok.lingko}
 
 review-access:
   # App Review 기간에만 활성화하며 원문 코드는 Review Notes와 운영 Secret에만 둔다.
