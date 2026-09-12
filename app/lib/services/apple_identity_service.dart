@@ -71,7 +71,16 @@ class SignInWithAppleIdentityService implements AppleIdentityService {
     final rawNonce = _generateRawNonce();
     // Apple에는 원문 대신 SHA-256만 전달하고 원문은 TLS로 Backend에 보내 replay를 막는다.
     final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
-    final credential = await _requestCredential(hashedNonce);
+    late final ApplePlatformCredential credential;
+    try {
+      credential = await _requestCredential(hashedNonce);
+    } on SignInWithAppleAuthorizationException catch (error) {
+      if (error.code == AuthorizationErrorCode.canceled) {
+        throw const AppleSignInCanceledException();
+      }
+      // 플랫폼 메시지는 개인정보를 포함할 수 있어 UI로 직접 전달하지 않는다.
+      throw const AppleSignInUnavailableException();
+    }
     final identityToken = credential.identityToken?.trim();
     if (identityToken == null || identityToken.isEmpty) {
       throw const AppleSignInUnavailableException();
@@ -117,4 +126,9 @@ class AppleSignInUnavailableException implements Exception {
 
   @override
   String toString() => 'Apple sign-in is unavailable';
+}
+
+/// Apple 인증창의 취소는 실패 알림 없이 로그인 선택 화면으로 돌아가야 한다.
+class AppleSignInCanceledException implements Exception {
+  const AppleSignInCanceledException();
 }

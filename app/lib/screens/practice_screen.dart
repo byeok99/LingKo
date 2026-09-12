@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../models/ai_processing_consent.dart';
 import 'package:flutter/services.dart';
 
 import '../app/app_theme.dart';
@@ -417,6 +418,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
       if (mounted) {
         setState(() => recordedAudioPath = null);
       }
+    } on AiProcessingConsentDeclined {
+      // 거절은 성공이 아니므로 녹음을 보존하고 전송·쿼터 소비 없이 화면으로 돌아간다.
+      widget.onImmersiveModeChanged(false);
     } catch (_) {
       if (mounted) {
         setState(() {

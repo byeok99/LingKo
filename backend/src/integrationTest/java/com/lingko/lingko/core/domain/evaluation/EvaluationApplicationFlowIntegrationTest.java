@@ -49,6 +49,8 @@ class EvaluationApplicationFlowIntegrationTest {
     private EvaluationLogRepository evaluationLogRepository;
     @Autowired
     private DailyPracticeQuotaRepository quotaRepository;
+    @Autowired
+    private com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService aiConsentService;
 
     @MockitoBean
     private SpeechEvaluator speechEvaluator;
@@ -64,6 +66,7 @@ class EvaluationApplicationFlowIntegrationTest {
     @DisplayName("평가 성공 시 결과가 저장되고 예약 quota가 사용량으로 확정된다")
     void persistsResultAndConfirmsQuota() {
         User user = saveUser("success-user");
+        aiConsentService.record(user.getUserIdx(), true, aiConsentService.CURRENT_VERSION);
         when(speechEvaluator.evaluate(anyString(), eq("안녕하세요")))
                 .thenReturn(assessmentResult());
 
@@ -89,6 +92,7 @@ class EvaluationApplicationFlowIntegrationTest {
     @DisplayName("외부 평가 실패 시 결과를 저장하지 않고 예약 quota를 복구한다")
     void releasesQuotaWhenProviderFails() {
         User user = saveUser("failure-user");
+        aiConsentService.record(user.getUserIdx(), true, aiConsentService.CURRENT_VERSION);
         when(speechEvaluator.evaluate(anyString(), eq("안녕하세요")))
                 .thenThrow(new IllegalStateException("provider unavailable"));
 
@@ -133,6 +137,15 @@ class EvaluationApplicationFlowIntegrationTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(evaluationLogRepository.count()).isZero();
+    }
+
+    @Test
+    void legacyEvaluationWithoutConsentNeverReservesOrSends() {
+        User user = saveUser("no-ai-consent");
+        assertThatThrownBy(() -> applicationService.evaluate(user.getUserIdx(), audio(), null, "안녕"))
+                .isInstanceOf(com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException.class);
+        assertThat(quotaRepository.count()).isZero();
+        org.mockito.Mockito.verifyNoInteractions(speechEvaluator);
     }
 
     private User saveUser(String socialId) {

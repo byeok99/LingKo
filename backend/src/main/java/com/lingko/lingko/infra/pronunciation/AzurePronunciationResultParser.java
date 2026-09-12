@@ -67,8 +67,8 @@ public class AzurePronunciationResultParser {
                 String actual = normalizeComparable(wordNode.path("Word").asText(""));
                 JsonNode scoreNode = wordNode.path("PronunciationAssessment").path("AccuracyScore");
                 if (!normalizeComparable(expected).equals(actual)) {
-                    log.warn("Azure word scores dropped: reason=text-mismatch, position={}, expected='{}', actual='{}'",
-                            position, expected, actual);
+                    // 짧은 토큰에도 이름 등 개인정보가 포함될 수 있어 원문 대신 위치만 기록한다.
+                    log.warn("Azure word scores dropped: reason=text-mismatch, position={}", position);
                     return List.of();
                 }
                 if (!scoreNode.isNumber()) {

@@ -133,7 +133,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
                           ],
                           Text(
                             'Review and agree to continue. You can change the '
-                            'optional item at any time in Settings.',
+                            'optional marketing choice by contacting support.',
                             style: Theme.of(
                               context,
                             ).textTheme.bodyLarge?.copyWith(

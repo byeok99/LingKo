@@ -59,6 +59,15 @@ public class EvaluationJob {
     @Column(name = "audio_object_key", nullable = false, length = 500)
     private String audioObjectKey;
 
+    /** NULL은 과거 작업에 AI 전송 근거가 없다는 뜻이며 Worker가 외부 호출 전에 거부한다. */
+    @Column(name = "ai_consent_id")
+    private Long aiConsentId;
+
+    /** 생성 트랜잭션에서 검증한 허용 기록을 작업에 묶어 철회 뒤 재시도를 차단한다. */
+    public void recordAiConsent(Long consentId) {
+        this.aiConsentId = consentId;
+    }
+
     @Enumerated(EnumType.STRING)
     @Column(name = "source", nullable = false, length = 30)
     private EvaluationLog.PracticeSource source;

@@ -1,8 +1,7 @@
 # LingKo Terms of Service
 
-> **All values in this document are confirmed.** No placeholders remain. It has not been reviewed by a lawyer. See [README.md](./README.md) for details.
 
-- Effective Date 2026-09-04
+- Effective Date 2026-09-12
 
 ---
 
@@ -20,7 +19,7 @@ These Terms govern the rights, obligations, and responsibilities between LEE SAN
 
 ## Article 3 (Publication and Amendment of Terms)
 
-1. The Company publishes these Terms together with its trade name, representative's name, business address, registration number, and contact details in the Service.
+1. The Company publishes these Terms together with the operator's name and available contact details. Because the Service is currently operated by an unregistered individual without business premises, no business registration number or business address is published; required business information will be added before paid features are introduced.
 
 2. The Company may amend these Terms within the limits of applicable law.
 
@@ -73,7 +72,7 @@ The Service may be used only by persons aged **16 or over**. The Company applies
 
 1. The Company provides:
    - recommended Korean sentences for practice, and the ability to save sentences;
-   - audio recording and automated pronunciation assessment returning an overall score, the recognised sentence, syllable-level scores, and weak characters;
+   - audio recording and automated pronunciation assessment returning an overall score, the recognised sentence, available word-level scores, and weak characters;
    - access to learning history and repeat practice;
    - text-to-speech reference pronunciation and learning guide videos.
 
@@ -123,15 +122,17 @@ The Service may be used only by persons aged **16 or over**. The Company applies
 
 6. Details of how personal data including voice data is handled are set out in the [Privacy Policy](./privacy-policy.en.md).
 
-## Article 11 (Account Deletion, Dormancy, and Suspension)
+7. Before audio upload, LingKo asks separate permission to share the recording via AWS S3 with Microsoft Azure AI Speech, together with reference pronunciation. You may decline or withdraw in Profile → AI assessment privacy. Browsing and guides remain available. See the Privacy Policy for recipients, retention and withdrawal limits for requests already started.
 
-1. You may delete your account at any time at **Settings › Delete account**, and the Company processes the request without undue delay except where law requires otherwise.
+## Article 11 (Account Deletion and Suspension)
+
+1. You may delete your account at any time at **Profile › Delete account**, and the Company processes the request without undue delay except where law requires otherwise.
 
 2. **Deleting your account permanently removes your account data, learning history, assessment results, evaluation credits, and login sessions. This cannot be undone.** Check anything you need before deleting.
 
-3. **Dormancy.** After 12 months without a login, the Company places the account in a dormant state and stores its personal data separately. You are emailed at least 30 days beforehand. Signing in again lifts the dormant state immediately.
+3. Account data is retained to provide your account until you request deletion, subject to applicable legal preservation requirements.
 
-4. **Deletion of dormant accounts.** After a further 6 months without a login, the Company deletes the account and learning history, having emailed you at least 30 days beforehand. Where your registered email address is no longer valid and the notice does not arrive, the Company is taken to have discharged its notification duty by sending it.
+4. There is no automatic dormant-account deletion schedule. You can request deletion in Profile at any time.
 
 5. The Company may suspend your access or terminate the contract if you breach Article 12, after prior notice. Where the breach is serious or urgent action is required, it may act immediately and notify you of the reason afterwards.
 
@@ -216,11 +217,11 @@ You must not:
 
 ## Supplementary Provisions
 
-These Terms take effect on 2026-09-04.
+These Terms take effect on 2026-09-12.
 
 **Revision history**
 
-- 2026-09-04 — Changed the advertising privacy choice path to the CMP and device settings
+- 2026-09-12 — Added separate AI sharing permission and corrected account retention
 - 2026-08-07 — Initial version
 
 ## Provider Information

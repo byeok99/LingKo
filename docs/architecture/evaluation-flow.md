@@ -40,16 +40,23 @@ sequenceDiagram
 
     U->>A: 녹음 시작/종료
     A->>A: WAV 파일 생성
+    A->>B: GET /api/legal/ai-consent
+    opt 현행 AI 허용 없음
+        A->>U: 수신자·전송 항목 고지 및 선택
+        U->>A: 명시적 허용 (거절 시 중단)
+        A->>B: POST /api/legal/ai-consent
+    end
     A->>B: POST /api/evaluations/uploads
     B-->>A: objectKey + Presigned PUT URL
     A->>S: WAV 직접 PUT
     A->>B: POST /api/evaluations/jobs
-    B->>D: 쿼터 예약 + PENDING 작업 저장
+    B->>D: 허용 재확인 + 쿼터 예약 + 동의 ID를 가진 PENDING 작업 저장
     B-->>A: 202 + jobId
     W->>D: PENDING polling + lock + lease claim
     W->>D: phase = DOWNLOADING_AUDIO
     W->>S: WAV 다운로드
     W->>D: phase = ANALYZING_SPEECH
+    W->>D: 현재 허용 및 작업의 동의 ID 재확인
     W->>Z: 기준 문장과 WAV 평가
     Z-->>W: 발음 점수·인식 결과
     W->>D: phase = PREPARING_GUIDES
@@ -70,6 +77,9 @@ sequenceDiagram
 ```
 
 ## 업로드 계약
+
+- 현행 AI 허용이 없으면 서버가 `403 AI_CONSENT_REQUIRED`로 차단합니다. 앱 거절은 로컬 녹음을 보존하고 전송·쿼터 소비 없이 종료합니다.
+- Worker는 다운로드 전·외부 평가 직전에 동의 ID를 확인합니다. 철회·고지 변경·기존 NULL 작업은 terminal 실패와 쿼터 복구 대상이며 재동의로 과거 작업을 재허용하지 않습니다.
 
 - 업로드 발급 요청은 파일명, `audio/wav`, 실제 byte 길이를 전달합니다.
 - 앱은 응답받은 URL에 동일한 `Content-Type`과 길이로 직접 PUT합니다.

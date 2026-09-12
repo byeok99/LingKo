@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:lingko_app/api/api_client.dart';
+import 'package:lingko_app/api/ai_processing_consent_api.dart';
+import 'package:lingko_app/models/ai_processing_consent.dart';
 import 'package:lingko_app/api/evaluation_api.dart';
 import 'package:lingko_app/models/score_status.dart';
 import 'package:lingko_app/api/practice_content_api.dart';
@@ -53,6 +55,34 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
 ///
 /// 취약 음절은 서버가 어절 점수를 음절에 귀속시켜 만든 값이라, 앱은 받은 대로 표시하고
 /// 다시 계산하지 않는다. 그 계약을 지키는지 보려면 화면에 무엇이 그려지는지만 확인하면 된다.
+class FakeAiProcessingConsentApi implements AiProcessingConsentApi {
+  FakeAiProcessingConsentApi({this.granted = true});
+  bool granted;
+  int reads = 0;
+  final List<bool> choices = [];
+  @override
+  Future<AiProcessingConsent> fetchStatus({required String accessToken}) async {
+    reads++;
+    return AiProcessingConsent(
+      granted: granted,
+      noticeVersion: AiProcessingConsent.supportedVersion,
+    );
+  }
+
+  @override
+  Future<AiProcessingConsent> record({
+    required String accessToken,
+    required bool granted,
+  }) async {
+    choices.add(granted);
+    this.granted = granted;
+    return AiProcessingConsent(
+      granted: granted,
+      noticeVersion: AiProcessingConsent.supportedVersion,
+    );
+  }
+}
+
 class FakePracticeContentApi implements PracticeContentApi {
   FakePracticeContentApi({
     this.weakSounds = const [],
@@ -818,6 +848,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -841,6 +872,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -867,6 +899,7 @@ void main() {
     final authService = FakeAppAuthService();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -906,6 +939,7 @@ void main() {
           );
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -943,6 +977,7 @@ void main() {
         final authService = FakeAppAuthService();
         await tester.pumpWidget(
           LingKoApp(
+            aiProcessingConsentApi: FakeAiProcessingConsentApi(),
             pronunciationApi: FakePronunciationApi(),
             sentenceApi: FakeSentenceApi(),
             evaluationApi: FakeEvaluationApi(),
@@ -976,6 +1011,7 @@ void main() {
     try {
       await tester.pumpWidget(
         LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
           pronunciationApi: FakePronunciationApi(),
           sentenceApi: FakeSentenceApi(),
           evaluationApi: FakeEvaluationApi(),
@@ -1019,6 +1055,7 @@ void main() {
     try {
       await tester.pumpWidget(
         LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
           pronunciationApi: FakePronunciationApi(),
           sentenceApi: FakeSentenceApi(),
           evaluationApi: FakeEvaluationApi(),
@@ -1041,6 +1078,7 @@ void main() {
     final restoreCompleter = Completer<AuthSession?>();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1066,6 +1104,7 @@ void main() {
     final authService = FakeAppAuthService();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1105,6 +1144,7 @@ void main() {
     );
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1136,6 +1176,7 @@ void main() {
     );
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1160,6 +1201,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1186,6 +1228,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1214,6 +1257,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1236,6 +1280,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1263,6 +1308,7 @@ void main() {
         FakeAppAuthService()..error = 'sensitive provider response';
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1291,6 +1337,7 @@ void main() {
     final speechService = FakeSentenceSpeechService();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1399,6 +1446,7 @@ void main() {
     );
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1464,6 +1512,7 @@ void main() {
     final sentenceApi = FakeSentenceApi(sentences: _categorizedSentences);
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: sentenceApi,
         evaluationApi: FakeEvaluationApi(),
@@ -1535,6 +1584,7 @@ void main() {
     var adRequests = 0;
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1621,6 +1671,7 @@ void main() {
       final adService = FakePracticeRewardAdService();
       await tester.pumpWidget(
         LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
           pronunciationApi: FakePronunciationApi(),
           sentenceApi: FakeSentenceApi(),
           evaluationApi: FakeEvaluationApi(),
@@ -1651,6 +1702,7 @@ void main() {
     );
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1687,6 +1739,7 @@ void main() {
       );
       await tester.pumpWidget(
         LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
           pronunciationApi: FakePronunciationApi(),
           sentenceApi: FakeSentenceApi(),
           evaluationApi: FakeEvaluationApi(),
@@ -1738,6 +1791,61 @@ void main() {
     },
   );
 
+  for (final allow in [false, true]) {
+    testWidgets('recording upload waits for explicit AI choice: $allow', (
+      tester,
+    ) async {
+      final consent = FakeAiProcessingConsentApi(granted: false);
+      final evaluation = FakeEvaluationApi();
+      final recorder = FakeAudioRecorderService();
+      await tester.pumpWidget(
+        LingKoApp(
+          aiProcessingConsentApi: consent,
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: evaluation,
+          practiceQuotaApi: FakePracticeQuotaApi(),
+          authService: FakeAppAuthService(restoreExistingSession: true),
+          audioRecorderService: recorder,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('맛있겠다.').first);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Record'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Record'));
+      await tester.pump();
+      await tester.ensureVisible(find.bySemanticsLabel('Stop and analyze'));
+      await tester.tap(find.bySemanticsLabel('Stop and analyze'));
+      await tester.pumpAndSettle();
+      expect(find.text('AI assessment privacy'), findsOneWidget);
+      expect(evaluation.lastAudioPath, isNull);
+      expect(evaluation.lastSentenceId, isNull);
+      final choice = find.text(
+        allow ? 'Allow sharing with Microsoft Azure' : 'Not now — do not send',
+      );
+      await tester.scrollUntilVisible(
+        choice,
+        350,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(choice);
+      await tester.pumpAndSettle();
+      if (allow) {
+        expect(evaluation.lastAudioPath, '/tmp/lingko-test.wav');
+        expect(consent.choices, [true]);
+      } else {
+        expect(evaluation.lastAudioPath, isNull);
+        expect(consent.choices, isEmpty);
+        expect(recorder.deletedPaths, isEmpty);
+      }
+    });
+  }
+
   testWidgets('recording success shows evaluation progress before Result', (
     WidgetTester tester,
   ) async {
@@ -1746,6 +1854,7 @@ void main() {
         FakeEvaluationApi()..createJobCompleter = createCompleter;
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: evaluationApi,
@@ -1813,6 +1922,7 @@ void main() {
         FakeEvaluationApi()..createJobCompleter = createCompleter;
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: evaluationApi,
@@ -1883,6 +1993,7 @@ void main() {
     final quotaApi = FakePracticeQuotaApi()..error = 'sensitive quota response';
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1909,6 +2020,7 @@ void main() {
     final recorder = FakeAudioRecorderService();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -1949,6 +2061,7 @@ void main() {
     final speechService = FakeSentenceSpeechService();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2012,6 +2125,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(error: 'Validation failed'),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2046,6 +2160,7 @@ void main() {
         FakeSentenceSpeechService()..error = StateError('voice unavailable');
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2074,6 +2189,7 @@ void main() {
     );
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2116,6 +2232,7 @@ void main() {
     );
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2177,6 +2294,7 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(
         LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
           pronunciationApi: FakePronunciationApi(),
           sentenceApi: FakeSentenceApi(),
           evaluationApi: FakeEvaluationApi(),
@@ -2223,6 +2341,7 @@ void main() {
     );
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: api,
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2250,6 +2369,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         key: UniqueKey(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(sentences: const []),
@@ -2265,6 +2385,7 @@ void main() {
 
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         key: UniqueKey(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(error: 'Cannot load sentences'),
@@ -2285,6 +2406,7 @@ void main() {
     final recorder = FakeAudioRecorderService(permissions: [false, true]);
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2326,6 +2448,7 @@ void main() {
         FakeEvaluationApi()..error = 'Daily practice quota exceeded';
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: evaluationApi,
@@ -2358,6 +2481,7 @@ void main() {
     final recorder = FakeAudioRecorderService();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2394,6 +2518,7 @@ void main() {
     final recorder = FakeAudioRecorderService();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2449,6 +2574,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2519,6 +2645,7 @@ void main() {
 
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2549,6 +2676,7 @@ void main() {
     final authService = FakeAppAuthService(restoreExistingSession: true);
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2589,6 +2717,7 @@ void main() {
     final authService = FakeAppAuthService(restoreExistingSession: true);
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2645,6 +2774,7 @@ void main() {
     );
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2692,6 +2822,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2719,6 +2850,7 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(
         LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
           pronunciationApi: FakePronunciationApi(),
           sentenceApi: FakeSentenceApi(),
           evaluationApi: FakeEvaluationApi(),
@@ -2748,6 +2880,7 @@ void main() {
     final launcher = FakeLegalDocumentLauncher();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2780,6 +2913,7 @@ void main() {
     final launcher = FakeLegalDocumentLauncher(succeeds: false);
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2805,6 +2939,7 @@ void main() {
     final recorder = FakeAudioRecorderService();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -2830,6 +2965,7 @@ void main() {
     final recorder = FakeAudioRecorderService();
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(sentences: _twoSentences),
         evaluationApi:
@@ -2867,6 +3003,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -3250,6 +3387,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),
@@ -3546,6 +3684,7 @@ void main() {
 
     await tester.pumpWidget(
       LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
         pronunciationApi: FakePronunciationApi(),
         sentenceApi: FakeSentenceApi(),
         evaluationApi: FakeEvaluationApi(),

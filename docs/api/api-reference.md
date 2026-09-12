@@ -32,7 +32,7 @@ Access Token의 subject에서만 결정합니다.
 ```json
 {
   "required": true,
-  "documentVersion": "2026-09-04"
+  "documentVersion": "2026-09-12"
 }
 ```
 
@@ -48,8 +48,8 @@ Access Token의 subject에서만 결정합니다.
   "termsAgreed": true,
   "privacyAcknowledged": true,
   "marketingOptIn": false,
-  "documentVersion": "2026-09-04",
-  "agreedAt": "2026-09-04T01:02:03Z"
+  "documentVersion": "2026-09-12",
+  "agreedAt": "2026-09-12T01:02:03Z"
 }
 ```
 
@@ -57,6 +57,32 @@ Access Token의 subject에서만 결정합니다.
 버전과 정확히 같아야 합니다. `agreedAt`은 기기 시각 참고값이고 감사 기준 시각은 서버가 별도로
 기록합니다. 같은 사용자·버전의 재시도는 새 행을 만들지 않는 idempotent 요청입니다. 성공 응답은
 같은 상태 구조에서 `required=false`를 반환합니다.
+
+### `GET /api/legal/ai-consent`, `POST /api/legal/ai-consent`
+
+AI 전송 허용은 일반 법무 확인과 별개이며 기존 회원에게 자동 부여하지 않습니다.
+모두 Bearer 인증이 필요합니다. POST body는 사용자 ID 없이 다음 형태입니다.
+
+```json
+{"granted": true, "noticeVersion": "2026-09-12"}
+```
+
+`granted`는 필수 boolean이며 철회는 false입니다. 허용에는 현행 고지 버전이 필요하고
+구버전 앱의 철회는 허용합니다. 버전 불일치는 `400 INVALID_REQUEST`, 필드 누락은
+`400 VALIDATION_FAILED`입니다. GET/POST 응답은 다음 구조입니다.
+
+```json
+{"granted": true, "noticeVersion": "2026-09-12", "recordedAt": "2026-09-12T01:02:03Z"}
+```
+
+최초 상태는 false/null입니다. 응답 버전은 현재 고지 버전이며 과거 버전의 허용은 false로
+취급합니다. 같은 선택 재시도는 멱등 처리하고 철회·재허용은 새 이력으로 기록합니다.
+앱이 지원하지 않는 버전은 허용 버튼을 표시하지 않습니다.
+
+평가 업로드 발급·작업 생성·구버전 multipart 평가에는 현행 허용이 필요합니다.
+없으면 `403 AI_CONSENT_REQUIRED`이며 쿼터를 예약하지 않습니다. Worker는 생성 당시
+동의 ID와 현재 허용을 확인하며 철회된 작업은 `FAILED`, `errorCode=AI_CONSENT_REQUIRED`로
+종료하고 예약을 복구합니다. 이미 시작된 전송을 회수하는 API는 아닙니다.
 
 ## 인증
 
