@@ -2,6 +2,11 @@
 
 ## 핵심 관계
 
+V23의 `ai_processing_consents`는 `id`, `user_idx`, `notice_version`, `granted`, `recorded_at`을
+가진 허용·철회 이력입니다. `(user_idx, id)` 인덱스로 최신 선택을 찾으며 사용자 삭제 시
+CASCADE 삭제합니다. `evaluation_jobs.ai_consent_id`는 생성 당시 허용의 논리 참조입니다.
+기존 NULL 작업은 전송 권한이 없으며 재동의가 이전 작업에 소급되지 않습니다.
+
 ```mermaid
  erDiagram
     USERS ||--o{ EVALUATION_LOG : records
@@ -10,6 +15,7 @@
     USERS ||--o{ AUTH_REFRESH_SESSIONS : authenticates
     USERS ||--o{ SAVED_SENTENCE : bookmarks
     USERS ||--o{ LEGAL_CONSENTS : accepts
+    USERS ||--o{ AI_PROCESSING_CONSENTS : permits
     USERS ||--o{ AD_REWARD_RECEIPTS : redeems
     USERS ||--o{ AD_REWARD_SESSIONS : opens
     EVALUATION_LOG ||--o{ EVALUATION_SYLLABLE : contains
@@ -81,6 +87,7 @@
 
     EVALUATION_JOBS {
       char job_id PK
+      bigint ai_consent_id nullable
       bigint user_idx FK
       varchar idempotency_key
       char request_hash

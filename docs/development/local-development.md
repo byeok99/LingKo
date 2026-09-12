@@ -14,6 +14,14 @@ DB와 외부 서비스 설정을 실행 환경에 전달해야 합니다. `bootR
 
 ## 앱
 
+iOS Apple 로그인은 Runner의 Sign in with Apple entitlement와 서명 profile/App ID의
+동일 capability가 필요합니다. Backend `APPLE_CLIENT_ID`는 앱 Bundle ID와 일치해야 하며
+기본값은 `com.byeok.lingko`입니다. 빈 환경변수는 startup validation에 실패합니다.
+
+AI 평가에는 `/api/legal/ai-consent`의 현행 고지 허용이 필요합니다. 신규 V23 migration을
+API와 Worker보다 먼저 적용하고 두 프로세스 모두 같은 버전으로 실행합니다. 일반 약관과
+AI 고지 버전은 `2026-09-12`이며 기존 계정의 일반 동의를 AI 허용으로 복사하지 않습니다.
+
 `app/`에서 실행합니다.
 
 ```bash

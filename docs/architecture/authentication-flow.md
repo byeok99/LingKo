@@ -45,6 +45,15 @@ cryptographically secure raw nonce를 만들고 SHA-256 값만 Apple 요청에 �
 공개 JWK로 RS256 서명을 확인하고 issuer, App ID audience, 만료, subject, token nonce를 검증합니다.
 Apple 이름은 최초 승인 응답에만 있으므로 이후 null 응답은 저장된 이름을 지우지 않습니다.
 
+iOS 서명에 `com.apple.developer.applesignin = [Default]` entitlement가 필요합니다.
+Backend audience 기본값은 `com.byeok.lingko`이며 `APPLE_CLIENT_ID`로 변경할 수 있습니다.
+빈 값은 시작 시 validation 실패로 처리합니다. Xcode Bundle ID, Developer Portal App ID,
+배포 provisioning profile의 capability가 일치해야 하며 unsigned 빌드로 로그인 성공을
+증명할 수 없습니다. Apple 인증 창 취소는 로그인 장애 메시지와 구분합니다.
+
+가입 동의는 AI 전송 허용을 포함하지 않습니다. AI 허용·철회는 로그인 후
+`/api/legal/ai-consent`로 별도 기록하며 평가 전 고지를 표시합니다.
+
 응답에는 `tokenType`, `accessToken`, `refreshToken`, `expiresInSeconds`, `user`가 포함됩니다.
 
 ## 인증 API 사용
