@@ -204,12 +204,10 @@ class EvaluationServiceResultTest {
         when(speechEvaluator.evaluate(anyString(), eq("김"))).thenReturn(result);
         when(guideMediaResolver.resolveForEvaluation(
                 "김",
-                List.of("ㄱ", "ㅣ", "ㅁ"),
                 VideoType.MOUTH
         )).thenReturn("https://guides/videos/mouth-kim.mp4");
         when(guideMediaResolver.resolveForEvaluation(
                 "김",
-                List.of("ㄱ", "ㅣ", "ㅁ"),
                 VideoType.TONGUE
         )).thenReturn("https://guides/videos/tongue-kim.mp4");
 

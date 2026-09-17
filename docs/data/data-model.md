@@ -113,7 +113,9 @@ CASCADE 삭제합니다. `evaluation_jobs.ai_consent_id`는 생성 당시 허용
     SYLLABLES {
       varchar syllable_char PK
       varchar mouth_url
+      varchar mouth_mapping_version
       varchar tongue_url
+      varchar tongue_mapping_version
     }
 
     DAILY_PRACTICE_QUOTA {

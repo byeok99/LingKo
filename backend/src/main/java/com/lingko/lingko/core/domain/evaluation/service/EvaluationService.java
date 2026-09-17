@@ -127,14 +127,8 @@ public class EvaluationService {
                 .filter(value -> !value.isBlank())
                 .toList()) {
             List<String> phonemes = KoreanPhonemeUtil.toPhonemeList(character);
-            String mouthGuideUrl = resolveGuideUrl(
-                    phonemes,
-                    VideoType.MOUTH
-            );
-            String tongueGuideUrl = resolveGuideUrl(
-                    phonemes,
-                    VideoType.TONGUE
-            );
+            String mouthGuideUrl = resolveGuideUrl(character, VideoType.MOUTH);
+            String tongueGuideUrl = resolveGuideUrl(character, VideoType.TONGUE);
             String guideType = resolveGuideType(mouthGuideUrl, tongueGuideUrl);
 
             characters.add(GuideCharacterResponse.builder()
@@ -156,21 +150,19 @@ public class EvaluationService {
     }
 
     private String resolveGuideUrl(
-            List<String> phonemes,
+            String syllable,
             VideoType videoType
     ) {
-        return guideMediaResolver.resolveStatic(phonemes, videoType);
+        return guideMediaResolver.resolveStatic(syllable, videoType);
     }
 
     private GuideCharacterResponse withTransitionGuides(GuideCharacterResponse character) {
         String mouthGuideUrl = guideMediaResolver.resolveForEvaluation(
                 character.getText(),
-                character.getPhonemes(),
                 VideoType.MOUTH
         );
         String tongueGuideUrl = guideMediaResolver.resolveForEvaluation(
                 character.getText(),
-                character.getPhonemes(),
                 VideoType.TONGUE
         );
         String guideType = resolveGuideType(mouthGuideUrl, tongueGuideUrl);
@@ -198,8 +190,8 @@ public class EvaluationService {
      */
     private String resolveArticulationNote(String guideType) {
         return switch (guideType) {
-            case "TONGUE" -> "Focus on where your tongue touches.";
-            case "MOUTH" -> "Focus on your lip and jaw opening.";
+            case "TONGUE" -> "Use the guide as a reference for tongue placement.";
+            case "MOUTH" -> "Use the guide as a reference for lip and jaw posture.";
             default -> "";
         };
     }

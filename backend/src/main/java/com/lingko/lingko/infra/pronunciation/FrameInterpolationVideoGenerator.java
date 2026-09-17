@@ -3,6 +3,7 @@ package com.lingko.lingko.infra.pronunciation;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
 import com.lingko.lingko.core.domain.evaluation.service.VideoGenerator;
+import com.lingko.lingko.core.util.GuideMediaVersion;
 import com.lingko.lingko.infra.storage.ExternalMediaUrlValidator;
 import com.lingko.lingko.infra.storage.S3Uploader;
 import lombok.RequiredArgsConstructor;
@@ -305,8 +306,9 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(source.toString().getBytes(StandardCharsets.UTF_8));
             return String.format(
-                    "%s_%s.mp4",
+                    "%s_%s_%s.mp4",
                     type.getPrefix(),
+                    GuideMediaVersion.CURRENT,
                     HexFormat.of().formatHex(digest, 0, 12)
             );
         } catch (NoSuchAlgorithmException exception) {

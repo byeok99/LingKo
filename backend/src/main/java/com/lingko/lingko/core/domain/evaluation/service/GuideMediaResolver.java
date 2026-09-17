@@ -3,6 +3,7 @@ package com.lingko.lingko.core.domain.evaluation.service;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.domain.evaluation.entity.Syllable;
 import com.lingko.lingko.core.domain.evaluation.repository.SyllableRepository;
+import com.lingko.lingko.core.util.GuideMediaVersion;
 import com.lingko.lingko.core.util.SyllableMappingUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,28 +44,17 @@ public class GuideMediaResolver {
         this(syllableMappingUtil, videoGenerator, null);
     }
 
-    public String resolveStatic(List<String> phonemes, VideoType videoType) {
-        return phonemes.stream()
-                .map(phoneme -> syllableMappingUtil.getImageUrl(phoneme, videoType))
-                .filter(url -> url != null && !url.isBlank())
-                .findFirst()
-                .orElse(null);
+    public String resolveStatic(String syllable, VideoType videoType) {
+        return syllableMappingUtil.getRepresentativeImageUrl(syllable, videoType);
     }
 
-    public String resolveForEvaluation(
-            String syllable,
-            List<String> phonemes,
-            VideoType videoType
-    ) {
+    public String resolveForEvaluation(String syllable, VideoType videoType) {
         String persistedVideo = findPersistedVideo(syllable, videoType);
         if (persistedVideo != null) {
             return persistedVideo;
         }
 
-        List<List<String>> framePairs = syllableMappingUtil.createFramePairs(
-                phonemes,
-                videoType
-        );
+        List<List<String>> framePairs = syllableMappingUtil.createFramePairs(syllable, videoType);
         String fallbackUrl = firstFrame(framePairs);
         if (fallbackUrl == null || isStaticFrame(framePairs) || videoGenerator == null) {
             return fallbackUrl;
@@ -94,6 +84,11 @@ public class GuideMediaResolver {
             return null;
         }
         return syllableRepository.findById(syllable.trim())
+                .filter(saved -> GuideMediaVersion.CURRENT.equals(
+                        videoType == VideoType.MOUTH
+                                ? saved.getMouthMappingVersion()
+                                : saved.getTongueMappingVersion()
+                ))
                 .map(saved -> videoType == VideoType.MOUTH ? saved.getMouthUrl() : saved.getTongueUrl())
                 .filter(this::isVideoUrl)
                 .orElse(null);
@@ -111,6 +106,12 @@ public class GuideMediaResolver {
                     .syllableChar(normalizedSyllable)
                     .mouthUrl(videoType == VideoType.MOUTH ? generatedUrl : current.getMouthUrl())
                     .tongueUrl(videoType == VideoType.TONGUE ? generatedUrl : current.getTongueUrl())
+                    .mouthMappingVersion(videoType == VideoType.MOUTH
+                            ? GuideMediaVersion.CURRENT
+                            : current.getMouthMappingVersion())
+                    .tongueMappingVersion(videoType == VideoType.TONGUE
+                            ? GuideMediaVersion.CURRENT
+                            : current.getTongueMappingVersion())
                     .build();
             syllableRepository.save(updated);
         } catch (RuntimeException exception) {

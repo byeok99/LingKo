@@ -99,6 +99,51 @@ class KoreanPhonemeUtilTest {
                 .isEqualTo(expected);
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "옷, 옫",
+            "밖, 박",
+            "앞, 압"
+    })
+    void testToPronunciation_어말받침도대표음으로바꾼다(String input, String expected) {
+        assertThat(KoreanPhonemeUtil.toPronunciation(input)).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "좋아, 조아",
+            "놓는, 논는",
+            "많고, 만코",
+            "싫네, 실레"
+    })
+    void testToPronunciation_히읗탈락과격음화를문맥에맞게적용한다(String input, String expected) {
+        assertThat(KoreanPhonemeUtil.toPronunciation(input)).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "값이, 갑씨",
+            "넋이, 넉씨",
+            "앉아, 안자",
+            "닭을, 달글",
+            "읊어, 을퍼"
+    })
+    void testToPronunciation_겹받침연음에서앞자음은받침에남긴다(String input, String expected) {
+        assertThat(KoreanPhonemeUtil.toPronunciation(input)).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "읽고, 일꼬",
+            "밟다, 밥따",
+            "국립, 궁닙",
+            "협력, 혐녁",
+            "희망, 히망"
+    })
+    void testToPronunciation_겹받침과리을및의발음회귀를보호한다(String input, String expected) {
+        assertThat(KoreanPhonemeUtil.toPronunciation(input)).isEqualTo(expected);
+    }
+
     @Test
     void testToPronunciation_맛있겠다는대표음과경음화를적용한다() {
         assertThat(KoreanPhonemeUtil.toPronunciation("맛있겠다"))

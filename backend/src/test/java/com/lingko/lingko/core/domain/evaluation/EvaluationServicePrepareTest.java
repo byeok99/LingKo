@@ -24,9 +24,10 @@ class EvaluationServicePrepareTest {
     @DisplayName("직접 입력 문장을 표준 발음과 guide item으로 준비한다")
     void prepareCustomSentenceBuildsGuideItems() {
         SyllableMappingUtil mappingUtil = mock(SyllableMappingUtil.class);
-        when(mappingUtil.getImageUrl("ㅁ", VideoType.MOUTH)).thenReturn("https://guides/mouth/m.png");
-        when(mappingUtil.getImageUrl("ㅁ", VideoType.TONGUE)).thenReturn("https://guides/tongue/m.png");
-        when(mappingUtil.getImageUrl("ㅏ", VideoType.MOUTH)).thenReturn("https://guides/mouth/a.png");
+        when(mappingUtil.getRepresentativeImageUrl("마", VideoType.MOUTH))
+                .thenReturn("https://guides/mouth/a.png");
+        when(mappingUtil.getRepresentativeImageUrl("마", VideoType.TONGUE))
+                .thenReturn("https://guides/tongue/a.png");
         EvaluationService service = new EvaluationService(mappingUtil);
 
         PronunciationPrepareResponse response = service.prepareCustomSentence("  맛있겠다.!?  ");
@@ -44,9 +45,9 @@ class EvaluationServicePrepareTest {
         assertThat(first.getPhonemes()).containsExactly("ㅁ", "ㅏ");
         assertThat(first.getGuideType()).isEqualTo("TONGUE");
         assertThat(first.getGuideStatus()).isEqualTo(GuideStatus.AVAILABLE);
-        assertThat(first.getMouthGuideUrl()).isEqualTo("https://guides/mouth/m.png");
-        assertThat(first.getTongueGuideUrl()).isEqualTo("https://guides/tongue/m.png");
-        assertThat(first.getNote()).isEqualTo("Focus on where your tongue touches.");
+        assertThat(first.getMouthGuideUrl()).isEqualTo("https://guides/mouth/a.png");
+        assertThat(first.getTongueGuideUrl()).isEqualTo("https://guides/tongue/a.png");
+        assertThat(first.getNote()).isEqualTo("Use the guide as a reference for tongue placement.");
     }
 
     @Test
