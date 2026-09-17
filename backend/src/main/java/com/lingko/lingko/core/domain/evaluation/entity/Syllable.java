@@ -24,4 +24,12 @@ public class Syllable {
 
     @Column(name="tongue_url", length=500)
     private String tongueUrl;
+
+    /** null은 버전 도입 전 생성되어 현재 매핑과의 호환성을 보장할 수 없는 mouth 영상이다. */
+    @Column(name="mouth_mapping_version", length=32)
+    private String mouthMappingVersion;
+
+    /** null은 버전 도입 전 생성되어 현재 매핑과의 호환성을 보장할 수 없는 tongue 영상이다. */
+    @Column(name="tongue_mapping_version", length=32)
+    private String tongueMappingVersion;
 }

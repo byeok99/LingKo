@@ -5,8 +5,6 @@ import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -53,16 +51,62 @@ public class SyllableMappingUtilTest {
     }
 
     @Test
-    void kimCreatesMouthAndTongueTransitionPairs() {
-        List<String> phonemes = KoreanPhonemeUtil.toPhonemeList("김");
-
-        assertThat(phonemes).containsExactly("ㄱ", "ㅣ", "ㅁ");
-        assertThat(util.createFramePairs(phonemes, VideoType.MOUTH))
-                .hasSize(1)
-                .allSatisfy(pair -> assertThat(pair).hasSize(2));
-        assertThat(util.createFramePairs(phonemes, VideoType.TONGUE))
+    void kimKeepsMouthAndTongueTimelinesSynchronized() {
+        assertThat(util.createFramePairs("김", VideoType.MOUTH))
                 .hasSize(2)
                 .allSatisfy(pair -> assertThat(pair).hasSize(2));
+        assertThat(util.createFramePairs("김", VideoType.TONGUE))
+                .hasSize(2)
+                .allSatisfy(pair -> assertThat(pair).hasSize(2));
+    }
+
+    @Test
+    void diphthongsReuseExistingAssetsAsOrderedFrames() {
+        assertThat(util.createFrameSequence("으", VideoType.MOUTH))
+                .extracting(url -> url.substring(url.lastIndexOf('/') + 1))
+                .containsExactly("vowel-eu.png");
+        assertThat(util.createFrameSequence("의", VideoType.MOUTH))
+                .extracting(url -> url.substring(url.lastIndexOf('/') + 1))
+                .containsExactly("vowel-eu.png", "vowel-i.png");
+        assertThat(util.createFrameSequence("와", VideoType.TONGUE))
+                .extracting(url -> url.substring(url.lastIndexOf('/') + 1))
+                .containsExactly("semi-vowel-w.png", "vowel-a.png");
+    }
+
+    @Test
+    void hUsesTheFollowingVowelPostureWithoutPretendingToHaveAnOralShape() {
+        assertThat(util.createFrameSequence("하", VideoType.TONGUE))
+                .allMatch(url -> url.endsWith("vowel-a.png"))
+                .hasSize(2);
+        assertThat(util.getImageFrames("ㅎ", VideoType.TONGUE)).isEmpty();
+    }
+
+    @Test
+    void onsetAndCodaRolesAreResolvedSeparately() {
+        assertThat(util.resolveMappingKey("ㄹ", SyllableMappingUtil.SyllableRole.ONSET, null))
+                .isEqualTo("초성ㄹ");
+        assertThat(util.resolveMappingKey("ㄹ", SyllableMappingUtil.SyllableRole.CODA, null))
+                .isEqualTo("종성ㄹ");
+        assertThat(util.resolveMappingKey("ㅇ", SyllableMappingUtil.SyllableRole.CODA, null))
+                .isEqualTo("종성ㅇ");
+    }
+
+    @Test
+    void staticGuideUsesTheVowelTargetForBothTracks() {
+        assertThat(util.getRepresentativeImageUrl("김", VideoType.MOUTH)).endsWith("vowel-i.png");
+        assertThat(util.getRepresentativeImageUrl("김", VideoType.TONGUE)).endsWith("semi-vowel-y.png");
+    }
+
+    @Test
+    void everyModernHangulSyllableHasSynchronizedMouthAndTongueTimelines() {
+        for (char syllable = 0xAC00; syllable <= 0xD7A3; syllable++) {
+            String text = String.valueOf(syllable);
+
+            assertThat(util.createFrameSequence(text, VideoType.MOUTH))
+                    .as("mouth frames for %s", text)
+                    .isNotEmpty()
+                    .hasSameSizeAs(util.createFrameSequence(text, VideoType.TONGUE));
+        }
     }
 
     private AwsSettings awsSettings(String bucket, String region) {

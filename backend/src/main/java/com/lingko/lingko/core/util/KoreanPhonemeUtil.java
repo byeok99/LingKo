@@ -3,11 +3,10 @@ package com.lingko.lingko.core.util;
 import java.util.*;
 
 /**
- * 한국어 표준발음 변환 및 음소 추출 유틸리티
+ * 한국어 표준 발음 규칙 변환 및 음소 추출 유틸리티다.
  *
- * 핵심 기능:
- * - 표준발음 변환 (연음화, 비음화, 경음화, 구개음화)
- * - 음소 추출 (초성, 중성, 종성)
+ * 연음화·비음화·유음화·경음화·구개음화·ㅎ 관련 규칙과 대표 받침을 결정적으로 적용한다.
+ * 형태소 사전이나 예외 발음 사전은 사용하지 않으므로 어휘별 예외까지 완전한 G2P를 보장하는 경계는 아니다.
  */
 public class KoreanPhonemeUtil {
 
@@ -165,7 +164,14 @@ public class KoreanPhonemeUtil {
             }
         }
 
-        // 2단계: 발음 규칙 적용
+        // 자음 뒤 ㅢ는 실제 발음의 [ㅣ]로 먼저 정규화해 이후 가이드도 같은 중성을 사용한다.
+        for (HangulChar current : chars) {
+            if (current != null && !"ㅇ".equals(current.chosung) && "ㅢ".equals(current.jungsung)) {
+                current.jungsung = "ㅣ";
+            }
+        }
+
+        // 모음으로 시작하는 다음 음절에는 구개음화·겹받침 분리·연음을 먼저 적용한다.
         for (int i = 0; i < chars.size(); i++) {
             if (chars.get(i) == null) continue;
 
@@ -185,109 +191,45 @@ public class KoreanPhonemeUtil {
                 }
             }
 
-            // 연음화
             if (next != null && !current.jongsung.isEmpty() && next.chosung.equals("ㅇ")) {
-                String transferSound = JONGSUNG_TO_CHOSUNG.get(current.jongsung);
-                if (transferSound != null) {
-                    next.chosung = transferSound;
-                    current.jongsung = "";
-                }
+                applyLiaison(current, next);
+                continue;
             }
 
-            // 자음 앞 받침은 대표음으로 바꾼 뒤 비음화·경음화를 적용해야 한다.
-            if (next != null && !next.chosung.equals("ㅇ")) {
+            if (next == null) {
                 current.jongsung = toRepresentativeFinalSound(current.jongsung);
+                continue;
             }
 
-            // 비음화
-            if (next != null && !current.jongsung.isEmpty()) {
-                if ((current.jongsung.equals("ㄱ") || current.jongsung.equals("ㄺ"))
-                        && (next.chosung.equals("ㄴ") || next.chosung.equals("ㅁ"))) {
-                    current.jongsung = "ㅇ";
-                } else if (current.jongsung.equals("ㄷ")
-                        && (next.chosung.equals("ㄴ") || next.chosung.equals("ㅁ"))) {
-                    current.jongsung = "ㄴ";
-                } else if ((current.jongsung.equals("ㅂ") || current.jongsung.equals("ㅄ") || current.jongsung.equals("ㄿ"))
-                        && (next.chosung.equals("ㄴ") || next.chosung.equals("ㅁ"))) {
-                    current.jongsung = "ㅁ";
-                }
-
-                // 유음화
-                if (current.jongsung.equals("ㄴ") && next.chosung.equals("ㄹ")) {
-                    current.jongsung = "ㄹ";
-                }
-                if (current.jongsung.equals("ㄹ") && next.chosung.equals("ㄴ")) {
-                    next.chosung = "ㄹ";
-                }
+            if (applyHieutRule(current, next)) {
+                continue;
             }
 
-            // 경음화
-            if (next != null && !current.jongsung.isEmpty()) {
-                if (current.jongsung.equals("ㄱ") || current.jongsung.equals("ㄷ")
-                        || current.jongsung.equals("ㅂ") || current.jongsung.equals("ㅈ")) {
-                    if (next.chosung.equals("ㄱ")) next.chosung = "ㄲ";
-                    else if (next.chosung.equals("ㄷ")) next.chosung = "ㄸ";
-                    else if (next.chosung.equals("ㅂ")) next.chosung = "ㅃ";
-                    else if (next.chosung.equals("ㅅ")) next.chosung = "ㅆ";
-                    else if (next.chosung.equals("ㅈ")) next.chosung = "ㅉ";
-                }
+            String originalFinal = current.jongsung;
+            if ("ㄺ".equals(originalFinal) && "ㄱ".equals(next.chosung)) {
+                // 읽고·맑게 계열은 ㄹ을 남기면서 뒤 ㄱ을 된소리로 발음한다.
+                current.jongsung = "ㄹ";
+                next.chosung = "ㄲ";
+            } else if (isBalpSyllable(current) && !"ㅇ".equals(next.chosung)) {
+                // 표준 발음의 어간 '밟-' 예외는 일반 ㄼ 대표음(ㄹ)과 달리 ㅂ으로 실현된다.
+                current.jongsung = "ㅂ";
+            } else {
+                current.jongsung = toRepresentativeFinalSound(originalFinal);
             }
 
-            // 격음화
-            if (next != null && !current.jongsung.isEmpty()) {
-                if (next.chosung.equals("ㅎ")) {
-                    if (current.jongsung.equals("ㄱ")) {
-                        next.chosung = "ㅋ";
-                        current.jongsung = "";
-                    } else if (current.jongsung.equals("ㄷ")) {
-                        next.chosung = "ㅌ";
-                        current.jongsung = "";
-                    } else if (current.jongsung.equals("ㅂ")) {
-                        next.chosung = "ㅍ";
-                        current.jongsung = "";
-                    } else if (current.jongsung.equals("ㅈ")) {
-                        next.chosung = "ㅊ";
-                        current.jongsung = "";
-                    }
-                }
+            // 폐쇄음 뒤 ㄹ은 ㄴ으로 바뀐 뒤 비음화되므로 국립·협력의 두 변화를 한 순서로 적용한다.
+            if (isObstruentCoda(current.jongsung) && "ㄹ".equals(next.chosung)) {
+                next.chosung = "ㄴ";
             }
-            if (current.jongsung.equals("ㅎ") && next != null) {
-                if (next.chosung.equals("ㄱ")) {
-                    next.chosung = "ㅋ";
-                    current.jongsung = "";
-                } else if (next.chosung.equals("ㄷ")) {
-                    next.chosung = "ㅌ";
-                    current.jongsung = "";
-                } else if (next.chosung.equals("ㅈ")) {
-                    next.chosung = "ㅊ";
-                    current.jongsung = "";
-                }
+
+            applyNasalization(current, next);
+            applyLiquidAssimilation(current, next);
+            if (isObstruentCoda(current.jongsung)) {
+                next.chosung = tense(next.chosung);
             }
         }
 
-        // 종성 7음 규칙
-        for (int i = 0; i < chars.size(); i++) {
-            if (chars.get(i) == null) continue;
-            HangulChar current = chars.get(i);
-
-            if (!current.jongsung.isEmpty()) {
-                switch (current.jongsung) {
-                    case "ㄳ": current.jongsung = "ㄱ"; break;
-                    case "ㄵ": current.jongsung = "ㄴ"; break;
-                    case "ㄶ": current.jongsung = "ㄴ"; break;
-                    case "ㄺ": current.jongsung = "ㄱ"; break;
-                    case "ㄻ": current.jongsung = "ㅁ"; break;
-                    case "ㄼ": current.jongsung = "ㄹ"; break;
-                    case "ㄽ": current.jongsung = "ㄹ"; break;
-                    case "ㄾ": current.jongsung = "ㄹ"; break;
-                    case "ㄿ": current.jongsung = "ㅂ"; break;
-                    case "ㅀ": current.jongsung = "ㄹ"; break;
-                    case "ㅄ": current.jongsung = "ㅂ"; break;
-                }
-            }
-        }
-
-        // 3단계: 재조합
+        // 재조합
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < chars.size(); i++) {
             if (isHangul.get(i)) {
@@ -300,12 +242,160 @@ public class KoreanPhonemeUtil {
         return result.toString();
     }
 
+    private static void applyLiaison(HangulChar current, HangulChar next) {
+        String finalSound = current.jongsung;
+        if ("ㅎ".equals(finalSound)) {
+            current.jongsung = "";
+            return;
+        }
+        if ("ㄶ".equals(finalSound)) {
+            current.jongsung = "";
+            next.chosung = "ㄴ";
+            return;
+        }
+        if ("ㅀ".equals(finalSound)) {
+            current.jongsung = "";
+            next.chosung = "ㄹ";
+            return;
+        }
+
+        String first = firstClusterSound(finalSound);
+        String second = secondClusterSound(finalSound);
+        if (first != null && second != null) {
+            current.jongsung = first;
+            next.chosung = second;
+            return;
+        }
+
+        String transferSound = JONGSUNG_TO_CHOSUNG.get(finalSound);
+        if (transferSound != null) {
+            next.chosung = transferSound;
+            current.jongsung = "";
+        }
+    }
+
+    private static boolean applyHieutRule(HangulChar current, HangulChar next) {
+        if ("ㅎ".equals(next.chosung) && isAspiratableCoda(current.jongsung)) {
+            next.chosung = aspirate(current.jongsung);
+            current.jongsung = "";
+            return true;
+        }
+        if ("ㅎ".equals(current.jongsung)) {
+            if ("ㄴ".equals(next.chosung) || "ㅁ".equals(next.chosung)) {
+                current.jongsung = next.chosung;
+            } else if (isAspiratableOnset(next.chosung)) {
+                next.chosung = aspirate(next.chosung);
+                current.jongsung = "";
+            }
+            return true;
+        }
+        if ("ㄶ".equals(current.jongsung) || "ㅀ".equals(current.jongsung)) {
+            String remainingCoda = "ㄶ".equals(current.jongsung) ? "ㄴ" : "ㄹ";
+            if (isAspiratableOnset(next.chosung)) {
+                next.chosung = aspirate(next.chosung);
+                current.jongsung = remainingCoda;
+                return true;
+            }
+            current.jongsung = remainingCoda;
+            // ㅎ만 탈락한 뒤에는 싫네[실레]처럼 남은 ㄹ·ㄴ의 후속 동화를 계속 적용해야 한다.
+            return false;
+        }
+        return false;
+    }
+
+    private static void applyNasalization(HangulChar current, HangulChar next) {
+        if (!"ㄴ".equals(next.chosung) && !"ㅁ".equals(next.chosung)) {
+            return;
+        }
+        current.jongsung = switch (current.jongsung) {
+            case "ㄱ" -> "ㅇ";
+            case "ㄷ" -> "ㄴ";
+            case "ㅂ" -> "ㅁ";
+            default -> current.jongsung;
+        };
+    }
+
+    private static void applyLiquidAssimilation(HangulChar current, HangulChar next) {
+        if ("ㄴ".equals(current.jongsung) && "ㄹ".equals(next.chosung)) {
+            current.jongsung = "ㄹ";
+        }
+        if ("ㄹ".equals(current.jongsung) && "ㄴ".equals(next.chosung)) {
+            next.chosung = "ㄹ";
+        }
+    }
+
+    private static boolean isBalpSyllable(HangulChar current) {
+        return "ㅂ".equals(current.chosung)
+                && "ㅏ".equals(current.jungsung)
+                && "ㄼ".equals(current.jongsung);
+    }
+
+    private static boolean isObstruentCoda(String finalSound) {
+        return "ㄱ".equals(finalSound) || "ㄷ".equals(finalSound) || "ㅂ".equals(finalSound);
+    }
+
+    private static boolean isAspiratableCoda(String finalSound) {
+        return "ㄱ".equals(finalSound) || "ㄷ".equals(finalSound)
+                || "ㅂ".equals(finalSound) || "ㅈ".equals(finalSound);
+    }
+
+    private static boolean isAspiratableOnset(String onset) {
+        return "ㄱ".equals(onset) || "ㄷ".equals(onset)
+                || "ㅂ".equals(onset) || "ㅈ".equals(onset);
+    }
+
+    private static String aspirate(String sound) {
+        return switch (sound) {
+            case "ㄱ" -> "ㅋ";
+            case "ㄷ" -> "ㅌ";
+            case "ㅂ" -> "ㅍ";
+            case "ㅈ" -> "ㅊ";
+            default -> sound;
+        };
+    }
+
+    private static String tense(String onset) {
+        return switch (onset) {
+            case "ㄱ" -> "ㄲ";
+            case "ㄷ" -> "ㄸ";
+            case "ㅂ" -> "ㅃ";
+            case "ㅅ" -> "ㅆ";
+            case "ㅈ" -> "ㅉ";
+            default -> onset;
+        };
+    }
+
+    private static String firstClusterSound(String finalSound) {
+        return switch (finalSound) {
+            case "ㄳ" -> "ㄱ";
+            case "ㄵ", "ㄶ" -> "ㄴ";
+            case "ㄺ", "ㄻ", "ㄼ", "ㄽ", "ㄾ", "ㄿ", "ㅀ" -> "ㄹ";
+            case "ㅄ" -> "ㅂ";
+            default -> null;
+        };
+    }
+
+    private static String secondClusterSound(String finalSound) {
+        return switch (finalSound) {
+            case "ㄳ", "ㄽ", "ㅄ" -> "ㅆ";
+            case "ㄵ" -> "ㅈ";
+            case "ㄶ" -> "ㅎ";
+            case "ㄺ" -> "ㄱ";
+            case "ㄻ" -> "ㅁ";
+            case "ㄼ" -> "ㅂ";
+            case "ㄾ" -> "ㅌ";
+            case "ㄿ" -> "ㅍ";
+            case "ㅀ" -> "ㅎ";
+            default -> null;
+        };
+    }
+
     private static String toRepresentativeFinalSound(String finalSound) {
         return switch (finalSound) {
             case "ㄲ", "ㄳ", "ㄺ", "ㅋ" -> "ㄱ";
-            case "ㄵ" -> "ㄴ";
-            case "ㅅ", "ㅆ", "ㅈ", "ㅊ", "ㅌ" -> "ㄷ";
-            case "ㄼ", "ㄽ", "ㄾ" -> "ㄹ";
+            case "ㄵ", "ㄶ" -> "ㄴ";
+            case "ㅅ", "ㅆ", "ㅈ", "ㅊ", "ㅌ", "ㅎ" -> "ㄷ";
+            case "ㄼ", "ㄽ", "ㄾ", "ㅀ" -> "ㄹ";
             case "ㄻ" -> "ㅁ";
             case "ㅄ", "ㄿ", "ㅍ" -> "ㅂ";
             default -> finalSound;

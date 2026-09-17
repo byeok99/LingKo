@@ -38,7 +38,7 @@ class FrameInterpolationVideoGeneratorCacheTest {
                 List.of("https://guides/tongue/g.png", "https://guides/tongue/i.png"),
                 List.of("https://guides/tongue/i.png", "https://guides/tongue/m.png")
         );
-        when(s3Uploader.findPublicUrl(startsWith("videos/tongue/")))
+        when(s3Uploader.findPublicUrl(startsWith("videos/tongue/tongue_phonology-v2_")))
                 .thenReturn(Optional.of("https://bucket/videos/tongue/cached.mp4"));
 
         String result = generator.generate(pairs, "김", VideoType.TONGUE);

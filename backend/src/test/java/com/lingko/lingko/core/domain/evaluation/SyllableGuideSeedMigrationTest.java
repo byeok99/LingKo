@@ -12,7 +12,7 @@ import java.sql.DriverManager;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 이미 생성된 가이드 영상이 기존 syllables 테이블의 초기 데이터로 배포되는 계약을 검증한다.
+ * 이미 생성된 가이드 영상과 매핑 버전 column이 기존 syllables 테이블에 함께 배포되는 계약을 검증한다.
  */
 class SyllableGuideSeedMigrationTest {
 
@@ -23,6 +23,7 @@ class SyllableGuideSeedMigrationTest {
                 "jdbc:h2:mem:syllable_guide_seed;MODE=MySQL;DATABASE_TO_UPPER=false"
         )) {
             runMigration(connection, "V1__baseline_schema.sql");
+            runMigration(connection, "V24__version_syllable_guide_cache.sql");
             connection.createStatement().executeUpdate("""
                     INSERT INTO syllables (syllable_char, mouth_url, tongue_url)
                     VALUES
@@ -32,7 +33,7 @@ class SyllableGuideSeedMigrationTest {
             runMigration(connection, "R__seed_generated_syllable_guides.sql");
 
             try (var statement = connection.prepareStatement("""
-                    SELECT mouth_url, tongue_url
+                    SELECT mouth_url, tongue_url, mouth_mapping_version, tongue_mapping_version
                     FROM syllables
                     WHERE syllable_char = ?
                     """)) {
@@ -40,6 +41,7 @@ class SyllableGuideSeedMigrationTest {
                 try (var result = statement.executeQuery()) {
                     assertThat(result.next()).isTrue();
                     assertThat(result.getString("mouth_url")).endsWith(".mp4");
+                    assertThat(result.getString("mouth_mapping_version")).isNull();
                 }
 
                 statement.setString(1, "각");
@@ -47,6 +49,7 @@ class SyllableGuideSeedMigrationTest {
                     assertThat(result.next()).isTrue();
                     assertThat(result.getString("tongue_url")).endsWith(".mp4");
                     assertThat(result.getString("tongue_url")).endsWith("newer.mp4");
+                    assertThat(result.getString("tongue_mapping_version")).isNull();
                 }
             }
         }

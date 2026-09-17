@@ -1,166 +1,46 @@
 {
-  "ㄱ": {
-    "mouth_url": "",
-    "tongue_url": "velar-consonants.png"
-  },
-  "ㄲ": {
-    "mouth_url": "",
-    "tongue_url": "velar-consonants.png"
-  },
-  "ㄴ": {
-    "mouth_url": "",
-    "tongue_url": "alveolar-consonants.png"
-  },
-  "ㄷ": {
-    "mouth_url": "",
-    "tongue_url": "alveolar-consonants.png"
-  },
-  "ㄸ": {
-    "mouth_url": "",
-    "tongue_url": "alveolar-consonants.png"
-  },
-  "ㄹ": {
-    "mouth_url": "",
-    "tongue_url": "alveolar-liquid.png"
-  },
-  "ㅁ": {
-    "mouth_url": "bilabial-consonants.png",
-    "tongue_url": "bilabial-consonants.png"
-  },
-  "ㅂ": {
-    "mouth_url": "bilabial-consonants.png",
-    "tongue_url": "bilabial-consonants.png"
-  },
-  "ㅃ": {
-    "mouth_url": "bilabial-consonants.png",
-    "tongue_url": "bilabial-consonants.png"
-  },
-  "ㅅ": {
-    "mouth_url": "",
-    "tongue_url": "alveolar-fricative.png"
-  },
-  "ㅆ": {
-    "mouth_url": "",
-    "tongue_url": "alveolar-fricative.png"
-  },
-  "변이음ㅅ": {
-    "mouth_url": "",
-    "tongue_url": "allophone-s-ss.png"
-  },
-  "변이음ㅆ": {
-    "mouth_url": "",
-    "tongue_url": "allophone-s-ss.png"
-  },
-  "ㅇ": {
-    "mouth_url": "",
-    "tongue_url": "velar-consonants.png"
-  },
-  "ㅈ": {
-    "mouth_url": "",
-    "tongue_url": "palatal-affricate.png"
-  },
-  "ㅉ": {
-    "mouth_url": "",
-    "tongue_url": "palatal-affricate.png"
-  },
-  "ㅊ": {
-    "mouth_url": "",
-    "tongue_url": "palatal-affricate.png"
-  },
-  "ㅋ": {
-    "mouth_url": "",
-    "tongue_url": "velar-consonants.png"
-  },
-  "ㅌ": {
-    "mouth_url": "",
-    "tongue_url": "alveolar-consonants.png"
-  },
-  "ㅍ": {
-    "mouth_url": "bilabial-consonants.png",
-    "tongue_url": "bilabial-consonants.png"
-  },
-  "ㅏ": {
-    "mouth_url": "vowel-a.png",
-    "tongue_url": "vowel-a.png"
-  },
-  "ㅐ": {
-    "mouth_url": "semi-vowel-y.png",
-    "tongue_url": "vowel-e-ae.png"
-  },
-  "ㅑ": {
-    "mouth_url": "semi-vowel-y.png",
-    "tongue_url": "semi-vowel-y.png"
-  },
-  "ㅒ": {
-    "mouth_url": "semi-vowel-y.png",
-    "tongue_url": "semi-vowel-y.png"
-  },
-  "ㅓ": {
-    "mouth_url": "vowel-eo.png",
-    "tongue_url": "vowel-eo-o.png"
-  },
-  "ㅔ": {
-    "mouth_url": "vowel-e.png",
-    "tongue_url": "vowel-e-ae.png"
-  },
-  "ㅕ": {
-    "mouth_url": "semi-vowel-y.png",
-    "tongue_url": "semi-vowel-y.png"
-  },
-  "ㅖ": {
-    "mouth_url": "semi-vowel-y.png",
-    "tongue_url": "semi-vowel-y.png"
-  },
-  "ㅗ": {
-    "mouth_url": "vowel-o.png",
-    "tongue_url": "vowel-eo-o.png"
-  },
-  "ㅘ": {
-    "mouth_url": "semi-vowel-w.png",
-    "tongue_url": "semi-vowel-w.png"
-  },
-  "ㅙ": {
-    "mouth_url": "semi-vowel-w.png",
-    "tongue_url": "semi-vowel-w.png"
-  },
-  "ㅚ": {
-    "mouth_url": "semi-vowel-w.png",
-    "tongue_url": "semi-vowel-w.png"
-  },
-  "ㅛ": {
-    "mouth_url": "semi-vowel-w.png",
-    "tongue_url": "semi-vowel-y.png"
-  },
-  "ㅜ": {
-    "mouth_url": "vowel-u.png",
-    "tongue_url": "semi-vowel-w.png"
-  },
-  "ㅝ": {
-    "mouth_url": "semi-vowel-w.png",
-    "tongue_url": "semi-vowel-w.png"
-  },
-  "ㅞ": {
-    "mouth_url": "semi-vowel-w.png",
-    "tongue_url": "semi-vowel-w.png"
-  },
-  "ㅟ": {
-    "mouth_url": "",
-    "tongue_url": "semi-vowel-w.png"
-  },
-  "ㅠ": {
-    "mouth_url": "semi-vowel-w.png",
-    "tongue_url": "semi-vowel-y.png"
-  },
-  "ㅡ": {
-    "mouth_url": "vowel-eu.png",
-    "tongue_url": "semi-vowel-w.png"
-  },
-  "ㅢ": {
-    "mouth_url": "semi-vowel-y.png",
-    "tongue_url": "semi-vowel-y.png"
-  },
-  "ㅣ": {
-    "mouth_url": "vowel-i.png",
-    "tongue_url": "semi-vowel-y.png"
-  }
+  "ㄱ": { "mouth_frames": [], "tongue_frames": ["velar-consonants.png"] },
+  "ㄲ": { "mouth_frames": [], "tongue_frames": ["velar-consonants.png"] },
+  "ㄴ": { "mouth_frames": [], "tongue_frames": ["alveolar-consonants.png"] },
+  "ㄷ": { "mouth_frames": [], "tongue_frames": ["alveolar-consonants.png"] },
+  "ㄸ": { "mouth_frames": [], "tongue_frames": ["alveolar-consonants.png"] },
+  "초성ㄹ": { "mouth_frames": [], "tongue_frames": ["alveolar-liquid.png"] },
+  "종성ㄹ": { "mouth_frames": [], "tongue_frames": ["alveolar-liquid.png"] },
+  "ㅁ": { "mouth_frames": ["bilabial-consonants.png"], "tongue_frames": ["bilabial-consonants.png"] },
+  "ㅂ": { "mouth_frames": ["bilabial-consonants.png"], "tongue_frames": ["bilabial-consonants.png"] },
+  "ㅃ": { "mouth_frames": ["bilabial-consonants.png"], "tongue_frames": ["bilabial-consonants.png"] },
+  "ㅅ": { "mouth_frames": [], "tongue_frames": ["alveolar-fricative.png"] },
+  "ㅆ": { "mouth_frames": [], "tongue_frames": ["alveolar-fricative.png"] },
+  "변이음ㅅ": { "mouth_frames": [], "tongue_frames": ["allophone-s-ss.png"] },
+  "변이음ㅆ": { "mouth_frames": [], "tongue_frames": ["allophone-s-ss.png"] },
+  "종성ㅇ": { "mouth_frames": [], "tongue_frames": ["velar-consonants.png"] },
+  "ㅈ": { "mouth_frames": [], "tongue_frames": ["palatal-affricate.png"] },
+  "ㅉ": { "mouth_frames": [], "tongue_frames": ["palatal-affricate.png"] },
+  "ㅊ": { "mouth_frames": [], "tongue_frames": ["palatal-affricate.png"] },
+  "ㅋ": { "mouth_frames": [], "tongue_frames": ["velar-consonants.png"] },
+  "ㅌ": { "mouth_frames": [], "tongue_frames": ["alveolar-consonants.png"] },
+  "ㅍ": { "mouth_frames": ["bilabial-consonants.png"], "tongue_frames": ["bilabial-consonants.png"] },
+  "ㅎ": { "mouth_frames": [], "tongue_frames": [] },
+
+  "ㅏ": { "mouth_frames": ["vowel-a.png"], "tongue_frames": ["vowel-a.png"] },
+  "ㅐ": { "mouth_frames": ["vowel-e.png"], "tongue_frames": ["vowel-e-ae.png"] },
+  "ㅑ": { "mouth_frames": ["semi-vowel-y.png", "vowel-a.png"], "tongue_frames": ["semi-vowel-y.png", "vowel-a.png"] },
+  "ㅒ": { "mouth_frames": ["semi-vowel-y.png", "vowel-e.png"], "tongue_frames": ["semi-vowel-y.png", "vowel-e-ae.png"] },
+  "ㅓ": { "mouth_frames": ["vowel-eo.png"], "tongue_frames": ["vowel-eo-o.png"] },
+  "ㅔ": { "mouth_frames": ["vowel-e.png"], "tongue_frames": ["vowel-e-ae.png"] },
+  "ㅕ": { "mouth_frames": ["semi-vowel-y.png", "vowel-eo.png"], "tongue_frames": ["semi-vowel-y.png", "vowel-eo-o.png"] },
+  "ㅖ": { "mouth_frames": ["semi-vowel-y.png", "vowel-e.png"], "tongue_frames": ["semi-vowel-y.png", "vowel-e-ae.png"] },
+  "ㅗ": { "mouth_frames": ["vowel-o.png"], "tongue_frames": ["vowel-eo-o.png"] },
+  "ㅘ": { "mouth_frames": ["semi-vowel-w.png", "vowel-a.png"], "tongue_frames": ["semi-vowel-w.png", "vowel-a.png"] },
+  "ㅙ": { "mouth_frames": ["semi-vowel-w.png", "vowel-e.png"], "tongue_frames": ["semi-vowel-w.png", "vowel-e-ae.png"] },
+  "ㅚ": { "mouth_frames": ["semi-vowel-w.png", "vowel-e.png"], "tongue_frames": ["semi-vowel-w.png", "vowel-e-ae.png"] },
+  "ㅛ": { "mouth_frames": ["semi-vowel-y.png", "vowel-o.png"], "tongue_frames": ["semi-vowel-y.png", "vowel-eo-o.png"] },
+  "ㅜ": { "mouth_frames": ["vowel-u.png"], "tongue_frames": ["semi-vowel-w.png"] },
+  "ㅝ": { "mouth_frames": ["semi-vowel-w.png", "vowel-eo.png"], "tongue_frames": ["semi-vowel-w.png", "vowel-eo-o.png"] },
+  "ㅞ": { "mouth_frames": ["semi-vowel-w.png", "vowel-e.png"], "tongue_frames": ["semi-vowel-w.png", "vowel-e-ae.png"] },
+  "ㅟ": { "mouth_frames": ["semi-vowel-w.png", "vowel-i.png"], "tongue_frames": ["semi-vowel-w.png", "semi-vowel-y.png"] },
+  "ㅠ": { "mouth_frames": ["semi-vowel-y.png", "vowel-u.png"], "tongue_frames": ["semi-vowel-y.png", "semi-vowel-w.png"] },
+  "ㅡ": { "mouth_frames": ["vowel-eu.png"], "tongue_frames": ["semi-vowel-w.png"] },
+  "ㅢ": { "mouth_frames": ["vowel-eu.png", "vowel-i.png"], "tongue_frames": ["semi-vowel-w.png", "semi-vowel-y.png"] },
+  "ㅣ": { "mouth_frames": ["vowel-i.png"], "tongue_frames": ["semi-vowel-y.png"] }
 }
