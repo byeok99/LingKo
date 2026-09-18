@@ -51,10 +51,12 @@ public class SyllableMappingUtilTest {
     }
 
     @Test
-    void kimKeepsMouthAndTongueTimelinesSynchronized() {
+    void kimKeepsSourceTimelinesSynchronizedAndRemovesOnlyNoOpTransitions() {
+        assertThat(util.createFrameSequence("김", VideoType.MOUTH))
+                .hasSameSizeAs(util.createFrameSequence("김", VideoType.TONGUE));
         assertThat(util.createFramePairs("김", VideoType.MOUTH))
-                .hasSize(2)
-                .allSatisfy(pair -> assertThat(pair).hasSize(2));
+                .singleElement()
+                .satisfies(pair -> assertThat(pair).hasSize(2));
         assertThat(util.createFramePairs("김", VideoType.TONGUE))
                 .hasSize(2)
                 .allSatisfy(pair -> assertThat(pair).hasSize(2));
@@ -79,6 +81,16 @@ public class SyllableMappingUtilTest {
                 .allMatch(url -> url.endsWith("vowel-a.png"))
                 .hasSize(2);
         assertThat(util.getImageFrames("ㅎ", VideoType.TONGUE)).isEmpty();
+    }
+
+    @Test
+    void repeatedPostureBecomesAStaticGuideInsteadOfAPointlessVideo() {
+        assertThat(util.createFramePairs("하", VideoType.TONGUE))
+                .singleElement()
+                .satisfies(pair -> assertThat(pair)
+                        .singleElement()
+                        .asString()
+                        .endsWith("vowel-a.png"));
     }
 
     @Test

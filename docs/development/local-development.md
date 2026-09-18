@@ -12,6 +12,14 @@ Java 21, Flutter SDK, MySQL과 필요한 외부 서비스 개발용 설정을 �
 
 DB와 외부 서비스 설정을 실행 환경에 전달해야 합니다. `bootRun`이 `.env` 파일을 자동으로 읽는다고 가정하지 않습니다. Compose 구성은 [백엔드 디렉터리](../../backend/)에서 확인할 수 있으며 API와 독립 Worker의 역할을 구분합니다.
 
+가이드 영상 cache 범위는 외부 호출 없이 확인할 수 있습니다.
+
+```bash
+./gradlew guidePrewarm
+```
+
+실제 사전 생성은 Gradle이 `.env`를 자동으로 읽지 않으므로 현재 shell에 필요한 AWS·Replicate 설정을 export하거나 `guide-prewarm` Compose profile을 사용하고 `--prewarm-dry-run=false`를 명시합니다. 먼저 작은 `--prewarm-limit`으로 S3 쓰기·FFmpeg·Replicate 연결을 확인하고, 성공한 범위는 `--prewarm-offset`으로 건너뛰어 재개합니다. 명령과 옵션은 [백엔드 README](../../backend/README.md#가이드-미디어-사전-생성)를 참고합니다.
+
 ## 앱
 
 iOS Apple 로그인은 Runner의 Sign in with Apple entitlement와 서명 profile/App ID의

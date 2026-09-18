@@ -3,6 +3,7 @@ package com.lingko.lingko.infra.pronunciation;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
 import com.lingko.lingko.core.domain.evaluation.service.VideoGenerator;
+import com.lingko.lingko.core.util.GuideMediaCacheKey;
 import com.lingko.lingko.core.util.GuideMediaVersion;
 import com.lingko.lingko.infra.storage.ExternalMediaUrlValidator;
 import com.lingko.lingko.infra.storage.S3Uploader;
@@ -14,13 +15,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -110,7 +107,7 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
     private String handleVideoGeneration(List<List<String>> urlPairs, String syllable, VideoType type) {
         log.info("영상 생성 처리: {}개 세그먼트", urlPairs.size());
 
-        String fileName = generateVideoFileName(syllable, type, urlPairs);
+        String fileName = generateVideoFileName(type, urlPairs);
         String s3Key = "videos/" + type.getPrefix() + "/" + fileName;
         Object generationLock = generationLocks.get(
                 Math.floorMod(s3Key.hashCode(), GENERATION_LOCK_STRIPES)
@@ -137,8 +134,7 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
 
         try {
             // 1. 각 프레임 쌍으로 영상 생성 및 다운로드
-            List<Path> segmentPaths = generateAndDownloadSegments(urlPairs);
-            tempFiles.addAll(segmentPaths);
+            List<Path> segmentPaths = generateAndDownloadSegments(urlPairs, type, tempFiles);
 
             // 2. 여러 세그먼트면 병합, 1개면 그대로
             Path finalVideoPath;
@@ -174,7 +170,11 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
     /**
      * 여러 프레임 쌍으로 영상 생성 및 다운로드
      */
-    private List<Path> generateAndDownloadSegments(List<List<String>> urlPairs) {
+    private List<Path> generateAndDownloadSegments(
+            List<List<String>> urlPairs,
+            VideoType type,
+            List<Path> tempFiles
+    ) {
         List<Path> segmentPaths = new ArrayList<>();
 
         for (int i = 0; i < urlPairs.size(); i++) {
@@ -189,18 +189,48 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
 
             externalMediaUrlValidator.validate(pair.get(0));
             externalMediaUrlValidator.validate(pair.get(1));
-
-            // Replicate API로 Frame Interpolation
-            String videoUrl = replicateApiClient.interpolate(pair.get(0), pair.get(1));
-
-            // 영상 다운로드
-            Path segmentPath = downloadFromUrl(videoUrl);
+            Path segmentPath = generateOrReuseSegment(pair, type, tempFiles);
             segmentPaths.add(segmentPath);
 
             log.info("세그먼트 {}/{} 완료", i + 1, urlPairs.size());
         }
 
         return segmentPaths;
+    }
+
+    private Path generateOrReuseSegment(
+            List<String> pair,
+            VideoType type,
+            List<Path> tempFiles
+    ) {
+        String signature = GuideMediaCacheKey.segmentSignature(type, pair);
+        String segmentKey = String.format(
+                "guide-segments/%s/%s_%s_%s.mp4",
+                type.getPrefix(),
+                type.getPrefix(),
+                GuideMediaVersion.CURRENT,
+                GuideMediaCacheKey.objectId(signature)
+        );
+        Object segmentLock = generationLocks.get(
+                Math.floorMod(segmentKey.hashCode(), GENERATION_LOCK_STRIPES)
+        );
+
+        synchronized (segmentLock) {
+            String cachedUrl = s3Uploader.findPublicUrl(segmentKey).orElse(null);
+            if (cachedUrl != null) {
+                Path cachedPath = downloadFromUrl(cachedUrl);
+                tempFiles.add(cachedPath);
+                return cachedPath;
+            }
+
+            String videoUrl = replicateApiClient.interpolate(pair.get(0), pair.get(1));
+            Path rawPath = downloadFromUrl(videoUrl);
+            tempFiles.add(rawPath);
+            // 전이 clip은 최종 산출물이 아니라 조합 재료다. 원본을 cache하고 병합이 끝난 뒤
+            // 한 번만 호환 보정해 반복 인코딩에 따른 화질 저하와 CPU 낭비를 피한다.
+            s3Uploader.upload(rawPath.toString(), segmentKey);
+            return rawPath;
+        }
     }
 
     /**
@@ -291,29 +321,14 @@ public class FrameInterpolationVideoGenerator implements VideoGenerator {
      *
      * 동일 음절·타입·프레임은 재시작 후에도 같은 S3 object를 조회하도록 내용 기반 파일명을 사용한다.
      */
-    private String generateVideoFileName(
-            String syllable,
-            VideoType type,
-            List<List<String>> urlPairs
-    ) {
-        StringBuilder source = new StringBuilder()
-                .append(type.name())
-                .append('|')
-                .append(syllable);
-        urlPairs.forEach(pair -> source.append('|').append(String.join(",", pair)));
-
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256")
-                    .digest(source.toString().getBytes(StandardCharsets.UTF_8));
-            return String.format(
-                    "%s_%s_%s.mp4",
-                    type.getPrefix(),
-                    GuideMediaVersion.CURRENT,
-                    HexFormat.of().formatHex(digest, 0, 12)
-            );
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 is unavailable", exception);
-        }
+    private String generateVideoFileName(VideoType type, List<List<String>> urlPairs) {
+        String signature = GuideMediaCacheKey.sequenceSignature(type, urlPairs);
+        return String.format(
+                "%s_%s_%s.mp4",
+                type.getPrefix(),
+                GuideMediaVersion.CURRENT,
+                GuideMediaCacheKey.objectId(signature)
+        );
     }
 
     /**

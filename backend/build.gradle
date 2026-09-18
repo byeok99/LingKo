@@ -151,3 +151,10 @@ tasks.register('externalIntegrationTest', Test) {
 		includeTags 'external'
 	}
 }
+
+tasks.register('guidePrewarm', JavaExec) {
+	description = 'Plans or generates the versioned, deduplicated pronunciation guide cache.'
+	group = 'operations'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'com.lingko.lingko.infra.pronunciation.GuideMediaPrewarmApplication'
+}

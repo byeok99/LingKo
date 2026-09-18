@@ -1,4 +1,4 @@
--- 출시 전 생성 완료된 MP4를 누적한다. 버전 column은 의도적으로 NULL로 두어 phonology-v2에서
+-- 출시 전 생성 완료된 MP4를 누적한다. 버전 column은 의도적으로 NULL로 두어 현재 phonology 버전에서
 -- 과거 프레임 계약의 영상을 재사용하지 않는다. 새 영상은 Worker가 현재 버전과 함께 저장한다.
 INSERT INTO syllables (syllable_char, mouth_url, tongue_url)
 VALUES

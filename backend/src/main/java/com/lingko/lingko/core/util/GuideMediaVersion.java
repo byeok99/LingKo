@@ -8,7 +8,7 @@ package com.lingko.lingko.core.util;
  */
 public final class GuideMediaVersion {
 
-    public static final String CURRENT = "phonology-v2";
+    public static final String CURRENT = "phonology-v3";
 
     private GuideMediaVersion() {
     }
