@@ -53,6 +53,23 @@ class GuideGenerationJobServiceTest {
     }
 
     @Test
+    void submitSharesAJobWhenDifferentSyllablesUseTheSameFrameSequence() {
+        AtomicInteger calls = new AtomicInteger();
+        VideoGenerator generator = (urlPairs, syllable, type) -> {
+            calls.incrementAndGet();
+            return "https://cdn.example.com/guides/shared.mp4";
+        };
+        GuideGenerationJobService service = new GuideGenerationJobService(generator, Runnable::run);
+        List<List<String>> urlPairs = List.of(List.of("https://example.com/a.png", "https://example.com/b.png"));
+
+        var first = service.submit("가", VideoType.TONGUE, urlPairs);
+        var second = service.submit("까", VideoType.TONGUE, urlPairs);
+
+        assertThat(second.getJobId()).isEqualTo(first.getJobId());
+        assertThat(calls).hasValue(1);
+    }
+
+    @Test
     void submitMarksJobFailedWhenGeneratorFails() {
         VideoGenerator generator = (urlPairs, syllable, type) -> {
             throw new IllegalStateException("replicate timeout");

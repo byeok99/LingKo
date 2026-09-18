@@ -93,5 +93,24 @@ services:
       EVALUATION_WORKER_ENABLED: "true"
       EVALUATION_CLEANUP_ENABLED: "false"
 
+  guide-prewarm:
+    profiles: ["operations"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      FFMPEG_PATH: ffmpeg
+      # 대량 실행에서는 FFmpeg debug 전문 대신 진행·실패·cache hit만 남긴다.
+      LOG_LEVEL: INFO
+    # 기본 API main 대신 DB가 필요 없는 사전 생성 main을 실행한다. profile 때문에 일반 up에는 포함되지 않는다.
+    entrypoint:
+      - java
+      - -Dloader.main=com.lingko.lingko.infra.pronunciation.GuideMediaPrewarmApplication
+      - -cp
+      - /app/app.jar
+      - org.springframework.boot.loader.launch.PropertiesLauncher
+
 volumes:
   mysql_data:

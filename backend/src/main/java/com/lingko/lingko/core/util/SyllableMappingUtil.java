@@ -180,7 +180,7 @@ public class SyllableMappingUtil {
 
     /** Frame Interpolation 공급자가 요구하는 인접 프레임 쌍으로 변환한다. */
     public List<List<String>> createFramePairs(String syllable, VideoType type) {
-        List<String> imageUrls = createFrameSequence(syllable, type);
+        List<String> imageUrls = collapseRepeatedPostures(createFrameSequence(syllable, type));
         if (imageUrls.isEmpty()) {
             return List.of();
         }
@@ -193,6 +193,17 @@ public class SyllableMappingUtil {
             pairs.add(List.of(imageUrls.get(index), imageUrls.get(index + 1)));
         }
         return List.copyOf(pairs);
+    }
+
+    private List<String> collapseRepeatedPostures(List<String> frames) {
+        List<String> canonical = new ArrayList<>();
+        for (String frame : frames) {
+            if (canonical.isEmpty() || !canonical.get(canonical.size() - 1).equals(frame)) {
+                canonical.add(frame);
+            }
+        }
+        // 같은 자세를 유지하는 구간은 영상으로 보간할 움직임이 아니므로 정적 guide로 축약한다.
+        return List.copyOf(canonical);
     }
 
     private KoreanPhonemeUtil.HangulChar decomposeSingleSyllable(String syllable) {

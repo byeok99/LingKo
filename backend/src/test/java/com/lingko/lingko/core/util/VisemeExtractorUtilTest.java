@@ -33,10 +33,10 @@ class VisemeExtractorUtilTest {
         List<List<String>> result = visumeExtractorUtil.extractTongueUrls("한");
 
         // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0)).allMatch(url -> url.contains("vowel-a"));
-        assertThat(result.get(1).get(0)).contains("vowel-a");
-        assertThat(result.get(1).get(1)).contains("alveolar-consonants");
+        assertThat(result).singleElement().satisfies(pair -> {
+            assertThat(pair.get(0)).contains("vowel-a");
+            assertThat(pair.get(1)).contains("alveolar-consonants");
+        });
     }
 
     @Test
@@ -62,10 +62,10 @@ class VisemeExtractorUtilTest {
     void testExtractLipsUrls_국() {
         // when
         List<List<String>> result = visumeExtractorUtil.extractLipsUrls("국");
-        assertThat(result).hasSize(2)
-                .allSatisfy(pair -> assertThat(pair)
-                        .hasSize(2)
-                        .allMatch(url -> url.endsWith("vowel-u.png")));
+        assertThat(result).singleElement().satisfies(pair -> assertThat(pair)
+                .singleElement()
+                .asString()
+                .endsWith("vowel-u.png"));
     }
 
     @Test
@@ -98,10 +98,11 @@ class VisemeExtractorUtilTest {
         // when
         List<List<String>> result = visumeExtractorUtil.extractLipsUrls("사");
 
-        // then - ㅅ 구간에도 다음 모음 자세를 유지해 혀 영상과 시간축을 맞춘다.
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0)).hasSize(2)
-                .allMatch(url -> url.endsWith("vowel-a.png"));
+        // then - 같은 ㅏ 자세를 유지하는 no-op 구간은 정적 guide 한 장으로 축약한다.
+        assertThat(result).singleElement().satisfies(pair -> assertThat(pair)
+                .singleElement()
+                .asString()
+                .endsWith("vowel-a.png"));
     }
 
     @Test
@@ -144,12 +145,9 @@ class VisemeExtractorUtilTest {
         List<List<String>> lips = visumeExtractorUtil.extractLipsUrls("하");
         List<List<String>> tongue = visumeExtractorUtil.extractTongueUrls("하");
 
-        // then - ㅎ 시간축과 ㅏ 시간축을 같은 자세로 유지한다.
-        assertThat(lips).hasSize(1);
-        assertThat(lips.get(0)).hasSize(2);
-
-        assertThat(tongue).hasSize(1);
-        assertThat(tongue.get(0)).hasSize(2);
+        // then - ㅎ와 ㅏ가 같은 자세이므로 불필요한 MP4 대신 정적 guide를 반환한다.
+        assertThat(lips).singleElement().satisfies(pair -> assertThat(pair).hasSize(1));
+        assertThat(tongue).singleElement().satisfies(pair -> assertThat(pair).hasSize(1));
     }
 
     @Test

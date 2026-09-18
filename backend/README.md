@@ -34,4 +34,29 @@ API와 Worker는 같은 코드베이스를 사용하지만 별도 프로세스�
 
 외부 서비스 호출 테스트는 별도 작업이며 자격증명과 비용이 필요할 수 있습니다. 상세 설정과 실행 범위는 [로컬 개발](../docs/development/local-development.md), [테스트 구성](../docs/development/testing-and-troubleshooting.md)을 참고합니다.
 
+### 가이드 미디어 사전 생성
+
+현대 한글 11,172자를 실제 입·혀 프레임 시퀀스로 변환한 뒤 중복을 제거해 cache를 미리 채울 수 있습니다. 인자 없이 실행하면 외부 서비스를 호출하지 않는 dry-run이며, 현재 `phonology-v3` 기준 결과 영상 693개와 고유 전이 clip 94개를 계획합니다.
+
+```bash
+./gradlew guidePrewarm
+./gradlew guidePrewarm --args='--prewarm-type=MOUTH --prewarm-offset=0 --prewarm-limit=25'
+```
+
+실제 생성은 AWS·Replicate·FFmpeg 설정을 환경변수로 전달하고 명시적으로 활성화합니다. 완료된 최종 영상과 전이 clip은 내용 기반 S3 key로 재사용하므로 같은 명령을 다시 실행해도 cache hit 항목은 외부 AI를 호출하지 않습니다.
+
+```bash
+./gradlew guidePrewarm --args='--prewarm-dry-run=false --prewarm-type=MOUTH --prewarm-offset=0 --prewarm-limit=25'
+```
+
+`.env`를 shell에서 직접 `source`하지 않고 Compose의 env-file parser로 전달하려면 운영 profile의 일회성 container를 사용합니다.
+
+```bash
+docker compose --profile operations run --rm --build guide-prewarm
+docker compose --profile operations run --rm --build guide-prewarm \
+  --prewarm-dry-run=false --prewarm-type=MOUTH --prewarm-offset=0 --prewarm-limit=25
+```
+
+`--prewarm-type`은 `MOUTH` 또는 `TONGUE`, `--prewarm-offset`과 `--prewarm-limit`은 재개 범위를 지정합니다. 기본값은 항목별 실패를 기록하고 다음 항목을 계속 처리하며, 즉시 중단하려면 `--prewarm-continue-on-error=false`를 사용합니다. 이 작업은 DB와 API 서버를 시작하지 않지만 실제 생성 시 외부 서비스 비용과 실행 시간이 발생합니다.
+
 [API 레퍼런스](../docs/api/api-reference.md) · [평가 흐름](../docs/architecture/evaluation-flow.md) · [데이터 모델](../docs/data/data-model.md)

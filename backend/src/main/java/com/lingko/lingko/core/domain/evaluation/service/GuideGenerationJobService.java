@@ -5,14 +5,11 @@ import com.lingko.lingko.core.config.GuideGenerationJobSettings;
 import com.lingko.lingko.core.domain.evaluation.dto.GuideGenerationJobStatus;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.domain.evaluation.exception.GuideJobCapacityExceededException;
+import com.lingko.lingko.core.util.GuideMediaCacheKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -95,7 +92,7 @@ public class GuideGenerationJobService {
             throw exception;
         }
         String trimmedSyllable = syllable.trim();
-        String cacheKey = cacheKey(trimmedSyllable, type, normalizedPairs);
+        String cacheKey = GuideMediaCacheKey.sequenceSignature(type, normalizedPairs);
         // cache 조회와 job 등록을 하나의 원자적 중복 제거 결정으로 만들기 위해 동기화한다.
         String existingJobId = jobIdByCacheKey.get(cacheKey);
         if (existingJobId != null) {
@@ -178,25 +175,6 @@ public class GuideGenerationJobService {
                         .map(String::trim)
                         .toList())
                 .toList();
-    }
-
-    private String cacheKey(String syllable, VideoType type, List<List<String>> urlPairs) {
-        StringBuilder builder = new StringBuilder()
-                .append(type.name())
-                .append('|')
-                .append(syllable);
-
-        for (List<String> pair : urlPairs) {
-            builder.append('|').append(String.join(",", pair));
-        }
-
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(builder.toString().getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 is unavailable", exception);
-        }
     }
 
     private GuideGenerationJobResponse response(

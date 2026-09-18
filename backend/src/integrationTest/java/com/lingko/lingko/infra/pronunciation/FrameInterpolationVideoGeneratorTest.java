@@ -91,9 +91,9 @@ class FrameInterpolationVideoGeneratorTest {
         System.out.println("=== 가 (mouth) ===");
         System.out.println("프레임 쌍: " + framePairs);
 
-        // [[ㅏ, ㅏ]] (혀 timeline과 같은 길이로 자세 유지)
+        // 같은 ㅏ 자세가 이어지므로 영상 전이를 만들지 않고 정적 이미지로 축약한다.
         assertThat(framePairs).hasSize(1);
-        assertThat(framePairs.get(0)).hasSize(2);
+        assertThat(framePairs.get(0)).hasSize(1);
     }
 
     @Test
