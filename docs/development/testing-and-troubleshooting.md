@@ -31,6 +31,12 @@ CI 성공은 운영 배포를 의미하지 않습니다. 현재 workflow는 검�
 
 이 workflow는 Linux에서 실행하는 Dart·Flutter test gate입니다. iOS 서명 build, App Store 배포, 실제 기기 권한과 외부 API 연결은 검증하지 않습니다. 첫 원격 실행이 안정화되면 `Flutter CI / test`도 branch protection의 required status check로 등록합니다.
 
+## Docker CI
+
+`develop` 대상 Pull Request에는 `Docker CI`도 실행됩니다. placeholder DB 비밀번호와 추적된 `.env.example`로 Compose 설정을 검증하고, Backend Dockerfile로 Registry에 push하지 않는 임시 이미지를 빌드합니다. API, evaluation worker와 guide prewarm은 같은 Dockerfile을 사용하므로 한 번의 image build로 공통 runtime을 검증합니다.
+
+빌드가 끝나면 image 안의 Spring Boot JAR, Java와 FFmpeg 실행 가능 여부를 확인합니다. 이 검증은 컨테이너 기동, MySQL 연결, 운영 Secret, Registry 업로드와 EC2 배포를 포함하지 않습니다. 첫 원격 실행이 안정화되면 `Docker CI / build`를 branch protection의 required status check로 등록합니다.
+
 ## 테스트 경계
 
 - 단위 테스트: 입력 검증, 변환 규칙, 응답 파싱과 서비스 상태 전이
