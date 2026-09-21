@@ -19,6 +19,12 @@ flutter test
 
 명령 목록은 실행 결과가 아닙니다. 변경마다 실제 수행한 범위와 결과를 구분합니다.
 
+## Backend CI
+
+`develop` 대상 Pull Request를 열거나 새 commit을 push하면 GitHub Actions의 `Backend CI`가 실행됩니다. Java 21 환경에서 단위 test, 통합 test, 합산 line coverage 80% 기준과 `bootJar` 생성을 순서대로 검증합니다.
+
+CI 성공은 운영 배포를 의미하지 않습니다. 현재 workflow는 검증만 수행하며, 외부 서비스 자격증명과 비용이 필요한 `externalIntegrationTest`는 실행하지 않습니다. PR 병합을 CI 성공에 의존시키려면 저장소 branch protection에서 `Backend CI / test`를 required status check로 등록해야 합니다.
+
 ## 테스트 경계
 
 - 단위 테스트: 입력 검증, 변환 규칙, 응답 파싱과 서비스 상태 전이
