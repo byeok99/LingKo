@@ -1,0 +1,59 @@
+name: Flutter CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: 코드 내려받기
+        uses: actions/checkout@v4
+
+      - name: Flutter 3.29.1 설치
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.1'
+          channel: stable
+          cache: true
+
+      - name: 의존성 설치
+        run: flutter pub get --enforce-lockfile
+
+      - name: 정적 분석
+        run: flutter analyze
+
+      - name: Test 및 coverage 생성
+        run: flutter test --coverage
+
+      - name: Line coverage 검증
+        run: |
+          awk -F: -v threshold=80 '
+            /^LF:/ { total += $2 }
+            /^LH:/ { covered += $2 }
+            END {
+              if (total == 0) {
+                print "측정 가능한 line coverage가 없습니다."
+                exit 1
+              }
+
+              coverage = covered * 100 / total
+              printf "Line coverage: %.2f%% (%d/%d)\n", coverage, covered, total
+
+              if (coverage < threshold) {
+                printf "요구 coverage %.2f%% 미만입니다.\n", threshold
+                exit 1
+              }
+            }
+          ' coverage/lcov.info

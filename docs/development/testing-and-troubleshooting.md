@@ -25,6 +25,12 @@ flutter test
 
 CI 성공은 운영 배포를 의미하지 않습니다. 현재 workflow는 검증만 수행하며, 외부 서비스 자격증명과 비용이 필요한 `externalIntegrationTest`는 실행하지 않습니다. PR 병합을 CI 성공에 의존시키려면 저장소 branch protection에서 `Backend CI / test`를 required status check로 등록해야 합니다.
 
+## Flutter CI
+
+`develop` 대상 Pull Request에는 `Flutter CI`도 실행됩니다. 프로젝트 생성 환경과 같은 Flutter 3.29.1을 설치하고 `pubspec.lock`을 강제한 의존성 설치, 정적 분석, 전체 test와 line coverage 80% 기준을 검증합니다.
+
+이 workflow는 Linux에서 실행하는 Dart·Flutter test gate입니다. iOS 서명 build, App Store 배포, 실제 기기 권한과 외부 API 연결은 검증하지 않습니다. 첫 원격 실행이 안정화되면 `Flutter CI / test`도 branch protection의 required status check로 등록합니다.
+
 ## 테스트 경계
 
 - 단위 테스트: 입력 검증, 변환 규칙, 응답 파싱과 서비스 상태 전이
