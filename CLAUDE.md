@@ -96,4 +96,3 @@ cd app && rtk flutter test                   # 앱 테스트
 - 트러블슈팅 템플릿과 인덱스: `docs/private/repository/docs/troubleshooting/README.md`
 - API 계약: `docs/api/api-reference.md`, `docs/api/error-codes.md`
 - 아키텍처 결정: `docs/architecture/adr/README.md`
-- dmux 훅을 수정할 때만: `.dmux-hooks/AGENTS.md`
