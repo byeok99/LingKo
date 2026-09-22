@@ -1,14 +1,13 @@
 name: Backend CD
 
 on:
-  push:
-    branches:
-      - develop
-    paths:
-      - backend/**
-      - scripts/deploy-backend.sh
-      - .github/workflows/backend-cd.yml
+  # 운영 반영은 develop 병합과 분리한다. 배포 담당자가 Actions에서 명시적으로 승인한 실행만 허용한다.
   workflow_dispatch:
+    inputs:
+      confirm_production:
+        description: 운영 Backend 배포를 승인합니다.
+        required: true
+        type: boolean
 
 permissions:
   contents: read
@@ -27,12 +26,15 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION }}
       AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
       AWS_EC2_INSTANCE_ID: ${{ vars.AWS_EC2_INSTANCE_ID }}
+      CONFIRM_PRODUCTION: ${{ inputs.confirm_production }}
 
     steps:
       - name: 배포 입력 검증
         shell: bash
         run: |
           set -euo pipefail
+          [[ "$CONFIRM_PRODUCTION" == "true" ]]
+          [[ "$GITHUB_REF_NAME" == "develop" ]]
           [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$AWS_REGION" == "us-east-1" ]]
           [[ "$AWS_DEPLOY_ROLE_ARN" =~ ^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+$ ]]
