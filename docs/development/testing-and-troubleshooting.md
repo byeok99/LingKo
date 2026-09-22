@@ -37,6 +37,30 @@ CI 성공은 운영 배포를 의미하지 않습니다. 현재 workflow는 검�
 
 빌드가 끝나면 image 안의 Spring Boot JAR, Java와 FFmpeg 실행 가능 여부를 확인합니다. 이 검증은 컨테이너 기동, MySQL 연결, 운영 Secret, Registry 업로드와 EC2 배포를 포함하지 않습니다. 첫 원격 실행이 안정화되면 `Docker CI / build`를 branch protection의 required status check로 등록합니다.
 
+## Backend CD
+
+`develop`에 Backend·배포 스크립트·CD workflow 변경이 반영되면 `Backend CD`가 `production` Environment를 통해 실행됩니다. 수동 재실행도 지원하지만 Environment의 deployment branch policy는 `develop`만 허용합니다. 동시 배포는 하나로 제한하며 진행 중인 배포를 새 실행이 취소하지 않습니다.
+
+GitHub Actions는 장기 AWS Access Key를 저장하지 않습니다. `id-token: write`로 발급받은 OIDC token을 AWS STS의 단기 자격 증명으로 교환하며, AWS role의 신뢰 조건은 `repo:byeok99/LingKo:environment:production`으로 제한합니다. Environment에는 다음 비밀값이 아닌 설정값이 필요합니다.
+
+- `AWS_REGION`: 현재 운영 리전
+- `AWS_DEPLOY_ROLE_ARN`: GitHub OIDC가 assume할 최소 권한 role
+- `AWS_EC2_INSTANCE_ID`: SSM managed node로 등록된 배포 대상 하나
+
+배포 role은 대상 instance와 AWS 관리 문서 `AWS-RunShellScript`에 대한 `ssm:SendCommand`, 대상의 Online 여부와 실행 결과를 확인할 최소 조회 권한만 가집니다. 애플리케이션 S3 key나 EC2 instance role을 GitHub에 공유하지 않습니다.
+
+EC2 명령은 원격 `develop`이 workflow의 정확한 commit인지, 서버의 추적 파일이 깨끗한지 확인하고 fast-forward만 허용합니다. 이후 commit SHA로 공용 Backend image를 한 번 빌드해 API와 evaluation worker를 함께 교체합니다. `/legal/terms?lang=en` 응답과 두 container의 실행 상태가 제한 시간 안에 정상이어야 성공합니다.
+
+교체 전 image는 `rollback-<UTC 시각>` tag로 보존합니다. 새 image의 명령 실행 또는 health check가 실패하면 API와 Worker를 직전 image로 되돌리고 workflow를 실패 처리합니다. 이 rollback은 database migration이나 서버 Git checkout을 되돌리지 않으므로, Flyway migration은 항상 이전 애플리케이션과 호환되는 순방향 변경이어야 합니다.
+
+배포 스크립트 회귀 검증:
+
+```bash
+./scripts/tests/deploy-backend-test.sh
+```
+
+이 테스트는 AWS나 운영 Docker를 호출하지 않고 mock command로 잘못된 SHA·dirty checkout 차단, 정확한 image tag 배포와 health check 실패 rollback을 확인합니다. 실제 OIDC·SSM·운영 네트워크는 첫 production 실행에서 별도로 검증합니다.
+
 ## 테스트 경계
 
 - 단위 테스트: 입력 검증, 변환 규칙, 응답 파싱과 서비스 상태 전이
