@@ -39,7 +39,9 @@ CI 성공은 운영 배포를 의미하지 않습니다. 현재 workflow는 검�
 
 ## Backend CD
 
-`develop`에 Backend·배포 스크립트·CD workflow 변경이 반영되면 `Backend CD`가 `production` Environment를 통해 실행됩니다. 수동 재실행도 지원하지만 Environment의 deployment branch policy는 `develop`만 허용합니다. 동시 배포는 하나로 제한하며 진행 중인 배포를 새 실행이 취소하지 않습니다.
+`develop` 병합은 운영 배포를 자동 실행하지 않습니다. 배포할 commit을 CI에서 검증하고 `Actions` → `Backend CD` → `Run workflow`에서 `develop`을 선택한 뒤 운영 배포 확인 항목을 체크해야 `production` Environment 배포가 시작됩니다. 이는 배포 가능한 상태를 계속 유지하되 운영 반영은 사람이 결정하는 Continuous Delivery 정책입니다.
+
+Environment의 deployment branch policy는 `develop`만 허용합니다. workflow도 선택한 ref가 `develop`인지, 명시적 승인 입력이 `true`인지 다시 검사합니다. 동시 배포는 하나로 제한하며 진행 중인 배포를 새 실행이 취소하지 않습니다.
 
 GitHub Actions는 장기 AWS Access Key를 저장하지 않습니다. `id-token: write`로 발급받은 OIDC token을 AWS STS의 단기 자격 증명으로 교환하며, AWS role의 신뢰 조건은 `repo:byeok99/LingKo:environment:production`으로 제한합니다. Environment에는 다음 비밀값이 아닌 설정값이 필요합니다.
 
