@@ -25,6 +25,9 @@ jobs:
           cp .env.example .env
           docker compose config --quiet
 
+      - name: 배포 스크립트 회귀 테스트
+        run: ./scripts/tests/deploy-backend-test.sh
+
       - name: Docker Buildx 설정
         uses: docker/setup-buildx-action@v4
 

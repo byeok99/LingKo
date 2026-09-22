@@ -29,6 +29,8 @@ services:
       - mysql_data:/var/lib/mysql
 
   backend:
+    # CD는 commit SHA tag를 주입하고 로컬 개발은 동일한 기본 image 이름을 사용한다.
+    image: "${BACKEND_IMAGE_REPOSITORY:-lingko-backend}:${BACKEND_IMAGE_TAG:-local}"
     build:
       context: .
       dockerfile: Dockerfile
@@ -71,6 +73,8 @@ services:
       ADMOB_SSV_REWARD_AMOUNT: "${ADMOB_SSV_REWARD_AMOUNT:-1}"
 
   evaluation-worker:
+    # API와 Worker가 같은 검증 image를 사용해야 실행 코드가 서로 어긋나지 않는다.
+    image: "${BACKEND_IMAGE_REPOSITORY:-lingko-backend}:${BACKEND_IMAGE_TAG:-local}"
     build:
       context: .
       dockerfile: Dockerfile
@@ -95,6 +99,7 @@ services:
 
   guide-prewarm:
     profiles: ["operations"]
+    image: "${BACKEND_IMAGE_REPOSITORY:-lingko-backend}:${BACKEND_IMAGE_TAG:-local}"
     build:
       context: .
       dockerfile: Dockerfile
