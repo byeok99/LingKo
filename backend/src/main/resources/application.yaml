@@ -24,24 +24,12 @@ logging:
   level:
     com.lingko.lingko: ${LOG_LEVEL:DEBUG}
 
-db:
-  host: ${DB_HOST:localhost}
-  port: ${DB_PORT:3306}
-  user: ${DB_USER:lingko}
-  password: ${DB_PASSWORD:}
-  name: ${DB_NAME:lingko}
-  driver: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
-
 jwt:
   # 비밀키는 예시 파일에 기록하지 않고 실행 환경에서만 주입한다.
   secret-key: ${JWT_SECRET_KEY:}
   access-token-expire-minutes: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:30}
   refresh-token-expire-days: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS:14}
   algorithm: ${JWT_ALGORITHM:HS256}
-
-openai:
-  api-key: ${OPENAI_API_KEY:}
-  text-model: ${OPENAI_TEXT_MODEL:gpt-4o-mini}
 
 azure:
   # 외부 서비스 자격 증명은 빈 기본값으로 두어 저장소에 비밀값이 포함되지 않게 한다.
@@ -51,8 +39,6 @@ azure:
 
 google:
   client-id: ${GOOGLE_CLIENT_ID:}
-  client-secret: ${GOOGLE_CLIENT_SECRET:}
-  redirect-uri: ${GOOGLE_REDIRECT_URI:}
 
 apple:
   # native iOS identity token의 audience인 App ID(Bundle ID)다. 비밀값은 아니다.

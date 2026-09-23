@@ -60,14 +60,6 @@ typedef PatchJsonTransport =
       Map<String, String> headers,
     );
 
-/// 파일과 field를 함께 보내는 multipart 요청의 교체 가능한 transport 계약이다.
-typedef MultipartTransport =
-    Future<ApiResponse> Function(
-      Uri uri,
-      MultipartUpload upload,
-      Duration timeout,
-    );
-
 /// Api Client 백엔드 요청·응답 매핑을 구현한다.
 /// 전송 실패와 JSON 형식 오류를 API 경계에서 정규화해 UI에는 형식이 지정된 결과만 전달한다.
 class ApiClient {
@@ -81,7 +73,6 @@ class ApiClient {
     DeleteJsonWithHeadersTransport? deleteJsonWithHeadersTransport,
     PutFileTransport? putFileTransport,
     PatchJsonTransport? patchJsonTransport,
-    MultipartTransport? multipartTransport,
   }) : baseUrl = Uri.parse(baseUrl ?? resolveLingKoApiBaseUrl()),
        _getJsonTransport = getJsonTransport ?? _getJsonWithDartIo,
        _postJsonTransport = postJsonTransport ?? _postJsonWithDartIo,
@@ -90,8 +81,7 @@ class ApiClient {
        _deleteJsonWithHeadersTransport =
            deleteJsonWithHeadersTransport ?? _deleteJsonWithHeadersWithDartIo,
        _putFileTransport = putFileTransport ?? _putFileWithDartIo,
-       _patchJsonTransport = patchJsonTransport ?? _patchJsonWithDartIo,
-       _multipartTransport = multipartTransport ?? _postMultipartWithDartIo;
+       _patchJsonTransport = patchJsonTransport ?? _patchJsonWithDartIo;
 
   final Uri baseUrl;
   final Duration timeout;
@@ -102,7 +92,6 @@ class ApiClient {
   final DeleteJsonWithHeadersTransport _deleteJsonWithHeadersTransport;
   final PutFileTransport _putFileTransport;
   final PatchJsonTransport _patchJsonTransport;
-  final MultipartTransport _multipartTransport;
 
   Future<JsonMap> getJson(
     String path, [
@@ -193,15 +182,6 @@ class ApiClient {
       body,
       timeout,
       headers,
-    );
-    return _decodeResponse(response);
-  }
-
-  Future<JsonMap> postMultipart(String path, MultipartUpload upload) async {
-    final response = await _multipartTransport(
-      baseUrl.resolve(path),
-      upload,
-      timeout,
     );
     return _decodeResponse(response);
   }
@@ -301,31 +281,6 @@ class ApiException implements Exception {
 
   @override
   String toString() => message;
-}
-
-/// Multipart Upload 백엔드 요청·응답 매핑을 구현한다.
-/// 전송 실패와 JSON 형식 오류를 API 경계에서 정규화해 UI에는 형식이 지정된 결과만 전달한다.
-class MultipartUpload {
-  const MultipartUpload({required this.file, this.fields = const {}});
-
-  final MultipartFileData file;
-  final Map<String, String> fields;
-}
-
-/// Multipart File Data 백엔드 요청·응답 매핑을 구현한다.
-/// 전송 실패와 JSON 형식 오류를 API 경계에서 정규화해 UI에는 형식이 지정된 결과만 전달한다.
-class MultipartFileData {
-  const MultipartFileData({
-    required this.fieldName,
-    required this.path,
-    required this.filename,
-    required this.contentType,
-  });
-
-  final String fieldName;
-  final String path;
-  final String filename;
-  final String contentType;
 }
 
 Future<ApiResponse> _getJsonWithDartIo(
@@ -485,51 +440,6 @@ Future<ApiResponse> _patchJsonWithDartIo(
       request.headers.set(header.key, header.value);
     }
     request.write(jsonEncode(body));
-
-    final response = await request.close().timeout(timeout);
-    final responseBody = await response.transform(utf8.decoder).join();
-
-    return ApiResponse(statusCode: response.statusCode, body: responseBody);
-  } on TimeoutException {
-    throw const ApiException('Request timed out');
-  } on SocketException {
-    throw const ApiException('Cannot connect to LingKo server');
-  } finally {
-    client.close(force: true);
-  }
-}
-
-Future<ApiResponse> _postMultipartWithDartIo(
-  Uri uri,
-  MultipartUpload upload,
-  Duration timeout,
-) async {
-  final client = HttpClient();
-  final boundary = 'lingko-${DateTime.now().microsecondsSinceEpoch}';
-  final file = File(upload.file.path);
-
-  try {
-    final request = await client.postUrl(uri).timeout(timeout);
-    request.headers.set(
-      HttpHeaders.contentTypeHeader,
-      'multipart/form-data; boundary=$boundary',
-    );
-
-    for (final entry in upload.fields.entries) {
-      request.write('--$boundary\r\n');
-      request.write(
-        'Content-Disposition: form-data; name="${entry.key}"\r\n\r\n',
-      );
-      request.write('${entry.value}\r\n');
-    }
-
-    request.write('--$boundary\r\n');
-    request.write(
-      'Content-Disposition: form-data; name="${upload.file.fieldName}"; filename="${upload.file.filename}"\r\n',
-    );
-    request.write('Content-Type: ${upload.file.contentType}\r\n\r\n');
-    await request.addStream(file.openRead()).timeout(timeout);
-    request.write('\r\n--$boundary--\r\n');
 
     final response = await request.close().timeout(timeout);
     final responseBody = await response.transform(utf8.decoder).join();
