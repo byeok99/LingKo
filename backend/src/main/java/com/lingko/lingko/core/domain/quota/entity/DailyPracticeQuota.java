@@ -19,7 +19,7 @@ import java.time.Instant;
  * Daily Practice 할당량 상태와 단일 aggregate 내부 계산 규칙을 영속화한다.
  *
  * 동시 요청의 예약·확정·복구는 조건부 DB UPDATE가 원자성을 소유하고, 이 엔티티는 조회 결과 계산과
- * 테스트·관리 작업에서 사용하는 단일 transaction 상태 전이만 담당한다.
+ * 자연 충전·광고 보상처럼 aggregate 내부에서 완결되는 상태 전이만 담당한다.
  */
 @Entity
 @Table(
@@ -111,10 +111,6 @@ public class DailyPracticeQuota {
                 + Math.max(0, rewardedAvailable - rewardedReserved);
     }
 
-    public boolean hasRemainingPractice() {
-        return remainingPractices() > 0;
-    }
-
     /**
      * 서버 기준으로 완료된 1시간 구간만큼 무료 사용량을 되돌리고 최대치에서는 timer를 제거한다.
      * 광고 등 보상 횟수는 이 자연 충전 clock과 독립적으로 유지한다.
@@ -144,28 +140,6 @@ public class DailyPracticeQuota {
         nextRefillAt = freeUsed == 0
                 ? null
                 : nextRefillAt.plus(refillInterval.multipliedBy(replenished));
-    }
-
-    public void consumePractice() {
-        // 획득한 보상 가치를 보존하기 위해 무료 제공량을 보상보다 먼저 사용한다.
-        if (freeUsed < freeLimit) {
-            freeUsed++;
-            return;
-        }
-        if (rewardedAvailable > 0) {
-            rewardedAvailable--;
-            return;
-        }
-
-        throw new IllegalStateException("quota is exhausted");
-    }
-
-    public void useFreePractices(int count) {
-        if (count < 0 || freeUsed + count > freeLimit) {
-            throw new IllegalArgumentException("invalid free practice count");
-        }
-
-        freeUsed += count;
     }
 
     public void addRewardedPractices(int count) {

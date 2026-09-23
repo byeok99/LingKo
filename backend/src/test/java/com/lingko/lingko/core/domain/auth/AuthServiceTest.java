@@ -222,11 +222,14 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("JWT provider는 access token subject를 사용자 ID로 파싱한다")
-    void jwtProviderParsesAccessTokenUserId() {
+    @DisplayName("JWT provider는 access token의 사용자와 세션 claim을 함께 파싱한다")
+    void jwtProviderParsesAccessTokenClaims() {
         JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(7L);
 
-        assertThat(jwtTokenProvider.parseAccessTokenUserId(tokens.accessToken())).isEqualTo(7L);
+        JwtTokenProvider.AccessTokenClaims claims = jwtTokenProvider.parseAccessToken(tokens.accessToken());
+
+        assertThat(claims.userId()).isEqualTo(7L);
+        assertThat(claims.sessionId()).isEqualTo(tokens.refreshSessionId());
     }
 
     @Test
@@ -234,7 +237,7 @@ class AuthServiceTest {
     void jwtProviderRejectsRefreshTokenAsAccessToken() {
         JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(7L);
 
-        assertThatThrownBy(() -> jwtTokenProvider.parseAccessTokenUserId(tokens.refreshToken()))
+        assertThatThrownBy(() -> jwtTokenProvider.parseAccessToken(tokens.refreshToken()))
                 .isInstanceOf(AuthException.class);
     }
 

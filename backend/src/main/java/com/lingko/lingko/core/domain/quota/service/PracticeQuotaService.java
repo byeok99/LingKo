@@ -56,13 +56,6 @@ public class PracticeQuotaService {
         return toResponse(findOrCreateCurrentQuota(userId));
     }
 
-    @Transactional
-    public PracticeQuotaResponse consumePractice(Long userId) {
-        PracticeQuotaReservation reservation = reservePractice(userId);
-        confirmPractice(reservation);
-        return toResponse(findCurrentQuota(userId));
-    }
-
     /**
      * 광고 SDK가 획득을 확정한 event 하나를 평가 기회 1회로 바꾼다.
      *
@@ -156,12 +149,6 @@ public class PracticeQuotaService {
                         today(),
                         MAX_NATURAL_PRACTICES
                 )));
-    }
-
-    private DailyPracticeQuota findCurrentQuota(Long userId) {
-        return quotaRepository.findCurrentByUserForUpdate(userId)
-                .map(this::replenish)
-                .orElseThrow(() -> new IllegalStateException("practice energy does not exist"));
     }
 
     private DailyPracticeQuota replenish(DailyPracticeQuota quota) {

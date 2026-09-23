@@ -99,13 +99,6 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Access 토큰 subject만 필요한 호출자를 위해 사용자 ID를 추출한다.
-     */
-    public Long parseAccessTokenUserId(String token) {
-        return parseAccessToken(token).userId();
-    }
-
-    /**
      * Access 토큰을 검증하고 활성 세션 조회에 필요한 claim을 반환한다.
      */
     public AccessTokenClaims parseAccessToken(String token) {
