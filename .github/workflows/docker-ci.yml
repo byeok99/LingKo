@@ -18,6 +18,12 @@ jobs:
       - name: 코드 내려받기
         uses: actions/checkout@v4
 
+      # protect-develop이 실패한 required check의 병합을 차단하는지 확인하기 위한 일회성 test branch 전용 단계다.
+      - name: CI 실패 병합 차단 리허설
+        run: |
+          echo "의도적인 실패입니다. 이 PR은 병합하면 안 됩니다."
+          exit 1
+
       - name: Compose 설정 검증
         working-directory: backend
         env:
