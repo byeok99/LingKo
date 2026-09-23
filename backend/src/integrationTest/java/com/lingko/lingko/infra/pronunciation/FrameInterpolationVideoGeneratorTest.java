@@ -27,42 +27,27 @@ class FrameInterpolationVideoGeneratorTest {
     @Test
     @DisplayName("SyllableMapping 로드 확인")
     void mapping_load_test() {
-        // ㅂ
-        SyllableMappingUtil.SyllableMapping bMapping = syllableMappingUtil.getMapping("ㅂ");
-
-        System.out.println("=== ㅂ ===");
-        System.out.println("Mouth: " + bMapping.getMouthFrames());
-        System.out.println("Tongue: " + bMapping.getTongueFrames());
-
-        assertThat(bMapping.hasMouth()).isTrue();
-        assertThat(bMapping.hasTongue()).isTrue();
-
-        // ㄱ
-        SyllableMappingUtil.SyllableMapping gMapping = syllableMappingUtil.getMapping("ㄱ");
-
-        System.out.println("\n=== ㄱ ===");
-        System.out.println("Mouth: " + gMapping.getMouthFrames());
-        System.out.println("Tongue: " + gMapping.getTongueFrames());
-
-        assertThat(gMapping.hasMouth()).isFalse();  // 입 모양 없음
-        assertThat(gMapping.hasTongue()).isTrue();
+        assertThat(syllableMappingUtil.getImageFrames("ㅂ", VideoType.MOUTH)).isNotEmpty();
+        assertThat(syllableMappingUtil.getImageFrames("ㅂ", VideoType.TONGUE)).isNotEmpty();
+        assertThat(syllableMappingUtil.getImageFrames("ㄱ", VideoType.MOUTH)).isEmpty();
+        assertThat(syllableMappingUtil.getImageFrames("ㄱ", VideoType.TONGUE)).isNotEmpty();
     }
 
     @Test
     @DisplayName("이미지 URL 생성")
     void image_url_test() {
         // ㅂ mouth
-        String url = syllableMappingUtil.getImageUrl("ㅂ", VideoType.MOUTH);
+        String url = syllableMappingUtil.getImageFrames("ㅂ", VideoType.MOUTH).getFirst();
 
         System.out.println("ㅂ mouth URL: " + url);
         assertThat(url).contains("guides/mouth/");
         assertThat(url).contains("bilabial-consonants.png");
 
         // ㄱ mouth (없음)
-        String gMouth = syllableMappingUtil.getImageUrl("ㄱ", VideoType.MOUTH);
+        List<String> gMouth = syllableMappingUtil.getImageFrames("ㄱ", VideoType.MOUTH);
 
         System.out.println("ㄱ mouth URL: " + gMouth);
-        assertThat(gMouth).isNull();
+        assertThat(gMouth).isEmpty();
     }
 
     @Test

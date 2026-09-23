@@ -9,9 +9,6 @@ import com.lingko.lingko.api.evaluation.dto.PracticeWordResultResponse;
 import com.lingko.lingko.core.domain.evaluation.dto.AssessmentResult;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
-import com.lingko.lingko.core.domain.sentence.entity.RecommendedSentence;
-import com.lingko.lingko.core.domain.sentence.exception.SentenceNotFoundException;
-import com.lingko.lingko.core.domain.sentence.repository.RecommendedSentenceRepository;
 import com.lingko.lingko.core.util.KoreanPhonemeUtil;
 import com.lingko.lingko.core.util.KoreanRomanizationUtil;
 import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
@@ -43,7 +40,6 @@ public class EvaluationService {
 
     private final GuideMediaResolver guideMediaResolver;
     private final SpeechEvaluator speechEvaluator;
-    private final RecommendedSentenceRepository sentenceRepository;
 
     public enum AudioValidationStatus {
         VALID,
@@ -55,20 +51,17 @@ public class EvaluationService {
         this(
                 syllableMappingUtil,
                 null,
-                null,
                 new GuideMediaResolver(syllableMappingUtil, null)
         );
     }
 
     public EvaluationService(
             SyllableMappingUtil syllableMappingUtil,
-            SpeechEvaluator speechEvaluator,
-            RecommendedSentenceRepository sentenceRepository
+            SpeechEvaluator speechEvaluator
     ) {
         this(
                 syllableMappingUtil,
                 speechEvaluator,
-                sentenceRepository,
                 new GuideMediaResolver(syllableMappingUtil, null)
         );
     }
@@ -77,12 +70,10 @@ public class EvaluationService {
     public EvaluationService(
             SyllableMappingUtil syllableMappingUtil,
             SpeechEvaluator speechEvaluator,
-            RecommendedSentenceRepository sentenceRepository,
             GuideMediaResolver guideMediaResolver
     ) {
         this.guideMediaResolver = guideMediaResolver;
         this.speechEvaluator = speechEvaluator;
-        this.sentenceRepository = sentenceRepository;
     }
 
     public String convertToStandardPronunciation(String text) {
@@ -206,10 +197,6 @@ public class EvaluationService {
         }
 
         return "NONE";
-    }
-
-    public boolean isSupportedAudio(MultipartFile audio) {
-        return validateAudio(audio) == AudioValidationStatus.VALID;
     }
 
     public AudioValidationStatus validateAudio(MultipartFile audio) {
@@ -349,11 +336,6 @@ public class EvaluationService {
         return (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
     }
 
-    public PracticeResultResponse evaluatePronunciation(MultipartFile audio, Long sentenceId, String text) {
-        String referenceText = resolveReferenceText(sentenceId, text);
-        return evaluatePronunciation(audio, referenceText);
-    }
-
     public PracticeResultResponse evaluatePronunciation(MultipartFile audio, String referenceText) {
         Path tempFile = null;
 
@@ -369,10 +351,6 @@ public class EvaluationService {
         } catch (IOException exception) {
             throw new VideoGenerationException("Failed to store uploaded audio");
         } catch (RuntimeException exception) {
-            if (exception instanceof SentenceNotFoundException) {
-                throw exception;
-            }
-
             throw new VideoGenerationException("Speech evaluation failed", exception);
         } finally {
             if (tempFile != null) {
@@ -383,14 +361,6 @@ public class EvaluationService {
                 }
             }
         }
-    }
-
-    /**
-     * Worker가 S3에서 받은 로컬 WAV를 다시 복사하지 않고 공급자 평가에 전달한다.
-     */
-    public PracticeResultResponse evaluatePronunciation(Path audioPath, String referenceText) {
-        return evaluatePronunciation(audioPath, referenceText, () -> {
-        });
     }
 
     /**
@@ -422,17 +392,6 @@ public class EvaluationService {
             }
             throw new VideoGenerationException("Speech evaluation failed", exception);
         }
-    }
-
-    private String resolveReferenceText(Long sentenceId, String text) {
-        if (sentenceId != null) {
-            RecommendedSentence sentence = requireSentenceRepository()
-                    .findBySentenceIdAndActiveTrue(sentenceId)
-                    .orElseThrow(() -> new SentenceNotFoundException(sentenceId));
-            return convertToStandardPronunciation(sentence.getOriginalText());
-        }
-
-        return convertToStandardPronunciation(text.trim());
     }
 
     private PracticeResultResponse toPracticeResult(String referenceText, AssessmentResult result) {
@@ -656,11 +615,4 @@ public class EvaluationService {
         return speechEvaluator;
     }
 
-    private RecommendedSentenceRepository requireSentenceRepository() {
-        if (sentenceRepository == null) {
-            throw new SentenceNotFoundException(null);
-        }
-
-        return sentenceRepository;
-    }
 }

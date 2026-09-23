@@ -42,7 +42,7 @@ class AdRewardServiceTest {
     @DisplayName("signed callback이 session token과 정책에 맞으면 1회 지급하고 완료 상태가 된다")
     void grantsVerifiedRewardOnce() {
         User user = saveUser();
-        quotaService.consumePractice(user.getUserIdx());
+        completePractice(user.getUserIdx());
         AdRewardSessionResponse session = rewardService.createSession(user.getUserIdx());
         VerifiedAdRewardCallback callback = callback(session.sessionToken(), "transaction-1");
 
@@ -63,7 +63,7 @@ class AdRewardServiceTest {
     @DisplayName("세션 생성만으로는 quota를 지급하지 않는다")
     void doesNotTrustClientSessionCreation() {
         User user = saveUser();
-        quotaService.consumePractice(user.getUserIdx());
+        completePractice(user.getUserIdx());
 
         rewardService.createSession(user.getUserIdx());
 
@@ -76,8 +76,8 @@ class AdRewardServiceTest {
     void rejectsDuplicateGoogleTransactionAcrossSessions() {
         User first = saveUser("ssv-user-1");
         User second = saveUser("ssv-user-2");
-        quotaService.consumePractice(first.getUserIdx());
-        quotaService.consumePractice(second.getUserIdx());
+        completePractice(first.getUserIdx());
+        completePractice(second.getUserIdx());
         AdRewardSessionResponse firstSession = rewardService.createSession(first.getUserIdx());
         AdRewardSessionResponse secondSession = rewardService.createSession(second.getUserIdx());
 
@@ -104,5 +104,11 @@ class AdRewardServiceTest {
                 .socialId(socialId)
                 .socialType(User.SocialType.GOOGLE)
                 .build());
+    }
+
+    /** 광고 테스트도 운영 평가와 동일한 예약·확정 계약으로 quota를 소비한다. */
+    private void completePractice(Long userId) {
+        PracticeQuotaService.PracticeQuotaReservation reservation = quotaService.reservePractice(userId);
+        quotaService.confirmPractice(reservation);
     }
 }

@@ -7,8 +7,6 @@ import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
 import com.lingko.lingko.core.domain.evaluation.service.GuideMediaResolver;
 import com.lingko.lingko.core.domain.evaluation.service.SpeechEvaluator;
-import com.lingko.lingko.core.domain.sentence.entity.RecommendedSentence;
-import com.lingko.lingko.core.domain.sentence.repository.RecommendedSentenceRepository;
 import com.lingko.lingko.core.util.SyllableMappingUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +15,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,16 +33,16 @@ class EvaluationServiceResultTest {
 
     private final SyllableMappingUtil mappingUtil = mock(SyllableMappingUtil.class);
     private final SpeechEvaluator speechEvaluator = mock(SpeechEvaluator.class);
-    private final RecommendedSentenceRepository sentenceRepository = mock(RecommendedSentenceRepository.class);
-    private final EvaluationService service = new EvaluationService(mappingUtil, speechEvaluator, sentenceRepository);
+    private final EvaluationService service = new EvaluationService(mappingUtil, speechEvaluator);
 
     @Test
-    @DisplayName("text 입력은 표준 발음으로 변환한 뒤 SpeechEvaluator 기준 문장으로 사용한다")
-    void evaluateWithTextReference() {
+    @DisplayName("변환한 표준 발음을 SpeechEvaluator 기준 문장으로 사용한다")
+    void evaluatesConvertedTextReference() {
         when(speechEvaluator.evaluate(anyString(), eq("바블 머거써요"))).thenReturn(assessmentResult());
         MockMultipartFile audio = wavAudio();
 
-        PracticeResultResponse response = service.evaluatePronunciation(audio, null, "밥을 먹었어요.");
+        String referenceText = service.convertToStandardPronunciation("밥을 먹었어요.");
+        PracticeResultResponse response = service.evaluatePronunciation(audio, referenceText);
 
         assertThat(response.getOverallScore()).isEqualTo(87);
         assertThat(response.getGradeLabel()).isEqualTo("Good");
@@ -58,17 +55,13 @@ class EvaluationServiceResultTest {
     }
 
     @Test
-    @DisplayName("sentenceId 입력은 추천 문장의 표준 발음을 SpeechEvaluator 기준 문장으로 사용한다")
-    void evaluateWithSentenceReference() {
-        RecommendedSentence sentence = RecommendedSentence.builder()
-                .sentenceId(1L)
-                .originalText("맛있겠다.")
-                .build();
-        when(sentenceRepository.findBySentenceIdAndActiveTrue(1L)).thenReturn(Optional.of(sentence));
+    @DisplayName("추천 문장도 표준 발음 변환 결과를 SpeechEvaluator 기준 문장으로 사용한다")
+    void evaluateWithRecommendedSentenceReference() {
         when(speechEvaluator.evaluate(anyString(), eq("마싣껟따"))).thenReturn(assessmentResult());
         MockMultipartFile audio = wavAudio();
 
-        PracticeResultResponse response = service.evaluatePronunciation(audio, 1L, null);
+        String referenceText = service.convertToStandardPronunciation("맛있겠다.");
+        PracticeResultResponse response = service.evaluatePronunciation(audio, referenceText);
 
         assertThat(response.getOverallScore()).isEqualTo(87);
     }
@@ -76,25 +69,30 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("wav 파일만 지원한다")
     void supportsWavOnly() {
-        assertThat(service.isSupportedAudio(
+        assertThat(service.validateAudio(
                 wavAudio()
-        )).isTrue();
-        assertThat(service.isSupportedAudio(
+        )).isEqualTo(EvaluationService.AudioValidationStatus.VALID);
+        assertThat(service.validateAudio(
                 new MockMultipartFile("audio", "recording.mp3", "audio/mpeg", new byte[]{1})
-        )).isFalse();
-        assertThat(service.isSupportedAudio(
+        )).isEqualTo(EvaluationService.AudioValidationStatus.UNSUPPORTED_TYPE);
+        assertThat(service.validateAudio(
                 new MockMultipartFile("audio", "recording.wav", "audio/wav", new byte[]{1, 2, 3})
-        )).isFalse();
+        )).isEqualTo(EvaluationService.AudioValidationStatus.INVALID_WAV);
     }
 
     @Test
     @DisplayName("PCM WAV fmt 필드의 sampleRate, byteRate, blockAlign, channels, bitsPerSample은 서로 일관되어야 한다")
     void rejectsInconsistentWavFormatFields() {
-        assertThat(service.isSupportedAudio(wavAudio(16000, 1, 16, 16000, 2))).isFalse();
-        assertThat(service.isSupportedAudio(wavAudio(16000, 1, 16, 32000, 4))).isFalse();
-        assertThat(service.isSupportedAudio(wavAudio(0, 1, 16, 0, 2))).isFalse();
-        assertThat(service.isSupportedAudio(wavAudio(16000, 2, 16, 64000, 4))).isFalse();
-        assertThat(service.isSupportedAudio(wavAudio(16000, 1, 8, 16000, 1))).isFalse();
+        assertThat(service.validateAudio(wavAudio(16000, 1, 16, 16000, 2)))
+                .isEqualTo(EvaluationService.AudioValidationStatus.INVALID_WAV);
+        assertThat(service.validateAudio(wavAudio(16000, 1, 16, 32000, 4)))
+                .isEqualTo(EvaluationService.AudioValidationStatus.INVALID_WAV);
+        assertThat(service.validateAudio(wavAudio(0, 1, 16, 0, 2)))
+                .isEqualTo(EvaluationService.AudioValidationStatus.INVALID_WAV);
+        assertThat(service.validateAudio(wavAudio(16000, 2, 16, 64000, 4)))
+                .isEqualTo(EvaluationService.AudioValidationStatus.INVALID_WAV);
+        assertThat(service.validateAudio(wavAudio(16000, 1, 8, 16000, 1)))
+                .isEqualTo(EvaluationService.AudioValidationStatus.INVALID_WAV);
     }
 
     @Test
@@ -114,7 +112,7 @@ class EvaluationServiceResultTest {
                 .build();
         when(speechEvaluator.evaluate(anyString(), eq("가나"))).thenReturn(result);
 
-        PracticeResultResponse response = service.evaluatePronunciation(wavAudio(), null, "가나");
+        PracticeResultResponse response = service.evaluatePronunciation(wavAudio(), "가나");
 
         assertThat(response.getCharacterScoreStatus()).isEqualTo(ScoreStatus.AVAILABLE);
         assertThat(response.getCharacters()).extracting("score").containsExactly(92, 55);
@@ -130,7 +128,7 @@ class EvaluationServiceResultTest {
     void exposesCharacterScoreFallback() {
         when(speechEvaluator.evaluate(anyString(), eq("가나"))).thenReturn(assessmentResult());
 
-        PracticeResultResponse response = service.evaluatePronunciation(wavAudio(), null, "가나");
+        PracticeResultResponse response = service.evaluatePronunciation(wavAudio(), "가나");
 
         assertThat(response.getCharacterScoreStatus()).isEqualTo(ScoreStatus.UNAVAILABLE);
         assertThat(response.getCharacters()).extracting("score").containsOnlyNulls();
@@ -160,7 +158,6 @@ class EvaluationServiceResultTest {
 
         PracticeResultResponse response = service.evaluatePronunciation(
                 wavAudio(),
-                null,
                 "김치찌개 하나 주세요"
         );
 
@@ -189,7 +186,6 @@ class EvaluationServiceResultTest {
         EvaluationService videoGuideService = new EvaluationService(
                 mappingUtil,
                 speechEvaluator,
-                sentenceRepository,
                 guideMediaResolver
         );
         AssessmentResult result = AssessmentResult.builder()
@@ -213,7 +209,6 @@ class EvaluationServiceResultTest {
 
         PracticeResultResponse response = videoGuideService.evaluatePronunciation(
                 wavAudio(),
-                null,
                 "김"
         );
 
@@ -235,7 +230,7 @@ class EvaluationServiceResultTest {
             throw new IllegalStateException("Azure unavailable");
         });
 
-        assertThatThrownBy(() -> service.evaluatePronunciation(wavAudio(), null, "가나"))
+        assertThatThrownBy(() -> service.evaluatePronunciation(wavAudio(), "가나"))
                 .hasMessage("Speech evaluation failed");
         assertThat(evaluatedPath.get()).isNotNull();
         assertThat(Files.exists(evaluatedPath.get())).isFalse();

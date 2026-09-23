@@ -1,7 +1,6 @@
 package com.lingko.lingko.core.domain.quota;
 
 import com.lingko.lingko.api.quota.dto.PracticeQuotaResponse;
-import com.lingko.lingko.core.domain.quota.entity.DailyPracticeQuota;
 import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
 import com.lingko.lingko.core.domain.quota.repository.DailyPracticeQuotaRepository;
 import com.lingko.lingko.core.domain.quota.repository.AdRewardReceiptRepository;
@@ -84,7 +83,7 @@ class PracticeQuotaServiceTest {
     void consumeFreeQuotaFirst() {
         User user = saveUser();
 
-        PracticeQuotaResponse response = quotaService.consumePractice(user.getUserIdx());
+        PracticeQuotaResponse response = completePractice(user.getUserIdx());
 
         assertThat(response.freeUsed()).isEqualTo(1);
         assertThat(response.rewardedAvailable()).isZero();
@@ -97,8 +96,8 @@ class PracticeQuotaServiceTest {
     @DisplayName("한 시간마다 1회 충전되고 최대 5회에 도달하면 timer를 제거한다")
     void replenishesOnePracticeEveryHourUpToMaximum() {
         User user = saveUser();
-        quotaService.consumePractice(user.getUserIdx());
-        quotaService.consumePractice(user.getUserIdx());
+        completePractice(user.getUserIdx());
+        completePractice(user.getUserIdx());
 
         Instant firstRefillAt = clock.instant().plus(Duration.ofHours(1));
         assertThat(quotaService.getTodayQuota(user.getUserIdx()).nextRefillAt().toInstant())
@@ -120,13 +119,13 @@ class PracticeQuotaServiceTest {
     @DisplayName("추가 소모는 이미 진행 중인 자연 충전 timer를 초기화하지 않는다")
     void additionalConsumptionKeepsExistingRefillTimer() {
         User user = saveUser();
-        quotaService.consumePractice(user.getUserIdx());
+        completePractice(user.getUserIdx());
         Instant firstRefillAt = quotaService.getTodayQuota(user.getUserIdx())
                 .nextRefillAt()
                 .toInstant();
 
         clock.advance(Duration.ofMinutes(20));
-        PracticeQuotaResponse response = quotaService.consumePractice(user.getUserIdx());
+        PracticeQuotaResponse response = completePractice(user.getUserIdx());
 
         assertThat(response.remainingPractices()).isEqualTo(3);
         assertThat(response.nextRefillAt().toInstant()).isEqualTo(firstRefillAt);
@@ -138,7 +137,7 @@ class PracticeQuotaServiceTest {
         User user = saveUser();
         clock.advance(Duration.ofHours(23).plusMinutes(20));
         for (int attempt = 0; attempt < 5; attempt++) {
-            quotaService.consumePractice(user.getUserIdx());
+            completePractice(user.getUserIdx());
         }
 
         Instant nextRefillAt = clock.instant().plus(Duration.ofHours(1));
@@ -155,12 +154,11 @@ class PracticeQuotaServiceTest {
     @DisplayName("무료 quota를 모두 쓰면 보상 quota를 사용한다")
     void consumeRewardQuotaAfterFreeQuota() {
         User user = saveUser();
-        DailyPracticeQuota quota = DailyPracticeQuota.create(user, LocalDate.of(2026, 6, 29), 5);
-        quota.useFreePractices(5);
-        quota.addRewardedPractices(2);
-        quotaRepository.save(quota);
+        exhaustFreePractices(user.getUserIdx());
+        quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-1");
+        quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-2");
 
-        PracticeQuotaResponse response = quotaService.consumePractice(user.getUserIdx());
+        PracticeQuotaResponse response = completePractice(user.getUserIdx());
 
         assertThat(response.freeUsed()).isEqualTo(5);
         assertThat(response.rewardedAvailable()).isEqualTo(1);
@@ -171,11 +169,9 @@ class PracticeQuotaServiceTest {
     @DisplayName("남은 quota가 없으면 차감할 수 없다")
     void cannotConsumeWhenQuotaIsExhausted() {
         User user = saveUser();
-        DailyPracticeQuota quota = DailyPracticeQuota.create(user, LocalDate.of(2026, 6, 29), 5);
-        quota.useFreePractices(5);
-        quotaRepository.save(quota);
+        exhaustFreePractices(user.getUserIdx());
 
-        assertThatThrownBy(() -> quotaService.consumePractice(user.getUserIdx()))
+        assertThatThrownBy(() -> quotaService.reservePractice(user.getUserIdx()))
                 .isInstanceOf(QuotaExceededException.class);
     }
 
@@ -230,10 +226,8 @@ class PracticeQuotaServiceTest {
     @DisplayName("보상 quota 예약을 취소하면 보상 횟수가 복구된다")
     void releasesReservedRewardedQuota() {
         User user = saveUser();
-        DailyPracticeQuota quota = DailyPracticeQuota.create(user, LocalDate.of(2026, 6, 29), 5);
-        quota.useFreePractices(5);
-        quota.addRewardedPractices(1);
-        quotaRepository.save(quota);
+        exhaustFreePractices(user.getUserIdx());
+        quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-for-release");
 
         PracticeQuotaService.PracticeQuotaReservation reservation =
                 quotaService.reservePractice(user.getUserIdx());
@@ -249,8 +243,8 @@ class PracticeQuotaServiceTest {
     @DisplayName("광고 보상은 1회를 추가하되 진행 중인 자연 충전 timer를 바꾸지 않는다")
     void grantsOneAdRewardWithoutResettingRefillTimer() {
         User user = saveUser();
-        quotaService.consumePractice(user.getUserIdx());
-        quotaService.consumePractice(user.getUserIdx());
+        completePractice(user.getUserIdx());
+        completePractice(user.getUserIdx());
         Instant originalRefillAt = quotaService.getTodayQuota(user.getUserIdx())
                 .nextRefillAt()
                 .toInstant();
@@ -270,8 +264,8 @@ class PracticeQuotaServiceTest {
     @DisplayName("같은 광고 reward event는 재요청해도 한 번만 지급한다")
     void grantsSameRewardEventOnlyOnce() {
         User user = saveUser();
-        quotaService.consumePractice(user.getUserIdx());
-        quotaService.consumePractice(user.getUserIdx());
+        completePractice(user.getUserIdx());
+        completePractice(user.getUserIdx());
 
         quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-123");
         boolean repeatedCredit = quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-123");
@@ -304,6 +298,19 @@ class PracticeQuotaServiceTest {
                 .email("user@example.com")
                 .name("LingKo User")
                 .build());
+    }
+
+    /** 실제 평가 성공 경계와 같은 예약·확정 순서로 테스트 상태를 만든다. */
+    private PracticeQuotaResponse completePractice(Long userId) {
+        PracticeQuotaService.PracticeQuotaReservation reservation = quotaService.reservePractice(userId);
+        quotaService.confirmPractice(reservation);
+        return quotaService.getTodayQuota(userId);
+    }
+
+    private void exhaustFreePractices(Long userId) {
+        for (int attempt = 0; attempt < PracticeQuotaService.MAX_NATURAL_PRACTICES; attempt++) {
+            completePractice(userId);
+        }
     }
 
     @TestConfiguration

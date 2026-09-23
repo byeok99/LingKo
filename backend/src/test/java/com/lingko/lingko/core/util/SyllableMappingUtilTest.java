@@ -23,15 +23,12 @@ public class SyllableMappingUtilTest {
 
     @Test
     void testJsonLoad() {
-        var mapping = util.getMapping("ㄱ");
-
-        assertThat(mapping).isNotNull();
-        assertThat(mapping.hasMouth() || mapping.hasTongue()).isTrue();
+        assertThat(util.getImageFrames("ㄱ", VideoType.TONGUE)).isNotEmpty();
     }
 
     @Test
-    void getImageUrlReturnsAbsoluteHttpsUrl() {
-        String imageUrl = util.getImageUrl("ㅏ", VideoType.MOUTH);
+    void imageFramesReturnAbsoluteHttpsUrls() {
+        String imageUrl = util.getImageFrames("ㅏ", VideoType.MOUTH).getFirst();
 
         assertThat(imageUrl)
                 .startsWith("https://lingko.s3.ap-northeast-2.amazonaws.com/guides/mouth/")
@@ -39,11 +36,11 @@ public class SyllableMappingUtilTest {
     }
 
     @Test
-    void getImageUrlUsesConfiguredS3BucketAndRegion() {
+    void imageFramesUseConfiguredS3BucketAndRegion() {
         SyllableMappingUtil configuredUtil = new SyllableMappingUtil(awsSettings("custom-bucket", "us-west-2"));
         configuredUtil.loadMapping();
 
-        String imageUrl = configuredUtil.getImageUrl("ㅏ", VideoType.MOUTH);
+        String imageUrl = configuredUtil.getImageFrames("ㅏ", VideoType.MOUTH).getFirst();
 
         assertThat(imageUrl)
                 .startsWith("https://custom-bucket.s3.us-west-2.amazonaws.com/guides/mouth/")
@@ -91,6 +88,48 @@ public class SyllableMappingUtilTest {
                         .singleElement()
                         .asString()
                         .endsWith("vowel-a.png"));
+    }
+
+    @Test
+    void commonSyllablesKeepExpectedMouthAndTongueTransitions() {
+        assertThat(util.createFramePairs("한", VideoType.TONGUE))
+                .singleElement()
+                .satisfies(pair -> {
+                    assertThat(pair.get(0)).contains("vowel-a");
+                    assertThat(pair.get(1)).contains("alveolar-consonants");
+                });
+        assertThat(util.createFramePairs("밥", VideoType.MOUTH))
+                .hasSize(2)
+                .first()
+                .satisfies(pair -> {
+                    assertThat(pair.get(0)).contains("bilabial-consonants");
+                    assertThat(pair.get(1)).contains("vowel-a");
+                });
+        assertThat(util.createFramePairs("국", VideoType.MOUTH))
+                .singleElement()
+                .satisfies(pair -> assertThat(pair)
+                        .singleElement()
+                        .asString()
+                        .endsWith("vowel-u.png"));
+        assertThat(util.createFramePairs("국", VideoType.TONGUE))
+                .hasSize(2)
+                .allSatisfy(pair -> assertThat(pair).hasSize(2));
+    }
+
+    @Test
+    void sibilantOnsetUsesPalatalAllophoneOnlyBeforePalatalVowels() {
+        String plainSibilant = util.createFramePairs("사", VideoType.TONGUE).getFirst().getFirst();
+        String palatalSibilant = util.createFramePairs("시", VideoType.TONGUE).getFirst().getFirst();
+
+        assertThat(plainSibilant).contains("alveolar-fricative");
+        assertThat(palatalSibilant).contains("allophone-s-ss");
+        assertThat(palatalSibilant).isNotEqualTo(plainSibilant);
+    }
+
+    @Test
+    void emptyOrNullInputReturnsNoFramePairs() {
+        assertThat(util.createFramePairs("", VideoType.MOUTH)).isEmpty();
+        assertThat(util.createFramePairs(null, VideoType.TONGUE)).isEmpty();
     }
 
     @Test

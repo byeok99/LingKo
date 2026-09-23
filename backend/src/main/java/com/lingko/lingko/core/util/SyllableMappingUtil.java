@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.core.config.AwsSettings;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -94,7 +93,7 @@ public class SyllableMappingUtil {
                 .toList();
     }
 
-    public SyllableMapping getMapping(String key) {
+    private SyllableMapping getMapping(String key) {
         return mappingTable.getOrDefault(key, EMPTY_MAPPING);
     }
 
@@ -107,11 +106,6 @@ public class SyllableMappingUtil {
         return mapping.frames(type).stream()
                 .map(filename -> String.format("%s/%s/%s", getGuideBaseUrl(), folder, filename))
                 .toList();
-    }
-
-    /** 기존 단일 이미지 호출자는 시퀀스의 첫 프레임을 대표값으로 받는다. */
-    public String getImageUrl(String key, VideoType type) {
-        return getImageFrames(key, type).stream().findFirst().orElse(null);
     }
 
     /** 자모가 놓인 음절 역할과 다음 모음을 이용해 문맥 매핑 key를 결정한다. */
@@ -270,22 +264,13 @@ public class SyllableMappingUtil {
     }
 
     /** JSON의 modality별 프레임 배열을 불변 값으로 보관한다. */
-    @Getter
-    public static final class SyllableMapping {
+    private static final class SyllableMapping {
         private final List<String> mouthFrames;
         private final List<String> tongueFrames;
 
-        public SyllableMapping(List<String> mouthFrames, List<String> tongueFrames) {
+        private SyllableMapping(List<String> mouthFrames, List<String> tongueFrames) {
             this.mouthFrames = List.copyOf(mouthFrames);
             this.tongueFrames = List.copyOf(tongueFrames);
-        }
-
-        public boolean hasMouth() {
-            return !mouthFrames.isEmpty();
-        }
-
-        public boolean hasTongue() {
-            return !tongueFrames.isEmpty();
         }
 
         private List<String> frames(VideoType type) {

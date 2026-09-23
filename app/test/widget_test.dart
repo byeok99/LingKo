@@ -35,7 +35,6 @@ import 'package:lingko_app/services/legal_document_launcher.dart';
 import 'package:lingko_app/services/sentence_speech_service.dart';
 import 'package:lingko_app/services/rewarded_ad_service.dart';
 import 'package:lingko_app/widgets/guide_sheet.dart';
-import 'package:lingko_app/widgets/result_tile.dart';
 import 'package:lingko_app/widgets/sentence_card.dart';
 import 'package:lingko_app/widgets/shared_widgets.dart';
 
@@ -49,6 +48,21 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
   await tester.tap(finder);
   await tester.pumpAndSettle();
+}
+
+/// 실제 Result 화면과 같은 공개 진입 함수로 guide sheet 테스트를 연다.
+Widget _guideSheetLauncher(CharacterResult character) {
+  return MaterialApp(
+    home: Builder(
+      builder:
+          (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showGuideSheet(context, character),
+              child: const Text('Open guide'),
+            ),
+          ),
+    ),
+  );
 }
 
 /// 취약 음절과 저장 문장 조회를 결정적으로 대체한다.
@@ -3037,12 +3051,9 @@ void main() {
       kind: 'TONGUE',
     );
 
-    await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: ResultTile(result: character))),
-    );
+    await tester.pumpWidget(_guideSheetLauncher(character));
 
-    expect(find.text('55'), findsOneWidget);
-    await tester.tap(find.byType(ResultTile));
+    await tester.tap(find.text('Open guide'));
     await tester.pumpAndSettle();
 
     // 가이드 URL이 없으면 라벨 붙은 도해 대신 로컬 대체 도해만 그린다.
@@ -3065,10 +3076,8 @@ void main() {
       kind: 'TONGUE',
     );
 
-    await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: ResultTile(result: character))),
-    );
-    await tester.tap(find.byType(ResultTile));
+    await tester.pumpWidget(_guideSheetLauncher(character));
+    await tester.tap(find.text('Open guide'));
     await tester.pumpAndSettle();
 
     // 자동 생성 문구가 아닌 실제 조음 힌트는 그대로 노출되어야 한다.

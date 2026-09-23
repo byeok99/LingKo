@@ -94,8 +94,15 @@ class PracticeQuotaConcurrencyTest {
     @DisplayName("남은 quota 1회에 동시 예약 10개가 들어오면 정확히 1개만 성공한다")
     void allowsOnlyOneReservationWhenOnePracticeRemains() throws Exception {
         User user = saveUser("reservation-user-" + System.nanoTime());
-        DailyPracticeQuota quota = DailyPracticeQuota.create(user, QUOTA_DATE, 5);
-        quota.useFreePractices(4);
+        DailyPracticeQuota quota = DailyPracticeQuota.builder()
+                .user(user)
+                .quotaDate(QUOTA_DATE)
+                .freeLimit(5)
+                .freeUsed(4)
+                .rewardedAvailable(0)
+                .freeReserved(0)
+                .rewardedReserved(0)
+                .build();
         quotaRepository.saveAndFlush(quota);
 
         List<ReservationOutcome> outcomes = runConcurrently(() -> {
