@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  flutter-test:
+    name: Flutter test
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
