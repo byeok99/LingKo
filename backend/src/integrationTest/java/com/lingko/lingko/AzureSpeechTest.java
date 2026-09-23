@@ -1,14 +1,17 @@
 package com.lingko.lingko;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.core.config.AzureSettings;
 import com.lingko.lingko.core.domain.evaluation.dto.AssessmentResult;
 import com.lingko.lingko.core.domain.evaluation.service.SpeechEvaluator;
+import com.lingko.lingko.infra.pronunciation.AzurePronunciationResultParser;
 import com.lingko.lingko.infra.pronunciation.AzureSpeechEvaluator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -48,5 +51,11 @@ public class AzureSpeechTest {
     @EnableConfigurationProperties(AzureSettings.class)
     @Import(AzureSpeechEvaluator.class)
     static class AzureEvaluatorTestConfig {
+
+        @Bean
+        AzurePronunciationResultParser azurePronunciationResultParser() {
+            // 전체 Boot context 대신 실제 Azure adapter에 필요한 JSON 경계만 명시적으로 구성한다.
+            return new AzurePronunciationResultParser(new ObjectMapper());
+        }
     }
 }
