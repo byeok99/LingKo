@@ -23,19 +23,31 @@ flutter test
 
 `develop` 대상 Pull Request를 열거나 새 commit을 push하면 GitHub Actions의 `Backend CI`가 실행됩니다. Java 21 환경에서 단위 test, 통합 test, 합산 line coverage 80% 기준과 `bootJar` 생성을 순서대로 검증합니다.
 
-CI 성공은 운영 배포를 의미하지 않습니다. 현재 workflow는 검증만 수행하며, 외부 서비스 자격증명과 비용이 필요한 `externalIntegrationTest`는 실행하지 않습니다. PR 병합을 CI 성공에 의존시키려면 저장소 branch protection에서 `Backend CI / test`를 required status check로 등록해야 합니다.
+CI 성공은 운영 배포를 의미하지 않습니다. 현재 workflow는 검증만 수행하며, 외부 서비스 자격증명과 비용이 필요한 `externalIntegrationTest`는 실행하지 않습니다. `Backend test`는 `develop` ruleset의 required status check입니다.
 
 ## Flutter CI
 
 `develop` 대상 Pull Request에는 `Flutter CI`도 실행됩니다. 프로젝트 생성 환경과 같은 Flutter 3.29.1을 설치하고 `pubspec.lock`을 강제한 의존성 설치, 정적 분석, 전체 test와 line coverage 80% 기준을 검증합니다.
 
-이 workflow는 Linux에서 실행하는 Dart·Flutter test gate입니다. iOS 서명 build, App Store 배포, 실제 기기 권한과 외부 API 연결은 검증하지 않습니다. 첫 원격 실행이 안정화되면 `Flutter CI / test`도 branch protection의 required status check로 등록합니다.
+이 workflow는 Linux에서 실행하는 Dart·Flutter test gate입니다. iOS 서명 build, App Store 배포, 실제 기기 권한과 외부 API 연결은 검증하지 않습니다. `Flutter test`는 `develop` ruleset의 required status check입니다.
 
 ## Docker CI
 
 `develop` 대상 Pull Request에는 `Docker CI`도 실행됩니다. placeholder DB 비밀번호와 추적된 `.env.example`로 Compose 설정을 검증하고, Backend Dockerfile로 Registry에 push하지 않는 임시 이미지를 빌드합니다. API, evaluation worker와 guide prewarm은 같은 Dockerfile을 사용하므로 한 번의 image build로 공통 runtime을 검증합니다.
 
-빌드가 끝나면 image 안의 Spring Boot JAR, Java와 FFmpeg 실행 가능 여부를 확인합니다. 이 검증은 컨테이너 기동, MySQL 연결, 운영 Secret, Registry 업로드와 EC2 배포를 포함하지 않습니다. 첫 원격 실행이 안정화되면 `Docker CI / build`를 branch protection의 required status check로 등록합니다.
+빌드가 끝나면 image 안의 Spring Boot JAR, Java와 FFmpeg 실행 가능 여부를 확인합니다. 이 검증은 컨테이너 기동, MySQL 연결, 운영 Secret, Registry 업로드와 EC2 배포를 포함하지 않습니다. `Docker build`는 `develop` ruleset의 required status check입니다.
+
+## develop 병합 보호
+
+`protect-develop` ruleset은 `develop` 변경에 Pull Request를 요구하고 `Backend test`, `Flutter test`, `Docker build`가 모두 성공해야 병합을 허용합니다. 세 이름은 GitHub required status check가 workflow가 아닌 job 이름을 사용한다는 계약에 맞춰 고유하게 유지합니다.
+
+필수 check는 최신 `develop` 기준으로 다시 검증하며 GitHub Actions가 생성한 결과만 인정합니다. ruleset에는 bypass 사용자를 두지 않고 branch 삭제와 force push를 차단합니다. 개인 프로젝트이므로 다른 사용자의 승인은 요구하지 않지만, 작성자 자신도 PR과 CI 검증은 우회할 수 없습니다. 병합 이후 수동으로 실행하는 `Backend CD`는 required check에 포함하지 않습니다.
+
+Required check 이름 회귀 검증:
+
+```bash
+./scripts/tests/ci-required-checks-test.sh
+```
 
 ## Backend CD
 

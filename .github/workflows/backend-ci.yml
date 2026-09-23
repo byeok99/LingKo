@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  backend-test:
+    name: Backend test
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
