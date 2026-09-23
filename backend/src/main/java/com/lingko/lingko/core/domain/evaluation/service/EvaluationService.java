@@ -15,7 +15,6 @@ import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
 import com.lingko.lingko.core.util.SyllableMappingUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +23,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Evaluation 업무 규칙을 조율한다.
@@ -34,18 +32,11 @@ import java.util.Locale;
 @Service
 public class EvaluationService {
 
-    public static final long MAX_AUDIO_BYTES = 10L * 1024 * 1024;
     private static final int MIN_WAV_HEADER_BYTES = 44;
     private static final int WEAK_SCORE_THRESHOLD = 80;
 
     private final GuideMediaResolver guideMediaResolver;
     private final SpeechEvaluator speechEvaluator;
-
-    public enum AudioValidationStatus {
-        VALID,
-        UNSUPPORTED_TYPE,
-        INVALID_WAV
-    }
 
     public EvaluationService(SyllableMappingUtil syllableMappingUtil) {
         this(
@@ -199,32 +190,6 @@ public class EvaluationService {
         return "NONE";
     }
 
-    public AudioValidationStatus validateAudio(MultipartFile audio) {
-        String filename = audio.getOriginalFilename();
-        String contentType = audio.getContentType();
-        boolean wavName = filename != null && filename.toLowerCase(Locale.ROOT).endsWith(".wav");
-        boolean wavType = contentType == null
-                || contentType.equalsIgnoreCase("audio/wav")
-                || contentType.equalsIgnoreCase("audio/x-wav")
-                || contentType.equalsIgnoreCase("audio/vnd.wave")
-                || contentType.equalsIgnoreCase("application/octet-stream");
-
-        // 확장자와 MIME은 1차 filter일 뿐이며 아래에서 RIFF/PCM 구조를 다시 검증한다.
-        if (!wavName || !wavType || audio.getSize() < MIN_WAV_HEADER_BYTES) {
-            return !wavName || !wavType
-                    ? AudioValidationStatus.UNSUPPORTED_TYPE
-                    : AudioValidationStatus.INVALID_WAV;
-        }
-
-        try (InputStream input = audio.getInputStream()) {
-            return hasValidPcmWavHeader(input, audio.getSize())
-                    ? AudioValidationStatus.VALID
-                    : AudioValidationStatus.INVALID_WAV;
-        } catch (IOException exception) {
-            return AudioValidationStatus.INVALID_WAV;
-        }
-    }
-
     private boolean hasValidPcmWavHeader(InputStream input, long fileSize) throws IOException {
         // 유효한 WAV에도 metadata chunk가 있을 수 있어 고정 44-byte header를 가정하지 않고 chunk를 parsing한다.
         byte[] riffHeader = input.readNBytes(12);
@@ -334,33 +299,6 @@ public class EvaluationService {
 
     private int littleEndianUnsignedShort(byte[] bytes, int offset) {
         return (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
-    }
-
-    public PracticeResultResponse evaluatePronunciation(MultipartFile audio, String referenceText) {
-        Path tempFile = null;
-
-        try {
-            // 공급자 API가 파일 경로를 요구하므로 upload byte를 이 호출 동안만 임시 파일로 저장한다.
-            tempFile = Files.createTempFile("lingko-evaluation-", ".wav");
-            audio.transferTo(tempFile);
-
-            AssessmentResult assessmentResult = requireSpeechEvaluator()
-                    .evaluate(tempFile.toString(), referenceText);
-
-            return toPracticeResult(referenceText, assessmentResult);
-        } catch (IOException exception) {
-            throw new VideoGenerationException("Failed to store uploaded audio");
-        } catch (RuntimeException exception) {
-            throw new VideoGenerationException("Speech evaluation failed", exception);
-        } finally {
-            if (tempFile != null) {
-                try {
-                    Files.deleteIfExists(tempFile);
-                } catch (IOException ignored) {
-                    // 임시 파일 정리 실패가 정상 평가 결과나 원래 예외를 덮어쓰지 않게 한다.
-                }
-            }
-        }
     }
 
     /**

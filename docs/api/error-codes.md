@@ -1,6 +1,6 @@
 # API 오류 코드
 
-AI 평가 업로드 발급·작업 생성·구버전 평가에서 현행 별도 허용이 없으면
+AI 평가 업로드 발급·작업 생성에서 현행 별도 허용이 없으면
 `403 AI_CONSENT_REQUIRED`를 반환합니다. 자동 재전송하지 말고 AI 고지 화면으로 안내합니다.
 Worker 철회 확인 시 작업의 `errorCode`도 같은 값이며 terminal 실패와 쿼터 복구를 수행합니다.
 완료된 결과 열람은 별도 AI 허용을 요구하지 않습니다.
@@ -30,9 +30,6 @@ Worker 철회 확인 시 작업의 `errorCode`도 같은 값이며 terminal 실�
 | 404 | `AD_REWARD_SESSION_NOT_FOUND` | 보상 token이 없거나 다른 사용자 소유 | 새 광고 보상 session 생성 |
 | 410 | 응답 본문 없음 | 폐기된 client 직접 광고 지급 endpoint 호출 | 앱을 SSV session 계약으로 업데이트 |
 | 409 | `IDEMPOTENCY_CONFLICT` | 같은 Idempotency Key를 다른 평가 요청에 재사용 | 새 키로 새 작업 생성 |
-| 413 | `AUDIO_TOO_LARGE` | 업로드 크기 10MiB 초과 | 더 짧게 재녹음 |
-| 415 | `UNSUPPORTED_MEDIA_TYPE` | WAV가 아닌 파일 | WAV 재녹음 |
-| 415 | `INVALID_WAV` | PCM·채널·비트·헤더 불일치 | 녹음 서비스 설정 확인 |
 | 429 | `QUOTA_EXCEEDED` | 무료·보상 횟수 모두 소진 | 리셋 시각 또는 보상 흐름 표시 |
 | 429 | `GUIDE_JOB_RATE_LIMITED` | 내부 호출자의 분당 생성 요청 한도 초과 | `Retry-After` 이후 재시도 |
 | 429 | `GUIDE_JOB_CAPACITY_EXCEEDED` | 허용된 동시 가이드 생성 슬롯 사용 중 | `Retry-After` 이후 상태 확인·재시도 |

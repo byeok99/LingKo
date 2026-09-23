@@ -2,6 +2,7 @@ package com.lingko.lingko.infra.storage;
 
 import com.lingko.lingko.core.config.AwsSettings;
 import com.lingko.lingko.core.config.EvaluationJobSettings;
+import com.lingko.lingko.core.domain.evaluation.service.EvaluationAudioStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -85,6 +86,24 @@ class S3EvaluationAudioStorageTest {
         ))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Failed to validate uploaded audio");
+    }
+
+    @Test
+    @DisplayName("현재 직접 업로드 경계는 WAV 확장자·MIME·크기를 모두 검증한다")
+    void rejectsInvalidDirectUploadMetadata() {
+        // multipart Controller가 사라져도 파일 형식과 크기 정책은 presigned URL 발급 전에 유지되어야 한다.
+        assertThatThrownBy(() -> storage.prepareUpload(7L, "recording.mp3", "audio/wav", 44))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> storage.prepareUpload(7L, "recording.wav", "audio/mpeg", 44))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> storage.prepareUpload(7L, "recording.wav", "audio/wav", 43))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> storage.prepareUpload(
+                7L,
+                "recording.wav",
+                "audio/wav",
+                EvaluationAudioStorage.MAX_AUDIO_BYTES + 1
+        )).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

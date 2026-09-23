@@ -79,7 +79,7 @@ AI 전송 허용은 일반 법무 확인과 별개이며 기존 회원에게 자
 취급합니다. 같은 선택 재시도는 멱등 처리하고 철회·재허용은 새 이력으로 기록합니다.
 앱이 지원하지 않는 버전은 허용 버튼을 표시하지 않습니다.
 
-평가 업로드 발급·작업 생성·구버전 multipart 평가에는 현행 허용이 필요합니다.
+평가 업로드 발급·작업 생성에는 현행 허용이 필요합니다.
 없으면 `403 AI_CONSENT_REQUIRED`이며 쿼터를 예약하지 않습니다. Worker는 생성 당시
 동의 ID와 현재 허용을 확인하며 철회된 작업은 `FAILED`, `errorCode=AI_CONSENT_REQUIRED`로
 종료하고 예약을 복구합니다. 이미 시작된 전송을 회수하는 API는 아닙니다.
@@ -363,7 +363,7 @@ Authorization: Bearer <access-token>
 
 클라이언트는 위 목록에 없는 값을 받으면 `UNAVAILABLE`로 처리해야 합니다. 서버가 상태값을 추가하더라도 배포되지 않은 구버전 앱이 신뢰할 수 없는 점수를 노출하지 않게 하기 위한 규칙입니다.
 
-기존 `POST /api/evaluations` multipart endpoint는 기본 비활성화되며 임시 호환이 필요할 때만 `EVALUATION_LEGACY_MULTIPART_ENABLED=true`로 활성화합니다.
+음성 평가는 `POST /api/evaluations/uploads`로 발급한 presigned URL에 직접 업로드한 뒤 `POST /api/evaluations/jobs`로 작업을 생성하는 비동기 흐름만 지원합니다. Backend로 음성 파일을 직접 보내는 multipart endpoint는 제공하지 않습니다.
 
 ## 사용자 연습 기록
 

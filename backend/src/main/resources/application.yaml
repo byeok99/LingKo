@@ -1,10 +1,6 @@
 spring:
   application:
     name: lingko
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 11MB
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:lingko}
     username: ${DB_USER:lingko}
@@ -71,8 +67,6 @@ aws:
     secret-key: ${AWS_SECRET_KEY:}
 
 evaluation:
-  # 신규 앱은 S3 직접 업로드와 DB Worker를 사용하며 multipart 평가 경로는 기본 비활성화한다.
-  legacy-multipart-enabled: ${EVALUATION_LEGACY_MULTIPART_ENABLED:false}
   upload-url-expire-minutes: ${EVALUATION_UPLOAD_URL_EXPIRE_MINUTES:10}
   worker:
     enabled: ${EVALUATION_WORKER_ENABLED:true}

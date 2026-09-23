@@ -8,6 +8,9 @@ import java.time.Instant;
  */
 public interface EvaluationAudioStorage {
 
+    /** 모바일 녹음 업로드와 Worker 다운로드가 함께 적용하는 최대 음성 크기다. */
+    long MAX_AUDIO_BYTES = 10L * 1024 * 1024;
+
     UploadTicket prepareUpload(Long userId, String fileName, String contentType, long contentLength);
 
     void validateUploaded(Long userId, String objectKey);

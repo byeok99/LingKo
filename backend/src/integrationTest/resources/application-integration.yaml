@@ -39,7 +39,6 @@ aws:
     secret-key: ${AWS_SECRET_KEY:integration-test-secret-key}
 
 evaluation:
-  legacy-multipart-enabled: true
   worker:
     enabled: false
 

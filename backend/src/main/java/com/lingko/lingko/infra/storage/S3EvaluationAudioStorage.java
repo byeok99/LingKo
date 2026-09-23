@@ -3,7 +3,6 @@ package com.lingko.lingko.infra.storage;
 import com.lingko.lingko.core.config.AwsSettings;
 import com.lingko.lingko.core.config.EvaluationJobSettings;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationAudioStorage;
-import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -96,7 +95,7 @@ public class S3EvaluationAudioStorage implements EvaluationAudioStorage {
             throw new IllegalStateException("Failed to validate uploaded audio", exception);
         }
         if (object.contentLength() < MIN_WAV_BYTES
-                || object.contentLength() > EvaluationService.MAX_AUDIO_BYTES
+                || object.contentLength() > EvaluationAudioStorage.MAX_AUDIO_BYTES
                 || !CONTENT_TYPE.equalsIgnoreCase(object.contentType())) {
             throw new IllegalArgumentException("Uploaded audio metadata is invalid");
         }
@@ -229,7 +228,7 @@ public class S3EvaluationAudioStorage implements EvaluationAudioStorage {
                 || !fileName.toLowerCase(Locale.ROOT).endsWith(".wav")
                 || !CONTENT_TYPE.equalsIgnoreCase(contentType)
                 || contentLength < MIN_WAV_BYTES
-                || contentLength > EvaluationService.MAX_AUDIO_BYTES) {
+                || contentLength > EvaluationAudioStorage.MAX_AUDIO_BYTES) {
             throw new IllegalArgumentException("Only WAV audio up to 10 MiB can be uploaded");
         }
     }

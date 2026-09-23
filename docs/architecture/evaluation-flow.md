@@ -151,7 +151,7 @@ DB의 음절·유형별 저장 MP4는 현재 매핑 버전(`phonology-v3`)과 �
 |---|---|
 | 업로드 metadata·소유권 오류 | 400 `INVALID_REQUEST` |
 | 기준 문장 누락 | 400 `VALIDATION_FAILED` |
-| 파일 크기 초과 | 413 `AUDIO_TOO_LARGE` |
+| 업로드 발급 요청의 크기·형식 제약 위반 | 400 `VALIDATION_FAILED` 또는 `INVALID_REQUEST` |
 | 추천 문장 없음 | 404 `SENTENCE_NOT_FOUND` |
 | 작업 없음 또는 다른 사용자 소유 | 404 `EVALUATION_JOB_NOT_FOUND` |
 | 같은 Idempotency Key의 다른 요청 | 409 `IDEMPOTENCY_CONFLICT` |
