@@ -1,0 +1,137 @@
+name: CloudWatch Agent
+
+on:
+  # 인프라 변경은 develop 병합과 분리하고 production 승인자가 시작한 실행만 허용한다.
+  workflow_dispatch:
+    inputs:
+      confirm_production:
+        description: 운영 EC2에 CloudWatch Agent를 설치하거나 갱신합니다.
+        required: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: cloudwatch-agent-production
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+      AWS_EC2_INSTANCE_ID: ${{ vars.AWS_EC2_INSTANCE_ID }}
+      CONFIRM_PRODUCTION: ${{ inputs.confirm_production }}
+
+    steps:
+      - name: 운영 적용 입력 검증
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$CONFIRM_PRODUCTION" == "true" ]]
+          [[ "$GITHUB_REF_NAME" == "develop" ]]
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$AWS_REGION" == "us-east-1" ]]
+          [[ "$AWS_DEPLOY_ROLE_ARN" =~ ^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+$ ]]
+          [[ "$AWS_EC2_INSTANCE_ID" =~ ^i-([0-9a-f]{8}|[0-9a-f]{17})$ ]]
+
+      # 장기 Access Key 없이 production Environment에 한정된 OIDC token을 사용한다.
+      - name: AWS 단기 자격 증명 발급
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: LingKo-CWAgent-${{ github.run_id }}
+          role-duration-seconds: 1800
+          mask-aws-account-id: true
+
+      - name: SSM 대상 상태 확인
+        shell: bash
+        run: |
+          set -euo pipefail
+          ping_status=$(aws ssm describe-instance-information \
+            --filters "Key=InstanceIds,Values=$AWS_EC2_INSTANCE_ID" \
+            --query 'InstanceInformationList[0].PingStatus' \
+            --output text)
+          [[ "$ping_status" == "Online" ]]
+
+      - name: CloudWatch Agent 적용 명령 전송
+        id: apply
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          parameters=$(jq -cn --arg sha "$GITHUB_SHA" '{
+            commands: [
+              ("sudo -u ubuntu -H bash -lc " + (
+                [
+                  "set -euo pipefail",
+                  "cd /home/ubuntu/LingKo",
+                  "test -z \"$(git status --porcelain --untracked-files=no)\"",
+                  "git fetch --prune origin develop",
+                  ("test \"$(git rev-parse origin/develop)\" = \"" + $sha + "\""),
+                  "git switch develop",
+                  ("git merge --ff-only \"" + $sha + "\"")
+                ] | join("; ") | @sh
+              )),
+              "sudo /home/ubuntu/LingKo/scripts/install-cloudwatch-agent.sh",
+              "sudo systemctl restart amazon-cloudwatch-agent.service",
+              "sleep 15",
+              "sudo systemctl is-active --quiet amazon-cloudwatch-agent.service",
+              "test \"$(sudo systemctl is-enabled amazon-cloudwatch-agent.service)\" = enabled",
+              "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a status",
+              "sudo journalctl -u amazon-cloudwatch-agent.service --since '3 minutes ago' --no-pager"
+            ],
+            executionTimeout: ["900"]
+          }')
+
+          command_id=$(aws ssm send-command \
+            --instance-ids "$AWS_EC2_INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --document-version "\$DEFAULT" \
+            --comment "LingKo CloudWatch Agent $GITHUB_SHA" \
+            --timeout-seconds 120 \
+            --max-concurrency 1 \
+            --max-errors 0 \
+            --parameters "$parameters" \
+            --query 'Command.CommandId' \
+            --output text)
+
+          [[ "$command_id" =~ ^[0-9a-f-]{36}$ ]]
+          echo "command_id=$command_id" >>"$GITHUB_OUTPUT"
+
+      - name: 적용 결과 확인
+        shell: bash
+        env:
+          COMMAND_ID: ${{ steps.apply.outputs.command_id }}
+        run: |
+          set -euo pipefail
+          result=''
+          status=Pending
+
+          for _ in $(seq 1 90); do
+            result=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$AWS_EC2_INSTANCE_ID" \
+              --output json 2>/dev/null || true)
+
+            if [[ -n "$result" ]]; then
+              status=$(jq -r '.Status // "Pending"' <<<"$result")
+              case "$status" in
+                Success | Failed | TimedOut | Cancelled | Cancelling) break ;;
+              esac
+            fi
+            sleep 10
+          done
+
+          if [[ -n "$result" ]]; then
+            jq -r '.StandardOutputContent // empty' <<<"$result"
+            jq -r '.StandardErrorContent // empty' <<<"$result" >&2
+          fi
+
+          [[ "$status" == "Success" ]]
