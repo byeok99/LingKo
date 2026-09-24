@@ -75,6 +75,47 @@ EC2 명령은 원격 `develop`이 workflow의 정확한 commit인지, 서버의 
 
 이 테스트는 AWS나 운영 Docker를 호출하지 않고 mock command로 잘못된 SHA·dirty checkout 차단, 정확한 image tag 배포와 health check 실패 rollback을 확인합니다. 실제 OIDC·SSM·운영 네트워크는 첫 production 실행에서 별도로 검증합니다.
 
+## CloudWatch Agent OS 지표
+
+운영 EC2는 Instance Profile `LingKoEc2SsmRole`의 임시 자격 증명으로 CloudWatch에 지표를 전송합니다. 장기 AWS Access Key를 Agent 설정에 저장하지 않습니다. 저장소의 `backend/aws/cloudwatch-agent.json`은 60초 간격으로 `CWAgent` namespace에 다음 지표만 전송합니다.
+
+- `mem_used_percent`
+- 루트(`/`)의 `disk_used_percent`
+- 루트(`/`)의 `disk_inodes_free`, `disk_inodes_total`
+
+모든 지표에는 `InstanceId`만 공통 dimension으로 붙이고 `drop_device`로 재부팅 시 달라질 수 있는 device dimension을 제거합니다. Docker overlay와 메모리 filesystem은 수집하지 않습니다.
+
+운영 적용은 `develop` 병합 후 `Actions` → `CloudWatch Agent` → `Run workflow`에서 `develop`을 선택하고 확인 항목을 체크해 시작합니다. 이 workflow는 Backend CD와 같은 production Environment·OIDC·SSM 경로를 사용하며, 정확한 `develop` commit만 EC2에 fast-forward한 뒤 설치합니다. 병합만으로 자동 실행되지는 않습니다.
+
+EC2에서 직접 복구해야 할 때만 저장소의 최신 `develop`을 받은 뒤 다음 명령을 사용합니다.
+
+```bash
+cd /home/ubuntu/LingKo
+sudo ./scripts/install-cloudwatch-agent.sh
+```
+
+설치 스크립트는 Ubuntu `amd64`·`arm64`만 허용하며 AWS 공식 GPG key fingerprint와 package signature를 검증한 후 설치합니다. 설정 schema 검증, service 시작, 부팅 시 자동 시작까지 한 번에 수행합니다. workflow는 설치 후 service를 한 번 더 재시작하고 active·enabled 상태와 최근 journal을 SSM 결과로 확인합니다.
+
+로컬 회귀 검증:
+
+```bash
+./scripts/tests/cloudwatch-agent-test.sh
+```
+
+적용 후에는 service와 Agent 로그를 확인합니다.
+
+```bash
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a status
+sudo systemctl is-enabled amazon-cloudwatch-agent.service
+sudo journalctl -u amazon-cloudwatch-agent --since '10 minutes ago' --no-pager
+```
+
+CloudWatch Console의 `Metrics` → `CWAgent`에서 현재 `InstanceId`의 네 지표가 5분 이상 연속 수집되는지 확인합니다. 중단해야 하면 먼저 Agent를 멈추고, 다시 적용할 때 동일 설치 스크립트를 실행합니다.
+
+```bash
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop
+```
+
 ## 테스트 경계
 
 - 단위 테스트: 입력 검증, 변환 규칙, 응답 파싱과 서비스 상태 전이

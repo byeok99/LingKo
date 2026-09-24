@@ -32,6 +32,9 @@ jobs:
       - name: 운영 배포 정책 회귀 테스트
         run: ./scripts/tests/backend-cd-policy-test.sh
 
+      - name: CloudWatch Agent 운영 정책 회귀 테스트
+        run: ./scripts/tests/cloudwatch-agent-test.sh
+
       - name: Required check 이름 회귀 테스트
         run: ./scripts/tests/ci-required-checks-test.sh
 
