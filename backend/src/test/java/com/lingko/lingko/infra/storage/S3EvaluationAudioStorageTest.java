@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -35,7 +37,7 @@ import static org.mockito.Mockito.when;
 /**
  * S3 업로드 검증 실패가 내부 오류가 아니라 클라이언트 입력 오류로 정규화되는지 검증한다.
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class S3EvaluationAudioStorageTest {
 
     @Mock
@@ -191,5 +193,17 @@ class S3EvaluationAudioStorageTest {
         assertThatThrownBy(() -> storage.deleteAllForUser(7L))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Failed to delete account audio");
+    }
+
+    @Test
+    @DisplayName("S3 삭제 실패 로그에는 사용자별 음성 object key를 남기지 않는다")
+    void omitsAudioObjectKeyFromOperationalLogs(CapturedOutput output) {
+        String objectKey = "evaluation-audio/7/private-recording.wav";
+        when(s3Client.deleteObject(any(software.amazon.awssdk.services.s3.model.DeleteObjectRequest.class)))
+                .thenThrow(S3Exception.builder().statusCode(503).message("Unavailable").build());
+
+        storage.delete(objectKey);
+
+        assertThat(output).doesNotContain(objectKey);
     }
 }

@@ -1,6 +1,6 @@
 # LingKo Privacy Policy
 
-- Effective date and last updated: 2026-09-12
+- Effective date and last updated: 2026-09-24
 - Operator and privacy contact: LEE SANG BYEOK (이상벽), maplebyeok@gmail.com
 
 This policy explains how LingKo collects, uses, shares, retains and deletes information. LingKo is operated by an individual. Contact the address above for privacy questions and requests.
@@ -15,7 +15,7 @@ This policy explains how LingKo collects, uses, shares, retains and deletes info
 | Assessment results, recognized speech, overall and available word-level scores, weak-sound information | Learning feedback and history. A syllable may have no individual score |
 | Session records, hashed refresh tokens, quota and reward records | Secure sessions, usage limits and reward verification |
 | Terms/privacy acknowledgement, optional marketing choice, and separate AI permission/withdrawal records including notice version and time | Recording choices and enforcing AI sharing permission |
-| Operational request/error information, such as request times, IP addresses and technical diagnostics | Security, incident investigation and service reliability |
+| Operational request/error information, such as request times, IP addresses, internal job identifiers and technical diagnostics | Security, incident investigation and service reliability |
 | Information you send to our contact address | Responding to enquiries and privacy requests |
 
 We do not use recordings to identify a person, create a voiceprint or train our own AI models. Do not include sensitive information, other people's voices or personal details in recordings or custom sentences.
@@ -44,7 +44,14 @@ Google LLC and Apple Inc. handle their own account services under their privacy 
 
 We require any processor receiving personal data to provide the **same or an equal level of protection** as this Policy: processing limited to the service purpose, appropriate confidentiality and security, restricted access, and deletion/retention safeguards. Our use of cloud processors is subject to their applicable data-processing and service terms, including the [Microsoft Products and Services DPA](https://www.microsoft.com/licensing/docs/view/Microsoft-Products-and-Services-Data-Protection-Addendum-DPA) and [AWS Data Processing Addendum](https://aws.amazon.com/compliance/data-processing-addendum/). A new recipient or material change to AI data or purposes requires an updated notice and renewed permission before sharing.
 
-The operator is in South Korea. AWS storage and Azure Speech are configured for Seoul (ap-northeast-2) and Korea Central respectively. Replicate and Google are US-based; provider operations may involve other countries under their service terms. Transmission occurs over HTTPS when you use the corresponding feature. You may decline AI transmission, control advertising choices, or contact us about cross-border processing. Declining AI processing prevents assessment but not browsing or guides.
+The operator is in South Korea. AWS processing locations differ by service:
+
+- AWS S3 storage for assessment audio and shared guide assets is in Seoul (ap-northeast-2).
+- The API server, MySQL data attached to the same EC2 host, and CloudWatch operational logs for the API and worker are processed and stored in US East (N. Virginia, us-east-1).
+
+The US AWS environment processes the account identifiers and session data, saved sentences, assessment history, usage/consent records and operational information described in Section 1 as needed to provide the service. Data is transferred over HTTPS when you register, sign in or use a feature. Account and assessment data follows the periods in Section 4; CloudWatch copies of operational logs are retained for 14 days after ingestion. The recipient is Amazon Web Services, Inc.; see [AWS Privacy Questions](https://aws.amazon.com/privacy/questions/). This processing provides the requested account and assessment service and supports security and incident response. You may refuse by not creating an account or by requesting account deletion, but authenticated saving and assessment features cannot then be provided.
+
+Azure Speech is configured for Korea Central. Replicate and Google are US-based; provider operations may involve other countries under their service terms. Transmission occurs over HTTPS when you use the corresponding feature. You may decline AI transmission, control advertising choices, or contact us about cross-border processing. Declining AI processing prevents assessment but not browsing or guides.
 
 ## 4. Retention and deletion
 
@@ -54,7 +61,7 @@ The operator is in South Korea. AWS storage and Azure Speech are configured for 
 | Local recording | Kept temporarily on the device for recording/retry; deleted after successful assessment or when the recording is discarded. Declining sharing does not upload it |
 | Account, saved sentences, assessment history, quota and consent records | Retained to provide the account and evidence choices until account deletion, subject to any applicable legal preservation requirement. There is no automatic dormant-account deletion schedule |
 | Completed/failed evaluation job metadata | Normally cleaned up after seven days; this is separate from learning history |
-| Operational logs and support correspondence | Kept only as needed for security, incident handling and resolving the enquiry, then deleted; contact us for an applicable retention request |
+| Operational logs and support correspondence | CloudWatch copies of API and worker logs expire 14 days after ingestion. Other operational logs and support correspondence are kept only as needed for security, incident handling and resolving the enquiry, then deleted; contact us for an applicable retention request |
 | Ad-provider records | Governed by Google's retention policies; LingKo does not separately store an advertising identifier |
 
 Account deletion first removes your stored audio objects, then deletes related sessions, jobs, results, quota, saved sentences, consent records and account data. If storage deletion fails, the app reports failure and lets you retry instead of claiming completion. Shared guide assets do not identify you and are not deleted with an account.
@@ -80,6 +87,8 @@ Additional rights depend on your jurisdiction. Korean users may also contact the
 Scores are automated language-learning feedback, not a medical assessment or a decision about eligibility for employment or services. They may be inaccurate. Contact us with concerns about a result.
 
 Material policy changes are communicated through the app or an appropriate service notice. Changes to AI recipients, data or purpose require renewed permission before transmission.
+
+Revision: 2026-09-24 — Disclosed the actual AWS processing regions, the data, purpose, retention and refusal path for US operations, set out the 14-day CloudWatch retention, and minimized direct identifiers in operational logs.
 
 Revision: 2026-09-12 — Separate AI permission, named recipients and transfer details, withdrawal, and retention corrections.
 
