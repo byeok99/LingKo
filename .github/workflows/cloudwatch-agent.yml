@@ -29,6 +29,9 @@ jobs:
       CONFIRM_PRODUCTION: ${{ inputs.confirm_production }}
 
     steps:
+      - name: 코드 내려받기
+        uses: actions/checkout@v4
+
       - name: 운영 적용 입력 검증
         shell: bash
         run: |
@@ -66,29 +69,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          parameters=$(jq -cn --arg sha "$GITHUB_SHA" '{
-            commands: [
-              ("sudo -u ubuntu -H bash -lc " + (
-                [
-                  "set -euo pipefail",
-                  "cd /home/ubuntu/LingKo",
-                  "test -z \"$(git status --porcelain --untracked-files=no)\"",
-                  "git fetch --prune origin develop",
-                  ("test \"$(git rev-parse origin/develop)\" = \"" + $sha + "\""),
-                  "git switch develop",
-                  ("git merge --ff-only \"" + $sha + "\"")
-                ] | join("; ") | @sh
-              )),
-              "sudo /home/ubuntu/LingKo/scripts/install-cloudwatch-agent.sh",
-              "sudo systemctl restart amazon-cloudwatch-agent.service",
-              "sleep 15",
-              "sudo systemctl is-active --quiet amazon-cloudwatch-agent.service",
-              "test \"$(sudo systemctl is-enabled amazon-cloudwatch-agent.service)\" = enabled",
-              "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a status",
-              "sudo journalctl -u amazon-cloudwatch-agent.service --since '3 minutes ago' --no-pager"
-            ],
-            executionTimeout: ["900"]
-          }')
+          parameters=$(./scripts/build-cloudwatch-agent-command.sh "$GITHUB_SHA")
 
           command_id=$(aws ssm send-command \
             --instance-ids "$AWS_EC2_INSTANCE_ID" \
