@@ -29,12 +29,12 @@ public class AccountDeletionService {
         try {
             deletedObjectCount = audioStorage.deleteAllForUser(userId);
         } catch (RuntimeException exception) {
-            log.warn("Account audio cleanup failed: userId={}", userId, exception);
+            // 운영 로그가 국외 CloudWatch로 복제될 수 있으므로 계정 식별자는 기록하지 않는다.
+            log.warn("Account audio cleanup failed", exception);
             throw new AccountDeletionUnavailableException(exception);
         }
 
         persistenceService.deleteUserData(userId);
-        log.info("Account deletion completed: userId={}, deletedAudioObjects={}",
-                userId, deletedObjectCount);
+        log.info("Account deletion completed: deletedAudioObjects={}", deletedObjectCount);
     }
 }

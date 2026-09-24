@@ -82,16 +82,16 @@ public class GuideGenerationJobAccessGuard {
         }
 
         if (authorization != null && !authorization.isBlank()) {
-            Long userId;
             try {
-                userId = activeSessionAuthenticator.authenticateBearer(authorization);
+                activeSessionAuthenticator.authenticateBearer(authorization);
             } catch (AuthException exception) {
                 telemetry.request("unauthorized");
                 log.warn("Guide job authentication rejected: credential=bearer");
                 throw exception;
             }
             telemetry.request("forbidden");
-            log.warn("Guide job authorization rejected: principal=user, userId={}", userId);
+            // 인증 결과만 감사하고 사용자 ID는 운영 로그에 남기지 않는다.
+            log.warn("Guide job authorization rejected: principal=user");
             throw new GuideJobAccessDeniedException();
         }
 

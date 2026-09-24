@@ -12,7 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -22,7 +25,7 @@ import static org.mockito.Mockito.when;
 /**
  * 재인증, S3 prefix 정리와 DB 개인정보 삭제의 순서·실패 계약을 검증한다.
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class AccountDeletionServiceTest {
 
     @Mock
@@ -67,5 +70,21 @@ class AccountDeletionServiceTest {
                 .isInstanceOf(AccountDeletionUnavailableException.class);
 
         verify(persistenceService, never()).deleteUserData(7L);
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴 운영 로그에는 사용자 식별자를 남기지 않는다")
+    void omitsUserIdentifierFromOperationalLogs(CapturedOutput output) {
+        RefreshTokenRequest request = new RefreshTokenRequest("refresh.jwt");
+        when(audioStorage.deleteAllForUser(7L)).thenReturn(3);
+        AccountDeletionService service = new AccountDeletionService(
+                authService,
+                audioStorage,
+                persistenceService
+        );
+
+        service.deleteAccount(7L, request);
+
+        assertThat(output).doesNotContain("userId=7");
     }
 }

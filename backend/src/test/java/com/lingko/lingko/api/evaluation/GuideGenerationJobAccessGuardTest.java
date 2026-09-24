@@ -9,6 +9,9 @@ import com.lingko.lingko.core.domain.evaluation.service.GuideGenerationJobTeleme
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -62,11 +65,14 @@ class GuideGenerationJobAccessGuardTest {
 
     @Test
     @DisplayName("활성 일반 사용자 token은 인증됐어도 내부 생성 권한이 없어 403 대상이다")
-    void rejectsAuthenticatedLearner() {
+    @ExtendWith(OutputCaptureExtension.class)
+    void rejectsAuthenticatedLearner(CapturedOutput output) {
         when(authenticator.authenticateBearer("Bearer learner-token")).thenReturn(42L);
 
         assertThatThrownBy(() -> guard.authorizeAndConsume(null, "Bearer learner-token"))
                 .isInstanceOf(GuideJobAccessDeniedException.class);
+
+        assertThat(output).doesNotContain("userId=42");
     }
 
     @Test

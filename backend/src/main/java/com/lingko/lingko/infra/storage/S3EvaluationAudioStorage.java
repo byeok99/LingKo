@@ -128,7 +128,8 @@ public class S3EvaluationAudioStorage implements EvaluationAudioStorage {
                     .build());
         } catch (RuntimeException exception) {
             // Lifecycle가 최종 안전망이며 평가 결과를 S3 정리 실패로 되돌리지 않는다.
-            log.warn("Failed to delete evaluation audio: objectKey={}", objectKey, exception);
+            // object key에는 사용자 prefix가 포함되므로 국외 운영 로그에 복제하지 않는다.
+            log.warn("Failed to delete evaluation audio", exception);
         }
     }
 

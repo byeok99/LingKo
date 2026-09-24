@@ -32,7 +32,7 @@ Access Token의 subject에서만 결정합니다.
 ```json
 {
   "required": true,
-  "documentVersion": "2026-09-12"
+  "documentVersion": "2026-09-24"
 }
 ```
 
@@ -48,8 +48,8 @@ Access Token의 subject에서만 결정합니다.
   "termsAgreed": true,
   "privacyAcknowledged": true,
   "marketingOptIn": false,
-  "documentVersion": "2026-09-12",
-  "agreedAt": "2026-09-12T01:02:03Z"
+  "documentVersion": "2026-09-24",
+  "agreedAt": "2026-09-24T01:02:03Z"
 }
 ```
 

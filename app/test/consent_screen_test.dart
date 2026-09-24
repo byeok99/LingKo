@@ -157,7 +157,7 @@ void main() {
       'termsAgreed': true,
       'privacyAcknowledged': true,
       'marketingOptIn': false,
-      'documentVersion': '2026-09-12',
+      'documentVersion': '2026-09-24',
       'agreedAt': '2026-08-07T01:02:03.000Z',
     });
   });
