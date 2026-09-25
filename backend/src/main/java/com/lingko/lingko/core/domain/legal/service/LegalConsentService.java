@@ -1,6 +1,7 @@
 package com.lingko.lingko.core.domain.legal.service;
 
 import com.lingko.lingko.api.legal.dto.LegalConsentRequest;
+import com.lingko.lingko.api.legal.dto.LegalConsentPolicyResponse;
 import com.lingko.lingko.api.legal.dto.LegalConsentStatusResponse;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.legal.LegalConsentPolicy;
@@ -22,6 +23,11 @@ public class LegalConsentService {
     private final LegalConsentRepository legalConsentRepository;
     private final UserRepository userRepository;
 
+    /** 로그인 전 화면도 서버와 같은 버전을 사용하도록 현재 공개 정책을 반환한다. */
+    public LegalConsentPolicyResponse getPolicy() {
+        return new LegalConsentPolicyResponse(LegalConsentPolicy.CURRENT_DOCUMENT_VERSION);
+    }
+
     /**
      * 현재 버전 기록이 존재하는지 사용자 범위 안에서 판정한다.
      */
@@ -39,21 +45,26 @@ public class LegalConsentService {
      */
     @Transactional
     public LegalConsentStatusResponse record(Long userId, LegalConsentRequest request) {
-        validate(request);
         User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new AuthException("Authenticated user not found"));
 
-        if (!legalConsentRepository.existsByUserUserIdxAndDocumentVersion(
+        boolean alreadyRecorded = legalConsentRepository.existsByUserUserIdxAndDocumentVersion(
                 userId,
                 LegalConsentPolicy.CURRENT_DOCUMENT_VERSION
-        )) {
-            legalConsentRepository.saveAndFlush(LegalConsent.record(
-                    user,
-                    LegalConsentPolicy.CURRENT_DOCUMENT_VERSION,
-                    request.marketingOptIn(),
-                    request.agreedAt()
-            ));
+        );
+        // 응답 유실 뒤 구버전 앱이 재전송해도 이미 성립한 최신 동의를 거절하지 않는다.
+        // 새 동의를 만들 때만 body를 검증하므로 구버전 제출 자체가 최신 동의로 승격되지는 않는다.
+        if (alreadyRecorded) {
+            return statusFor(userId);
         }
+
+        validate(request);
+        legalConsentRepository.saveAndFlush(LegalConsent.record(
+                user,
+                LegalConsentPolicy.CURRENT_DOCUMENT_VERSION,
+                request.marketingOptIn(),
+                request.agreedAt()
+        ));
         return statusFor(userId);
     }
 

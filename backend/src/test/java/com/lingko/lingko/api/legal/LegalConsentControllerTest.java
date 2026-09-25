@@ -1,6 +1,7 @@
 package com.lingko.lingko.api.legal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lingko.lingko.api.legal.dto.LegalConsentPolicyResponse;
 import com.lingko.lingko.api.legal.dto.LegalConsentStatusResponse;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.auth.service.ActiveSessionAuthenticator;
@@ -18,10 +19,12 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -41,6 +44,20 @@ class LegalConsentControllerTest {
 
     @MockitoBean
     private ActiveSessionAuthenticator activeSessionAuthenticator;
+
+    @Test
+    @DisplayName("로그인 전에도 현재 동의 문서 버전을 캐시 없이 조회할 수 있다")
+    void getPolicyDoesNotRequireAuthentication() throws Exception {
+        when(legalConsentService.getPolicy())
+                .thenReturn(new LegalConsentPolicyResponse("2026-09-24"));
+
+        mockMvc.perform(get("/api/legal/consent/policy"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.documentVersion").value("2026-09-24"));
+
+        verifyNoInteractions(activeSessionAuthenticator);
+    }
 
     @Test
     @DisplayName("상태 조회는 Bearer token 사용자의 현재 동의 필요 여부를 반환한다")
