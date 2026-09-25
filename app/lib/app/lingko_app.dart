@@ -23,6 +23,7 @@ import '../models/auth_session.dart';
 import '../models/consent_selection.dart';
 import '../models/evaluation_job.dart';
 import '../models/evaluation_progress.dart';
+import '../models/legal_consent_status.dart';
 import '../models/practice_quota.dart';
 import '../models/ad_reward_session.dart';
 import '../models/practice_result.dart';
@@ -185,7 +186,7 @@ class _LingKoShellState extends State<LingKoShell> {
   /// 동의 gate를 통과시키지 않은 채 사용자에게 재시도 이유만 알려준다.
   String? consentErrorText;
 
-  /// 복원 세션은 서버가 알려준 최신 버전을 사용하고, 로그인 전에는 앱 내 버전을 사용한다.
+  /// 서버 상태 또는 로그인 전 공개 정책 endpoint가 알려준 최신 문서 버전이다.
   String consentGateDocumentVersion = consentDocumentVersion;
 
   /// 동의 화면에서 받은 선택이다. 로그인 성공 후 서버에 전달할 때까지 들고 있는다.
@@ -441,18 +442,46 @@ class _LingKoShellState extends State<LingKoShell> {
     }
   }
 
-  /// 로그인 수단을 누르면 곧바로 인증하지 않고 동의 화면을 먼저 연다.
+  /// 로그인 수단을 누르면 서버 정책을 조회한 뒤 인증하지 않고 동의 화면을 먼저 연다.
   ///
   /// 계정이 만들어진 뒤에 동의를 받으면, 거부한 사용자의 개인정보가 이미 서버에 생긴
   /// 상태가 되어 즉시 삭제하는 경로를 따로 만들어야 한다. 계정 생성 전에 받으면 그 경로가 없어도 된다.
-  void openConsent(_SignInProvider provider) {
+  Future<void> openConsent(_SignInProvider provider) async {
+    if (isSigningIn) {
+      return;
+    }
     setState(() {
-      pendingSignInProvider = provider;
-      isConsentOpen = true;
-      consentGateDocumentVersion = consentDocumentVersion;
-      consentErrorText = null;
+      isSigningIn = true;
       authErrorText = null;
     });
+
+    try {
+      final policy = await widget.authService.fetchLegalConsentPolicy();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        pendingSignInProvider = provider;
+        isConsentOpen = true;
+        consentGateDocumentVersion = policy.documentVersion;
+        consentErrorText = null;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      // 현재 버전을 모른 채 로컬 상수로 제출하면 개정 직후 무한 실패가 재발하므로 fail-closed 한다.
+      setState(() {
+        authErrorText =
+            'Unable to load the current agreement. Please try again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSigningIn = false;
+        });
+      }
+    }
   }
 
   /// Review Notes의 코드를 검증해 기존 계정 세션을 복원하고 최신 동의 상태까지 확인한다.
@@ -621,30 +650,57 @@ class _LingKoShellState extends State<LingKoShell> {
           authErrorText = 'Your session expired. Please sign in again.';
         });
       }
-    } catch (_) {
+    } catch (error) {
       if (!mounted) {
         return;
       }
       // 앱보다 서버 문서 버전이 먼저 올라간 배포 순서에서도 다음 재시도가 같은
       // 구버전 body를 반복하지 않게 현재 상태를 다시 읽는다.
-      String nextDocumentVersion = consentGateDocumentVersion;
+      final failedDocumentVersion = consentGateDocumentVersion;
+      LegalConsentStatus? latestStatus;
       try {
-        final latestStatus = await widget.authService.fetchLegalConsentStatus();
-        if (latestStatus.required) {
-          nextDocumentVersion = latestStatus.documentVersion;
-        }
+        latestStatus = await widget.authService.fetchLegalConsentStatus();
       } catch (_) {
         // 원래 저장 실패 안내가 우선이다. 보조 조회 실패로 원인을 덮지 않는다.
       }
       if (!mounted) {
         return;
       }
+
+      // POST가 DB에는 반영됐지만 응답만 유실된 경우 GET 결과를 최종 사실로 사용한다.
+      // 이미 완료된 동의를 다시 제출하게 두면 같은 오류 화면에 영구히 갇힐 수 있다.
+      if (latestStatus != null && !latestStatus.required) {
+        setState(() {
+          isConsentOpen = false;
+          pendingConsent = null;
+          pendingSignInProvider = null;
+          consentErrorText = null;
+        });
+        await loadAuthenticatedData(activeSession);
+        return;
+      }
+
+      final nextDocumentVersion =
+          latestStatus?.documentVersion ?? failedDocumentVersion;
+      final documentWasUpdated =
+          latestStatus?.required == true &&
+          nextDocumentVersion != failedDocumentVersion;
+      final requestWasRejected =
+          error is ApiException && error.statusCode == 400;
       // 인증은 성공했지만 동의 기록이 실패한 경우 Home으로 보내지 않는다.
-      // 저장된 세션으로 같은 제출을 재시도할 수 있게 gate와 선택 화면을 유지한다.
+      // 문서가 바뀌었으면 이전 선택을 새 문서 동의로 재사용하지 않도록 Widget key도 교체한다.
       setState(() {
         isConsentOpen = true;
         consentGateDocumentVersion = nextDocumentVersion;
-        consentErrorText = 'Could not save your agreement. Please try again.';
+        if (documentWasUpdated) {
+          pendingConsent = null;
+        }
+        consentErrorText =
+            documentWasUpdated
+                ? 'The agreement was updated. Review and agree again.'
+                : requestWasRejected
+                ? 'The agreement could not be accepted. Review and try again.'
+                : 'Could not save your agreement. Please try again.';
       });
     } finally {
       if (mounted) {
@@ -1137,6 +1193,7 @@ class _LingKoShellState extends State<LingKoShell> {
 
     if (isConsentOpen) {
       return ConsentScreen(
+        key: ValueKey('consent-$consentGateDocumentVersion'),
         documentVersion: consentGateDocumentVersion,
         errorText: consentErrorText,
         isLoading: isSubmittingConsent,
@@ -1150,8 +1207,9 @@ class _LingKoShellState extends State<LingKoShell> {
       return LoginScreen(
         isLoading: isSigningIn,
         errorText: authErrorText,
-        onSignInWithGoogle: () => openConsent(_SignInProvider.google),
-        onSignInWithApple: () => openConsent(_SignInProvider.apple),
+        onSignInWithGoogle:
+            () => unawaited(openConsent(_SignInProvider.google)),
+        onSignInWithApple: () => unawaited(openConsent(_SignInProvider.apple)),
         onSignInForReview: signInForReview,
         // Android는 Service ID·HTTPS redirect 계약이 별도라 native iOS 범위에서만 노출한다.
         showAppleSignIn: defaultTargetPlatform == TargetPlatform.iOS,

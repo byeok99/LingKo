@@ -30,6 +30,7 @@ import 'package:lingko_app/screens/result_screen.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
 import 'package:lingko_app/models/consent_selection.dart';
+import 'package:lingko_app/models/legal_consent_policy.dart';
 import 'package:lingko_app/models/legal_consent_status.dart';
 import 'package:lingko_app/services/legal_document_launcher.dart';
 import 'package:lingko_app/services/sentence_speech_service.dart';
@@ -552,7 +553,10 @@ class FakeAppAuthService implements AppAuthService {
     this.restoreCompleter,
     this.expireAuthenticatedRequests = false,
     this.legalConsentRequired = false,
+    this.legalConsentPolicyVersion = consentDocumentVersion,
+    this.legalConsentPolicyError,
     this.legalConsentStatusError,
+    this.legalConsentStatusResponses = const [],
     this.legalConsentRecordError,
   });
 
@@ -560,13 +564,18 @@ class FakeAppAuthService implements AppAuthService {
   final Completer<AuthSession?>? restoreCompleter;
   final bool expireAuthenticatedRequests;
   final bool legalConsentRequired;
+  final String legalConsentPolicyVersion;
+  final Object? legalConsentPolicyError;
   final Object? legalConsentStatusError;
+  final List<LegalConsentStatus> legalConsentStatusResponses;
   final Object? legalConsentRecordError;
   bool signInCalled = false;
   bool appleSignInCalled = false;
   final reviewAccessCodes = <String>[];
   int legalConsentRecordCount = 0;
+  int legalConsentStatusFetchCount = 0;
   ConsentSelection? recordedConsent;
+  ConsentSelection? lastAttemptedConsent;
   bool deleteAccountCalled = false;
   Object? deleteAccountError;
   Object? error;
@@ -636,9 +645,25 @@ class FakeAppAuthService implements AppAuthService {
   }
 
   @override
+  Future<LegalConsentPolicy> fetchLegalConsentPolicy() async {
+    if (legalConsentPolicyError != null) {
+      throw legalConsentPolicyError!;
+    }
+    return LegalConsentPolicy(documentVersion: legalConsentPolicyVersion);
+  }
+
+  @override
   Future<LegalConsentStatus> fetchLegalConsentStatus() async {
+    final responseIndex = legalConsentStatusFetchCount++;
     if (legalConsentStatusError != null) {
       throw legalConsentStatusError!;
+    }
+    if (legalConsentStatusResponses.isNotEmpty) {
+      final boundedIndex =
+          responseIndex < legalConsentStatusResponses.length
+              ? responseIndex
+              : legalConsentStatusResponses.length - 1;
+      return legalConsentStatusResponses[boundedIndex];
     }
     return LegalConsentStatus(
       required: legalConsentRequired && recordedConsent == null,
@@ -651,6 +676,7 @@ class FakeAppAuthService implements AppAuthService {
     ConsentSelection selection,
   ) async {
     legalConsentRecordCount++;
+    lastAttemptedConsent = selection;
     if (legalConsentRecordError != null) {
       throw legalConsentRecordError!;
     }
@@ -1149,6 +1175,64 @@ void main() {
     expect(find.text('LingKo User'), findsNothing);
   });
 
+  testWidgets('Login loads the server policy before showing consent', (
+    WidgetTester tester,
+  ) async {
+    final authService = FakeAppAuthService(
+      legalConsentPolicyVersion: '2099-01-31',
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Continue with Google'));
+    await tester.pumpAndSettle();
+    await agreeToConsent(tester);
+
+    expect(authService.lastAttemptedConsent?.documentVersion, '2099-01-31');
+  });
+
+  testWidgets(
+    'Policy lookup failure keeps login closed before authentication',
+    (WidgetTester tester) async {
+      final authService = FakeAppAuthService(
+        legalConsentPolicyError: StateError('offline'),
+      );
+      await tester.pumpWidget(
+        LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: FakeEvaluationApi(),
+          practiceQuotaApi: FakePracticeQuotaApi(),
+          authService: authService,
+          audioRecorderService: FakeAudioRecorderService(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Continue with Google'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Continue with Google'), findsOneWidget);
+      expect(
+        find.text('Unable to load the current agreement. Please try again.'),
+        findsOneWidget,
+      );
+      expect(find.text('Before you start'), findsNothing);
+      expect(authService.signInCalled, isFalse);
+    },
+  );
+
   testWidgets('Restored session without current consent shows agreement gate', (
     WidgetTester tester,
   ) async {
@@ -1208,6 +1292,78 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Practice by situation'), findsNothing);
+  });
+
+  testWidgets(
+    'Consent retry proceeds when the server already has current consent',
+    (WidgetTester tester) async {
+      final authService = FakeAppAuthService(
+        restoreExistingSession: true,
+        legalConsentRecordError: StateError('response lost'),
+        legalConsentStatusResponses: const [
+          LegalConsentStatus(required: true, documentVersion: '2026-09-24'),
+          LegalConsentStatus(required: false, documentVersion: '2026-09-24'),
+        ],
+      );
+      await tester.pumpWidget(
+        LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: FakeEvaluationApi(),
+          practiceQuotaApi: FakePracticeQuotaApi(),
+          authService: authService,
+          audioRecorderService: FakeAudioRecorderService(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await agreeToConsent(tester);
+
+      expect(find.text('Before you start'), findsNothing);
+      expect(find.text('Practice by situation'), findsOneWidget);
+      expect(authService.legalConsentStatusFetchCount, 2);
+    },
+  );
+
+  testWidgets('A newer server policy resets stale consent selections', (
+    WidgetTester tester,
+  ) async {
+    final authService = FakeAppAuthService(
+      restoreExistingSession: true,
+      legalConsentRecordError: const ApiException(
+        'Unsupported consent document version',
+        statusCode: 400,
+      ),
+      legalConsentStatusResponses: const [
+        LegalConsentStatus(required: true, documentVersion: '2026-09-12'),
+        LegalConsentStatus(required: true, documentVersion: '2026-09-24'),
+      ],
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: FakePracticeQuotaApi(),
+        authService: authService,
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await agreeToConsent(tester);
+
+    expect(
+      find.text('The agreement was updated. Review and agree again.'),
+      findsOneWidget,
+    );
+    expect(authService.lastAttemptedConsent?.documentVersion, '2026-09-12');
+    expect(
+      tester
+          .widget<PrimaryButton>(find.byKey(const Key('consent-continue')))
+          .onPressed,
+      isNull,
+    );
   });
 
   testWidgets('Consent status failure fails closed before Home', (

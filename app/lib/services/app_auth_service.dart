@@ -6,6 +6,7 @@ import '../api/api_client.dart';
 import '../api/legal_consent_api.dart';
 import '../models/auth_session.dart';
 import '../models/consent_selection.dart';
+import '../models/legal_consent_policy.dart';
 import '../models/legal_consent_status.dart';
 import 'auth_session_store.dart';
 import 'apple_identity_service.dart';
@@ -24,6 +25,9 @@ abstract class AppAuthService {
 
   /// 사용자가 직접 입력한 심사용 코드로 제한 계정 세션을 만들고 안전한 저장소에 보관한다.
   Future<AuthSession> signInForReview(String accessCode);
+
+  /// 계정을 만들기 전에 서버의 현재 법무 문서 버전을 인증 없이 조회한다.
+  Future<LegalConsentPolicy> fetchLegalConsentPolicy();
 
   /// 현재 로그인 사용자가 최신 문서 버전에 동의했는지 서버에서 확인한다.
   Future<LegalConsentStatus> fetchLegalConsentStatus();
@@ -111,6 +115,12 @@ class DefaultAppAuthService implements AppAuthService {
     }
     await _sessionStore.save(session);
     return session;
+  }
+
+  @override
+  Future<LegalConsentPolicy> fetchLegalConsentPolicy() {
+    // 로그인 전 호출이므로 token 저장소나 refresh 흐름을 통과시키지 않는다.
+    return _legalConsentApi.fetchPolicy();
   }
 
   @override

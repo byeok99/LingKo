@@ -1,11 +1,15 @@
 // 파일 의도: 인증 사용자의 약관 동의 상태 조회·제출 HTTP 계약을 캡슐화한다.
 
 import '../models/consent_selection.dart';
+import '../models/legal_consent_policy.dart';
 import '../models/legal_consent_status.dart';
 import 'api_client.dart';
 
 /// 약관 동의 상태와 기록을 제공하는 백엔드 경계다.
 abstract class LegalConsentApi {
+  /// 로그인 전에 현재 동의 문서 버전을 공개 endpoint에서 조회한다.
+  Future<LegalConsentPolicy> fetchPolicy();
+
   Future<LegalConsentStatus> fetchStatus({required String accessToken});
 
   Future<LegalConsentStatus> record({
@@ -19,6 +23,12 @@ class DartIoLegalConsentApi implements LegalConsentApi {
   DartIoLegalConsentApi({ApiClient? client}) : _client = client ?? ApiClient();
 
   final ApiClient _client;
+
+  @override
+  Future<LegalConsentPolicy> fetchPolicy() async {
+    final json = await _client.getJson('/api/legal/consent/policy');
+    return LegalConsentPolicy.fromJson(json);
+  }
 
   @override
   Future<LegalConsentStatus> fetchStatus({required String accessToken}) async {

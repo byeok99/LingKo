@@ -6,7 +6,11 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingko_app/api/api_client.dart';
 import 'package:lingko_app/api/auth_api.dart';
+import 'package:lingko_app/api/legal_consent_api.dart';
 import 'package:lingko_app/models/auth_session.dart';
+import 'package:lingko_app/models/consent_selection.dart';
+import 'package:lingko_app/models/legal_consent_policy.dart';
+import 'package:lingko_app/models/legal_consent_status.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
 import 'package:lingko_app/services/auth_session_store.dart';
 import 'package:lingko_app/services/apple_identity_service.dart';
@@ -14,6 +18,24 @@ import 'package:lingko_app/services/google_identity_service.dart';
 
 // 갱신 토큰 회전, single-flight 재시도, 로그아웃, 생명주기 경합을 검증한다.
 void main() {
+  test(
+    'current legal policy is fetched before any authenticated session exists',
+    () async {
+      final legalConsentApi = FakeLegalConsentApi();
+      final service = DefaultAppAuthService(
+        authApi: FakeAuthApi(),
+        legalConsentApi: legalConsentApi,
+        googleIdentityService: FakeGoogleIdentityService(),
+        sessionStore: AuthSessionStore(storage: MemoryTokenStorage()),
+      );
+
+      final policy = await service.fetchLegalConsentPolicy();
+
+      expect(policy.documentVersion, '2026-09-24');
+      expect(legalConsentApi.policyFetchCount, 1);
+    },
+  );
+
   test(
     'review access code session is saved without embedding credentials',
     () async {
@@ -314,6 +336,30 @@ class FakeAuthApi implements AuthApi {
     if (accountDeletionError != null) {
       throw accountDeletionError!;
     }
+  }
+}
+
+/// 로그인 전 공개 정책 조회가 token 저장소에 의존하지 않는지 검증하는 API 대역이다.
+class FakeLegalConsentApi implements LegalConsentApi {
+  int policyFetchCount = 0;
+
+  @override
+  Future<LegalConsentPolicy> fetchPolicy() async {
+    policyFetchCount++;
+    return const LegalConsentPolicy(documentVersion: '2026-09-24');
+  }
+
+  @override
+  Future<LegalConsentStatus> fetchStatus({required String accessToken}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<LegalConsentStatus> record({
+    required String accessToken,
+    required ConsentSelection selection,
+  }) {
+    throw UnimplementedError();
   }
 }
 
