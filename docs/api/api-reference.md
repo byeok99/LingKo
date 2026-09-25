@@ -19,11 +19,25 @@
 
 예: `GET /legal/privacy?lang=en`
 
-## 법무 동의 (인증 필요)
+## 법무 동의
 
-법무 문서의 공개 열람 URL과 달리 동의 상태는 사용자별 개인정보이므로 모든 endpoint가
-`Authorization: Bearer <access-token>`을 요구합니다. 사용자 ID는 요청 body나 query로 받지 않고
-Access Token의 subject에서만 결정합니다.
+### `GET /api/legal/consent/policy` (인증 불필요)
+
+로그인 전에 동의 화면이 사용할 서버의 현재 문서 버전을 반환합니다. 사용자별 상태를 포함하지
+않는 공개 정보이며, 앱에 고정된 버전과 서버 버전의 배포 시점이 달라져 제출이 반복 실패하지 않도록
+로그인 수단을 선택한 직후 이 endpoint를 먼저 조회합니다.
+
+```json
+{
+  "documentVersion": "2026-09-24"
+}
+```
+
+중간 cache가 개정 전 버전을 재사용하지 않도록 `Cache-Control: no-store`를 반환합니다. 조회에 실패하면
+앱은 로컬 상수로 동의를 제출하지 않고 로그인 화면에서 재시도를 안내합니다.
+
+아래 동의 상태·기록 endpoint는 사용자별 개인정보이므로 `Authorization: Bearer <access-token>`을
+요구합니다. 사용자 ID는 요청 body나 query로 받지 않고 Access Token의 subject에서만 결정합니다.
 
 ### `GET /api/legal/consent`
 
@@ -55,8 +69,10 @@ Access Token의 subject에서만 결정합니다.
 
 `termsAgreed`와 `privacyAcknowledged`는 반드시 `true`여야 하며, `documentVersion`은 서버의 현재
 버전과 정확히 같아야 합니다. `agreedAt`은 기기 시각 참고값이고 감사 기준 시각은 서버가 별도로
-기록합니다. 같은 사용자·버전의 재시도는 새 행을 만들지 않는 idempotent 요청입니다. 성공 응답은
-같은 상태 구조에서 `required=false`를 반환합니다.
+기록합니다. 같은 사용자·버전의 재시도는 새 행을 만들지 않는 idempotent 요청입니다. 이미 현재
+버전의 동의가 저장된 사용자는 응답 유실 뒤 구버전 앱 body를 재전송해도 기존 기록을 변경하지 않고
+`required=false`를 받습니다. 현재 기록이 없는 사용자의 구버전 body는 계속 거부되므로, 과거 동의가
+최신 동의로 승격되지는 않습니다.
 
 ### `GET /api/legal/ai-consent`, `POST /api/legal/ai-consent`
 
