@@ -8,6 +8,51 @@ import 'package:lingko_app/api/legal_consent_api.dart';
 import 'package:lingko_app/models/consent_selection.dart';
 
 void main() {
+  test(
+    'fetchPolicy reads the current version without an auth header',
+    () async {
+      Uri? requestedUri;
+      Map<String, String>? requestedHeaders;
+      final api = DartIoLegalConsentApi(
+        client: ApiClient(
+          baseUrl: 'http://localhost:8080',
+          getJsonTransport: (uri, timeout, headers) async {
+            requestedUri = uri;
+            requestedHeaders = headers;
+            return ApiResponse(
+              statusCode: 200,
+              body: jsonEncode({'documentVersion': '2026-09-24'}),
+            );
+          },
+        ),
+      );
+
+      final policy = await api.fetchPolicy();
+
+      expect(
+        requestedUri.toString(),
+        'http://localhost:8080/api/legal/consent/policy',
+      );
+      expect(requestedHeaders, isEmpty);
+      expect(policy.documentVersion, '2026-09-24');
+    },
+  );
+
+  test('fetchPolicy rejects an empty server document version', () async {
+    final api = DartIoLegalConsentApi(
+      client: ApiClient(
+        baseUrl: 'http://localhost:8080',
+        getJsonTransport:
+            (uri, timeout, headers) async => ApiResponse(
+              statusCode: 200,
+              body: jsonEncode({'documentVersion': '   '}),
+            ),
+      ),
+    );
+
+    await expectLater(api.fetchPolicy(), throwsA(isA<FormatException>()));
+  });
+
   test('fetchStatus sends bearer token and maps current requirement', () async {
     Uri? requestedUri;
     Map<String, String>? requestedHeaders;
