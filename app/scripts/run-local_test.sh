@@ -84,6 +84,10 @@ run_with_clean_environment() {
     unset DEVICE_ID IOS_DEVICE_ID ANDROID_DEVICE_ID ANDROID_EMULATOR_ID
     unset GOOGLE_SERVER_CLIENT_ID GOOGLE_ID LINGKO_API_BASE_URL API_URL
     unset ADMOB_ANDROID_REWARDED_AD_UNIT_ID ADMOB_IOS_REWARDED_AD_UNIT_ID
+    unset ADMOB_ANDROID_REVIEW_BANNER_AD_UNIT_ID
+    unset ADMOB_ANDROID_PROFILE_BANNER_AD_UNIT_ID
+    unset ADMOB_IOS_REVIEW_BANNER_AD_UNIT_ID
+    unset ADMOB_IOS_PROFILE_BANNER_AD_UNIT_ID
     unset ADMOB_TEST_DEVICE_ID
     unset SIMULATOR_STATE ANDROID_BOOT_MARKER ANDROID_DEVICE_ID_FOR_TEST
     export PATH="$mock_bin:$PATH"
@@ -101,6 +105,8 @@ printf '%s\n' \
   "GOOGLE_SERVER_CLIENT_ID='google-from-file'" \
   "LINGKO_API_BASE_URL='http://127.0.0.1:18080'" \
   "ADMOB_IOS_REWARDED_AD_UNIT_ID='ios-ad-from-file'" \
+  "ADMOB_IOS_REVIEW_BANNER_AD_UNIT_ID='ios-review-banner-from-file'" \
+  "ADMOB_IOS_PROFILE_BANNER_AD_UNIT_ID='ios-profile-banner-from-file'" \
   "ADMOB_TEST_DEVICE_ID='ios-test-device-from-file'" \
   "IOS_DEVICE_ID='ios-device-from-file'" \
   > "$auto_env_file"
@@ -116,6 +122,10 @@ assert_argument "$auto_output_file" \
   '--dart-define=LINGKO_API_BASE_URL=http://127.0.0.1:18080'
 assert_argument "$auto_output_file" \
   '--dart-define=ADMOB_IOS_REWARDED_AD_UNIT_ID=ios-ad-from-file'
+assert_argument "$auto_output_file" \
+  '--dart-define=ADMOB_IOS_REVIEW_BANNER_AD_UNIT_ID=ios-review-banner-from-file'
+assert_argument "$auto_output_file" \
+  '--dart-define=ADMOB_IOS_PROFILE_BANNER_AD_UNIT_ID=ios-profile-banner-from-file'
 assert_argument "$auto_output_file" \
   '--dart-define=ADMOB_TEST_DEVICE_ID=ios-test-device-from-file'
 assert_argument "$auto_output_file" '-d'
@@ -159,6 +169,8 @@ printf '%s\n' \
   "GOOGLE_SERVER_CLIENT_ID='google-from-file'" \
   "ANDROID_DEVICE_ID='android-device-from-file'" \
   "ADMOB_ANDROID_REWARDED_AD_UNIT_ID='android-ad-from-file'" \
+  "ADMOB_ANDROID_REVIEW_BANNER_AD_UNIT_ID='android-review-banner-from-file'" \
+  "ADMOB_ANDROID_PROFILE_BANNER_AD_UNIT_ID='android-profile-banner-from-file'" \
   > "$android_env_file"
 
 run_with_clean_environment \
@@ -171,6 +183,10 @@ assert_argument "$android_output_file" \
   '--dart-define=LINGKO_API_BASE_URL=http://10.0.2.2:8080'
 assert_argument "$android_output_file" \
   '--dart-define=ADMOB_ANDROID_REWARDED_AD_UNIT_ID=android-ad-from-file'
+assert_argument "$android_output_file" \
+  '--dart-define=ADMOB_ANDROID_REVIEW_BANNER_AD_UNIT_ID=android-review-banner-from-file'
+assert_argument "$android_output_file" \
+  '--dart-define=ADMOB_ANDROID_PROFILE_BANNER_AD_UNIT_ID=android-profile-banner-from-file'
 
 # 꺼진 Android emulator는 AVD 이름으로 실행한 뒤 지정한 Device ID가 나타날 때까지 기다려야 한다.
 android_boot_env_file="$temp_dir/android-boot.env"

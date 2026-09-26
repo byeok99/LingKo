@@ -26,6 +26,14 @@ android_ad_unit_override_set="${ADMOB_ANDROID_REWARDED_AD_UNIT_ID+x}"
 android_ad_unit_override="${ADMOB_ANDROID_REWARDED_AD_UNIT_ID-}"
 ios_ad_unit_override_set="${ADMOB_IOS_REWARDED_AD_UNIT_ID+x}"
 ios_ad_unit_override="${ADMOB_IOS_REWARDED_AD_UNIT_ID-}"
+android_review_banner_override_set="${ADMOB_ANDROID_REVIEW_BANNER_AD_UNIT_ID+x}"
+android_review_banner_override="${ADMOB_ANDROID_REVIEW_BANNER_AD_UNIT_ID-}"
+android_profile_banner_override_set="${ADMOB_ANDROID_PROFILE_BANNER_AD_UNIT_ID+x}"
+android_profile_banner_override="${ADMOB_ANDROID_PROFILE_BANNER_AD_UNIT_ID-}"
+ios_review_banner_override_set="${ADMOB_IOS_REVIEW_BANNER_AD_UNIT_ID+x}"
+ios_review_banner_override="${ADMOB_IOS_REVIEW_BANNER_AD_UNIT_ID-}"
+ios_profile_banner_override_set="${ADMOB_IOS_PROFILE_BANNER_AD_UNIT_ID+x}"
+ios_profile_banner_override="${ADMOB_IOS_PROFILE_BANNER_AD_UNIT_ID-}"
 admob_test_device_override_set="${ADMOB_TEST_DEVICE_ID+x}"
 admob_test_device_override="${ADMOB_TEST_DEVICE_ID-}"
 
@@ -65,6 +73,14 @@ restore_override ADMOB_ANDROID_REWARDED_AD_UNIT_ID \
   "$android_ad_unit_override_set" "$android_ad_unit_override"
 restore_override ADMOB_IOS_REWARDED_AD_UNIT_ID \
   "$ios_ad_unit_override_set" "$ios_ad_unit_override"
+restore_override ADMOB_ANDROID_REVIEW_BANNER_AD_UNIT_ID \
+  "$android_review_banner_override_set" "$android_review_banner_override"
+restore_override ADMOB_ANDROID_PROFILE_BANNER_AD_UNIT_ID \
+  "$android_profile_banner_override_set" "$android_profile_banner_override"
+restore_override ADMOB_IOS_REVIEW_BANNER_AD_UNIT_ID \
+  "$ios_review_banner_override_set" "$ios_review_banner_override"
+restore_override ADMOB_IOS_PROFILE_BANNER_AD_UNIT_ID \
+  "$ios_profile_banner_override_set" "$ios_profile_banner_override"
 restore_override ADMOB_TEST_DEVICE_ID \
   "$admob_test_device_override_set" "$admob_test_device_override"
 
@@ -74,6 +90,10 @@ google_server_client_id="${GOOGLE_SERVER_CLIENT_ID:-${GOOGLE_ID:-}}"
 api_url="${LINGKO_API_BASE_URL:-${API_URL:-}}"
 android_rewarded_ad_unit_id="${ADMOB_ANDROID_REWARDED_AD_UNIT_ID:-}"
 ios_rewarded_ad_unit_id="${ADMOB_IOS_REWARDED_AD_UNIT_ID:-}"
+android_review_banner_ad_unit_id="${ADMOB_ANDROID_REVIEW_BANNER_AD_UNIT_ID:-}"
+android_profile_banner_ad_unit_id="${ADMOB_ANDROID_PROFILE_BANNER_AD_UNIT_ID:-}"
+ios_review_banner_ad_unit_id="${ADMOB_IOS_REVIEW_BANNER_AD_UNIT_ID:-}"
+ios_profile_banner_ad_unit_id="${ADMOB_IOS_PROFILE_BANNER_AD_UNIT_ID:-}"
 admob_test_device_id="${ADMOB_TEST_DEVICE_ID:-}"
 android_emulator_id="${ANDROID_EMULATOR_ID:-}"
 
@@ -95,6 +115,10 @@ Optional aliases:
   ANDROID_EMULATOR_ID=<flutter-avd-id>
   ADMOB_ANDROID_REWARDED_AD_UNIT_ID=<android-rewarded-ad-unit-id>
   ADMOB_IOS_REWARDED_AD_UNIT_ID=<ios-rewarded-ad-unit-id>
+  ADMOB_ANDROID_REVIEW_BANNER_AD_UNIT_ID=<android-review-banner-ad-unit-id>
+  ADMOB_ANDROID_PROFILE_BANNER_AD_UNIT_ID=<android-profile-banner-ad-unit-id>
+  ADMOB_IOS_REVIEW_BANNER_AD_UNIT_ID=<ios-review-banner-ad-unit-id>
+  ADMOB_IOS_PROFILE_BANNER_AD_UNIT_ID=<ios-profile-banner-ad-unit-id>
   ADMOB_TEST_DEVICE_ID=<google-mobile-ads-test-device-id>
 
 Defaults:
@@ -202,6 +226,10 @@ flutter_args=(
   --dart-define="LINGKO_API_BASE_URL=$api_url" \
   --dart-define="ADMOB_ANDROID_REWARDED_AD_UNIT_ID=$android_rewarded_ad_unit_id" \
   --dart-define="ADMOB_IOS_REWARDED_AD_UNIT_ID=$ios_rewarded_ad_unit_id"
+  --dart-define="ADMOB_ANDROID_REVIEW_BANNER_AD_UNIT_ID=$android_review_banner_ad_unit_id"
+  --dart-define="ADMOB_ANDROID_PROFILE_BANNER_AD_UNIT_ID=$android_profile_banner_ad_unit_id"
+  --dart-define="ADMOB_IOS_REVIEW_BANNER_AD_UNIT_ID=$ios_review_banner_ad_unit_id"
+  --dart-define="ADMOB_IOS_PROFILE_BANNER_AD_UNIT_ID=$ios_profile_banner_ad_unit_id"
   --dart-define="ADMOB_TEST_DEVICE_ID=$admob_test_device_id"
 )
 

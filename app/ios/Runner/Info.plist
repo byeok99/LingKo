@@ -53,6 +53,9 @@
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>LingKo records your pronunciation so it can score your Korean speaking practice.</string>
+	<!-- AdMob의 UMP IDFA message가 ATT 선택을 요청할 때 표시하는 목적 설명이다. -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This identifier is used to deliver and measure ads while respecting your privacy choices.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<!-- 약관·개인정보 처리방침을 브라우저로 열기 위해 조회할 URL scheme이다.
