@@ -39,9 +39,11 @@ import '../screens/saved_sentences_screen.dart';
 import '../screens/sound_detail_screen.dart';
 import '../screens/result_screen.dart';
 import '../services/audio_recorder_service.dart';
+import '../services/banner_ad_service.dart';
 import '../services/legal_document_launcher.dart';
 import '../services/app_auth_service.dart';
 import '../services/apple_identity_service.dart';
+import '../services/mobile_ads_privacy_service.dart';
 import '../services/sentence_speech_service.dart';
 import '../services/rewarded_ad_service.dart';
 import 'app_theme.dart';
@@ -67,6 +69,8 @@ class LingKoApp extends StatelessWidget {
     this.sentenceSpeechService,
     this.legalDocumentLauncher,
     this.practiceRewardAdService,
+    this.bannerAdService,
+    this.advertisingPrivacyService,
     this.onRequestPracticeReward,
   });
 
@@ -81,12 +85,23 @@ class LingKoApp extends StatelessWidget {
   final SentenceSpeechService? sentenceSpeechService;
   final LegalDocumentLauncher? legalDocumentLauncher;
   final PracticeRewardAdService? practiceRewardAdService;
+  final AppBannerAdService? bannerAdService;
+  final AdvertisingPrivacyService? advertisingPrivacyService;
 
   /// 테스트·호스트 앱이 광고 지급 흐름 전체를 대체할 때만 사용하는 override다.
   final Future<void> Function()? onRequestPracticeReward;
 
   @override
   Widget build(BuildContext context) {
+    final adsPrivacy =
+        advertisingPrivacyService ?? GoogleMobileAdsPrivacyService();
+    final banners =
+        bannerAdService ?? GoogleAppBannerAdService(privacyService: adsPrivacy);
+    final rewardedAds =
+        practiceRewardAdService ??
+        GooglePracticeRewardAdService(
+          gateway: GoogleMobileAdsRewardedAdGateway(privacyService: adsPrivacy),
+        );
     return MaterialApp(
       title: 'LingKo',
       debugShowCheckedModeBanner: false,
@@ -111,8 +126,9 @@ class LingKoApp extends StatelessWidget {
             sentenceSpeechService ?? FlutterTtsSentenceSpeechService(),
         legalDocumentLauncher:
             legalDocumentLauncher ?? UrlLauncherLegalDocumentLauncher(),
-        practiceRewardAdService:
-            practiceRewardAdService ?? GooglePracticeRewardAdService(),
+        practiceRewardAdService: rewardedAds,
+        bannerAdService: banners,
+        advertisingPrivacyService: adsPrivacy,
         onRequestPracticeReward: onRequestPracticeReward,
       ),
     );
@@ -135,6 +151,8 @@ class LingKoShell extends StatefulWidget {
     required this.sentenceSpeechService,
     required this.legalDocumentLauncher,
     required this.practiceRewardAdService,
+    required this.bannerAdService,
+    required this.advertisingPrivacyService,
     this.onRequestPracticeReward,
   });
 
@@ -149,6 +167,8 @@ class LingKoShell extends StatefulWidget {
   final SentenceSpeechService sentenceSpeechService;
   final LegalDocumentLauncher legalDocumentLauncher;
   final PracticeRewardAdService practiceRewardAdService;
+  final AppBannerAdService bannerAdService;
+  final AdvertisingPrivacyService advertisingPrivacyService;
   final Future<void> Function()? onRequestPracticeReward;
 
   @override
@@ -225,8 +245,19 @@ class _LingKoShellState extends State<LingKoShell> {
   @override
   void initState() {
     super.initState();
+    if (_advertisingEnabled) {
+      // UMP는 앱 launch마다 최신 상태를 확인한다. 실패해도 로그인·학습은 막지 않고,
+      // 실제 배너 load가 같은 공유 service를 통해 다시 초기화를 시도한다.
+      unawaited(
+        widget.advertisingPrivacyService.initialize().catchError((_) {}),
+      );
+    }
     restoreSession();
   }
+
+  bool get _advertisingEnabled =>
+      widget.bannerAdService.isConfigured ||
+      widget.practiceRewardAdService.isConfigured;
 
   @override
   void dispose() {
@@ -1293,6 +1324,7 @@ class _LingKoShellState extends State<LingKoShell> {
         session: session!,
         onRetryPractice: retryPractice,
         onSessionExpired: () => handleSessionChanged(null),
+        bannerAdService: widget.bannerAdService,
       ),
       ProfileScreen(
         onManageAiConsent: () => unawaited(manageAiConsent()),
@@ -1302,6 +1334,9 @@ class _LingKoShellState extends State<LingKoShell> {
         onOpenReview: () => setState(() => selectedTab = 2),
         onOpenDocument: (document) => unawaited(openLegalDocument(document)),
         onOpenSavedSentences: () => setState(() => isSavedSentencesOpen = true),
+        bannerAdService: widget.bannerAdService,
+        advertisingPrivacyService: widget.advertisingPrivacyService,
+        advertisingEnabled: _advertisingEnabled,
       ),
     ];
 

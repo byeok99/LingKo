@@ -11,6 +11,8 @@ import '../models/practice_history.dart';
 import '../models/practice_result.dart';
 import '../models/practice_sentence.dart';
 import '../services/app_auth_service.dart';
+import '../services/banner_ad_service.dart';
+import '../widgets/inline_banner_ad.dart';
 import '../widgets/score_card.dart';
 import '../widgets/shared_widgets.dart';
 import '../widgets/romanized_pronunciation.dart';
@@ -25,6 +27,7 @@ class ReviewScreen extends StatefulWidget {
     required this.session,
     required this.onRetryPractice,
     required this.onSessionExpired,
+    required this.bannerAdService,
   });
 
   final EvaluationApi evaluationApi;
@@ -32,6 +35,7 @@ class ReviewScreen extends StatefulWidget {
   final AuthSession session;
   final ValueChanged<PracticeSentence> onRetryPractice;
   final VoidCallback onSessionExpired;
+  final AppBannerAdService bannerAdService;
 
   @override
   State<ReviewScreen> createState() => _ReviewScreenState();
@@ -66,7 +70,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          history = null;
           errorText =
               'Practice history could not be loaded. Check your connection and try again.';
         });
@@ -88,13 +91,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
         children: [
           const TopBar(title: 'Review'),
           const SizedBox(height: 10),
-          if (isLoading)
+          if (isLoading && history == null)
             const StatePanel(
               icon: Icons.history,
               title: 'Loading practice history',
               isLoading: true,
             )
-          else if (errorText != null)
+          else if (errorText != null && history == null)
             StatePanel(
               icon: Icons.wifi_off_outlined,
               title: 'History is unavailable',
@@ -110,7 +113,18 @@ class _ReviewScreenState extends State<ReviewScreen> {
             )
           else ...[
             _ReviewSummary(history: history!),
-            const SizedBox(height: 24),
+            if (widget.bannerAdService.isConfiguredFor(
+              AppBannerPlacement.review,
+            )) ...[
+              const SizedBox(height: 16),
+              InlineBannerAd(
+                key: const ValueKey('review-banner-ad'),
+                service: widget.bannerAdService,
+                placement: AppBannerPlacement.review,
+              ),
+              const SizedBox(height: 20),
+            ] else
+              const SizedBox(height: 24),
             const SectionHeader(title: 'Recent history'),
             const SizedBox(height: 10),
             // 기록을 카드 하나로 묶고 행은 구분선으로만 나눈다. 행마다 카드를 두면

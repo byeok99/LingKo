@@ -27,12 +27,15 @@ import 'package:lingko_app/models/practice_result.dart';
 import 'package:lingko_app/models/practice_sentence.dart';
 import 'package:lingko_app/models/weak_sound.dart';
 import 'package:lingko_app/screens/result_screen.dart';
+import 'package:lingko_app/screens/review_screen.dart';
 import 'package:lingko_app/services/audio_recorder_service.dart';
 import 'package:lingko_app/services/app_auth_service.dart';
 import 'package:lingko_app/models/consent_selection.dart';
 import 'package:lingko_app/models/legal_consent_policy.dart';
 import 'package:lingko_app/models/legal_consent_status.dart';
 import 'package:lingko_app/services/legal_document_launcher.dart';
+import 'package:lingko_app/services/banner_ad_service.dart';
+import 'package:lingko_app/services/mobile_ads_privacy_service.dart';
 import 'package:lingko_app/services/sentence_speech_service.dart';
 import 'package:lingko_app/services/rewarded_ad_service.dart';
 import 'package:lingko_app/widgets/guide_sheet.dart';
@@ -204,6 +207,8 @@ class FakeEvaluationApi implements EvaluationApi {
   EvaluationJob? createdJob;
   List<EvaluationJob> fetchedJobs = const [];
   int fetchedJobIndex = 0;
+  Completer<PracticeHistory>? historyCompleter;
+  int historyFetchCount = 0;
   PracticeHistory history = PracticeHistory(
     items: [
       PracticeHistoryItem(
@@ -345,8 +350,13 @@ class FakeEvaluationApi implements EvaluationApi {
     int page = 0,
     int size = 10,
   }) async {
+    historyFetchCount++;
     if (error != null) {
       throw error!;
+    }
+    final pending = historyCompleter;
+    if (pending != null) {
+      return pending.future;
     }
 
     return history;
@@ -437,6 +447,86 @@ class FakePracticeRewardAdService implements PracticeRewardAdService {
     showCount++;
     lastCustomData = customData;
     return result;
+  }
+}
+
+/// 실제 AdMob platform view 없이 화면별 배너 위치와 lifecycle을 검증한다.
+class FakeAppBannerAdService implements AppBannerAdService {
+  FakeAppBannerAdService({this.isConfigured = true});
+
+  @override
+  final bool isConfigured;
+
+  final List<AppBannerPlacement> loadedPlacements = [];
+
+  @override
+  bool isConfiguredFor(AppBannerPlacement placement) => isConfigured;
+
+  @override
+  Future<AppBannerAdPresentation?> load({
+    required AppBannerPlacement placement,
+    required int width,
+    required int maxHeight,
+  }) async {
+    loadedPlacements.add(placement);
+    return FakeAppBannerAdPresentation(placement);
+  }
+}
+
+class FakeAppBannerAdPresentation implements AppBannerAdPresentation {
+  FakeAppBannerAdPresentation(this.placement);
+
+  final AppBannerPlacement placement;
+  int disposeCount = 0;
+
+  @override
+  double get height => 50;
+
+  @override
+  double get width => 320;
+
+  @override
+  Widget buildWidget() {
+    return SizedBox(
+      key: ValueKey('fake-${placement.name}-banner'),
+      width: width,
+      height: height,
+    );
+  }
+
+  @override
+  void dispose() {
+    disposeCount++;
+  }
+}
+
+/// UMP plugin을 호출하지 않고 개인정보 설정 노출 조건과 선택 동작을 기록한다.
+class FakeAdvertisingPrivacyService implements AdvertisingPrivacyService {
+  FakeAdvertisingPrivacyService({
+    this.privacyOptionsRequired = false,
+    this.initializeError,
+  });
+
+  final bool privacyOptionsRequired;
+  final Object? initializeError;
+  int initializeCount = 0;
+  int showPrivacyOptionsCount = 0;
+
+  @override
+  Future<void> initialize() async {
+    initializeCount++;
+    final error = initializeError;
+    if (error != null) {
+      throw error;
+    }
+  }
+
+  @override
+  Future<bool> isPrivacyOptionsRequired() async => privacyOptionsRequired;
+
+  @override
+  Future<void> showPrivacyOptions() async {
+    showPrivacyOptionsCount++;
   }
 }
 
@@ -2742,6 +2832,7 @@ void main() {
   testWidgets('Review shows recent practice history and opens retry', (
     WidgetTester tester,
   ) async {
+    final bannerService = FakeAppBannerAdService();
     await tester.pumpWidget(
       LingKoApp(
         aiProcessingConsentApi: FakeAiProcessingConsentApi(),
@@ -2750,6 +2841,8 @@ void main() {
         evaluationApi: FakeEvaluationApi(),
         authService: FakeAppAuthService(restoreExistingSession: true),
         audioRecorderService: FakeAudioRecorderService(),
+        bannerAdService: bannerService,
+        advertisingPrivacyService: FakeAdvertisingPrivacyService(),
       ),
     );
     await tester.pumpAndSettle();
@@ -2762,6 +2855,17 @@ void main() {
     expect(find.text('Latest score'), findsOneWidget);
     expect(find.text('91'), findsWidgets);
     expect(find.text('맛있겠다.'), findsOneWidget);
+    final reviewBanner = find.byKey(const ValueKey('fake-review-banner'));
+    expect(reviewBanner, findsOneWidget);
+    expect(
+      tester.getTopLeft(reviewBanner).dy,
+      greaterThan(tester.getBottomLeft(find.text('Latest score')).dy),
+    );
+    expect(
+      tester.getBottomLeft(reviewBanner).dy,
+      lessThan(tester.getTopLeft(find.text('Recent history')).dy),
+    );
+    expect(bannerService.loadedPlacements, [AppBannerPlacement.review]);
     expect(
       find.byKey(const ValueKey('review-history-card-10')),
       findsOneWidget,
@@ -2840,10 +2944,47 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Review keeps its banner while history refresh is pending', (
+    WidgetTester tester,
+  ) async {
+    final evaluationApi = FakeEvaluationApi();
+    final bannerService = FakeAppBannerAdService();
+    await tester.pumpWidget(
+      LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: evaluationApi,
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+        bannerAdService: bannerService,
+        advertisingPrivacyService: FakeAdvertisingPrivacyService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(_navigationLabel('Review'));
+    await tester.pumpAndSettle();
+
+    evaluationApi.historyCompleter = Completer<PracticeHistory>();
+    final reviewState = tester.state(find.byType(ReviewScreen));
+    final refreshFuture =
+        (reviewState as dynamic).loadHistory() as Future<void>;
+    await tester.pump();
+
+    expect(evaluationApi.historyFetchCount, 2);
+    expect(find.byKey(const ValueKey('fake-review-banner')), findsOneWidget);
+    expect(bannerService.loadedPlacements, [AppBannerPlacement.review]);
+
+    evaluationApi.historyCompleter!.complete(evaluationApi.history);
+    await refreshFuture;
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('Profile shows account and sign out returns to login', (
     WidgetTester tester,
   ) async {
     final authService = FakeAppAuthService(restoreExistingSession: true);
+    final bannerService = FakeAppBannerAdService();
     await tester.pumpWidget(
       LingKoApp(
         aiProcessingConsentApi: FakeAiProcessingConsentApi(),
@@ -2852,6 +2993,8 @@ void main() {
         evaluationApi: FakeEvaluationApi(),
         authService: authService,
         audioRecorderService: FakeAudioRecorderService(),
+        bannerAdService: bannerService,
+        advertisingPrivacyService: FakeAdvertisingPrivacyService(),
       ),
     );
     await tester.pumpAndSettle();
@@ -2861,6 +3004,17 @@ void main() {
 
     expect(find.text('LingKo User'), findsOneWidget);
     expect(find.text('user@example.com'), findsOneWidget);
+    final profileBanner = find.byKey(const ValueKey('fake-profile-banner'));
+    expect(profileBanner, findsOneWidget);
+    expect(
+      tester.getTopLeft(profileBanner).dy,
+      greaterThan(tester.getBottomLeft(find.text('user@example.com')).dy),
+    );
+    expect(
+      tester.getBottomLeft(profileBanner).dy,
+      lessThan(tester.getTopLeft(find.text('Your content')).dy),
+    );
+    expect(bannerService.loadedPlacements, [AppBannerPlacement.profile]);
     // 핸드오프의 설정 행은 첫 아이콘부터 카드 테두리 안쪽 14px에서 시작한다.
     final savedRow = find.byKey(const ValueKey('profile-saved-sentences'));
     final savedIcon = find.descendant(
@@ -3041,6 +3195,68 @@ void main() {
       expect(find.byKey(const ValueKey('profile-ad-privacy')), findsNothing);
       expect(find.byKey(const ValueKey('profile-contact')), findsNothing);
       expect(find.text('Delete account'), findsOneWidget);
+    },
+  );
+
+  testWidgets('Profile exposes required advertising privacy options', (
+    WidgetTester tester,
+  ) async {
+    final privacyService = FakeAdvertisingPrivacyService(
+      privacyOptionsRequired: true,
+    );
+    await tester.pumpWidget(
+      LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+        bannerAdService: FakeAppBannerAdService(),
+        advertisingPrivacyService: privacyService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(_navigationLabel('Profile'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('profile-ad-privacy')),
+      240,
+    );
+
+    expect(find.text('Advertising privacy'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('profile-ad-privacy')));
+    await tester.pumpAndSettle();
+    expect(privacyService.showPrivacyOptionsCount, 1);
+  });
+
+  testWidgets(
+    'Profile keeps advertising privacy options available after ad denial',
+    (WidgetTester tester) async {
+      final privacyService = FakeAdvertisingPrivacyService(
+        privacyOptionsRequired: true,
+        initializeError: StateError('ad requests denied'),
+      );
+      await tester.pumpWidget(
+        LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: FakeEvaluationApi(),
+          authService: FakeAppAuthService(restoreExistingSession: true),
+          audioRecorderService: FakeAudioRecorderService(),
+          bannerAdService: FakeAppBannerAdService(),
+          advertisingPrivacyService: privacyService,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(_navigationLabel('Profile'));
+      await tester.pumpAndSettle();
+
+      // 광고 거부는 load 차단 사유이지 사용자가 선택을 바꾸는 진입점을 숨길 사유가 아니다.
+      expect(find.byKey(const ValueKey('profile-ad-privacy')), findsOneWidget);
     },
   );
 

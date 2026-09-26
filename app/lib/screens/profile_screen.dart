@@ -1,5 +1,7 @@
 // 파일 의도: 계정 정보와 학습 환경 설정만 관리하고 기록은 Review로 분리한다.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
@@ -7,6 +9,9 @@ import '../app/app_palette.dart';
 import '../models/auth_session.dart';
 import '../models/consent_selection.dart';
 import '../services/app_auth_service.dart';
+import '../services/banner_ad_service.dart';
+import '../services/mobile_ads_privacy_service.dart';
+import '../widgets/inline_banner_ad.dart';
 import '../widgets/shared_widgets.dart';
 
 /// 현재 계정 정보, 법무 문서, 개인정보 동작과 세션 종료를 한곳에서 제공한다.
@@ -20,6 +25,9 @@ class ProfileScreen extends StatefulWidget {
     required this.onOpenDocument,
     this.onOpenSavedSentences,
     this.onManageAiConsent,
+    required this.bannerAdService,
+    required this.advertisingPrivacyService,
+    required this.advertisingEnabled,
   });
 
   final AppAuthService authService;
@@ -35,6 +43,11 @@ class ProfileScreen extends StatefulWidget {
 
   final VoidCallback? onOpenSavedSentences;
   final VoidCallback? onManageAiConsent;
+  final AppBannerAdService bannerAdService;
+  final AdvertisingPrivacyService advertisingPrivacyService;
+
+  /// 보상형 또는 배너 광고 중 하나라도 활성화돼 UMP 설정 진입점이 의미가 있는 상태다.
+  final bool advertisingEnabled;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -43,6 +56,48 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool isDeletingAccount = false;
   String? errorText;
+  bool showAdvertisingPrivacy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.advertisingEnabled) {
+      unawaited(_loadAdvertisingPrivacyRequirement());
+    }
+  }
+
+  Future<void> _loadAdvertisingPrivacyRequirement() async {
+    try {
+      await widget.advertisingPrivacyService.initialize();
+    } catch (_) {
+      // 광고 거부나 일시적인 SDK 초기화 실패는 load를 중단하지만, 사용자가 선택을
+      // 바꿀 수 있는 UMP 진입점까지 숨기면 안 되므로 requirement 조회는 계속한다.
+    }
+
+    try {
+      final isRequired =
+          await widget.advertisingPrivacyService.isPrivacyOptionsRequired();
+      if (mounted) {
+        setState(() => showAdvertisingPrivacy = isRequired);
+      }
+    } catch (_) {
+      // UMP requirement 조회 실패는 Profile과 핵심 기능을 막지 않는다. 다음 launch에서 재확인한다.
+    }
+  }
+
+  Future<void> _showAdvertisingPrivacyOptions() async {
+    try {
+      await widget.advertisingPrivacyService.showPrivacyOptions();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Advertising privacy options are unavailable.'),
+          ),
+        );
+      }
+    }
+  }
 
   Future<void> signOut() async {
     try {
@@ -108,7 +163,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const TopBar(title: 'Profile'),
           const SizedBox(height: 18),
           _AccountBlock(session: widget.session),
-          const SizedBox(height: 20),
+          if (widget.bannerAdService.isConfiguredFor(
+            AppBannerPlacement.profile,
+          )) ...[
+            const SizedBox(height: 16),
+            InlineBannerAd(
+              key: const ValueKey('profile-banner-ad'),
+              service: widget.bannerAdService,
+              placement: AppBannerPlacement.profile,
+            ),
+            const SizedBox(height: 20),
+          ] else
+            const SizedBox(height: 20),
           const SectionHeader(title: 'Your content'),
           const SizedBox(height: 10),
           AppCard(
@@ -142,6 +208,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'AI assessment privacy',
                   onTap: widget.onManageAiConsent,
                 ),
+                if (showAdvertisingPrivacy)
+                  _SettingsLinkRow(
+                    key: const ValueKey('profile-ad-privacy'),
+                    icon: Icons.ads_click_outlined,
+                    label: 'Advertising privacy',
+                    onTap: () => unawaited(_showAdvertisingPrivacyOptions()),
+                  ),
                 _SettingsLinkRow(
                   key: const ValueKey('profile-privacy'),
                   icon: Icons.privacy_tip_outlined,

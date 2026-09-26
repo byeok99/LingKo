@@ -6,6 +6,8 @@ import 'dart:io';
 
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'mobile_ads_privacy_service.dart';
+
 /// Mobile Ads가 지원하는 앱 플랫폼만 명시적으로 구분한다.
 enum RewardedAdPlatform { android, ios, unsupported }
 
@@ -157,54 +159,20 @@ class GooglePracticeRewardAdService implements PracticeRewardAdService {
 
 /// UMP 개인정보 선택을 갱신한 뒤 Google Mobile Ads SDK를 초기화한다.
 class GoogleMobileAdsRewardedAdGateway implements RewardedAdGateway {
+  GoogleMobileAdsRewardedAdGateway({AdvertisingPrivacyService? privacyService})
+    : _privacyService = privacyService;
+
+  AdvertisingPrivacyService? _privacyService;
+
   @override
   Future<void> initialize({String? testDeviceId}) async {
-    await _updateConsent();
-    if (!await ConsentInformation.instance.canRequestAds()) {
-      throw StateError('Privacy consent does not allow ad requests');
-    }
-    // 운영 Ad Unit과 SSV 계약은 유지하고, 명시적으로 주입된 로컬 기기만
-    // Google test mode로 요청해 invalid traffic과 실수로 인한 실제 광고 클릭을 막는다.
-    if (testDeviceId != null) {
-      await MobileAds.instance.updateRequestConfiguration(
-        RequestConfiguration(testDeviceIds: [testDeviceId]),
-      );
-    }
-    await MobileAds.instance.initialize();
-  }
-
-  Future<void> _updateConsent() async {
-    final update = Completer<void>();
-    ConsentInformation.instance.requestConsentInfoUpdate(
-      ConsentRequestParameters(),
-      () => update.complete(),
-      (error) => update.completeError(
-        StateError('Unable to update ad privacy consent: ${error.errorCode}'),
-      ),
-    );
-
-    try {
-      await update.future;
-    } catch (_) {
-      // 공식 UMP 지침처럼 update 실패 시에도 이전 session의 유효한 동의가 있으면
-      // canRequestAds로 계속할 수 있게 한다. 실제 허용 여부는 initialize에서 확인한다.
-      if (!await ConsentInformation.instance.canRequestAds()) {
-        rethrow;
-      }
-      return;
-    }
-
-    final form = Completer<void>();
-    ConsentForm.loadAndShowConsentFormIfRequired((error) {
-      if (error == null) {
-        form.complete();
-      } else {
-        form.completeError(
-          StateError('Unable to show ad privacy form: ${error.errorCode}'),
+    // 배너와 같은 UMP 상태·SDK instance를 공유한다. 별도 생성 경로에서도 test device
+    // 설정을 잃지 않도록 주입값이 없을 때만 전용 privacy service를 지연 생성한다.
+    final privacy =
+        _privacyService ??= GoogleMobileAdsPrivacyService(
+          testDeviceId: testDeviceId ?? '',
         );
-      }
-    });
-    await form.future;
+    await privacy.initialize();
   }
 
   @override

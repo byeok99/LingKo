@@ -2,6 +2,7 @@
 // 보장 대상: ID가 없으면 광고를 요청하지 않고, 플랫폼별 ID를 고르며, 성공·취소와 무관하게 광고를 폐기한다.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lingko_app/services/mobile_ads_privacy_service.dart';
 import 'package:lingko_app/services/rewarded_ad_service.dart';
 
 void main() {
@@ -198,6 +199,32 @@ void main() {
       expect(presentation.disposeCount, 1);
     });
   });
+
+  test('Google gateway는 배너와 공유하는 개인정보 초기화 경계에 위임한다', () async {
+    final privacyService = FakeAdvertisingPrivacyService();
+    final gateway = GoogleMobileAdsRewardedAdGateway(
+      privacyService: privacyService,
+    );
+
+    await gateway.initialize(testDeviceId: 'ignored-by-shared-service');
+
+    expect(privacyService.initializeCount, 1);
+  });
+}
+
+class FakeAdvertisingPrivacyService implements AdvertisingPrivacyService {
+  int initializeCount = 0;
+
+  @override
+  Future<void> initialize() async {
+    initializeCount++;
+  }
+
+  @override
+  Future<bool> isPrivacyOptionsRequired() async => false;
+
+  @override
+  Future<void> showPrivacyOptions() async {}
 }
 
 class FakeRewardedAdGateway implements RewardedAdGateway {
