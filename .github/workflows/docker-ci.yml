@@ -35,6 +35,9 @@ jobs:
       - name: CloudWatch Agent 운영 정책 회귀 테스트
         run: ./scripts/tests/cloudwatch-agent-test.sh
 
+      - name: CloudWatch Logs 설정 회귀 테스트
+        run: ./scripts/tests/cloudwatch-logs-test.sh
+
       - name: Required check 이름 회귀 테스트
         run: ./scripts/tests/ci-required-checks-test.sh
 

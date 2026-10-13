@@ -12,6 +12,7 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 BACKEND_DIR="$REPO_ROOT/backend"
 ENV_FILE="$BACKEND_DIR/.env"
+PRODUCTION_COMPOSE_FILE="$BACKEND_DIR/docker-compose.prod.yml"
 
 fail() {
   echo "DEPLOY_ERROR: $*" >&2
@@ -34,14 +35,18 @@ cleanup_lock() {
   rmdir "$LOCK_DIR" 2>/dev/null || true
 }
 
-deploy_tag() {
-  local tag=$1
+docker_compose() {
   (
     cd "$BACKEND_DIR"
-    BACKEND_IMAGE_REPOSITORY="$IMAGE_REPOSITORY" \
-      BACKEND_IMAGE_TAG="$tag" \
-      docker compose up -d --no-deps backend evaluation-worker
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml "$@"
   )
+}
+
+deploy_tag() {
+  local tag=$1
+  BACKEND_IMAGE_REPOSITORY="$IMAGE_REPOSITORY" \
+    BACKEND_IMAGE_TAG="$tag" \
+    docker_compose up -d --no-deps backend evaluation-worker
 }
 
 runtime_is_healthy() {
@@ -52,7 +57,7 @@ runtime_is_healthy() {
   backend_running=$(docker inspect --format '{{.State.Running}}' lingko-backend 2>/dev/null || true)
   [[ $backend_running == "true" ]] || return 1
 
-  worker_id=$(cd "$BACKEND_DIR" && docker compose ps -q evaluation-worker)
+  worker_id=$(docker_compose ps -q evaluation-worker)
   [[ -n $worker_id ]] || return 1
   worker_running=$(docker inspect --format '{{.State.Running}}' "$worker_id" 2>/dev/null || true)
   [[ $worker_running == "true" ]] || return 1
@@ -83,6 +88,23 @@ restore_previous_image() {
   return 1
 }
 
+verify_awslogs_group() {
+  local log_group=$1
+  local marker="LINGKO_AWSLOGS_PREFLIGHT commit=$TARGET_SHA"
+
+  # 실행 중 서비스를 교체하기 전에 Docker driver 초기화와 instance role의 Log Group 접근을 확인한다.
+  docker run --rm \
+    --entrypoint sh \
+    --log-driver awslogs \
+    --log-opt "awslogs-region=$AWS_LOGS_REGION" \
+    --log-opt "awslogs-group=$log_group" \
+    --log-opt awslogs-create-group=false \
+    --log-opt mode=non-blocking \
+    --log-opt max-buffer-size=4m \
+    "$TARGET_IMAGE" \
+    -c 'printf "%s\n" "$1"' sh "$marker" >/dev/null
+}
+
 [[ $TARGET_SHA =~ ^[0-9a-f]{40}$ ]] || fail "target commit must be a 40-character lowercase SHA"
 [[ $HEALTH_ATTEMPTS =~ ^[1-9][0-9]*$ ]] || fail "health attempts must be a positive integer"
 [[ $HEALTH_INTERVAL_SECONDS =~ ^[0-9]+$ ]] || fail "health interval must be a non-negative integer"
@@ -95,6 +117,7 @@ docker compose version >/dev/null 2>&1 || fail "Docker Compose plugin is unavail
 
 [[ -d $BACKEND_DIR ]] || fail "backend directory is missing"
 [[ -f $ENV_FILE ]] || fail "backend/.env is missing"
+[[ -f $PRODUCTION_COMPOSE_FILE ]] || fail "backend/docker-compose.prod.yml is missing"
 
 CURRENT_BRANCH=$(git -C "$REPO_ROOT" branch --show-current)
 [[ $CURRENT_BRANCH == "$EXPECTED_BRANCH" ]] || fail "expected branch $EXPECTED_BRANCH, got $CURRENT_BRANCH"
@@ -121,6 +144,16 @@ IMAGE_REPOSITORY=$(read_env_value BACKEND_IMAGE_REPOSITORY)
 IMAGE_REPOSITORY=${IMAGE_REPOSITORY:-lingko-backend}
 [[ $IMAGE_REPOSITORY =~ ^[A-Za-z0-9./:_-]+$ ]] || fail "BACKEND_IMAGE_REPOSITORY contains unsupported characters"
 
+AWS_LOGS_REGION=${AWS_LOGS_REGION:-$(read_env_value AWS_LOGS_REGION)}
+AWS_LOGS_REGION=${AWS_LOGS_REGION:-us-east-1}
+AWS_LOGS_API_GROUP=${AWS_LOGS_API_GROUP:-$(read_env_value AWS_LOGS_API_GROUP)}
+AWS_LOGS_API_GROUP=${AWS_LOGS_API_GROUP:-/lingko/prod/api}
+AWS_LOGS_WORKER_GROUP=${AWS_LOGS_WORKER_GROUP:-$(read_env_value AWS_LOGS_WORKER_GROUP)}
+AWS_LOGS_WORKER_GROUP=${AWS_LOGS_WORKER_GROUP:-/lingko/prod/worker}
+[[ $AWS_LOGS_REGION =~ ^[a-z]{2}(-gov)?-[a-z]+-[0-9]+$ ]] || fail "AWS_LOGS_REGION is invalid"
+[[ $AWS_LOGS_API_GROUP =~ ^/[A-Za-z0-9_./-]+$ ]] || fail "AWS_LOGS_API_GROUP is invalid"
+[[ $AWS_LOGS_WORKER_GROUP =~ ^/[A-Za-z0-9_./-]+$ ]] || fail "AWS_LOGS_WORKER_GROUP is invalid"
+
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
   fail "another backend deployment is already running"
 fi
@@ -142,6 +175,12 @@ echo "Building backend image for commit $TARGET_SHA"
   docker build --tag "$TARGET_IMAGE" .
 )
 
+echo "Verifying CloudWatch Logs delivery prerequisites"
+verify_awslogs_group "$AWS_LOGS_API_GROUP" \
+  || fail "CloudWatch Logs preflight failed for API"
+verify_awslogs_group "$AWS_LOGS_WORKER_GROUP" \
+  || fail "CloudWatch Logs preflight failed for evaluation worker"
+
 echo "Replacing backend and evaluation-worker"
 if ! deploy_tag "$TARGET_SHA"; then
   echo "Deployment command failed; restoring $ROLLBACK_TAG" >&2
@@ -158,8 +197,7 @@ fi
 echo "Deployment completed: $TARGET_SHA"
 echo "Rollback image retained: $ROLLBACK_IMAGE"
 (
-  cd "$BACKEND_DIR"
   BACKEND_IMAGE_REPOSITORY="$IMAGE_REPOSITORY" \
     BACKEND_IMAGE_TAG="$TARGET_SHA" \
-    docker compose ps backend evaluation-worker
+    docker_compose ps backend evaluation-worker
 )
