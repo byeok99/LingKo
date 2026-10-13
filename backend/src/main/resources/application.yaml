@@ -15,10 +15,9 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 
 logging:
-  file:
-    name: logs/lingko.log
   level:
-    com.lingko.lingko: ${LOG_LEVEL:DEBUG}
+    # 운영 container는 stdout을 Docker awslogs로 전달하며 기본값은 개인정보 노출과 비용을 줄이는 INFO다.
+    com.lingko.lingko: ${LOG_LEVEL:INFO}
 
 jwt:
   # 비밀키는 예시 파일에 기록하지 않고 실행 환경에서만 주입한다.

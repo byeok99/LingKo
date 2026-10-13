@@ -1,0 +1,22 @@
+services:
+  backend:
+    logging:
+      # 운영에서만 CloudWatch를 사용해 로컬 개발 로그가 운영 Group으로 섞이지 않게 한다.
+      # 고정 stream 이름은 재생성 container와 충돌하므로 생략하고 Docker의 container ID를 사용한다.
+      driver: awslogs
+      options:
+        awslogs-region: "${AWS_LOGS_REGION:-us-east-1}"
+        awslogs-group: "${AWS_LOGS_API_GROUP:-/lingko/prod/api}"
+        awslogs-create-group: "false"
+        mode: non-blocking
+        max-buffer-size: "4m"
+
+  evaluation-worker:
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "${AWS_LOGS_REGION:-us-east-1}"
+        awslogs-group: "${AWS_LOGS_WORKER_GROUP:-/lingko/prod/worker}"
+        awslogs-create-group: "false"
+        mode: non-blocking
+        max-buffer-size: "4m"

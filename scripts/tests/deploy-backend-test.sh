@@ -4,6 +4,7 @@ set -euo pipefail
 
 PROJECT_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 DEPLOY_SCRIPT="$PROJECT_ROOT/scripts/deploy-backend.sh"
+PRODUCTION_COMPOSE_FILE="$PROJECT_ROOT/backend/docker-compose.prod.yml"
 TARGET_SHA=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 fail() {
@@ -42,6 +43,22 @@ EOF
 #!/usr/bin/env bash
 set -euo pipefail
 echo "docker $* tag=${BACKEND_IMAGE_TAG:-unset}" >>"$TEST_LOG"
+if [[ ${1:-} == "compose" && " $* " == *" ps "* ]]; then
+  if [[ " $* " == *" -q evaluation-worker "* ]]; then
+    echo "worker-container"
+  else
+    echo "backend running"
+    echo "evaluation-worker running"
+  fi
+  exit 0
+fi
+if [[ ${1:-} == "compose" && " $* " == *" up "* ]]; then
+  if [[ -n ${TEST_UP_FAIL_TAG:-} && ${BACKEND_IMAGE_TAG:-unset} == "$TEST_UP_FAIL_TAG" ]]; then
+    exit 66
+  fi
+  printf '%s' "${BACKEND_IMAGE_TAG:-unset}" >"$TEST_STATE"
+  exit 0
+fi
 case "${1:-} ${2:-}" in
   "info ") exit 0 ;;
   "compose version") exit 0 ;;
@@ -53,21 +70,13 @@ case "${1:-} ${2:-}" in
       echo "true"
     fi
     ;;
-  "compose ps")
-    if [[ " $* " == *" -q evaluation-worker "* ]]; then
-      echo "worker-container"
-    else
-      echo "backend running"
-      echo "evaluation-worker running"
-    fi
-    ;;
   "image tag") exit 0 ;;
   "build --tag") exit 0 ;;
-  "compose up")
-    if [[ -n ${TEST_UP_FAIL_TAG:-} && ${BACKEND_IMAGE_TAG:-unset} == "$TEST_UP_FAIL_TAG" ]]; then
-      exit 66
+  "run --rm")
+    if [[ -n ${TEST_AWSLOGS_FAIL_GROUP:-} && " $* " == *" awslogs-group=$TEST_AWSLOGS_FAIL_GROUP "* ]]; then
+      exit 67
     fi
-    printf '%s' "${BACKEND_IMAGE_TAG:-unset}" >"$TEST_STATE"
+    exit 0
     ;;
   *) echo "unexpected docker command: $*" >&2; exit 65 ;;
 esac
@@ -91,6 +100,7 @@ new_fixture() {
   FIXTURE=$(mktemp -d)
   mkdir -p "$FIXTURE/repo/scripts" "$FIXTURE/repo/backend" "$FIXTURE/bin"
   cp "$DEPLOY_SCRIPT" "$FIXTURE/repo/scripts/deploy-backend.sh"
+  cp "$PRODUCTION_COMPOSE_FILE" "$FIXTURE/repo/backend/docker-compose.prod.yml"
   chmod +x "$FIXTURE/repo/scripts/deploy-backend.sh"
   printf 'APP_PORT=18080\n' >"$FIXTURE/repo/backend/.env"
   TEST_LOG="$FIXTURE/commands.log"
@@ -133,7 +143,25 @@ test_deploys_exact_commit_image() {
     LINGKO_DEPLOY_HEALTH_ATTEMPTS=1 \
     "$FIXTURE/repo/scripts/deploy-backend.sh" "$TARGET_SHA" >/dev/null
   assert_contains "$TEST_LOG" "docker build --tag lingko-backend:$TARGET_SHA ."
-  assert_contains "$TEST_LOG" "docker compose up -d --no-deps backend evaluation-worker tag=$TARGET_SHA"
+  assert_contains "$TEST_LOG" "docker run --rm --entrypoint sh --log-driver awslogs --log-opt awslogs-region=us-east-1 --log-opt awslogs-group=/lingko/prod/api"
+  assert_contains "$TEST_LOG" "docker run --rm --entrypoint sh --log-driver awslogs --log-opt awslogs-region=us-east-1 --log-opt awslogs-group=/lingko/prod/worker"
+  assert_contains "$TEST_LOG" "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-deps backend evaluation-worker tag=$TARGET_SHA"
+  cleanup_fixture
+}
+
+test_stops_before_replacement_when_awslogs_preflight_fails() {
+  new_fixture
+  export TEST_AWSLOGS_FAIL_GROUP=/lingko/prod/worker
+  if PATH="$FIXTURE/bin:$PATH" \
+    LINGKO_DEPLOY_LOCK_DIR="$FIXTURE/lock" \
+    LINGKO_DEPLOY_HEALTH_ATTEMPTS=1 \
+    "$FIXTURE/repo/scripts/deploy-backend.sh" "$TARGET_SHA" >/dev/null 2>&1; then
+    fail "failed awslogs preflight reported success"
+  fi
+  if grep -F " up -d --no-deps backend evaluation-worker " "$TEST_LOG" >/dev/null; then
+    fail "container replacement ran after awslogs preflight failure"
+  fi
+  unset TEST_AWSLOGS_FAIL_GROUP
   cleanup_fixture
 }
 
@@ -146,7 +174,7 @@ test_rolls_back_failed_health_check() {
     "$FIXTURE/repo/scripts/deploy-backend.sh" "$TARGET_SHA" >/dev/null 2>&1; then
     fail "unhealthy deployment reported success"
   fi
-  grep -E "docker compose up -d --no-deps backend evaluation-worker tag=rollback-[0-9]+" "$TEST_LOG" >/dev/null \
+  grep -E "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-deps backend evaluation-worker tag=rollback-[0-9]+" "$TEST_LOG" >/dev/null \
     || fail "rollback image was not restored"
   unset TEST_FAIL_TAG
   cleanup_fixture
@@ -172,6 +200,7 @@ test_verifies_rollback_after_replacement_failure() {
 test_rejects_invalid_sha
 test_rejects_dirty_checkout
 test_deploys_exact_commit_image
+test_stops_before_replacement_when_awslogs_preflight_fails
 test_rolls_back_failed_health_check
 test_verifies_rollback_after_replacement_failure
 

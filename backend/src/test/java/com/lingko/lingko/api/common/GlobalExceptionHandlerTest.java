@@ -1,5 +1,9 @@
 package com.lingko.lingko.api.common;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.lingko.lingko.api.evaluation.EvaluationController;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
@@ -10,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.slf4j.LoggerFactory;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -60,6 +65,64 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.code").value("EVALUATION_FAILED"))
                 .andExpect(jsonPath("$.message").value("Pronunciation evaluation failed. Please try again."))
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("replicate.delivery"))));
+    }
+
+    @Test
+    @DisplayName("외부 연동 실패 로그에도 credential을 포함할 수 있는 URL 원문을 남기지 않는다")
+    void videoGenerationFailureDoesNotExposeSourceUrlInLogs() {
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            var failure = new VideoGenerationException(
+                    "외부 미디어 URL 연결 실패: https://example.invalid/result.mp4?token=sensitive"
+            );
+
+            new GlobalExceptionHandler().handleVideoGeneration(failure);
+
+            org.assertj.core.api.Assertions.assertThat(appender.list)
+                    .hasSize(1)
+                    .allSatisfy(event -> {
+                        org.assertj.core.api.Assertions.assertThat(event.getFormattedMessage())
+                                .doesNotContain("example.invalid", "token=sensitive");
+                        org.assertj.core.api.Assertions.assertThat(event.getThrowableProxy()).isNull();
+                    });
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
+    @DisplayName("예상하지 못한 500 예외는 상세 응답 없이 ERROR stack trace를 서버 로그에 남긴다")
+    void unexpectedFailureIsLoggedWithoutExposingDetails() {
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            RuntimeException failure = new RuntimeException("database unavailable");
+
+            var response = new GlobalExceptionHandler().handleUnexpected(failure);
+
+            org.assertj.core.api.Assertions.assertThat(response.getStatusCode().value()).isEqualTo(500);
+            org.assertj.core.api.Assertions.assertThat(response.getBody().message())
+                    .isEqualTo("Unexpected server error")
+                    .doesNotContain("database unavailable");
+            org.assertj.core.api.Assertions.assertThat(appender.list)
+                    .anySatisfy(event -> {
+                        org.assertj.core.api.Assertions.assertThat(event.getLevel()).isEqualTo(Level.ERROR);
+                        org.assertj.core.api.Assertions.assertThat(event.getFormattedMessage())
+                                .isEqualTo("Unexpected server error");
+                        org.assertj.core.api.Assertions.assertThat(event.getThrowableProxy()).isNotNull();
+                    });
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
     }
 
 }

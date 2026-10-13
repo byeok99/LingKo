@@ -164,8 +164,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(VideoGenerationException.class)
     public ResponseEntity<ErrorResponse> handleVideoGeneration(VideoGenerationException exception) {
-        // 공급자 세부사항은 서버에만 남기고 클라이언트에는 재시도 가능한 중립 오류를 반환한다.
-        log.warn("Pronunciation evaluation failed", exception);
+        // 외부 URL query에는 credential이 포함될 수 있어 예외 원문·stack trace 대신 분류만 남긴다.
+        String causeType = exception.getCause() == null
+                ? "none"
+                : exception.getCause().getClass().getSimpleName();
+        log.warn(
+                "Pronunciation evaluation failed: errorType={}, causeType={}",
+                exception.getClass().getSimpleName(),
+                causeType
+        );
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                 .body(ErrorResponse.of("EVALUATION_FAILED", "Pronunciation evaluation failed. Please try again."));
     }
@@ -184,7 +191,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception exception) {
-        // 예측하지 못한 실패 경로의 임의 예외 메시지를 응답으로 직렬화하지 않는다.
+        // 상세 stack trace는 운영 로그에만 남기고 임의 예외 메시지는 응답으로 직렬화하지 않는다.
+        log.error("Unexpected server error", exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.of("INTERNAL_SERVER_ERROR", "Unexpected server error"));
     }

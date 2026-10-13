@@ -75,6 +75,38 @@ EC2 명령은 원격 `develop`이 workflow의 정확한 commit인지, 서버의 
 
 이 테스트는 AWS나 운영 Docker를 호출하지 않고 mock command로 잘못된 SHA·dirty checkout 차단, 정확한 image tag 배포와 health check 실패 rollback을 확인합니다. 실제 OIDC·SSM·운영 네트워크는 첫 production 실행에서 별도로 검증합니다.
 
+## CloudWatch 애플리케이션 로그
+
+Spring Boot는 별도 파일을 만들지 않고 stdout으로만 기록합니다. 기본 `docker-compose.yml`은 로컬 개발이 AWS 자격 증명을 요구하거나 운영 로그와 섞이지 않도록 모든 서비스에 회전되는 `json-file`을 사용합니다. 운영 배포 스크립트만 `docker-compose.prod.yml`을 함께 합성해 API stdout을 `/lingko/prod/api`, 평가 Worker stdout을 `/lingko/prod/worker` Log Group으로 전송합니다. Docker가 각 container ID를 stream 이름으로 사용하므로 재배포된 container가 기존 stream을 공유하지 않습니다. 두 Group은 `us-east-1`에서 14일 보관하며 기본 애플리케이션 로그 레벨은 `INFO`입니다.
+
+운영 API·Worker의 `awslogs`는 `mode=non-blocking`, `max-buffer-size=4m`으로 설정해 CloudWatch 전송 지연이 애플리케이션 실행을 직접 막지 않게 합니다. 이 모드는 buffer가 가득 차면 일부 로그를 버릴 수 있으므로 장애 시 애플리케이션 오류와 함께 Docker daemon 로그도 확인해야 합니다. 운영 MySQL과 수동 `guide-prewarm`, 로컬의 모든 서비스는 CloudWatch로 보내지 않고 `json-file`을 파일당 10 MiB, 최대 3개로 회전합니다.
+
+운영 `.env`에서 목적지를 바꿔야 할 때만 다음 비밀값이 아닌 설정을 사용합니다.
+
+- `AWS_LOGS_REGION` (기본 `us-east-1`)
+- `AWS_LOGS_API_GROUP` (기본 `/lingko/prod/api`)
+- `AWS_LOGS_WORKER_GROUP` (기본 `/lingko/prod/worker`)
+
+배포 스크립트는 새 image를 만든 뒤 API와 Worker의 각 Log Group에 일회성 canary container를 실행합니다. Docker logging driver 초기화에 실패하면 실행 중인 container를 교체하기 전에 배포를 중단합니다. Log Group은 자동 생성하지 않으므로 미리 만들고 EC2 Instance Role에 `logs:CreateLogStream`과 `logs:PutLogEvents` 권한을 부여해야 합니다.
+
+로컬 설정 회귀 검증:
+
+```bash
+./scripts/tests/cloudwatch-logs-test.sh
+./scripts/tests/deploy-backend-test.sh
+```
+
+배포 후 CloudWatch Console에서 region을 `us-east-1`로 선택하고 `Logs` → `Log groups`에서 두 Group의 최신 stream을 각각 확인합니다. EC2에서는 driver와 Spring 파일 로그 제거 상태를 다음처럼 확인합니다.
+
+```bash
+docker inspect lingko-backend --format '{{.HostConfig.LogConfig.Type}}'
+worker_id=$(docker compose -f /home/ubuntu/LingKo/backend/docker-compose.yml ps -q evaluation-worker)
+docker inspect "$worker_id" --format '{{.HostConfig.LogConfig.Type}}'
+docker exec lingko-backend sh -c 'test ! -e /app/logs/lingko.log'
+```
+
+인증 Header·token·Presigned URL·사용자 문장·음성·이메일·소셜 ID와 사용자별 S3 object key는 기록하지 않습니다. 내부 작업 ID는 장애 추적에 필요한 범위에서만 사용하며, 예측하지 못한 500은 응답에 예외 메시지를 노출하지 않고 서버에서 `ERROR`로 기록합니다.
+
 ## CloudWatch Agent OS 지표
 
 운영 EC2는 Instance Profile `LingKoEc2SsmRole`의 임시 자격 증명으로 CloudWatch에 지표를 전송합니다. 장기 AWS Access Key를 Agent 설정에 저장하지 않습니다. 저장소의 `backend/aws/cloudwatch-agent.json`은 60초 간격으로 `CWAgent` namespace에 다음 지표만 전송합니다.
