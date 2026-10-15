@@ -15,6 +15,9 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 
 logging:
+  pattern:
+    # API는 requestId로 요청 로그를 연결하고 HTTP 요청이 없는 Worker는 none으로 명확히 구분한다.
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] %logger{36} requestId=%X{requestId:-none} - %msg%n%wEx"
   level:
     # 운영 container는 stdout을 Docker awslogs로 전달하며 기본값은 개인정보 노출과 비용을 줄이는 INFO다.
     com.lingko.lingko: ${LOG_LEVEL:INFO}

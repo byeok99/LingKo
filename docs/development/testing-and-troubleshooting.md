@@ -107,6 +107,28 @@ docker exec lingko-backend sh -c 'test ! -e /app/logs/lingko.log'
 
 인증 Header·token·Presigned URL·사용자 문장·음성·이메일·소셜 ID와 사용자별 S3 object key는 기록하지 않습니다. 내부 작업 ID는 장애 추적에 필요한 범위에서만 사용하며, 예측하지 못한 500은 응답에 예외 메시지를 노출하지 않고 서버에서 `ERROR`로 기록합니다.
 
+### 요청 단위 로그 추적
+
+API는 모든 HTTP 요청에 `X-Request-Id` 응답 Header를 반환하고 같은 값을 MDC `requestId`와 오류 응답
+본문에 사용합니다. 외부 Header는 영숫자로 시작하고 영숫자·점·밑줄·하이픈만 포함한 1~64자일 때만
+수용하며, 나머지는 서버 UUID로 교체해 로그 주입을 막습니다. 요청 완료 INFO 로그에는 method, status,
+outcome, duration만 기록하고 URL·query·본문은 기록하지 않습니다. Servlet thread 재사용으로 다른 요청의
+ID가 섞이지 않도록 요청 종료 시 MDC 값을 제거합니다.
+
+console 로그는 `requestId=<값>`을 포함합니다. HTTP 요청을 처리하지 않는 평가 Worker는
+`requestId=none`이며, 비동기 작업 로그의 `jobId=<값>`으로 한 작업을 추적합니다. CloudWatch Logs
+Insights에서는 사용자로부터 받은 ID를 그대로 query 문법에 붙이지 말고 허용 형식을 확인한 뒤 다음처럼
+검색합니다.
+
+```text
+fields @timestamp, @message
+| filter @message like /requestId=5b8df634-fbab-44d2-9a89-8e1698570dc2/
+| sort @timestamp asc
+```
+
+Worker 작업은 `/lingko/prod/worker`에서 `jobId=<작업 ID>`로 같은 방식으로 검색합니다. `requestId`와
+`jobId`는 로그 검색용이며 CloudWatch Metric dimension으로 사용하지 않습니다.
+
 ## CloudWatch Agent OS 지표
 
 운영 EC2는 Instance Profile `LingKoEc2SsmRole`의 임시 자격 증명으로 CloudWatch에 지표를 전송합니다. 장기 AWS Access Key를 Agent 설정에 저장하지 않습니다. 저장소의 `backend/aws/cloudwatch-agent.json`은 60초 간격으로 `CWAgent` namespace에 다음 지표만 전송합니다.

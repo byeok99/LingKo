@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -37,17 +38,54 @@ class GlobalExceptionHandlerTest {
     private EvaluationService evaluationService;
 
     @Test
-    @DisplayName("validation 실패는 ErrorResponse 구조와 VALIDATION_FAILED code를 반환한다")
+    @DisplayName("정상 요청은 응답 Header와 INFO 완료 로그에 같은 requestId를 사용한다")
+    void successfulRequestAndLogShareRequestId() throws Exception {
+        String requestId = "successful-request-01";
+        when(evaluationService.convertToStandardPronunciation(anyString())).thenReturn("마시께따");
+        Logger logger = (Logger) LoggerFactory.getLogger(RequestIdFilter.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            mockMvc.perform(post("/api/pronunciation/convert")
+                            .header(RequestIdFilter.HEADER_NAME, requestId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"text\":\"맛있겠다\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string(RequestIdFilter.HEADER_NAME, requestId))
+                    .andExpect(jsonPath("$.standardPronunciation").value("마시께따"));
+
+            org.assertj.core.api.Assertions.assertThat(appender.list)
+                    .anySatisfy(event -> {
+                        org.assertj.core.api.Assertions.assertThat(event.getLevel()).isEqualTo(Level.INFO);
+                        org.assertj.core.api.Assertions.assertThat(event.getMDCPropertyMap())
+                                .containsEntry(RequestIdContext.MDC_KEY, requestId);
+                        org.assertj.core.api.Assertions.assertThat(event.getFormattedMessage())
+                                .contains("method=POST", "status=200", "outcome=completed");
+                    });
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
+    @DisplayName("validation 실패는 응답 Header와 ErrorResponse에 같은 requestId를 반환한다")
     void validationFailureReturnsErrorResponse() throws Exception {
+        String requestId = "validation-request-01";
+
         mockMvc.perform(post("/api/pronunciation/convert")
+                        .header(RequestIdFilter.HEADER_NAME, requestId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"\"}"))
                 .andExpect(status().isBadRequest())
+                .andExpect(header().string(RequestIdFilter.HEADER_NAME, requestId))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.message").value("Validation failed"))
                 .andExpect(jsonPath("$.details[0].field").value("text"))
                 .andExpect(jsonPath("$.details.length()").value(2))
-                .andExpect(jsonPath("$.requestId").doesNotExist());
+                .andExpect(jsonPath("$.requestId").value(requestId));
     }
 
     @Test
@@ -117,6 +155,41 @@ class GlobalExceptionHandlerTest {
                         org.assertj.core.api.Assertions.assertThat(event.getLevel()).isEqualTo(Level.ERROR);
                         org.assertj.core.api.Assertions.assertThat(event.getFormattedMessage())
                                 .isEqualTo("Unexpected server error");
+                        org.assertj.core.api.Assertions.assertThat(event.getThrowableProxy()).isNotNull();
+                    });
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
+    @DisplayName("예상하지 못한 500 응답과 ERROR 로그는 같은 requestId로 연결된다")
+    void unexpectedFailureResponseAndLogShareRequestId() throws Exception {
+        String requestId = "unexpected-request-01";
+        when(evaluationService.convertToStandardPronunciation(anyString()))
+                .thenThrow(new RuntimeException("database unavailable"));
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            mockMvc.perform(post("/api/pronunciation/convert")
+                            .header(RequestIdFilter.HEADER_NAME, requestId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"text\":\"맛있겠다\"}"))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(header().string(RequestIdFilter.HEADER_NAME, requestId))
+                    .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
+                    .andExpect(jsonPath("$.message").value("Unexpected server error"))
+                    .andExpect(jsonPath("$.requestId").value(requestId));
+
+            org.assertj.core.api.Assertions.assertThat(appender.list)
+                    .anySatisfy(event -> {
+                        org.assertj.core.api.Assertions.assertThat(event.getLevel()).isEqualTo(Level.ERROR);
+                        org.assertj.core.api.Assertions.assertThat(event.getMDCPropertyMap())
+                                .containsEntry(RequestIdContext.MDC_KEY, requestId);
                         org.assertj.core.api.Assertions.assertThat(event.getThrowableProxy()).isNotNull();
                     });
         } finally {

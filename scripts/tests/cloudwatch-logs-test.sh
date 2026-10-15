@@ -30,6 +30,7 @@ if grep -Eq '^[[:space:]]+(file:|name:[[:space:]]*logs/lingko\.log)' "$APPLICATI
   fail "Spring file logging must be disabled"
 fi
 assert_contains "$APPLICATION_CONFIG" 'com.lingko.lingko: ${LOG_LEVEL:INFO}'
+assert_contains "$APPLICATION_CONFIG" 'requestId=%X{requestId:-none}'
 assert_contains "$ENV_EXAMPLE" 'LOG_LEVEL=INFO'
 assert_contains "$ENV_EXAMPLE" 'AWS_LOGS_REGION=us-east-1'
 assert_contains "$ENV_EXAMPLE" 'AWS_LOGS_API_GROUP=/lingko/prod/api'
