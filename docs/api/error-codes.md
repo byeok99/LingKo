@@ -7,13 +7,19 @@ Worker 철회 확인 시 작업의 `errorCode`도 같은 값이며 terminal 실�
 
 오류 응답의 기본 구조는 다음과 같습니다.
 
+모든 HTTP 응답은 `X-Request-Id` Header를 포함합니다. 오류 응답의 `requestId`는 이 Header 및
+같은 요청에서 생성된 서버 로그의 `requestId`와 동일하므로 고객 문의와 장애 조사에 사용할 수 있습니다.
+클라이언트가 `X-Request-Id`를 보내면 영숫자로 시작하고 영숫자·점·밑줄·하이픈만 사용한 1~64자 값만
+재사용하며, 누락되거나 유효하지 않으면 서버가 UUID를 생성합니다.
+
 ```json
 {
   "code": "VALIDATION_FAILED",
   "message": "Validation failed",
-  "fieldErrors": [
-    {"field": "text", "message": "must not be blank"}
-  ]
+  "details": [
+    {"field": "text", "reason": "must not be blank"}
+  ],
+  "requestId": "5b8df634-fbab-44d2-9a89-8e1698570dc2"
 }
 ```
 
@@ -43,6 +49,7 @@ Worker 철회 확인 시 작업의 `errorCode`도 같은 값이며 terminal 실�
 
 - HTTP 상태만 보지 말고 `code`를 우선 분기합니다.
 - 서버의 내부 예외 메시지를 사용자에게 그대로 노출하지 않습니다.
+- 오류를 사용자에게 표시하거나 문의를 접수할 때 `requestId`를 함께 보존하되 인증 token이나 개인정보와 결합해 외부 분석 도구로 전송하지 않습니다.
 - 재시도 가능한 오류와 입력 수정이 필요한 오류를 구분합니다.
 - 401 발생 시 무한 재로그인·재요청 루프를 만들지 않습니다.
 - 429의 경우 서버가 제공하는 `nextRefillAt`과 `serverTime`의 차이로 다음 충전 countdown을 표시합니다.

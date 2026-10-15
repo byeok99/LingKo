@@ -537,11 +537,15 @@ X-LingKo-Internal-Token: <service-secret>
 
 ## 공통 오류 형식
 
+모든 HTTP 응답은 로그 상관관계에 사용하는 `X-Request-Id` Header를 포함합니다. 오류 본문의
+`requestId`도 같은 값이며 자세한 생성·검증 규칙은 [오류 코드](error-codes.md)를 참고합니다.
+
 ```json
 {
   "code": "INVALID_REQUEST",
   "message": "...",
-  "fieldErrors": []
+  "details": [],
+  "requestId": "5b8df634-fbab-44d2-9a89-8e1698570dc2"
 }
 ```
 

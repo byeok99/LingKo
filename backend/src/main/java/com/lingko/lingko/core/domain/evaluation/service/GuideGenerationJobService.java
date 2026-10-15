@@ -148,7 +148,8 @@ public class GuideGenerationJobService {
             jobsById.put(jobId, response(jobId, GuideGenerationJobStatus.COMPLETED, cacheKey, resultUrl, null));
             telemetry.jobFinished("completed");
         } catch (Exception exception) {
-            log.warn("Guide generation job failed: {}", jobId, exception);
+            // HTTP requestId가 이어지지 않는 비동기 실행은 jobId를 명시해 Worker 로그를 연결한다.
+            log.warn("Guide generation job failed: jobId={}", jobId, exception);
             jobsById.put(jobId, response(jobId, GuideGenerationJobStatus.FAILED, cacheKey, null, FAILURE_MESSAGE));
             telemetry.jobFinished("failed");
         } finally {

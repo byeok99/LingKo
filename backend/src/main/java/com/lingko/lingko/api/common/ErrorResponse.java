@@ -18,12 +18,15 @@ public record ErrorResponse(
         details = details == null ? List.of() : List.copyOf(details);
     }
 
+    /** 현재 HTTP 요청의 ID를 포함한 상세 항목 없는 오류 응답을 만든다. */
     public static ErrorResponse of(String code, String message) {
-        return new ErrorResponse(code, message, List.of(), null);
+        return new ErrorResponse(code, message, List.of(), RequestIdContext.current());
     }
 
+    /** 현재 HTTP 요청의 ID와 validation 상세 항목을 함께 담은 오류 응답을 만든다. */
     public static ErrorResponse of(String code, String message, List<FieldErrorDetail> details) {
-        return new ErrorResponse(code, message, details, null);
+        // HTTP 요청 밖의 직접 호출에서는 null이며, 요청 중에는 응답 Header와 같은 MDC 값을 사용한다.
+        return new ErrorResponse(code, message, details, RequestIdContext.current());
     }
 
     public record FieldErrorDetail(
