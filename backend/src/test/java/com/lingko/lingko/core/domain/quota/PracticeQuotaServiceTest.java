@@ -291,6 +291,33 @@ class PracticeQuotaServiceTest {
         assertThat(adRewardReceiptRepository.count()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("진행 중 예약분까지 5회이면 보상하지 않아 예약 복구 뒤에도 5회를 넘지 않는다")
+    void countsReservedPracticeTowardRewardCap() {
+        User user = saveUser();
+        // 잔여 4회 + 진행 중 예약 1회: 과거 기준(잔여 < 5)이면 지급되어 복구 후 6회가 됐다.
+        PracticeQuotaService.PracticeQuotaReservation inFlight =
+                quotaService.reservePractice(user.getUserIdx());
+        assertThat(quotaService.getTodayQuota(user.getUserIdx()).remainingPractices()).isEqualTo(4);
+
+        assertThat(quotaService.canReceiveAdReward(user.getUserIdx())).isFalse();
+        boolean credited = quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-during-evaluation");
+        quotaService.releasePractice(inFlight);
+        PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
+
+        assertThat(credited).isFalse();
+        assertThat(response.remainingPractices()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("예약이 없고 보유량이 5회 미만이면 광고 보상을 받을 수 있다")
+    void allowsAdRewardBelowCap() {
+        User user = saveUser();
+        completePractice(user.getUserIdx());
+
+        assertThat(quotaService.canReceiveAdReward(user.getUserIdx())).isTrue();
+    }
+
     private User saveUser() {
         return userRepository.save(User.builder()
                 .socialId("google-sub-123")

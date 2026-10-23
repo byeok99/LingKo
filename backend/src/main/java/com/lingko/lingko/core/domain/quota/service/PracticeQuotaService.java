@@ -57,6 +57,17 @@ public class PracticeQuotaService {
     }
 
     /**
+     * 광고를 보여 줘도 지급 가능한 상태인지, 즉 예약 포함 보유량이 최대치 미만인지 반환한다.
+     *
+     * <p>지급 판정({@link #grantVerifiedAdReward})과 같은 기준을 써야 광고를 끝까지 본 뒤
+     * 지급 거절되는 경우를 줄일 수 있다.</p>
+     */
+    @Transactional
+    public boolean canReceiveAdReward(Long userId) {
+        return findOrCreateCurrentQuota(userId).heldPractices() < MAX_NATURAL_PRACTICES;
+    }
+
+    /**
      * 광고 SDK가 획득을 확정한 event 하나를 평가 기회 1회로 바꾼다.
      *
      * <p>quota 행을 먼저 잠가 같은 사용자의 병렬 지급을 직렬화한 뒤 event 기록을 확인한다.
@@ -71,7 +82,8 @@ public class PracticeQuotaService {
 
         adRewardReceiptRepository.save(AdRewardReceipt.create(userId, rewardEventId));
         // 버튼을 누른 뒤 자연 충전으로 이미 5회가 된 경쟁 상황에서도 최대치를 넘기지 않는다.
-        if (quota.remainingPractices() < MAX_NATURAL_PRACTICES) {
+        // 예약분은 실패 시 복구되므로 잔여량이 아니라 예약 포함 보유량으로 상한을 판단한다.
+        if (quota.heldPractices() < MAX_NATURAL_PRACTICES) {
             quota.addRewardedPractices(1);
             return true;
         }
