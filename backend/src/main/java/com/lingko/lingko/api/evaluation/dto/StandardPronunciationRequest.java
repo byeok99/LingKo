@@ -15,7 +15,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StandardPronunciationRequest {
-    @NotBlank(message = "문장을 입력해주세요.")
-    @Size(min=1, max=30, message = "문장은 30자 이내로 입력해주세요.")
+    /**
+     * 변환할 문장이며 최대 100자다.
+     *
+     * <p>자유 문장 준비({@code /prepare})와 평가 작업 요청의 상한이 100자이므로 같은 값을 쓴다.
+     * 경계마다 상한이 다르면 한쪽에서 통과한 문장이 다른 쪽에서 거부되는 계약 불일치가 생긴다.</p>
+     */
+    @NotBlank(message = "text is required")
+    @Size(max = 100, message = "text must be 100 characters or fewer")
     private String text;
 }

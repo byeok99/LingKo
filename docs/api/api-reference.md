@@ -244,7 +244,7 @@ Authorization: Bearer <access-token>
 
 원문과 표준 발음을 반환합니다.
 
-`text`는 Unicode 문장부호·기호를 제거하고 연속 공백을 하나로 합친 뒤 변환합니다. 정규화 결과가 비어 있으면 `400 INVALID_REQUEST`를 반환합니다.
+`text`는 필수이며 자유 문장 준비·평가 요청과 같이 100자 이하여야 합니다(초과 시 `400 VALIDATION_FAILED`). Unicode 문장부호·기호를 제거하고 연속 공백을 하나로 합친 뒤 변환합니다. 정규화 결과가 비어 있으면 `400 INVALID_REQUEST`를 반환합니다.
 
 ### `POST /api/pronunciation/prepare`
 
