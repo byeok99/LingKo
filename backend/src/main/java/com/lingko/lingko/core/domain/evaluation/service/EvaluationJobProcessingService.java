@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.config.EvaluationJobSettings;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob;
+import com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobLeaseLostException;
 import com.lingko.lingko.core.domain.evaluation.exception.InvalidEvaluationAudioException;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationJobRepository;
 import com.lingko.lingko.core.domain.quota.service.PracticeQuotaService;
@@ -55,7 +56,7 @@ public class EvaluationJobProcessingService {
 
     @Transactional
     public void complete(EvaluationJob claimedJob, PracticeResultResponse result) {
-        EvaluationJob job = requireProcessingJob(claimedJob.getJobId());
+        EvaluationJob job = requireProcessingJob(claimedJob);
         persistenceService.saveResult(EvaluationPersistenceService.SaveEvaluationResultCommand.builder()
                 .user(job.getUser())
                 .source(job.getSource())
@@ -74,7 +75,7 @@ public class EvaluationJobProcessingService {
      */
     @Transactional
     public void advancePhase(EvaluationJob claimedJob, EvaluationJob.Phase phase) {
-        EvaluationJob job = requireProcessingJob(claimedJob.getJobId());
+        EvaluationJob job = requireProcessingJob(claimedJob);
         job.advancePhase(phase);
     }
 
@@ -92,7 +93,7 @@ public class EvaluationJobProcessingService {
      */
     @Transactional
     public boolean fail(EvaluationJob claimedJob, RuntimeException failure) {
-        EvaluationJob job = requireProcessingJob(claimedJob.getJobId());
+        EvaluationJob job = requireProcessingJob(claimedJob);
         boolean consentDenied = failure instanceof com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException;
         boolean invalidAudio = failure instanceof InvalidEvaluationAudioException;
         String errorCode = consentDenied
@@ -121,11 +122,22 @@ public class EvaluationJobProcessingService {
         return false;
     }
 
-    private EvaluationJob requireProcessingJob(String jobId) {
+    /**
+     * 호출 Worker가 아직 이 작업의 현재 lease 소유자인지 확인하고 잠긴 최신 행을 반환한다.
+     *
+     * <p>claim마다 attemptCount가 증가하므로 claim 시점의 값이 현재 행과 같아야 같은 시도다.
+     * 상태만 확인하면 lease 만료 후 다른 Worker가 재claim해 PROCESSING인 작업을 이전 Worker가
+     * 완료·실패 처리해 결과 중복 저장이나 상태 역전이 생긴다.</p>
+     *
+     * @throws EvaluationJobLeaseLostException 다른 시도가 lease를 가져갔거나 작업이 더 이상 PROCESSING이 아님
+     */
+    private EvaluationJob requireProcessingJob(EvaluationJob claimedJob) {
+        String jobId = claimedJob.getJobId();
         EvaluationJob job = jobRepository.findByIdForUpdate(jobId)
-                .orElseThrow(() -> new IllegalStateException("evaluation job does not exist"));
-        if (job.getStatus() != EvaluationJob.Status.PROCESSING) {
-            throw new IllegalStateException("evaluation job is not processing");
+                .orElseThrow(() -> new EvaluationJobLeaseLostException(jobId));
+        if (job.getStatus() != EvaluationJob.Status.PROCESSING
+                || job.getAttemptCount() != claimedJob.getAttemptCount()) {
+            throw new EvaluationJobLeaseLostException(jobId);
         }
         return job;
     }
