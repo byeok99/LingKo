@@ -96,9 +96,18 @@ class EvaluationControllerPrepareTest {
     }
 
     @Test
-    @DisplayName("convert text가 30자를 넘으면 공통 validation 에러를 반환한다")
+    @DisplayName("convert text는 prepare와 같은 100자까지 허용한다")
+    void convertAcceptsTextUpToPrepareLimit() throws Exception {
+        mockMvc.perform(post("/api/pronunciation/convert")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"" + "가".repeat(100) + "\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("convert text가 100자를 넘으면 공통 validation 에러를 반환한다")
     void convertValidatesLongTextAsBadRequest() throws Exception {
-        String longText = "가".repeat(31);
+        String longText = "가".repeat(101);
 
         mockMvc.perform(post("/api/pronunciation/convert")
                         .contentType(MediaType.APPLICATION_JSON)
