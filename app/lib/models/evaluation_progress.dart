@@ -24,6 +24,7 @@ class EvaluationProgress {
     this.message,
     this.failedAt,
     this.uploadFraction,
+    this.canRetryRecording = true,
   });
 
   /// Backend 작업 상태를 사용자가 이해할 수 있는 실제 처리 단계와 안내로 변환한다.
@@ -76,6 +77,10 @@ class EvaluationProgress {
 
   /// 업로드한 byte/전체 byte로 계산한 0~1 값이며 서버 처리 단계에서는 null이다.
   final double? uploadFraction;
+
+  /// 실패 상태에서 같은 녹음 파일로 재시도할 수 있는지 나타낸다.
+  /// false(녹음 형식 오류)이면 재시도 대신 새로 녹음하도록 안내한다. 실패가 아닐 때는 의미가 없다.
+  final bool canRetryRecording;
 
   bool get isActive => switch (stage) {
     EvaluationProgressStage.uploading ||

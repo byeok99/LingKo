@@ -2,10 +2,12 @@ package com.lingko.lingko.infra.auth;
 
 import com.lingko.lingko.core.config.AppleOAuthSettings;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.auth.exception.OAuthProviderUnavailableException;
 import com.lingko.lingko.core.domain.auth.service.OAuthIdentity;
 import com.lingko.lingko.core.domain.auth.service.OAuthIdentityVerifier;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.KeySourceException;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.proc.JWSVerificationKeySelector;
@@ -80,6 +82,10 @@ public class AppleOAuthIdentityVerifier implements OAuthIdentityVerifier {
                     null,
                     null
             );
+        } catch (KeySourceException exception) {
+            // 공개 JWK 장애를 401로 보내면 앱이 정상 token을 버리고 재로그인을 반복하므로 503으로 구분한다.
+            log.warn("Apple public keys are unavailable: {}", exception.getClass().getSimpleName());
+            throw new OAuthProviderUnavailableException("Apple public keys are unavailable", exception);
         } catch (ParseException | JOSEException | BadJOSEException | RuntimeException exception) {
             // 예외 본문에는 token/claim이 섞일 수 있어 유형만 남긴다.
             log.warn("Apple identity verification rejected: {}", exception.getClass().getSimpleName());

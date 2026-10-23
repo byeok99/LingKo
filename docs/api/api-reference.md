@@ -129,6 +129,12 @@ iOS Apple 로그인은 앱이 매 요청 생성한 원 nonce와 최초 승인 �
 상태를 확인합니다. 계정 키는 이메일이 아니라 Apple `sub`입니다. 잘못된 token·nonce·audience는
 `401 AUTHENTICATION_FAILED`, Apple 요청의 nonce 누락은 `400 VALIDATION_FAILED`입니다.
 
+Google token은 Google 공개 JWK(`https://www.googleapis.com/oauth2/v3/certs`, cache 후 key rotation 시 갱신)로
+로컬에서 검증합니다. RS256 서명, `iss`(`accounts.google.com` 또는 `https://accounts.google.com`),
+`aud=GOOGLE_CLIENT_ID`, `exp`, `sub`를 확인하고 `email_verified=false`는 거부합니다.
+Google·Apple 공개 키를 일시적으로 가져올 수 없으면 token 오류와 구분해 `503 OAUTH_PROVIDER_UNAVAILABLE`을
+반환하므로 앱은 재로그인이 아니라 잠시 후 재시도를 안내합니다.
+
 응답 필드:
 
 ```text
@@ -148,8 +154,11 @@ App Review 기간에만 활성화하는 전용 endpoint입니다. 앱은 Review 
 
 Backend는 원문이 아닌 운영 환경의 SHA-256 hash와 상수 시간 비교하고, 성공하면
 `REVIEW_ACCESS_USER_ID`로 지정된 기존 사용자에게 일반 로그인과 같은 token 응답을 발급합니다.
-기능 비활성화·코드 불일치·계정 없음은 모두 `401 AUTHENTICATION_FAILED`입니다. 서버가 관찰한 같은
-원격 주소의 기본 5분 5회 제한을 넘으면 `429 REVIEW_ACCESS_RATE_LIMITED`와 `Retry-After`를 반환합니다.
+기능 비활성화·코드 불일치·계정 없음은 모두 `401 AUTHENTICATION_FAILED`입니다. 같은 클라이언트
+주소의 기본 5분 5회 제한을 넘으면 `429 REVIEW_ACCESS_RATE_LIMITED`와 `Retry-After`를 반환합니다.
+클라이언트 주소는 `SERVER_FORWARD_HEADERS_STRATEGY=native`(기본값)일 때 loopback·사설망 reverse proxy가
+보낸 `X-Forwarded-For`에서 복원하므로 TLS proxy 뒤에서도 사용자별로 제한되고, 외부에서 직접 보낸
+위조 header는 반영되지 않습니다.
 
 ### `POST /api/auth/token/refresh`
 
@@ -244,7 +253,7 @@ Authorization: Bearer <access-token>
 
 원문과 표준 발음을 반환합니다.
 
-`text`는 Unicode 문장부호·기호를 제거하고 연속 공백을 하나로 합친 뒤 변환합니다. 정규화 결과가 비어 있으면 `400 INVALID_REQUEST`를 반환합니다.
+`text`는 필수이며 자유 문장 준비·평가 요청과 같이 100자 이하여야 합니다(초과 시 `400 VALIDATION_FAILED`). Unicode 문장부호·기호를 제거하고 연속 공백을 하나로 합친 뒤 변환합니다. 정규화 결과가 비어 있으면 `400 INVALID_REQUEST`를 반환합니다.
 
 ### `POST /api/pronunciation/prepare`
 
@@ -319,6 +328,8 @@ Authorization: Bearer <access-token>
 ### `GET /api/evaluations/jobs/{jobId}`
 
 인증 필요. 상태는 `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`입니다. `phase`는 실제 Worker 처리 경계를 나타내며 `QUEUED`, `DOWNLOADING_AUDIO`, `ANALYZING_SPEECH`, `PREPARING_GUIDES`, `FINALIZING` 중 하나입니다. 이는 단계 순서만 나타내고 단계별 소요 시간이 달라질 수 있으므로 백분율로 환산하지 않습니다. 성공 시 `result`에 기존 평가 결과 계약을 반환합니다.
+
+실패 시 `errorCode`는 `AI_CONSENT_REQUIRED`(동의 철회, 즉시 종료), `INVALID_AUDIO`(음성 형식 오류, 재시도 없이 즉시 종료하므로 다시 녹음 필요), `EVALUATION_FAILED`(일시 장애가 최대 시도 횟수까지 반복) 중 하나입니다. 세 경우 모두 예약된 평가 기회는 복구됩니다.
 
 대표 성공 결과:
 
@@ -482,7 +493,9 @@ Authorization: Bearer <access-token>
 ```
 
 - 앱은 token을 Rewarded Ad의 `customData`로 설정합니다. 원본 token은 DB에 저장하지 않고 SHA-256 hash만 보관합니다.
-- 허용 광고 단위가 설정되지 않았거나 현재 기회가 5회이면 `503 AD_REWARD_UNAVAILABLE`입니다.
+- 허용 광고 단위가 설정되지 않았거나 보유 기회가 5회이면 `503 AD_REWARD_UNAVAILABLE`입니다. 보유 기회는 진행 중 평가에 예약된 횟수를 포함합니다. 예약은 평가 실패 시 복구되므로, 잔여 4회와 예약 1회 상태에서 보상하면 복구 후 6회가 되기 때문입니다. SSV 지급 시에도 같은 기준으로 5회 상한을 지킵니다.
+- 새 세션을 만들 때 만료된 `PENDING` 세션만 정리합니다. 아직 유효한 `PENDING` 세션은 SSV callback이 늦게 도착해도 지급되도록 유지합니다.
+- 유효한 `PENDING` 세션이 이미 5개이면 기존 대기 보상을 지우지 않고 새 생성을 `503 AD_REWARD_UNAVAILABLE`로 거절합니다.
 
 ### `GET /api/quota/ad-reward-sessions/{sessionToken}`
 

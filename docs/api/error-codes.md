@@ -26,7 +26,11 @@ Worker 철회 확인 시 작업의 `errorCode`도 같은 값이며 terminal 실�
 | HTTP | 코드 | 발생 조건 | 앱 처리 권장 |
 |---:|---|---|---|
 | 400 | `VALIDATION_FAILED` | DTO 필수값·형식 누락 | 해당 입력 또는 녹음 상태 안내 |
-| 400 | `INVALID_REQUEST` | JSON 파싱, 쿼리 범위, S3 객체 소유권·메타데이터 불일치, 동의 문서 버전이 서버 현재 버전과 다르거나 필수 동의가 누락된 경우 | 사용자 입력 또는 업로드 상태 확인. 동의 관련이면 최신 문서 버전을 다시 받아 동의 화면을 표시 |
+| 400 | `INVALID_REQUEST` | S3 객체 소유권·메타데이터 불일치, 동의 문서 버전이 서버 현재 버전과 다르거나 필수 동의가 누락된 경우 | 사용자 입력 또는 업로드 상태 확인. 동의 관련이면 최신 문서 버전을 다시 받아 동의 화면을 표시 |
+| 400 | `INVALID_REQUEST` (고정 메시지) | 잘못된 JSON, 필수 query·header 누락, 경로·query 타입 불일치, 파라미터 범위 위반. 내부 파서·타입 정보를 숨기기 위해 메시지는 `Request is invalid`로 고정 | 요청 형식 확인 |
+| 404 | `NOT_FOUND` | 존재하지 않는 경로 | 앱에서는 발생하지 않아야 함. 호출 경로 확인 |
+| 405 | `METHOD_NOT_ALLOWED` | 경로는 있으나 HTTP method가 다름. `Allow` Header 포함 | 호출 method 확인 |
+| 415 | `UNSUPPORTED_MEDIA_TYPE` | JSON endpoint에 다른 `Content-Type` 전송 | `application/json` 사용 |
 | 400 | `INVALID_AD_REWARD_CALLBACK` | AdMob SSV 서명 또는 지급 정책 불일치 | 앱에서 호출하지 않음. 서버 보안 로그와 AdMob 설정 확인 |
 | 401 | `AUTHENTICATION_FAILED` | Bearer 토큰 누락·만료·검증 실패 또는 심사용 접근 검증 실패 | 세션 갱신 또는 재로그인. 심사용 접근은 설정·코드·계정 존재 여부를 서버 응답으로 구분하지 않음 |
 | 403 | `GUIDE_JOB_FORBIDDEN` | 일반 사용자 토큰으로 내부 가이드 작업 요청 | 앱에서는 요청하지 않고 내부 도구 권한 확인 |
@@ -42,6 +46,7 @@ Worker 철회 확인 시 작업의 `errorCode`도 같은 값이며 terminal 실�
 | 429 | `REVIEW_ACCESS_RATE_LIMITED` | 같은 원격 주소의 심사용 로그인 시도 한도 초과 | `Retry-After` 이후 재시도 |
 | 502 | `EVALUATION_FAILED` | 음성 평가 또는 영상 처리 외부 연동 실패 | 잠시 후 재시도 |
 | 503 | `ACCOUNT_DELETION_UNAVAILABLE` | 회원 탈퇴 중 S3 음성 삭제 실패 | 로그인 상태를 유지하고 잠시 후 재시도 |
+| 503 | `OAUTH_PROVIDER_UNAVAILABLE` | 로그인 중 Google·Apple 공개 키를 일시적으로 가져오지 못함 | 재로그인 루프 없이 잠시 후 다시 로그인 시도 |
 | 503 | `AD_REWARD_UNAVAILABLE` | SSV allowlist 미설정, 최대 quota 또는 Google 공개키 일시 실패 | 설정 확인 또는 잠시 후 재시도 |
 | 500 | `INTERNAL_SERVER_ERROR` | 처리되지 않은 서버 오류 | 일반 오류와 문의 경로 표시 |
 

@@ -14,6 +14,14 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
 
+server:
+  # 운영은 TLS reverse proxy 뒤에서 실행되어 getRemoteAddr()가 proxy 주소 하나로 보인다.
+  # 그대로 두면 IP별 rate limit(review 로그인 등)이 모든 사용자에게 공유되므로 X-Forwarded-For를 해석한다.
+  # native는 Tomcat RemoteIpValve를 쓰며, 기본 internal-proxies(loopback·사설망)에서 온 요청의 header만 신뢰하고
+  # 오른쪽부터 신뢰하지 않는 첫 주소를 고르므로 외부 클라이언트가 직접 보낸 위조 header는 반영되지 않는다.
+  # proxy 없이 직접 공개하는 환경은 none으로 바꿔 header 해석을 끈다.
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:native}
+
 logging:
   pattern:
     # API는 requestId로 요청 로그를 연결하고 HTTP 요청이 없는 Worker는 none으로 명확히 구분한다.
