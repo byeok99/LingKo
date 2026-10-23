@@ -29,6 +29,11 @@ import java.util.Base64;
 public class AdRewardService {
 
     private static final int TOKEN_BYTES = 32;
+    /**
+     * 한 사용자가 동시에 보유할 수 있는 유효 PENDING 세션 수다.
+     * 연속 시청 중 callback 지연을 흡수할 만큼 두되, 세션 행을 무한히 만들지 못하게 제한한다.
+     */
+    static final int MAX_ACTIVE_PENDING_SESSIONS = 5;
 
     private final AdRewardSessionRepository sessionRepository;
     private final AdRewardReceiptRepository receiptRepository;
@@ -55,15 +60,21 @@ public class AdRewardService {
     @Transactional
     public AdRewardSessionResponse createSession(Long userId) {
         validateOperationalSettings();
+        Instant now = clock.instant();
         // callback도 session→quota 순서로 잠그므로 생성 경로도 같은 순서를 지켜 deadlock을 피한다.
-        sessionRepository.deleteAllByUserIdAndStatus(userId, AdRewardSessionStatus.PENDING);
-        if (quotaService.getTodayQuota(userId).remainingPractices()
-                >= PracticeQuotaService.MAX_NATURAL_PRACTICES) {
+        // 유효한 PENDING 세션은 지연된 SSV callback을 받아야 하므로 만료된 세션만 정리한다.
+        sessionRepository.deleteExpiredByUserIdAndStatus(userId, AdRewardSessionStatus.PENDING, now);
+        if (sessionRepository.countByUserIdAndStatusAndExpiresAtAfter(
+                userId, AdRewardSessionStatus.PENDING, now) >= MAX_ACTIVE_PENDING_SESSIONS) {
+            // 기존 세션을 지워 자리를 만들면 지급 대기 중인 보상이 사라지므로 새 생성을 거절한다.
+            throw new AdRewardUnavailableException("Too many pending ad reward sessions");
+        }
+        if (!quotaService.canReceiveAdReward(userId)) {
             throw new AdRewardUnavailableException("Ad reward is not available at maximum quota");
         }
 
         String token = newToken();
-        Instant expiresAt = clock.instant().plus(Duration.ofMinutes(settings.getSessionExpiryMinutes()));
+        Instant expiresAt = now.plus(Duration.ofMinutes(settings.getSessionExpiryMinutes()));
         sessionRepository.save(AdRewardSession.pending(userId, hash(token), expiresAt));
         return new AdRewardSessionResponse(
                 token,

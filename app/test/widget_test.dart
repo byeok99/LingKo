@@ -385,6 +385,9 @@ class FakePracticeQuotaApi implements PracticeQuotaApi {
   String? lastSessionToken;
   int sessionStatusFetchCount = 0;
 
+  /// SSV callback 지연을 재현할 때 pending으로 바꾼다. 기본값은 즉시 지급 완료다.
+  AdRewardStatus sessionStatus = AdRewardStatus.completed;
+
   @override
   Future<PracticeQuota> fetchTodayQuota({required String accessToken}) async {
     lastAccessToken = accessToken;
@@ -419,6 +422,9 @@ class FakePracticeQuotaApi implements PracticeQuotaApi {
     lastAccessToken = accessToken;
     lastSessionToken = sessionToken;
     sessionStatusFetchCount++;
+    if (sessionStatus != AdRewardStatus.completed) {
+      return AdRewardSessionStatus(status: sessionStatus, credited: null);
+    }
     quota = rewardQuota ?? quota;
     return const AdRewardSessionStatus(
       status: AdRewardStatus.completed,
@@ -1952,6 +1958,41 @@ void main() {
       expect(find.text('4/5'), findsOneWidget);
     },
   );
+
+  testWidgets('delayed SSV confirmation tells the user the reward is pending', (
+    WidgetTester tester,
+  ) async {
+    final quotaApi =
+        FakePracticeQuotaApi()..sessionStatus = AdRewardStatus.pending;
+    final adService = FakePracticeRewardAdService();
+    await tester.pumpWidget(
+      LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: quotaApi,
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+        practiceRewardAdService: adService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('practice-energy-ad-button')));
+    // 폴링 사이의 1초 대기는 frame을 예약하지 않으므로 시간을 직접 진행한다.
+    for (var second = 0; second < 12; second++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
+    await tester.pumpAndSettle();
+
+    expect(quotaApi.sessionStatusFetchCount, 10);
+    expect(
+      find.byKey(const ValueKey('practice-reward-pending-snackbar')),
+      findsOneWidget,
+    );
+    expect(find.text('3/5'), findsOneWidget);
+  });
 
   testWidgets('dismissed rewarded ad does not call the quota reward endpoint', (
     WidgetTester tester,
