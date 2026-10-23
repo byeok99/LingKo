@@ -2776,6 +2776,56 @@ void main() {
     expect(find.text('Result'), findsNothing);
   });
 
+  testWidgets(
+    'INVALID_AUDIO failure asks for a new recording instead of a retry',
+    (WidgetTester tester) async {
+      final evaluationApi =
+          FakeEvaluationApi()
+            ..createdJob = const EvaluationJob(
+              jobId: 'job-invalid-audio',
+              status: EvaluationJobStatus.failed,
+              errorCode: 'INVALID_AUDIO',
+            );
+      await tester.pumpWidget(
+        LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: evaluationApi,
+          authService: FakeAppAuthService(restoreExistingSession: true),
+          audioRecorderService: FakeAudioRecorderService(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('맛있겠다.').first);
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+      await tester.pumpAndSettle();
+      await _tapVisible(tester, find.text('Record'));
+      await _tapVisible(tester, find.bySemanticsLabel('Stop and analyze'));
+
+      expect(
+        find.text('We could not read this recording. Please record it again.'),
+        findsOneWidget,
+      );
+      expect(find.text('Retry with this recording'), findsNothing);
+
+      await _tapVisible(
+        tester,
+        find.byKey(const ValueKey('evaluation-record-again')),
+      );
+
+      expect(find.byKey(const ValueKey('evaluation-progress')), findsNothing);
+      // 실패 화면을 닫으면 같은 문장의 기본 녹음 버튼으로 돌아온다(스크롤 위치에 따라 offstage일 수 있다).
+      expect(
+        find.text('Retry with this recording', skipOffstage: false),
+        findsNothing,
+      );
+      expect(find.text('Record', skipOffstage: false), findsOneWidget);
+    },
+  );
+
   testWidgets('immersive recording can restart and cancel safely', (
     WidgetTester tester,
   ) async {

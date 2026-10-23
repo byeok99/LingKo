@@ -1166,7 +1166,7 @@ class _LingKoShellState extends State<LingKoShell> {
           return;
         }
         if (job.status == EvaluationJobStatus.failed) {
-          throw const ApiException('Pronunciation evaluation failed');
+          throw EvaluationJobFailedException(job.errorCode);
         }
 
         if (mounted) {
@@ -1194,16 +1194,22 @@ class _LingKoShellState extends State<LingKoShell> {
         await handleSessionChanged(null);
       }
       rethrow;
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         final failedAt = evaluationProgress.stage;
+        // 녹음 형식 오류는 같은 파일 재시도가 무의미하므로 재시도 대신 새 녹음을 안내한다.
+        final requiresNewRecording =
+            error is EvaluationJobFailedException && error.requiresNewRecording;
         setState(() {
           evaluationProgress = EvaluationProgress(
             stage: EvaluationProgressStage.failed,
             jobId: evaluationProgress.jobId,
             failedAt: failedAt,
+            canRetryRecording: !requiresNewRecording,
             message:
-                'The evaluation did not finish. Retry with the saved recording when available.',
+                requiresNewRecording
+                    ? 'We could not read this recording. Please record it again.'
+                    : 'The evaluation did not finish. Retry with the saved recording when available.',
           );
         });
         unawaited(HapticFeedback.heavyImpact());
@@ -1328,6 +1334,10 @@ class _LingKoShellState extends State<LingKoShell> {
                 () => setState(() {
                   isPracticeImmersive = false;
                   selectedTab = 0;
+                }),
+            onDismissEvaluationFailure:
+                () => setState(() {
+                  evaluationProgress = const EvaluationProgress();
                 }),
           ),
       ReviewScreen(
