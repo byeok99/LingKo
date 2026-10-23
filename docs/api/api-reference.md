@@ -320,6 +320,8 @@ Authorization: Bearer <access-token>
 
 인증 필요. 상태는 `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`입니다. `phase`는 실제 Worker 처리 경계를 나타내며 `QUEUED`, `DOWNLOADING_AUDIO`, `ANALYZING_SPEECH`, `PREPARING_GUIDES`, `FINALIZING` 중 하나입니다. 이는 단계 순서만 나타내고 단계별 소요 시간이 달라질 수 있으므로 백분율로 환산하지 않습니다. 성공 시 `result`에 기존 평가 결과 계약을 반환합니다.
 
+실패 시 `errorCode`는 `AI_CONSENT_REQUIRED`(동의 철회, 즉시 종료), `INVALID_AUDIO`(음성 형식 오류, 재시도 없이 즉시 종료하므로 다시 녹음 필요), `EVALUATION_FAILED`(일시 장애가 최대 시도 횟수까지 반복) 중 하나입니다. 세 경우 모두 예약된 평가 기회는 복구됩니다.
+
 대표 성공 결과:
 
 ```json
@@ -482,7 +484,9 @@ Authorization: Bearer <access-token>
 ```
 
 - 앱은 token을 Rewarded Ad의 `customData`로 설정합니다. 원본 token은 DB에 저장하지 않고 SHA-256 hash만 보관합니다.
-- 허용 광고 단위가 설정되지 않았거나 현재 기회가 5회이면 `503 AD_REWARD_UNAVAILABLE`입니다.
+- 허용 광고 단위가 설정되지 않았거나 보유 기회가 5회이면 `503 AD_REWARD_UNAVAILABLE`입니다. 보유 기회는 진행 중 평가에 예약된 횟수를 포함합니다. 예약은 평가 실패 시 복구되므로, 잔여 4회와 예약 1회 상태에서 보상하면 복구 후 6회가 되기 때문입니다. SSV 지급 시에도 같은 기준으로 5회 상한을 지킵니다.
+- 새 세션을 만들 때 만료된 `PENDING` 세션만 정리합니다. 아직 유효한 `PENDING` 세션은 SSV callback이 늦게 도착해도 지급되도록 유지합니다.
+- 유효한 `PENDING` 세션이 이미 5개이면 기존 대기 보상을 지우지 않고 새 생성을 `503 AD_REWARD_UNAVAILABLE`로 거절합니다.
 
 ### `GET /api/quota/ad-reward-sessions/{sessionToken}`
 

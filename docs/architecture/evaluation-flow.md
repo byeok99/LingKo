@@ -135,7 +135,7 @@ sequenceDiagram
 
 같은 사용자의 동시 작업 생성은 사용자 행의 짧은 비관적 lock으로 직렬화합니다. 기존 작업 확인과 쿼터 예약·작업 생성을 한 transaction에서 처리하므로 같은 Key 요청은 작업과 예약 각각 한 건으로 수렴합니다. 완료 작업 정리는 `completed_at`을 기준으로 하며 진행 중 작업을 삭제하지 않아 Worker 재처리와 예약 쿼터를 보호합니다.
 
-Compose 운영에서는 API 내부 Worker를 끄고 web server가 없는 `evaluation-worker` 한 개가 MySQL을 polling합니다. DB가 작업 상태와 대기열의 원본이므로 별도 Queue가 없으며, 프로세스가 종료되면 lease가 만료된 `PROCESSING` 작업을 다시 claim합니다. 같은 Docker 호스트에서는 자원을 공유하지만 평가 작업의 프로세스 장애와 재시작 경계는 API와 분리됩니다.
+Compose 운영에서는 API 내부 Worker를 끄고 web server가 없는 `evaluation-worker` 한 개가 MySQL을 polling합니다. DB가 작업 상태와 대기열의 원본이므로 별도 Queue가 없으며, 프로세스가 종료되면 lease가 만료된 `PROCESSING` 작업을 다시 claim합니다. claim은 MySQL `FOR UPDATE SKIP LOCKED`로 다른 Worker가 잠근 행을 건너뜁니다. claim마다 시도 번호가 증가하며, 결과·실패·phase 기록 시 현재 행의 시도 번호가 claim 시점과 다르면 lease를 잃은 이전 시도로 보고 DB 상태와 S3 원본을 건드리지 않고 중단합니다. 같은 Docker 호스트에서는 자원을 공유하지만 평가 작업의 프로세스 장애와 재시작 경계는 API와 분리됩니다.
 
 가이드 영상은 문장 준비 단계가 아니라 평가 완료 결과를 조립할 때 모든 음절에 생성합니다. 글자 점수가 없더라도 Result에서 각 음절 가이드를 열 수 있으므로 점수가 아닌 프레임 전환 유무로 영상 여부를 결정합니다. 초성·중성·종성 역할을 구분하고 복합 모음은 반모음에서 목표 모음으로 이어지는 기존 이미지 배열로 펼칩니다. 한 트랙에 자음 이미지가 없으면 해당 구간을 삭제하지 않고 인접 자세를 유지해 입·혀 segment 수를 같게 합니다. 초성 `ㅎ`에는 잘못된 구강 위치를 부여하지 않고 다음 모음 자세를 유지합니다.
 
@@ -157,3 +157,4 @@ DB의 음절·유형별 저장 MP4는 현재 매핑 버전(`phonology-v3`)과 �
 | 같은 Idempotency Key의 다른 요청 | 409 `IDEMPOTENCY_CONFLICT` |
 | 평가 기회 소진 | 429 `QUOTA_EXCEEDED` |
 | Worker 최종 실패 | 작업 상태 `FAILED`, `errorCode=EVALUATION_FAILED` |
+| 업로드 음성이 16-bit mono PCM WAV(48kHz 이하)가 아님 | 재시도 없이 즉시 `FAILED`, `errorCode=INVALID_AUDIO`, 예약 복구 |
