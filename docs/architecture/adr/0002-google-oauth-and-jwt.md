@@ -9,7 +9,7 @@
 
 ## 결정
 
-Flutter가 Google ID Token을 획득하고 백엔드가 이를 검증합니다. 백엔드는 소셜 사용자 정보를 생성·갱신한 후 자체 Access/Refresh JWT를 발급합니다.
+Flutter가 Google ID Token을 획득하고 백엔드가 이를 검증합니다. 검증은 로그인마다 원격 tokeninfo를 호출하지 않고 cache한 Google 공개 JWK로 서명과 `iss`·`aud`·`exp`를 로컬에서 확인합니다(2026-10 변경: 외부 지연이 요청 thread를 점유하던 문제 해소). 백엔드는 소셜 사용자 정보를 생성·갱신한 후 자체 Access/Refresh JWT를 발급합니다.
 
 Access Token과 Refresh Token은 기기 세션별 `sid`를 공유하며 서버에는 현재 Refresh Token의 SHA-256 해시만 저장합니다. 보호 API는 JWT 검증 후 `sid`의 활성 상태를 확인합니다. 갱신 시 같은 세션 행을 잠그고 Access/Refresh Token을 모두 회전합니다. 이전 토큰 재사용은 탈취 신호로 처리해 해당 기기 세션을 폐기하며, 그 세션의 Access Token도 즉시 거부합니다. 절대 만료는 로그인 시점부터 계산하며 회전으로 연장하지 않습니다.
 

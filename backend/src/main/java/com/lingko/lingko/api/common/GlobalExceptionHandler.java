@@ -7,6 +7,7 @@ import com.lingko.lingko.core.domain.evaluation.exception.GuideJobAccessDeniedEx
 import com.lingko.lingko.core.domain.evaluation.exception.GuideJobCapacityExceededException;
 import com.lingko.lingko.core.domain.evaluation.exception.GuideJobRateLimitExceededException;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.auth.exception.OAuthProviderUnavailableException;
 import com.lingko.lingko.core.domain.auth.exception.ReviewAccessRateLimitExceededException;
 import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
 import com.lingko.lingko.core.domain.quota.exception.AdMobSsvVerificationException;
@@ -75,6 +76,18 @@ public class GlobalExceptionHandler {
     }
 
     /** 심사용 인증 공격을 늦추면서 구체적인 검증 실패 정보 없이 재시도 시각만 전달한다. */
+    /** 공급자 공개 키 장애는 사용자 token 문제가 아니므로 401이 아닌 재시도 가능한 503으로 구분한다. */
+    @ExceptionHandler(OAuthProviderUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleOAuthProviderUnavailable(
+            OAuthProviderUnavailableException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.of(
+                        "OAUTH_PROVIDER_UNAVAILABLE",
+                        "Sign-in is temporarily unavailable. Please try again."
+                ));
+    }
+
     @ExceptionHandler(ReviewAccessRateLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleReviewAccessRateLimit(
             ReviewAccessRateLimitExceededException exception

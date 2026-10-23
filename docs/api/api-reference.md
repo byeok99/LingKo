@@ -129,6 +129,12 @@ iOS Apple 로그인은 앱이 매 요청 생성한 원 nonce와 최초 승인 �
 상태를 확인합니다. 계정 키는 이메일이 아니라 Apple `sub`입니다. 잘못된 token·nonce·audience는
 `401 AUTHENTICATION_FAILED`, Apple 요청의 nonce 누락은 `400 VALIDATION_FAILED`입니다.
 
+Google token은 Google 공개 JWK(`https://www.googleapis.com/oauth2/v3/certs`, cache 후 key rotation 시 갱신)로
+로컬에서 검증합니다. RS256 서명, `iss`(`accounts.google.com` 또는 `https://accounts.google.com`),
+`aud=GOOGLE_CLIENT_ID`, `exp`, `sub`를 확인하고 `email_verified=false`는 거부합니다.
+Google·Apple 공개 키를 일시적으로 가져올 수 없으면 token 오류와 구분해 `503 OAUTH_PROVIDER_UNAVAILABLE`을
+반환하므로 앱은 재로그인이 아니라 잠시 후 재시도를 안내합니다.
+
 응답 필드:
 
 ```text
