@@ -85,7 +85,8 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.message").value("Validation failed"))
                 .andExpect(jsonPath("$.details[0].field").value("text"))
-                .andExpect(jsonPath("$.details.length()").value(2))
+                // 빈 문장은 @NotBlank 하나로만 보고한다. 중복이던 @Size(min=1) 오류는 제거됐다.
+                .andExpect(jsonPath("$.details.length()").value(1))
                 .andExpect(jsonPath("$.requestId").value(requestId));
     }
 
