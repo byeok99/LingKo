@@ -6,10 +6,16 @@ services:
     env_file:
       - .env
     ports:
-      - "${DB_PORT:-3306}:3306"
+      # Backend는 Compose network로 접속하므로 host 공개는 개발 도구용 loopback으로 제한한다.
+      # Docker가 연 port는 ufw 규칙을 우회하므로 0.0.0.0에 열면 Security Group만이 DB 방어선이 된다.
+      - "${DB_BIND_ADDRESS:-127.0.0.1}:${DB_PORT:-3306}:3306"
     environment:
       # root는 컨테이너 초기화에만 쓰고 애플리케이션은 DB_USER의 일반 계정으로 접속한다.
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required in .env}"
+      # 앱 계정이 유출돼도 root 권한까지 넘어가지 않도록 DB_ROOT_PASSWORD를 분리한다.
+      # 미설정이면 기존 설치와 호환되도록 DB_PASSWORD를 쓰며, 값은 data volume 최초 초기화 때만 적용된다.
+      # 기존 volume에 새 값만 넣으면 아래 healthcheck가 새 비밀번호로 root 접속해 실패하므로,
+      # 먼저 MySQL에서 ALTER USER 'root'@'%'로 root 비밀번호를 바꾼 뒤 설정한다.
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-${DB_PASSWORD:?DB_PASSWORD is required in .env}}"
       MYSQL_DATABASE: "${DB_NAME:-lingko}"
       MYSQL_USER: "${DB_USER:-lingko}"
       MYSQL_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required in .env}"
@@ -49,7 +55,9 @@ services:
       mysql:
         condition: service_healthy
     ports:
-      - "${APP_PORT:-8080}:8080"
+      # TLS reverse proxy가 같은 host에 있으면 APP_BIND_ADDRESS=127.0.0.1로 평문 8080 직접 접근을 막는다.
+      # proxy가 다른 host에 있을 수 있어 기본값은 기존 동작(모든 interface)을 유지한다.
+      - "${APP_BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-8080}:8080"
     environment:
       # 컨테이너 내부에서는 localhost가 아닌 Compose 서비스 이름으로 MySQL을 찾는다.
       DB_HOST: mysql
