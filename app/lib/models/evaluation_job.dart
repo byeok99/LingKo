@@ -107,6 +107,24 @@ class EvaluationJob {
   final String? errorCode;
 }
 
+/// 서버가 평가 작업을 `FAILED`로 끝냈음을 실패 코드와 함께 앱 shell에 전달한다.
+///
+/// `errorCode` 값: `INVALID_AUDIO`(녹음 형식 오류라 같은 파일 재시도가 무의미),
+/// `AI_CONSENT_REQUIRED`(AI 처리 동의 철회), `EVALUATION_FAILED`(일시 장애), null(구버전 서버).
+class EvaluationJobFailedException implements Exception {
+  const EvaluationJobFailedException(this.errorCode);
+
+  static const invalidAudioErrorCode = 'INVALID_AUDIO';
+
+  final String? errorCode;
+
+  /// 같은 녹음으로 재시도해도 결과가 바뀌지 않아 새로 녹음해야 하는 실패인지 나타낸다.
+  bool get requiresNewRecording => errorCode == invalidAudioErrorCode;
+
+  @override
+  String toString() => 'Evaluation job failed: ${errorCode ?? 'unknown'}';
+}
+
 String _requiredString(Object? value) {
   if (value is String && value.isNotEmpty) {
     return value;

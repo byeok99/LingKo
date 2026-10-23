@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -162,6 +163,75 @@ class GlobalExceptionHandlerTest {
             logger.detachAppender(appender);
             appender.stop();
         }
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 경로는 ERROR 로그 없이 404 NOT_FOUND를 반환한다")
+    void unknownPathReturnsNotFoundWithoutErrorLog() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            mockMvc.perform(get("/wp-login.php"))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+
+            org.assertj.core.api.Assertions.assertThat(appender.list)
+                    .noneSatisfy(event -> org.assertj.core.api.Assertions.assertThat(event.getLevel())
+                            .isEqualTo(Level.ERROR));
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
+    @DisplayName("지원하지 않는 HTTP method는 405와 Allow Header를 반환한다")
+    void unsupportedMethodReturnsMethodNotAllowed() throws Exception {
+        mockMvc.perform(get("/api/pronunciation/convert"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(header().string("Allow", org.hamcrest.Matchers.containsString("POST")))
+                .andExpect(jsonPath("$.code").value("METHOD_NOT_ALLOWED"));
+    }
+
+    @Test
+    @DisplayName("JSON이 아닌 Content-Type은 415를 반환한다")
+    void unsupportedMediaTypeReturns415() throws Exception {
+        mockMvc.perform(post("/api/pronunciation/convert")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("맛있겠다"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"));
+    }
+
+    @Test
+    @DisplayName("malformed JSON은 Jackson 내부 메시지 대신 고정 메시지를 반환한다")
+    void malformedJsonHidesParserDetails() throws Exception {
+        mockMvc.perform(post("/api/pronunciation/convert")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Request is invalid"));
+    }
+
+    @Test
+    @DisplayName("LingKo 코드의 IllegalArgumentException 메시지는 유지하고 라이브러리 원문은 숨긴다")
+    void illegalArgumentMessageIsExposedOnlyForApplicationCode() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+        IllegalArgumentException applicationFailure =
+                new IllegalArgumentException("Only WAV audio up to 10 MiB can be uploaded");
+        IllegalArgumentException libraryFailure = org.assertj.core.api.Assertions.catchThrowableOfType(
+                IllegalArgumentException.class,
+                () -> java.util.UUID.fromString("not-a-uuid")
+        );
+
+        org.assertj.core.api.Assertions.assertThat(handler.handleIllegalArgument(applicationFailure).getBody().message())
+                .isEqualTo("Only WAV audio up to 10 MiB can be uploaded");
+        org.assertj.core.api.Assertions.assertThat(handler.handleIllegalArgument(libraryFailure).getBody().message())
+                .isEqualTo("Request is invalid");
     }
 
     @Test

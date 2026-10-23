@@ -7,6 +7,7 @@ import com.lingko.lingko.core.domain.evaluation.exception.GuideJobAccessDeniedEx
 import com.lingko.lingko.core.domain.evaluation.exception.GuideJobCapacityExceededException;
 import com.lingko.lingko.core.domain.evaluation.exception.GuideJobRateLimitExceededException;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
+import com.lingko.lingko.core.domain.auth.exception.OAuthProviderUnavailableException;
 import com.lingko.lingko.core.domain.auth.exception.ReviewAccessRateLimitExceededException;
 import com.lingko.lingko.core.domain.quota.exception.QuotaExceededException;
 import com.lingko.lingko.core.domain.quota.exception.AdMobSsvVerificationException;
@@ -22,7 +23,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -36,6 +43,8 @@ import java.util.List;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    private static final String APPLICATION_PACKAGE = "com.lingko.lingko.";
 
     /** 기존 앱과 직접 호출도 동의 누락을 인증 실패와 구분해 처리하게 한다. */
     @ExceptionHandler(com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException.class)
@@ -56,15 +65,63 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of("VALIDATION_FAILED", "Validation failed", details));
     }
 
+    /**
+     * framework가 만든 요청 형식 오류는 고정 메시지로 응답한다.
+     *
+     * <p>Jackson·Bean Validation·Spring MVC 예외 메시지에는 내부 타입명, controller method 이름,
+     * 파라미터 타입이 들어가므로 원문을 클라이언트에 그대로 직렬화하지 않는다.</p>
+     */
     @ExceptionHandler({
             HttpMessageNotReadableException.class,
             MissingServletRequestParameterException.class,
+            MissingRequestHeaderException.class,
+            MethodArgumentTypeMismatchException.class,
             ConstraintViolationException.class,
-            IllegalArgumentException.class
+            HandlerMethodValidationException.class
     })
-    public ResponseEntity<ErrorResponse> handleInvalidRequest(Exception exception) {
+    public ResponseEntity<ErrorResponse> handleMalformedRequest(Exception exception) {
         return ResponseEntity.badRequest()
-                .body(ErrorResponse.of("INVALID_REQUEST", exception.getMessage()));
+                .body(ErrorResponse.of("INVALID_REQUEST", "Request is invalid"));
+    }
+
+    /**
+     * 업무 검증 메시지는 유지하되 라이브러리가 던진 IllegalArgumentException 원문은 숨긴다.
+     *
+     * <p>LingKo 코드가 던진 예외는 "Only WAV audio up to 10 MiB can be uploaded"처럼 사용자에게 보여 줄
+     * 의도로 작성됐다. 첫 stack frame이 LingKo package가 아니면(JDK enum 변환, URI parsing 등) 내부 구현
+     * 정보가 섞일 수 있어 고정 메시지로 대체한다.</p>
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException exception) {
+        String message = isApplicationMessage(exception) ? exception.getMessage() : "Request is invalid";
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.of("INVALID_REQUEST", message));
+    }
+
+    /** 존재하지 않는 경로는 스캐너 트래픽이 대부분이므로 ERROR 로그 없이 404로 응답한다. */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of("NOT_FOUND", "Resource not found"));
+    }
+
+    /** 허용되지 않은 HTTP method는 Allow Header와 함께 405로 응답한다. */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException exception
+    ) {
+        ResponseEntity.BodyBuilder builder = ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED);
+        if (exception.getSupportedHttpMethods() != null) {
+            builder.allow(exception.getSupportedHttpMethods().toArray(org.springframework.http.HttpMethod[]::new));
+        }
+        return builder.body(ErrorResponse.of("METHOD_NOT_ALLOWED", "Method not allowed"));
+    }
+
+    /** JSON endpoint에 다른 Content-Type을 보낸 요청은 서버 오류가 아니라 415다. */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException exception) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(ErrorResponse.of("UNSUPPORTED_MEDIA_TYPE", "Unsupported media type"));
     }
 
     @ExceptionHandler(AuthException.class)
@@ -75,6 +132,18 @@ public class GlobalExceptionHandler {
     }
 
     /** 심사용 인증 공격을 늦추면서 구체적인 검증 실패 정보 없이 재시도 시각만 전달한다. */
+    /** 공급자 공개 키 장애는 사용자 token 문제가 아니므로 401이 아닌 재시도 가능한 503으로 구분한다. */
+    @ExceptionHandler(OAuthProviderUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleOAuthProviderUnavailable(
+            OAuthProviderUnavailableException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.of(
+                        "OAUTH_PROVIDER_UNAVAILABLE",
+                        "Sign-in is temporarily unavailable. Please try again."
+                ));
+    }
+
     @ExceptionHandler(ReviewAccessRateLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleReviewAccessRateLimit(
             ReviewAccessRateLimitExceededException exception
@@ -195,6 +264,13 @@ public class GlobalExceptionHandler {
         log.error("Unexpected server error", exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.of("INTERNAL_SERVER_ERROR", "Unexpected server error"));
+    }
+
+    private boolean isApplicationMessage(IllegalArgumentException exception) {
+        StackTraceElement[] stackTrace = exception.getStackTrace();
+        return exception.getMessage() != null
+                && stackTrace.length > 0
+                && stackTrace[0].getClassName().startsWith(APPLICATION_PACKAGE);
     }
 
     private ErrorResponse.FieldErrorDetail toDetail(FieldError fieldError) {
