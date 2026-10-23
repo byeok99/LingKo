@@ -138,6 +138,28 @@ class EvaluationJobExecutorTest {
     }
 
     @Test
+    @DisplayName("lease를 잃은 시도는 외부 평가 전에 중단하고 실패 기록·S3 원본 삭제를 하지 않는다")
+    void lostLeaseStopsWithoutTouchingStateOrSource() {
+        EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
+        when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
+        when(job.getAudioObjectKey()).thenReturn("evaluation-audio/7/audio.wav");
+        Path audioPath = Path.of("/tmp/audio.wav");
+        when(audioStorage.download("evaluation-audio/7/audio.wav")).thenReturn(audioPath);
+        org.mockito.Mockito.doThrow(
+                        new com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobLeaseLostException("job"))
+                .when(processingService).advancePhase(job, EvaluationJob.Phase.ANALYZING_SPEECH);
+
+        EvaluationJobExecutor.ExecutionResult outcome = executor.execute(job);
+
+        assertThat(outcome).isEqualTo(EvaluationJobExecutor.ExecutionResult.LEASE_LOST);
+        verify(evaluationService, never()).evaluatePronunciation(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(processingService, never()).fail(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(audioStorage, never()).delete(org.mockito.ArgumentMatchers.anyString());
+        verify(audioStorage).deleteLocal(audioPath);
+    }
+
+    @Test
     @DisplayName("최종 실패는 쿼터 보상 후 S3 원본을 삭제한다")
     void deletesSourceAfterTerminalFailure() {
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);

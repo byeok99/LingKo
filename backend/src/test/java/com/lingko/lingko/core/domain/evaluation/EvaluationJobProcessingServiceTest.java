@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.core.config.EvaluationJobSettings;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationLog;
+import com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobLeaseLostException;
 import com.lingko.lingko.core.domain.evaluation.exception.InvalidEvaluationAudioException;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationJobRepository;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobProcessingService;
@@ -104,6 +105,62 @@ class EvaluationJobProcessingServiceTest {
         assertThat(job.getStatus()).isEqualTo(EvaluationJob.Status.FAILED);
         assertThat(job.getErrorCode()).isEqualTo("INVALID_AUDIO");
         verify(quotaService).releasePracticeIfReserved(job.reservation());
+    }
+
+    @Test
+    @DisplayName("lease 만료 후 다른 시도가 재claim한 작업은 이전 시도가 완료·실패 처리할 수 없다")
+    void staleAttemptCannotCompleteOrFailReclaimedJob() {
+        EvaluationJobRepository jobRepository = mock(EvaluationJobRepository.class);
+        EvaluationPersistenceService persistenceService = mock(EvaluationPersistenceService.class);
+        PracticeQuotaService quotaService = mock(PracticeQuotaService.class);
+        EvaluationJobSettings settings = new EvaluationJobSettings();
+        settings.getWorker().setMaxAttempts(3);
+        Instant now = Instant.parse("2026-07-30T12:00:00Z");
+        // 이전 Worker가 들고 있는 claim 시점 snapshot(시도 1)과 재claim된 현재 행(시도 2)을 분리한다.
+        EvaluationJob staleSnapshot = pendingJob(now);
+        staleSnapshot.claim(now.minusSeconds(700), now.minusSeconds(100));
+        EvaluationJob current = pendingJob(now);
+        current.claim(now.minusSeconds(700), now.minusSeconds(100));
+        current.claim(now.minusSeconds(50), now.plusSeconds(550));
+        when(jobRepository.findByIdForUpdate(current.getJobId())).thenReturn(Optional.of(current));
+        EvaluationJobProcessingService service = new EvaluationJobProcessingService(
+                jobRepository,
+                persistenceService,
+                quotaService,
+                settings,
+                new ObjectMapper(),
+                Clock.fixed(now, ZoneOffset.UTC)
+        );
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.complete(
+                staleSnapshot,
+                com.lingko.lingko.api.evaluation.dto.PracticeResultResponse.builder().overallScore(80).build()
+        )).isInstanceOf(EvaluationJobLeaseLostException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.fail(
+                staleSnapshot,
+                new IllegalStateException("late failure")
+        )).isInstanceOf(EvaluationJobLeaseLostException.class);
+
+        org.mockito.Mockito.verifyNoInteractions(persistenceService, quotaService);
+        assertThat(current.getStatus()).isEqualTo(EvaluationJob.Status.PROCESSING);
+        assertThat(current.getAttemptCount()).isEqualTo(2);
+    }
+
+    private EvaluationJob pendingJob(Instant now) {
+        return EvaluationJob.create(
+                "job-reclaimed",
+                User.builder().userIdx(1L).socialId("google-sub").socialType(User.SocialType.GOOGLE).build(),
+                "idempotency-key",
+                "request-hash",
+                "evaluation-audio/1/audio.wav",
+                EvaluationLog.PracticeSource.CUSTOM,
+                null,
+                "김",
+                "김",
+                LocalDate.of(2026, 7, 27),
+                PracticeQuotaService.QuotaSource.FREE,
+                now.minusSeconds(800)
+        );
     }
 
     private EvaluationJob processingJob(Instant now) {
