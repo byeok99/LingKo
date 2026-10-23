@@ -69,8 +69,7 @@ public class AdRewardService {
             // 기존 세션을 지워 자리를 만들면 지급 대기 중인 보상이 사라지므로 새 생성을 거절한다.
             throw new AdRewardUnavailableException("Too many pending ad reward sessions");
         }
-        if (quotaService.getTodayQuota(userId).remainingPractices()
-                >= PracticeQuotaService.MAX_NATURAL_PRACTICES) {
+        if (!quotaService.canReceiveAdReward(userId)) {
             throw new AdRewardUnavailableException("Ad reward is not available at maximum quota");
         }
 
