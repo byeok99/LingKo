@@ -112,6 +112,17 @@ public class DailyPracticeQuota {
     }
 
     /**
+     * 진행 중 평가에 예약된 횟수까지 포함한 보유량이다.
+     *
+     * <p>{@link #remainingPractices()}는 예약분을 빼서 보여 주지만, 평가가 실패하면 예약이 복구되어
+     * 다시 잔여량이 된다. 최대 보유량 5회 판단을 잔여량으로만 하면 "잔여 4 + 예약 1"에서 보상을 받은 뒤
+     * 예약이 복구될 때 6회가 되므로, 상한 판단에는 이 값을 사용한다.</p>
+     */
+    public int heldPractices() {
+        return Math.max(0, freeLimit - freeUsed) + Math.max(0, rewardedAvailable);
+    }
+
+    /**
      * 서버 기준으로 완료된 1시간 구간만큼 무료 사용량을 되돌리고 최대치에서는 timer를 제거한다.
      * 광고 등 보상 횟수는 이 자연 충전 clock과 독립적으로 유지한다.
      */
