@@ -320,6 +320,8 @@ Authorization: Bearer <access-token>
 
 인증 필요. 상태는 `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`입니다. `phase`는 실제 Worker 처리 경계를 나타내며 `QUEUED`, `DOWNLOADING_AUDIO`, `ANALYZING_SPEECH`, `PREPARING_GUIDES`, `FINALIZING` 중 하나입니다. 이는 단계 순서만 나타내고 단계별 소요 시간이 달라질 수 있으므로 백분율로 환산하지 않습니다. 성공 시 `result`에 기존 평가 결과 계약을 반환합니다.
 
+실패 시 `errorCode`는 `AI_CONSENT_REQUIRED`(동의 철회, 즉시 종료), `INVALID_AUDIO`(음성 형식 오류, 재시도 없이 즉시 종료하므로 다시 녹음 필요), `EVALUATION_FAILED`(일시 장애가 최대 시도 횟수까지 반복) 중 하나입니다. 세 경우 모두 예약된 평가 기회는 복구됩니다.
+
 대표 성공 결과:
 
 ```json

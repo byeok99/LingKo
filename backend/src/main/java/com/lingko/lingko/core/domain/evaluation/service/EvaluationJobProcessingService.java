@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.config.EvaluationJobSettings;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob;
+import com.lingko.lingko.core.domain.evaluation.exception.InvalidEvaluationAudioException;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationJobRepository;
 import com.lingko.lingko.core.domain.quota.service.PracticeQuotaService;
 import lombok.RequiredArgsConstructor;
@@ -78,15 +79,27 @@ public class EvaluationJobProcessingService {
     }
 
     /**
+     * 실패를 재시도 또는 최종 실패로 기록한다.
+     *
+     * <p>작업 {@code errorCode} 값:
+     * <ul>
+     *   <li>{@code AI_CONSENT_REQUIRED}: AI 처리 동의 철회. 즉시 최종 실패</li>
+     *   <li>{@code INVALID_AUDIO}: 업로드 음성 형식 오류. 재시도해도 같으므로 즉시 최종 실패</li>
+     *   <li>{@code EVALUATION_FAILED}: 그 밖의 일시 장애. 최대 시도 횟수까지 재시도</li>
+     * </ul></p>
+     *
      * @return 원본 음성을 삭제해도 되는 최종 실패이면 true
      */
     @Transactional
     public boolean fail(EvaluationJob claimedJob, RuntimeException failure) {
         EvaluationJob job = requireProcessingJob(claimedJob.getJobId());
         boolean consentDenied = failure instanceof com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException;
-        String errorCode = consentDenied ? "AI_CONSENT_REQUIRED" : "EVALUATION_FAILED";
-        // 철회는 일시적 외부 장애가 아니므로 즉시 종료하고 예약을 복구한다.
-        if (consentDenied || job.getAttemptCount() >= settings.getWorker().getMaxAttempts()) {
+        boolean invalidAudio = failure instanceof InvalidEvaluationAudioException;
+        String errorCode = consentDenied
+                ? "AI_CONSENT_REQUIRED"
+                : invalidAudio ? "INVALID_AUDIO" : "EVALUATION_FAILED";
+        // 철회와 형식 오류는 일시적 외부 장애가 아니므로 재시도하지 않고 즉시 종료해 예약을 복구한다.
+        if (consentDenied || invalidAudio || job.getAttemptCount() >= settings.getWorker().getMaxAttempts()) {
             job.fail(errorCode, clock.instant());
             // 예약 복구 native UPDATE 전에 FAILED를 기록해 clear 이후 상태 변경 유실을 막는다.
             boolean quotaReleased = quotaService.releasePracticeIfReserved(job.reservation());
