@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.core.config.EvaluationJobSettings;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationLog;
+import com.lingko.lingko.core.domain.evaluation.exception.InvalidEvaluationAudioException;
 import com.lingko.lingko.core.domain.evaluation.repository.EvaluationJobRepository;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobProcessingService;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationPersistenceService;
@@ -56,6 +57,52 @@ class EvaluationJobProcessingServiceTest {
         assertThat(job.getStatus()).isEqualTo(EvaluationJob.Status.FAILED);
         assertThat(job.getErrorCode()).isEqualTo("EVALUATION_FAILED");
         assertThat(job.getCompletedAt()).isEqualTo(now);
+        verify(quotaService).releasePracticeIfReserved(job.reservation());
+    }
+
+    @Test
+    @DisplayName("업로드 음성 형식 오류는 첫 시도에서도 재시도 없이 INVALID_AUDIO로 종결하고 예약을 복구한다")
+    void terminatesInvalidAudioWithoutRetry() {
+        EvaluationJobRepository jobRepository = mock(EvaluationJobRepository.class);
+        PracticeQuotaService quotaService = mock(PracticeQuotaService.class);
+        EvaluationJobSettings settings = new EvaluationJobSettings();
+        settings.getWorker().setMaxAttempts(3);
+        Instant now = Instant.parse("2026-07-30T12:00:00Z");
+        EvaluationJob job = EvaluationJob.create(
+                "job-invalid-audio",
+                User.builder().userIdx(1L).socialId("google-sub").socialType(User.SocialType.GOOGLE).build(),
+                "idempotency-key",
+                "request-hash",
+                "evaluation-audio/1/bad.wav",
+                EvaluationLog.PracticeSource.CUSTOM,
+                null,
+                "김",
+                "김",
+                LocalDate.of(2026, 7, 27),
+                PracticeQuotaService.QuotaSource.FREE,
+                now.minusSeconds(60)
+        );
+        job.claim(now.minusSeconds(10), now.plusSeconds(600));
+        when(jobRepository.findByIdForUpdate(job.getJobId())).thenReturn(Optional.of(job));
+        when(quotaService.releasePracticeIfReserved(any())).thenReturn(true);
+        EvaluationJobProcessingService service = new EvaluationJobProcessingService(
+                jobRepository,
+                mock(EvaluationPersistenceService.class),
+                quotaService,
+                settings,
+                new ObjectMapper(),
+                Clock.fixed(now, ZoneOffset.UTC)
+        );
+
+        boolean terminalFailure = service.fail(
+                job,
+                new InvalidEvaluationAudioException("Invalid uploaded WAV audio")
+        );
+
+        assertThat(job.getAttemptCount()).isEqualTo(1);
+        assertThat(terminalFailure).isTrue();
+        assertThat(job.getStatus()).isEqualTo(EvaluationJob.Status.FAILED);
+        assertThat(job.getErrorCode()).isEqualTo("INVALID_AUDIO");
         verify(quotaService).releasePracticeIfReserved(job.reservation());
     }
 

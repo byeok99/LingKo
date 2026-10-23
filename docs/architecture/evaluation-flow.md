@@ -157,3 +157,4 @@ DB의 음절·유형별 저장 MP4는 현재 매핑 버전(`phonology-v3`)과 �
 | 같은 Idempotency Key의 다른 요청 | 409 `IDEMPOTENCY_CONFLICT` |
 | 평가 기회 소진 | 429 `QUOTA_EXCEEDED` |
 | Worker 최종 실패 | 작업 상태 `FAILED`, `errorCode=EVALUATION_FAILED` |
+| 업로드 음성이 16-bit mono PCM WAV(48kHz 이하)가 아님 | 재시도 없이 즉시 `FAILED`, `errorCode=INVALID_AUDIO`, 예약 복구 |
