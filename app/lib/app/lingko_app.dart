@@ -925,8 +925,20 @@ class _LingKoShellState extends State<LingKoShell> {
         }
         await Future<void>.delayed(const Duration(seconds: 1));
       }
+      // 10초 안에 COMPLETED를 보지 못해도 서버 세션은 만료 전까지 유지되어 늦은 SSV callback도 지급된다.
+      // 조용히 끝내면 사용자가 보상이 사라졌다고 여기고 광고를 다시 보므로 확인 중임을 알린다.
       if (mounted) {
         await loadPracticeQuota();
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            key: ValueKey('practice-reward-pending-snackbar'),
+            content: Text(
+              'Your reward is still being confirmed. It will be added shortly.',
+            ),
+          ),
+        );
       }
     } on AuthSessionExpiredException {
       if (mounted) {
