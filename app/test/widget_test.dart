@@ -385,6 +385,9 @@ class FakePracticeQuotaApi implements PracticeQuotaApi {
   String? lastSessionToken;
   int sessionStatusFetchCount = 0;
 
+  /// SSV callback 지연을 재현할 때 pending으로 바꾼다. 기본값은 즉시 지급 완료다.
+  AdRewardStatus sessionStatus = AdRewardStatus.completed;
+
   @override
   Future<PracticeQuota> fetchTodayQuota({required String accessToken}) async {
     lastAccessToken = accessToken;
@@ -419,6 +422,9 @@ class FakePracticeQuotaApi implements PracticeQuotaApi {
     lastAccessToken = accessToken;
     lastSessionToken = sessionToken;
     sessionStatusFetchCount++;
+    if (sessionStatus != AdRewardStatus.completed) {
+      return AdRewardSessionStatus(status: sessionStatus, credited: null);
+    }
     quota = rewardQuota ?? quota;
     return const AdRewardSessionStatus(
       status: AdRewardStatus.completed,
@@ -1953,6 +1959,41 @@ void main() {
     },
   );
 
+  testWidgets('delayed SSV confirmation tells the user the reward is pending', (
+    WidgetTester tester,
+  ) async {
+    final quotaApi =
+        FakePracticeQuotaApi()..sessionStatus = AdRewardStatus.pending;
+    final adService = FakePracticeRewardAdService();
+    await tester.pumpWidget(
+      LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+        pronunciationApi: FakePronunciationApi(),
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        practiceQuotaApi: quotaApi,
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+        practiceRewardAdService: adService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('practice-energy-ad-button')));
+    // 폴링 사이의 1초 대기는 frame을 예약하지 않으므로 시간을 직접 진행한다.
+    for (var second = 0; second < 12; second++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
+    await tester.pumpAndSettle();
+
+    expect(quotaApi.sessionStatusFetchCount, 10);
+    expect(
+      find.byKey(const ValueKey('practice-reward-pending-snackbar')),
+      findsOneWidget,
+    );
+    expect(find.text('3/5'), findsOneWidget);
+  });
+
   testWidgets('dismissed rewarded ad does not call the quota reward endpoint', (
     WidgetTester tester,
   ) async {
@@ -2734,6 +2775,56 @@ void main() {
     expect(find.text('Retry with this recording'), findsOneWidget);
     expect(find.text('Result'), findsNothing);
   });
+
+  testWidgets(
+    'INVALID_AUDIO failure asks for a new recording instead of a retry',
+    (WidgetTester tester) async {
+      final evaluationApi =
+          FakeEvaluationApi()
+            ..createdJob = const EvaluationJob(
+              jobId: 'job-invalid-audio',
+              status: EvaluationJobStatus.failed,
+              errorCode: 'INVALID_AUDIO',
+            );
+      await tester.pumpWidget(
+        LingKoApp(
+          aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+          pronunciationApi: FakePronunciationApi(),
+          sentenceApi: FakeSentenceApi(),
+          evaluationApi: evaluationApi,
+          authService: FakeAppAuthService(restoreExistingSession: true),
+          audioRecorderService: FakeAudioRecorderService(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('맛있겠다.').first);
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+      await tester.pumpAndSettle();
+      await _tapVisible(tester, find.text('Record'));
+      await _tapVisible(tester, find.bySemanticsLabel('Stop and analyze'));
+
+      expect(
+        find.text('We could not read this recording. Please record it again.'),
+        findsOneWidget,
+      );
+      expect(find.text('Retry with this recording'), findsNothing);
+
+      await _tapVisible(
+        tester,
+        find.byKey(const ValueKey('evaluation-record-again')),
+      );
+
+      expect(find.byKey(const ValueKey('evaluation-progress')), findsNothing);
+      // 실패 화면을 닫으면 같은 문장의 기본 녹음 버튼으로 돌아온다(스크롤 위치에 따라 offstage일 수 있다).
+      expect(
+        find.text('Retry with this recording', skipOffstage: false),
+        findsNothing,
+      );
+      expect(find.text('Record', skipOffstage: false), findsOneWidget);
+    },
+  );
 
   testWidgets('immersive recording can restart and cancel safely', (
     WidgetTester tester,

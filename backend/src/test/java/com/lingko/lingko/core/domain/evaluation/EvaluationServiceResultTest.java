@@ -68,7 +68,7 @@ class EvaluationServiceResultTest {
     @DisplayName("Worker가 내려받은 파일의 실제 WAV 구조가 잘못되면 외부 평가 전에 거부한다")
     void rejectsInvalidWavBytes() {
         assertThatThrownBy(() -> evaluate(service, new byte[]{1, 2, 3}, "가나"))
-                .isInstanceOf(com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException.class)
+                .isInstanceOf(com.lingko.lingko.core.domain.evaluation.exception.InvalidEvaluationAudioException.class)
                 .hasMessage("Invalid uploaded WAV audio");
     }
 
@@ -85,7 +85,7 @@ class EvaluationServiceResultTest {
 
         assertThat(invalidHeaders).allSatisfy(header ->
                 assertThatThrownBy(() -> evaluate(service, header, "가나"))
-                        .isInstanceOf(com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException.class)
+                        .isInstanceOf(com.lingko.lingko.core.domain.evaluation.exception.InvalidEvaluationAudioException.class)
                         .hasMessage("Invalid uploaded WAV audio")
         );
     }

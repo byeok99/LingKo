@@ -35,6 +35,7 @@ class PracticeScreen extends StatefulWidget {
     required this.evaluationProgress,
     required this.onImmersiveModeChanged,
     required this.onContinueInBackground,
+    this.onDismissEvaluationFailure,
   });
 
   final PracticeSentence? sentence;
@@ -48,6 +49,10 @@ class PracticeScreen extends StatefulWidget {
   final EvaluationProgress evaluationProgress;
   final ValueChanged<bool> onImmersiveModeChanged;
   final VoidCallback onContinueInBackground;
+
+  /// 실패한 평가 상태를 shell에서 지워 녹음 화면으로 돌아가게 한다.
+  /// null이면 "다시 녹음" 버튼을 표시하지 않는다.
+  final VoidCallback? onDismissEvaluationFailure;
 
   @override
   State<PracticeScreen> createState() => _PracticeScreenState();
@@ -357,6 +362,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
     widget.onImmersiveModeChanged(false);
   }
 
+  /// 서버가 읽지 못한 녹음 파일을 버리고 실패 화면을 닫아 같은 문장의 녹음 화면으로 돌아간다.
+  Future<void> _recordAgainAfterFailure() async {
+    // reportErrors=true여야 녹음 경로와 이전 실패 문구가 함께 초기화되어 기본 녹음 버튼이 보인다.
+    await _cleanupRecording(reportErrors: true);
+    widget.onDismissEvaluationFailure?.call();
+  }
+
   /// 현재 파일을 평가에 보내지 않고 버린 뒤 같은 문장을 즉시 다시 녹음한다.
   Future<void> _restartRecording() async {
     await _cleanupRecording(reportErrors: true);
@@ -464,6 +476,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
           EvaluationProgressPanel(
             progress: widget.evaluationProgress,
             onRetry: recordedAudioPath == null ? null : _submitRecording,
+            onRecordAgain:
+                widget.onDismissEvaluationFailure == null
+                    ? null
+                    : _recordAgainAfterFailure,
             onContinueInBackground: widget.onContinueInBackground,
           )
         else if (isRecording)
