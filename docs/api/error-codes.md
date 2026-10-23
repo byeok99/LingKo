@@ -46,6 +46,7 @@ Worker 철회 확인 시 작업의 `errorCode`도 같은 값이며 terminal 실�
 | 429 | `REVIEW_ACCESS_RATE_LIMITED` | 같은 원격 주소의 심사용 로그인 시도 한도 초과 | `Retry-After` 이후 재시도 |
 | 502 | `EVALUATION_FAILED` | 음성 평가 또는 영상 처리 외부 연동 실패 | 잠시 후 재시도 |
 | 503 | `ACCOUNT_DELETION_UNAVAILABLE` | 회원 탈퇴 중 S3 음성 삭제 실패 | 로그인 상태를 유지하고 잠시 후 재시도 |
+| 503 | `OAUTH_PROVIDER_UNAVAILABLE` | 로그인 중 Google·Apple 공개 키를 일시적으로 가져오지 못함 | 재로그인 루프 없이 잠시 후 다시 로그인 시도 |
 | 503 | `AD_REWARD_UNAVAILABLE` | SSV allowlist 미설정, 최대 quota 또는 Google 공개키 일시 실패 | 설정 확인 또는 잠시 후 재시도 |
 | 500 | `INTERNAL_SERVER_ERROR` | 처리되지 않은 서버 오류 | 일반 오류와 문의 경로 표시 |
 
