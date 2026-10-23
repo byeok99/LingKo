@@ -46,6 +46,8 @@ public class AuthController {
             @Valid @RequestBody ReviewLoginRequest request,
             HttpServletRequest servletRequest
     ) {
+        // server.forward-headers-strategy=native이면 RemoteIpValve가 신뢰 proxy의 X-Forwarded-For로
+        // 실제 클라이언트 주소를 복원한다. proxy 주소 하나로 모든 시도가 묶이지 않게 하는 전제다.
         Long reviewUserId = reviewAccessGuard.authorizeAndConsume(
                 request.trimmedAccessCode(),
                 servletRequest.getRemoteAddr()

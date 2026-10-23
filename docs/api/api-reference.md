@@ -148,8 +148,11 @@ App Review 기간에만 활성화하는 전용 endpoint입니다. 앱은 Review 
 
 Backend는 원문이 아닌 운영 환경의 SHA-256 hash와 상수 시간 비교하고, 성공하면
 `REVIEW_ACCESS_USER_ID`로 지정된 기존 사용자에게 일반 로그인과 같은 token 응답을 발급합니다.
-기능 비활성화·코드 불일치·계정 없음은 모두 `401 AUTHENTICATION_FAILED`입니다. 서버가 관찰한 같은
-원격 주소의 기본 5분 5회 제한을 넘으면 `429 REVIEW_ACCESS_RATE_LIMITED`와 `Retry-After`를 반환합니다.
+기능 비활성화·코드 불일치·계정 없음은 모두 `401 AUTHENTICATION_FAILED`입니다. 같은 클라이언트
+주소의 기본 5분 5회 제한을 넘으면 `429 REVIEW_ACCESS_RATE_LIMITED`와 `Retry-After`를 반환합니다.
+클라이언트 주소는 `SERVER_FORWARD_HEADERS_STRATEGY=native`(기본값)일 때 loopback·사설망 reverse proxy가
+보낸 `X-Forwarded-For`에서 복원하므로 TLS proxy 뒤에서도 사용자별로 제한되고, 외부에서 직접 보낸
+위조 header는 반영되지 않습니다.
 
 ### `POST /api/auth/token/refresh`
 
