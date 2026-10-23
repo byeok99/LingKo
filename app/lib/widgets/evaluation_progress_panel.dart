@@ -13,11 +13,15 @@ class EvaluationProgressPanel extends StatelessWidget {
     super.key,
     required this.progress,
     this.onRetry,
+    this.onRecordAgain,
     this.onContinueInBackground,
   });
 
   final EvaluationProgress progress;
   final VoidCallback? onRetry;
+
+  /// 같은 파일 재시도가 무의미한 실패에서 실패 화면을 닫고 녹음 화면으로 돌아간다.
+  final VoidCallback? onRecordAgain;
   final VoidCallback? onContinueInBackground;
 
   @override
@@ -154,9 +158,21 @@ class EvaluationProgressPanel extends StatelessWidget {
           ),
         ),
         if (progress.stage == EvaluationProgressStage.failed &&
+            progress.canRetryRecording &&
             onRetry != null) ...[
           const SizedBox(height: AppSpacing.lg),
           PrimaryButton(label: 'Retry with this recording', onPressed: onRetry),
+        ],
+        // 녹음 형식 오류는 같은 파일로 재시도해도 다시 실패하므로 새 녹음으로만 안내한다.
+        if (progress.stage == EvaluationProgressStage.failed &&
+            !progress.canRetryRecording &&
+            onRecordAgain != null) ...[
+          const SizedBox(height: AppSpacing.lg),
+          PrimaryButton(
+            key: const ValueKey('evaluation-record-again'),
+            label: 'Record again',
+            onPressed: onRecordAgain,
+          ),
         ],
         const SizedBox(height: 14),
         Text(

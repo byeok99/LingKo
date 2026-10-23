@@ -3,6 +3,7 @@ package com.lingko.lingko.core.domain.quota;
 import com.lingko.lingko.api.quota.dto.AdRewardSessionResponse;
 import com.lingko.lingko.core.config.AdMobSsvSettings;
 import com.lingko.lingko.core.domain.quota.entity.AdRewardSessionStatus;
+import com.lingko.lingko.core.domain.quota.exception.AdRewardUnavailableException;
 import com.lingko.lingko.core.domain.quota.repository.AdRewardReceiptRepository;
 import com.lingko.lingko.core.domain.quota.repository.AdRewardSessionRepository;
 import com.lingko.lingko.core.domain.quota.repository.DailyPracticeQuotaRepository;
@@ -18,6 +19,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** client 요청만으로는 지급하지 않고 verified SSV transaction만 한 번 지급하는 계약을 검증한다. */
 @DataJpaTest(properties = {
@@ -87,6 +89,38 @@ class AdRewardServiceTest {
         assertThat(quotaService.getTodayQuota(first.getUserIdx()).remainingPractices()).isEqualTo(5);
         assertThat(quotaService.getTodayQuota(second.getUserIdx()).remainingPractices()).isEqualTo(4);
         assertThat(receiptRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("새 세션을 만들어도 아직 유효한 이전 세션의 지연 callback은 지급된다")
+    void keepsActivePendingSessionForDelayedCallback() {
+        User user = saveUser();
+        completePractice(user.getUserIdx());
+        completePractice(user.getUserIdx());
+        AdRewardSessionResponse first = rewardService.createSession(user.getUserIdx());
+        AdRewardSessionResponse second = rewardService.createSession(user.getUserIdx());
+
+        rewardService.processVerifiedCallback(callback(first.sessionToken(), "transaction-late"));
+
+        assertThat(rewardService.getSessionStatus(user.getUserIdx(), first.sessionToken()).credited())
+                .isTrue();
+        assertThat(rewardService.getSessionStatus(user.getUserIdx(), second.sessionToken()).status())
+                .isEqualTo(AdRewardSessionStatus.PENDING);
+        assertThat(quotaService.getTodayQuota(user.getUserIdx()).remainingPractices()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("유효 PENDING 세션이 상한이면 기존 대기 보상을 지우지 않고 새 생성을 거절한다")
+    void rejectsSessionCreationAtPendingLimit() {
+        User user = saveUser();
+        completePractice(user.getUserIdx());
+        for (int i = 0; i < 5; i++) {
+            rewardService.createSession(user.getUserIdx());
+        }
+
+        assertThatThrownBy(() -> rewardService.createSession(user.getUserIdx()))
+                .isInstanceOf(AdRewardUnavailableException.class);
+        assertThat(sessionRepository.count()).isEqualTo(5);
     }
 
     private VerifiedAdRewardCallback callback(String token, String transactionId) {

@@ -8,6 +8,7 @@ import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.api.evaluation.dto.PracticeWordResultResponse;
 import com.lingko.lingko.core.domain.evaluation.dto.AssessmentResult;
 import com.lingko.lingko.core.domain.evaluation.dto.VideoType;
+import com.lingko.lingko.core.domain.evaluation.exception.InvalidEvaluationAudioException;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
 import com.lingko.lingko.core.util.KoreanPhonemeUtil;
 import com.lingko.lingko.core.util.KoreanRomanizationUtil;
@@ -315,7 +316,8 @@ public class EvaluationService {
             long fileSize = Files.size(audioPath);
             try (InputStream input = Files.newInputStream(audioPath)) {
                 if (!hasValidPcmWavHeader(input, fileSize)) {
-                    throw new VideoGenerationException("Invalid uploaded WAV audio");
+                    // 형식 오류는 재시도해도 바뀌지 않으므로 외부 연동 실패와 다른 영구 실패 타입으로 던진다.
+                    throw new InvalidEvaluationAudioException("Invalid uploaded WAV audio");
                 }
             }
             AssessmentResult assessmentResult = requireSpeechEvaluator()
@@ -325,7 +327,8 @@ public class EvaluationService {
         } catch (IOException exception) {
             throw new VideoGenerationException("Failed to read uploaded audio", exception);
         } catch (RuntimeException exception) {
-            if (exception instanceof VideoGenerationException) {
+            if (exception instanceof VideoGenerationException
+                    || exception instanceof InvalidEvaluationAudioException) {
                 throw exception;
             }
             throw new VideoGenerationException("Speech evaluation failed", exception);
