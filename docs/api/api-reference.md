@@ -483,6 +483,8 @@ Authorization: Bearer <access-token>
 
 - 앱은 token을 Rewarded Ad의 `customData`로 설정합니다. 원본 token은 DB에 저장하지 않고 SHA-256 hash만 보관합니다.
 - 허용 광고 단위가 설정되지 않았거나 현재 기회가 5회이면 `503 AD_REWARD_UNAVAILABLE`입니다.
+- 새 세션을 만들 때 만료된 `PENDING` 세션만 정리합니다. 아직 유효한 `PENDING` 세션은 SSV callback이 늦게 도착해도 지급되도록 유지합니다.
+- 유효한 `PENDING` 세션이 이미 5개이면 기존 대기 보상을 지우지 않고 새 생성을 `503 AD_REWARD_UNAVAILABLE`로 거절합니다.
 
 ### `GET /api/quota/ad-reward-sessions/{sessionToken}`
 
