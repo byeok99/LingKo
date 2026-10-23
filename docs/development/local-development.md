@@ -12,6 +12,12 @@ Java 21, Flutter SDK, MySQL과 필요한 외부 서비스 개발용 설정을 �
 
 DB와 외부 서비스 설정을 실행 환경에 전달해야 합니다. `bootRun`이 `.env` 파일을 자동으로 읽는다고 가정하지 않습니다. Compose 구성은 [백엔드 디렉터리](../../backend/)에서 확인할 수 있으며 API와 독립 Worker의 역할을 구분합니다.
 
+Compose 포트와 DB 계정 설정:
+
+- MySQL은 `DB_BIND_ADDRESS`(기본 `127.0.0.1`)에만 공개합니다. Backend는 Compose network로 접속하므로 host 공개는 로컬 DB 도구용입니다.
+- Backend는 `APP_BIND_ADDRESS`(기본 `0.0.0.0`)에 공개합니다. TLS reverse proxy가 같은 host에 있으면 `127.0.0.1`로 제한해 평문 8080 직접 접근을 막습니다.
+- `DB_ROOT_PASSWORD`를 앱 계정 `DB_PASSWORD`와 다르게 설정하는 것을 권장합니다. 비우면 `DB_PASSWORD`를 사용하며 data volume 최초 초기화 때만 적용됩니다. 이미 초기화된 volume에 새 값만 넣으면 healthcheck가 실패하므로 먼저 MySQL에서 root 비밀번호를 바꾼 뒤 설정합니다.
+
 가이드 영상 cache 범위는 외부 호출 없이 확인할 수 있습니다.
 
 ```bash
