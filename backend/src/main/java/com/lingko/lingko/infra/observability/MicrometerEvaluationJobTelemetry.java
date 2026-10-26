@@ -7,6 +7,7 @@ import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobTelemetry;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -31,7 +32,8 @@ public class MicrometerEvaluationJobTelemetry implements EvaluationJobTelemetry 
     private final AtomicLong expiredLeases = new AtomicLong();
     private final AtomicLong lastHeartbeatEpochSeconds = new AtomicLong();
 
-    /** repository snapshot과 MeterRegistry를 연결하고 고정된 gauge 집합을 한 번 등록한다. */
+    /** test용 Clock 생성자와 구분해 운영 context가 사용할 repository·registry 생성자를 명시한다. */
+    @Autowired
     public MicrometerEvaluationJobTelemetry(EvaluationJobRepository repository, MeterRegistry registry) {
         this(repository, registry, Clock.systemUTC());
     }

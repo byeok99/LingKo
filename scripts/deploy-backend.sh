@@ -7,6 +7,7 @@ EXPECTED_BRANCH=${LINGKO_DEPLOY_BRANCH:-develop}
 LOCK_DIR=${LINGKO_DEPLOY_LOCK_DIR:-/tmp/lingko-backend-deploy.lock}
 HEALTH_ATTEMPTS=${LINGKO_DEPLOY_HEALTH_ATTEMPTS:-45}
 HEALTH_INTERVAL_SECONDS=${LINGKO_DEPLOY_HEALTH_INTERVAL_SECONDS:-2}
+STABILITY_SECONDS=${LINGKO_DEPLOY_STABILITY_SECONDS:-15}
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
@@ -51,16 +52,22 @@ deploy_tag() {
 
 runtime_is_healthy() {
   local backend_running
+    local backend_restart_count
   local worker_id
   local worker_running
+    local worker_restart_count
 
   backend_running=$(docker inspect --format '{{.State.Running}}' lingko-backend 2>/dev/null || true)
   [[ $backend_running == "true" ]] || return 1
+    backend_restart_count=$(docker inspect --format '{{.RestartCount}}' lingko-backend 2>/dev/null || true)
+    [[ $backend_restart_count == "0" ]] || return 1
 
   worker_id=$(docker_compose ps -q evaluation-worker)
   [[ -n $worker_id ]] || return 1
   worker_running=$(docker inspect --format '{{.State.Running}}' "$worker_id" 2>/dev/null || true)
   [[ $worker_running == "true" ]] || return 1
+    worker_restart_count=$(docker inspect --format '{{.RestartCount}}' "$worker_id" 2>/dev/null || true)
+    [[ $worker_restart_count == "0" ]] || return 1
 
   curl --fail --silent --show-error --max-time 5 \
     "http://127.0.0.1:$APP_PORT/actuator/health" >/dev/null
@@ -70,7 +77,11 @@ wait_for_runtime() {
   local attempt
   for ((attempt = 1; attempt <= HEALTH_ATTEMPTS; attempt += 1)); do
     if runtime_is_healthy; then
-      return 0
+      # restart policy가 시작 직후의 crash를 잠시 Running으로 가릴 수 있어 안정화 뒤 같은 계약을 재확인한다.
+      if ((STABILITY_SECONDS > 0)); then
+        sleep "$STABILITY_SECONDS"
+      fi
+      runtime_is_healthy && return 0
     fi
     if ((attempt < HEALTH_ATTEMPTS)); then
       sleep "$HEALTH_INTERVAL_SECONDS"
@@ -108,6 +119,7 @@ verify_awslogs_group() {
 [[ $TARGET_SHA =~ ^[0-9a-f]{40}$ ]] || fail "target commit must be a 40-character lowercase SHA"
 [[ $HEALTH_ATTEMPTS =~ ^[1-9][0-9]*$ ]] || fail "health attempts must be a positive integer"
 [[ $HEALTH_INTERVAL_SECONDS =~ ^[0-9]+$ ]] || fail "health interval must be a non-negative integer"
+[[ $STABILITY_SECONDS =~ ^[0-9]+$ ]] || fail "stability seconds must be a non-negative integer"
 
 for required_command in git docker curl awk date grep; do
   command -v "$required_command" >/dev/null || fail "missing command: $required_command"
