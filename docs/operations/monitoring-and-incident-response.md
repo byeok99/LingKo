@@ -20,6 +20,8 @@ Spring stdout → Docker awslogs              ┘
 
 StatsD는 기존 CloudWatch Agent를 재사용합니다. 애플리케이션이 CloudWatch API로 직접 push하지 않으므로 CloudWatch 장애나 UDP 유실이 요청 처리를 막지 않으며, 같은 지표를 두 경로로 중복 전송하지 않습니다. export allowlist는 JVM heap, GC pause, live thread, HTTP, HikariCP와 `lingko.*`만 허용합니다.
 
+Agent JSON에는 설치 version의 공식 schema가 허용하는 `service_address`, 수집·집계 주기와 `metric_separator`만 사용합니다. CloudWatch Agent는 `#tag:value`가 포함된 StatsD 형식을 지원하므로 legacy Telegraf 속성인 `parse_data_dog_tags`를 JSON에 추가하지 않습니다. p50·p95 생성은 Agent의 비지원 `percentiles` 속성이 아니라 Spring의 `management.metrics.distribution.percentiles`가 책임집니다.
+
 ## 배포와 검증
 
 Agent 설정을 먼저 배포한 뒤 API/Worker를 배포합니다. EC2에서 다음을 확인합니다.

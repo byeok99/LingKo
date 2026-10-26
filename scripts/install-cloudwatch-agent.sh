@@ -5,7 +5,9 @@ set -Eeuo pipefail
 EXPECTED_FINGERPRINT=937616F3450B7D806CBD9725D58167303B789C72
 AWS_REGION=us-east-1
 AGENT_CONTROL=/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl
+AGENT_BINARY=/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent
 AGENT_CONFIG=/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+COMMON_CONFIG=/opt/aws/amazon-cloudwatch-agent/etc/common-config.toml
 
 fail() {
   echo "CLOUDWATCH_AGENT_ERROR: $*" >&2
@@ -19,7 +21,7 @@ REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 CONFIG_SOURCE="$REPO_ROOT/backend/aws/cloudwatch-agent.json"
 [[ -f $CONFIG_SOURCE ]] || fail "configuration file is missing: $CONFIG_SOURCE"
 
-for required_command in curl dpkg dpkg-query gpg install systemctl awk mktemp; do
+for required_command in curl dpkg dpkg-query gpg install systemctl awk grep mktemp sleep; do
   command -v "$required_command" >/dev/null || fail "missing command: $required_command"
 done
 
@@ -71,13 +73,24 @@ dpkg -i -E "$PACKAGE"
 install -d -o root -g root -m 0755 "$(dirname -- "$AGENT_CONFIG")"
 install -o root -g root -m 0644 "$CONFIG_SOURCE" "$AGENT_CONFIG"
 
-# fetch-config가 schema를 검증하고 systemd service를 시작하므로 잘못된 설정은 즉시 실패한다.
+# fetch-config는 service가 곧 종료되는 설정도 비동기로 성공할 수 있어 설치된 version의 translator로 먼저 검증한다.
+"$AGENT_BINARY" config-translator \
+  -input "$CONFIG_SOURCE" \
+  -output "$TEMP_DIR/amazon-cloudwatch-agent.toml" \
+  -mode ec2 \
+  -config "$COMMON_CONFIG" \
+  -multi-config remove >/dev/null
+
 "$AGENT_CONTROL" -a fetch-config -m ec2 -s -c "file:$AGENT_CONFIG"
 systemctl enable amazon-cloudwatch-agent.service >/dev/null
+sleep 3
 systemctl is-active --quiet amazon-cloudwatch-agent.service \
   || fail "CloudWatch Agent service is not active"
+AGENT_STATUS=$("$AGENT_CONTROL" -a status)
+grep -Fq '"status": "running"' <<<"$AGENT_STATUS" \
+  || fail "CloudWatch Agent did not remain running"
 
 echo "CLOUDWATCH_AGENT=active"
 echo "CLOUDWATCH_AGENT_VERSION=$(dpkg-query -W -f='${Version}' amazon-cloudwatch-agent)"
 echo "CLOUDWATCH_AGENT_CONFIG=$AGENT_CONFIG"
-"$AGENT_CONTROL" -a status
+printf '%s\n' "$AGENT_STATUS"

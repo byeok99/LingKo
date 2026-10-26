@@ -12,7 +12,11 @@ bash -n "$root_dir/scripts/apply-ec2-s3-policy.sh"
 bash -n "$root_dir/scripts/verify-s3-instance-role.sh"
 
 grep -Fq '"statsd"' "$root_dir/backend/aws/cloudwatch-agent.json"
-grep -Fq 'parse_data_dog_tags' "$root_dir/backend/aws/cloudwatch-agent.json"
+grep -Fq '"metric_separator": "_"' "$root_dir/backend/aws/cloudwatch-agent.json"
+if grep -Eq '"(parse_data_dog_tags|percentiles)"' "$root_dir/backend/aws/cloudwatch-agent.json"; then
+  echo 'CloudWatch Agent JSON contains unsupported StatsD properties' >&2
+  exit 1
+fi
 grep -Fq 'DefaultCredentialsProvider.create()' "$root_dir/backend/src/main/java/com/lingko/lingko/core/config/S3Config.java"
 for prefix in evaluation-audio guide-segments images videos; do
   grep -Fq "__BUCKET_ARN__/$prefix/*" "$root_dir/backend/aws/s3-instance-role-policy.json.template"
