@@ -9,6 +9,13 @@
       "InstanceId": "${aws:InstanceId}"
     },
     "metrics_collected": {
+      "statsd": {
+        "service_address": ":8125",
+        "metrics_collection_interval": 60,
+        "metrics_aggregation_interval": 60,
+        "parse_data_dog_tags": true,
+        "percentiles": [50, 95]
+      },
       "mem": {
         "measurement": [
           "used_percent"

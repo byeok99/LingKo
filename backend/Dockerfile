@@ -10,7 +10,7 @@ RUN gradle --no-daemon bootJar
 FROM eclipse-temurin:21-jre-jammy
 # 발음 가이드 영상 병합 기능이 컨테이너 안에서도 동일하게 동작하도록 FFmpeg를 설치한다.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
+    && apt-get install -y --no-install-recommends curl ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /workspace/build/libs/*.jar /app/app.jar

@@ -22,6 +22,36 @@ server:
   # proxy 없이 직접 공개하는 환경은 none으로 바꿔 header 해석을 끈다.
   forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:native}
 
+management:
+  endpoints:
+    web:
+      # 운영 probe 이외의 Actuator surface를 인터넷에 노출하지 않는다.
+      exposure:
+        include: health
+      discovery:
+        enabled: false
+  endpoint:
+    health:
+      # DB 장애는 상태 코드에 반영하되 내부 component와 예외는 응답에서 숨긴다.
+      show-details: never
+      show-components: never
+  metrics:
+    tags:
+      environment: ${METRICS_ENVIRONMENT:local}
+      service: ${METRICS_SERVICE:api}
+    distribution:
+      percentiles:
+        http.server.requests: 0.5,0.95
+  statsd:
+    metrics:
+      export:
+        # 운영 Compose에서만 켜며 UDP 장애가 API·Worker 실행을 막지 않게 한다.
+        enabled: ${MANAGEMENT_STATSD_METRICS_EXPORT_ENABLED:false}
+        host: ${MANAGEMENT_STATSD_METRICS_EXPORT_HOST:localhost}
+        port: ${MANAGEMENT_STATSD_METRICS_EXPORT_PORT:8125}
+        flavor: datadog
+        polling-frequency: 60s
+
 logging:
   pattern:
     # API는 requestId로 요청 로그를 연결하고 HTTP 요청이 없는 Worker는 none으로 명확히 구분한다.
@@ -72,9 +102,6 @@ aws:
   s3:
     bucket: ${AWS_S3_BUCKET:}
     region: ${AWS_S3_REGION:}
-  credentials:
-    access-key: ${AWS_ACCESS_KEY:}
-    secret-key: ${AWS_SECRET_KEY:}
 
 evaluation:
   upload-url-expire-minutes: ${EVALUATION_UPLOAD_URL_EXPIRE_MINUTES:10}

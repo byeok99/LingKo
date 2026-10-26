@@ -34,9 +34,6 @@ aws:
   s3:
     bucket: integration-test-bucket
     region: ap-northeast-2
-  credentials:
-    access-key: ${AWS_ACCESS_KEY:integration-test-access-key}
-    secret-key: ${AWS_SECRET_KEY:integration-test-secret-key}
 
 evaluation:
   worker:

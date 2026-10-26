@@ -4,8 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -27,7 +26,8 @@ public class S3Config {
 
         return S3Client.builder()
                 .region(Region.of(awsSettings.getS3().getRegion()))
-                .credentialsProvider(credentialsProvider())
+                // EC2는 Instance Profile의 단기 자격 증명을 사용하고 로컬은 표준 AWS chain을 따른다.
+                .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
     }
 
@@ -35,15 +35,7 @@ public class S3Config {
     public S3Presigner s3Presigner() {
         return S3Presigner.builder()
                 .region(Region.of(awsSettings.getS3().getRegion()))
-                .credentialsProvider(credentialsProvider())
+                .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
-    }
-
-    private StaticCredentialsProvider credentialsProvider() {
-        AwsBasicCredentials credentials = AwsBasicCredentials.create(
-                awsSettings.getCredentials().getAccessKey(),
-                awsSettings.getCredentials().getSecretKey()
-        );
-        return StaticCredentialsProvider.create(credentials);
     }
 }

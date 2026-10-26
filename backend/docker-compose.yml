@@ -58,6 +58,13 @@ services:
       # TLS reverse proxy가 같은 host에 있으면 APP_BIND_ADDRESS=127.0.0.1로 평문 8080 직접 접근을 막는다.
       # proxy가 다른 host에 있을 수 있어 기본값은 기존 동작(모든 interface)을 유지한다.
       - "${APP_BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-8080}:8080"
+    healthcheck:
+      # CD와 같은 애플리케이션 계약을 사용해 JVM 실행만이 아니라 DB 연결까지 판정한다.
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --max-time 5 --output /dev/null http://127.0.0.1:8080/actuator/health"]
+      interval: 30s
+      timeout: 6s
+      retries: 3
+      start_period: 60s
     environment:
       # 컨테이너 내부에서는 localhost가 아닌 Compose 서비스 이름으로 MySQL을 찾는다.
       DB_HOST: mysql

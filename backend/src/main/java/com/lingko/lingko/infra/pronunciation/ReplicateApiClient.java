@@ -3,9 +3,10 @@ package com.lingko.lingko.infra.pronunciation;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lingko.lingko.core.config.ReplicateSettings;
+import com.lingko.lingko.core.domain.evaluation.service.ExternalCallTelemetry;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -21,12 +23,31 @@ import java.util.function.Supplier;
  * polling과 응답 검증을 이 경계에서 처리해 도메인 서비스가 공급자 전송 형식에 의존하지 않게 한다.
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class ReplicateApiClient {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final ReplicateSettings settings;
+    private final ExternalCallTelemetry telemetry;
+
+    /** 관측 계층이 없는 단위 test와 최소 prewarm 구성에서 공급자 client를 생성한다. */
+    public ReplicateApiClient(WebClient webClient, ObjectMapper objectMapper, ReplicateSettings settings) {
+        this(webClient, objectMapper, settings, Optional.empty());
+    }
+
+    /** 수동 prewarm context에는 관측 bean이 없을 수 있으므로 호출 기능을 우선 유지한다. */
+    @Autowired
+    public ReplicateApiClient(
+            WebClient webClient,
+            ObjectMapper objectMapper,
+            ReplicateSettings settings,
+            Optional<ExternalCallTelemetry> telemetry
+    ) {
+        this.webClient = webClient;
+        this.objectMapper = objectMapper;
+        this.settings = settings;
+        this.telemetry = telemetry.orElse(ExternalCallTelemetry.NOOP);
+    }
 
     private static final String BASE_URL = "https://api.replicate.com/v1";
 
@@ -38,6 +59,8 @@ public class ReplicateApiClient {
      * @return 생성된 영상 URL
      */
     public String interpolate(String frame1Url, String frame2Url) {
+        long startedAt = System.nanoTime();
+        String outcome = "failure";
         try {
             // 입력 URL은 presigned credential을 포함할 수 있어 로그에 원문을 남기지 않는다.
             log.debug("Frame Interpolation 시작");
@@ -50,6 +73,7 @@ public class ReplicateApiClient {
             String videoUrl = pollUntilComplete(predictionId);
             log.debug("Frame Interpolation 완료");
 
+            outcome = "success";
             return videoUrl;
 
         } catch (InterruptedException exception) {
@@ -59,6 +83,8 @@ public class ReplicateApiClient {
         } catch (Exception e) {
             log.error("Frame Interpolation 실패", e);
             throw new VideoGenerationException("Frame Interpolation 실패", e);
+        } finally {
+            telemetry.record("replicate", outcome, System.nanoTime() - startedAt);
         }
     }
 

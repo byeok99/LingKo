@@ -33,8 +33,16 @@ collected = metrics["metrics_collected"]
 assert agent == {"metrics_collection_interval": 60, "region": "us-east-1"}
 assert metrics["namespace"] == "CWAgent"
 assert metrics["append_dimensions"] == {"InstanceId": "${aws:InstanceId}"}
-assert set(collected) == {"mem", "disk"}
+assert set(collected) == {"mem", "disk", "statsd"}
 assert collected["mem"] == {"measurement": ["used_percent"]}
+
+assert collected["statsd"] == {
+    "service_address": ":8125",
+    "metrics_collection_interval": 60,
+    "metrics_aggregation_interval": 60,
+    "parse_data_dog_tags": True,
+    "percentiles": [50, 95],
+}
 
 disk = collected["disk"]
 assert disk["resources"] == ["/"]
