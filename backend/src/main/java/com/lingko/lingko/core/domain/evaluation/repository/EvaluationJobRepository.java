@@ -24,6 +24,14 @@ public interface EvaluationJobRepository extends JpaRepository<EvaluationJob, St
 
     Optional<EvaluationJob> findByJobIdAndUserUserIdx(String jobId, Long userId);
 
+    long countByStatus(EvaluationJob.Status status);
+
+    long countByStatusAndLeaseExpiresAtBefore(EvaluationJob.Status status, Instant now);
+
+    /** 대기시간 gauge 계산에 필요한 가장 오래된 생성 시각만 조회한다. */
+    @Query("select min(job.createdAt) from EvaluationJob job where job.status = :status")
+    Optional<Instant> findOldestCreatedAtByStatus(@Param("status") EvaluationJob.Status status);
+
     @Query("""
             select job.jobId
             from EvaluationJob job

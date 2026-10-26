@@ -63,7 +63,7 @@ GitHub Actions는 장기 AWS Access Key를 저장하지 않습니다. `id-token:
 
 배포 role은 대상 instance와 AWS 관리 문서 `AWS-RunShellScript`에 대한 `ssm:SendCommand`, 대상의 Online 여부와 실행 결과를 확인할 최소 조회 권한만 가집니다. 애플리케이션 S3 key나 EC2 instance role을 GitHub에 공유하지 않습니다.
 
-EC2 명령은 원격 `develop`이 workflow의 정확한 commit인지, 서버의 추적 파일이 깨끗한지 확인하고 fast-forward만 허용합니다. 이후 commit SHA로 공용 Backend image를 한 번 빌드해 API와 evaluation worker를 함께 교체합니다. `/legal/terms?lang=en` 응답과 두 container의 실행 상태가 제한 시간 안에 정상이어야 성공합니다.
+EC2 명령은 원격 `develop`이 workflow의 정확한 commit인지, 서버의 추적 파일이 깨끗한지 확인하고 fast-forward만 허용합니다. 이후 commit SHA로 공용 Backend image를 한 번 빌드해 API와 evaluation worker를 함께 교체합니다. DB indicator를 포함한 `/actuator/health` 응답과 두 container의 실행 상태가 제한 시간 안에 정상이어야 성공합니다.
 
 교체 전 image는 `rollback-<UTC 시각>` tag로 보존합니다. 새 image의 명령 실행 또는 health check가 실패하면 API와 Worker를 직전 image로 되돌리고 workflow를 실패 처리합니다. 이 rollback은 database migration이나 서버 Git checkout을 되돌리지 않으므로, Flyway migration은 항상 이전 애플리케이션과 호환되는 순방향 변경이어야 합니다.
 
@@ -131,13 +131,13 @@ Worker 작업은 `/lingko/prod/worker`에서 `jobId=<작업 ID>`로 같은 방�
 
 ## CloudWatch Agent OS 지표
 
-운영 EC2는 Instance Profile `LingKoEc2SsmRole`의 임시 자격 증명으로 CloudWatch에 지표를 전송합니다. 장기 AWS Access Key를 Agent 설정에 저장하지 않습니다. 저장소의 `backend/aws/cloudwatch-agent.json`은 60초 간격으로 `CWAgent` namespace에 다음 지표만 전송합니다.
+운영 EC2는 Instance Profile `LingKoEc2SsmRole`의 임시 자격 증명으로 CloudWatch에 지표를 전송합니다. 장기 AWS Access Key를 Agent 설정에 저장하지 않습니다. 저장소의 `backend/aws/cloudwatch-agent.json`은 60초 간격으로 `CWAgent` namespace에 OS 지표와 Spring StatsD allowlist 지표를 전송합니다.
 
 - `mem_used_percent`
 - 루트(`/`)의 `disk_used_percent`
 - 루트(`/`)의 `disk_inodes_free`, `disk_inodes_total`
 
-모든 지표에는 `InstanceId`만 공통 dimension으로 붙이고 `drop_device`로 재부팅 시 달라질 수 있는 device dimension을 제거합니다. Docker overlay와 메모리 filesystem은 수집하지 않습니다.
+모든 지표에는 `InstanceId`를 붙이고 `drop_device`로 재부팅 시 달라질 수 있는 device dimension을 제거합니다. Docker overlay와 메모리 filesystem은 수집하지 않습니다. Spring 지표에는 `environment`, `service`와 bounded outcome/provider tag만 추가합니다. 세부 지표·Alarm·비용·디스크 대응은 [운영 모니터링·장애 대응](../operations/monitoring-and-incident-response.md)을 참고합니다.
 
 운영 적용은 `develop` 병합 후 `Actions` → `CloudWatch Agent` → `Run workflow`에서 `develop`을 선택하고 확인 항목을 체크해 시작합니다. 이 workflow는 Backend CD와 같은 production Environment·OIDC·SSM 경로를 사용하며, 정확한 `develop` commit만 EC2에 fast-forward한 뒤 설치합니다. 병합만으로 자동 실행되지는 않습니다.
 
@@ -164,7 +164,7 @@ sudo systemctl is-enabled amazon-cloudwatch-agent.service
 sudo journalctl -u amazon-cloudwatch-agent --since '10 minutes ago' --no-pager
 ```
 
-CloudWatch Console의 `Metrics` → `CWAgent`에서 현재 `InstanceId`의 네 지표가 5분 이상 연속 수집되는지 확인합니다. 중단해야 하면 먼저 Agent를 멈추고, 다시 적용할 때 동일 설치 스크립트를 실행합니다.
+CloudWatch Console의 `Metrics` → `CWAgent`에서 현재 `InstanceId`의 OS 지표와 `service=api|worker` 애플리케이션 지표가 5분 이상 연속 수집되는지 확인합니다. 중단해야 하면 먼저 Agent를 멈추고, 다시 적용할 때 동일 설치 스크립트를 실행합니다.
 
 ```bash
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop

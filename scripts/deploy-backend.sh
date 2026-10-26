@@ -63,7 +63,7 @@ runtime_is_healthy() {
   [[ $worker_running == "true" ]] || return 1
 
   curl --fail --silent --show-error --max-time 5 \
-    "http://127.0.0.1:$APP_PORT/legal/terms?lang=en" >/dev/null
+    "http://127.0.0.1:$APP_PORT/actuator/health" >/dev/null
 }
 
 wait_for_runtime() {
@@ -109,7 +109,7 @@ verify_awslogs_group() {
 [[ $HEALTH_ATTEMPTS =~ ^[1-9][0-9]*$ ]] || fail "health attempts must be a positive integer"
 [[ $HEALTH_INTERVAL_SECONDS =~ ^[0-9]+$ ]] || fail "health interval must be a non-negative integer"
 
-for required_command in git docker curl awk date; do
+for required_command in git docker curl awk date grep; do
   command -v "$required_command" >/dev/null || fail "missing command: $required_command"
 done
 docker info >/dev/null 2>&1 || fail "Docker daemon is unavailable"
@@ -118,6 +118,12 @@ docker compose version >/dev/null 2>&1 || fail "Docker Compose plugin is unavail
 [[ -d $BACKEND_DIR ]] || fail "backend directory is missing"
 [[ -f $ENV_FILE ]] || fail "backend/.env is missing"
 [[ -f $PRODUCTION_COMPOSE_FILE ]] || fail "backend/docker-compose.prod.yml is missing"
+
+# env_file은 선언된 모든 값을 container에 전달하므로 빈 값이어도 과거 credential 항목 자체를 제거한다.
+if grep -Eq '^[[:space:]]*(export[[:space:]]+)?AWS_(ACCESS_KEY|SECRET_KEY|ACCESS_KEY_ID|SECRET_ACCESS_KEY|SESSION_TOKEN)[[:space:]]*=' \
+  "$ENV_FILE"; then
+  fail "remove AWS credential entries from backend/.env before deployment"
+fi
 
 CURRENT_BRANCH=$(git -C "$REPO_ROOT" branch --show-current)
 [[ $CURRENT_BRANCH == "$EXPECTED_BRANCH" ]] || fail "expected branch $EXPECTED_BRANCH, got $CURRENT_BRANCH"

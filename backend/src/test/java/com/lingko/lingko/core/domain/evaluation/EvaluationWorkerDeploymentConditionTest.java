@@ -4,6 +4,7 @@ import com.lingko.lingko.core.config.EvaluationJobSettings;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobExecutor;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobProcessingService;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobWorker;
+import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobTelemetry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -57,6 +58,11 @@ class EvaluationWorkerDeploymentConditionTest {
         @Bean
         EvaluationJobExecutor executor() {
             return mock(EvaluationJobExecutor.class);
+        }
+
+        @Bean
+        EvaluationJobTelemetry telemetry() {
+            return mock(EvaluationJobTelemetry.class);
         }
     }
 }

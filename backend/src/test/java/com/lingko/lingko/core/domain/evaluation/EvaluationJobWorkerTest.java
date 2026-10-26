@@ -3,6 +3,7 @@ package com.lingko.lingko.core.domain.evaluation;
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobExecutor;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobProcessingService;
+import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobTelemetry;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobWorker;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,29 +27,35 @@ class EvaluationJobWorkerTest {
     private EvaluationJobProcessingService processingService;
     @Mock
     private EvaluationJobExecutor executor;
+    @Mock
+    private EvaluationJobTelemetry telemetry;
 
     @Test
     @DisplayName("claim 가능한 DB 작업이 있으면 공통 실행기로 전달한다")
     void executesClaimedJob() {
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
         when(processingService.claimNext()).thenReturn(Optional.of(job));
-        EvaluationJobWorker worker = new EvaluationJobWorker(processingService, executor);
+        when(executor.execute(job)).thenReturn(EvaluationJobExecutor.ExecutionResult.COMPLETED);
+        EvaluationJobWorker worker = new EvaluationJobWorker(processingService, executor, telemetry);
 
         boolean processed = worker.processNext();
 
         org.assertj.core.api.Assertions.assertThat(processed).isTrue();
         verify(executor).execute(job);
+        verify(telemetry).heartbeat();
+        verify(telemetry).record(org.mockito.ArgumentMatchers.eq(EvaluationJobExecutor.ExecutionResult.COMPLETED), org.mockito.ArgumentMatchers.anyLong());
     }
 
     @Test
     @DisplayName("claim 가능한 DB 작업이 없으면 실행기를 호출하지 않는다")
     void skipsWhenNoJobIsClaimable() {
         when(processingService.claimNext()).thenReturn(Optional.empty());
-        EvaluationJobWorker worker = new EvaluationJobWorker(processingService, executor);
+        EvaluationJobWorker worker = new EvaluationJobWorker(processingService, executor, telemetry);
 
         boolean processed = worker.processNext();
 
         org.assertj.core.api.Assertions.assertThat(processed).isFalse();
         verify(executor, never()).execute(org.mockito.ArgumentMatchers.any());
+        verify(telemetry).heartbeat();
     }
 }

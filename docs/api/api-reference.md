@@ -2,6 +2,12 @@
 
 운영 주소는 `https://lingko-api.duckdns.org`이고 로컬 Backend 주소는 `http://localhost:8080`입니다. Flutter 앱은 별도 override가 없으면 운영 HTTPS 주소를 사용합니다. JSON 응답은 UTF-8을 사용하며 인증 API는 `Authorization: Bearer <access-token>` 헤더를 사용합니다.
 
+## 운영 상태 (인증 불필요)
+
+### `GET /actuator/health`
+
+API와 필수 DB 연결을 확인하는 배포·컨테이너 health 계약입니다. 정상은 `200 {"status":"UP"}`, DB 장애는 `503 {"status":"DOWN"}`이며 component, DB URL, 계정과 예외 상세는 공개하지 않습니다. 그 밖의 Actuator discovery·metrics endpoint는 노출하지 않습니다.
+
 ## 법무 문서 (인증 불필요)
 
 ### `GET /legal/{document}`

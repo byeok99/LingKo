@@ -54,6 +54,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	// 비용 유발 guide job의 요청·실행 지표를 MeterRegistry에 기록한다.
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// 기존 EC2 CloudWatch Agent의 UDP 수집 경로를 재사용해 애플리케이션 AWS 자격 증명을 분리한다.
+	runtimeOnly 'io.micrometer:micrometer-registry-statsd'
 	// Apple identity token의 RS256 서명과 JWK rotation을 검증한다.
 	implementation 'com.nimbusds:nimbus-jose-jwt:10.9.1'
     testImplementation 'com.h2database:h2'
@@ -90,7 +92,7 @@ tasks.register('integrationTest', Test) {
 	systemProperty 'spring.profiles.active', 'integration'
 	useJUnitPlatform()
 	useJUnitPlatform {
-		excludeTags 'external'
+		excludeTags 'external', 's3-external'
 	}
 }
 
@@ -138,9 +140,7 @@ tasks.register('externalIntegrationTest', Test) {
 				'REPLICATE_API_KEY',
 				'REPLICATE_VERSION',
 				'AWS_S3_BUCKET',
-				'AWS_S3_REGION',
-				'AWS_ACCESS_KEY',
-				'AWS_SECRET_KEY'
+				'AWS_S3_REGION'
 		]
 		def missingEnv = requiredEnv.findAll { !System.getenv(it) }
 		if (!missingEnv.isEmpty()) {
@@ -149,6 +149,25 @@ tasks.register('externalIntegrationTest', Test) {
 	}
 	useJUnitPlatform {
 		includeTags 'external'
+	}
+}
+
+tasks.register('s3ExternalIntegrationTest', Test) {
+	description = 'Runs the S3 lifecycle contract with the AWS default credential provider chain.'
+	group = 'verification'
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath = sourceSets.integrationTest.runtimeClasspath
+	shouldRunAfter integrationTest
+	systemProperty 'spring.profiles.active', 'integration'
+	doFirst {
+		def requiredEnv = ['AWS_S3_BUCKET', 'AWS_S3_REGION']
+		def missingEnv = requiredEnv.findAll { !System.getenv(it) }
+		if (!missingEnv.isEmpty()) {
+			throw new GradleException("s3ExternalIntegrationTest requires environment variables: ${missingEnv.join(', ')}")
+		}
+	}
+	useJUnitPlatform {
+		includeTags 's3-external'
 	}
 }
 

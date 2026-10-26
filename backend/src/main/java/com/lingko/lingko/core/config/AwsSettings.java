@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Configuration;
 @Getter @Setter
 public class AwsSettings {
     private S3 s3;
-    private Credentials credentials;
 
     @Getter
     @Setter
@@ -23,12 +22,4 @@ public class AwsSettings {
         private String bucket;
         private String region;
     }
-
-    @Getter
-    @Setter
-    public static class Credentials {
-        private String accessKey;
-        private String secretKey;
-    }
-
 }

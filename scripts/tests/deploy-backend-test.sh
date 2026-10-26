@@ -165,6 +165,21 @@ test_stops_before_replacement_when_awslogs_preflight_fails() {
   cleanup_fixture
 }
 
+test_rejects_long_lived_aws_credentials() {
+  new_fixture
+  printf 'AWS_ACCESS_KEY=legacy-id\nAWS_SECRET_KEY=legacy-secret\n' >>"$FIXTURE/repo/backend/.env"
+  if PATH="$FIXTURE/bin:$PATH" \
+    LINGKO_DEPLOY_LOCK_DIR="$FIXTURE/lock" \
+    LINGKO_DEPLOY_HEALTH_ATTEMPTS=1 \
+    "$FIXTURE/repo/scripts/deploy-backend.sh" "$TARGET_SHA" >/dev/null 2>&1; then
+    fail "long-lived AWS credentials were accepted"
+  fi
+  if grep -F "docker build" "$TEST_LOG" >/dev/null; then
+    fail "image build ran with long-lived AWS credentials"
+  fi
+  cleanup_fixture
+}
+
 test_rolls_back_failed_health_check() {
   new_fixture
   export TEST_FAIL_TAG="$TARGET_SHA"
@@ -201,6 +216,7 @@ test_rejects_invalid_sha
 test_rejects_dirty_checkout
 test_deploys_exact_commit_image
 test_stops_before_replacement_when_awslogs_preflight_fails
+test_rejects_long_lived_aws_credentials
 test_rolls_back_failed_health_check
 test_verifies_rollback_after_replacement_failure
 

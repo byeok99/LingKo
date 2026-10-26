@@ -16,4 +16,5 @@
 - [데이터 모델](data/data-model.md) · [마이그레이션 정책](data/migration-policy.md)
 - [보안·개인정보 설계](security/security-and-privacy.md)
 - [로컬 개발](development/local-development.md) · [테스트 구성](development/testing-and-troubleshooting.md)
+- [운영 모니터링·장애 대응](operations/monitoring-and-incident-response.md)
 - [법무 문서](legal/README.md)

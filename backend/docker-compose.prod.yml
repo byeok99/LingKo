@@ -1,5 +1,15 @@
 services:
   backend:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      MANAGEMENT_STATSD_METRICS_EXPORT_ENABLED: "true"
+      MANAGEMENT_STATSD_METRICS_EXPORT_HOST: host.docker.internal
+      MANAGEMENT_STATSD_METRICS_EXPORT_PORT: "8125"
+      METRICS_ENVIRONMENT: prod
+      METRICS_SERVICE: api
+      # EC2 SDK는 Instance Profile을 IMDSv2로만 조회해 IMDSv1 fallback을 허용하지 않는다.
+      AWS_EC2_METADATA_V1_DISABLED: "true"
     logging:
       # 운영에서만 CloudWatch를 사용해 로컬 개발 로그가 운영 Group으로 섞이지 않게 한다.
       # 고정 stream 이름은 재생성 container와 충돌하므로 생략하고 Docker의 container ID를 사용한다.
@@ -12,6 +22,15 @@ services:
         max-buffer-size: "4m"
 
   evaluation-worker:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      MANAGEMENT_STATSD_METRICS_EXPORT_ENABLED: "true"
+      MANAGEMENT_STATSD_METRICS_EXPORT_HOST: host.docker.internal
+      MANAGEMENT_STATSD_METRICS_EXPORT_PORT: "8125"
+      METRICS_ENVIRONMENT: prod
+      METRICS_SERVICE: worker
+      AWS_EC2_METADATA_V1_DISABLED: "true"
     logging:
       driver: awslogs
       options:
@@ -20,3 +39,7 @@ services:
         awslogs-create-group: "false"
         mode: non-blocking
         max-buffer-size: "4m"
+
+  guide-prewarm:
+    environment:
+      AWS_EC2_METADATA_V1_DISABLED: "true"
