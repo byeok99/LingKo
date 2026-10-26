@@ -4,7 +4,10 @@ import com.lingko.lingko.core.config.EvaluationJobSettings;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobExecutor;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobProcessingService;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobWorker;
-import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobTelemetry;
+import com.lingko.lingko.core.domain.evaluation.repository.EvaluationJobRepository;
+import com.lingko.lingko.infra.observability.MicrometerEvaluationJobTelemetry;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -36,18 +39,19 @@ class EvaluationWorkerDeploymentConditionTest {
     }
 
     @Test
-    @DisplayName("독립 Worker 배포는 DB polling Worker 한 개를 실행한다")
+    @DisplayName("독립 Worker 배포는 실제 telemetry와 DB polling Worker를 함께 실행한다")
     void enablesWorkerInIndependentDeployment() {
         contextRunner
                 .withPropertyValues("evaluation.worker.enabled=true")
-                .run(context ->
-                        assertThat(context).hasSingleBean(EvaluationJobWorker.class)
-                );
+                .run(context -> {
+                    assertThat(context).hasSingleBean(EvaluationJobWorker.class);
+                    assertThat(context).hasSingleBean(MicrometerEvaluationJobTelemetry.class);
+                });
     }
 
     @Configuration(proxyBeanMethods = false)
     @EnableConfigurationProperties(EvaluationJobSettings.class)
-    @Import(EvaluationJobWorker.class)
+    @Import({EvaluationJobWorker.class, MicrometerEvaluationJobTelemetry.class})
     static class TestConfiguration {
 
         @Bean
@@ -61,8 +65,13 @@ class EvaluationWorkerDeploymentConditionTest {
         }
 
         @Bean
-        EvaluationJobTelemetry telemetry() {
-            return mock(EvaluationJobTelemetry.class);
+        EvaluationJobRepository evaluationJobRepository() {
+            return mock(EvaluationJobRepository.class);
+        }
+
+        @Bean
+        MeterRegistry meterRegistry() {
+            return new SimpleMeterRegistry();
         }
     }
 }

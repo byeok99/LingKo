@@ -63,7 +63,7 @@ GitHub Actions는 장기 AWS Access Key를 저장하지 않습니다. `id-token:
 
 배포 role은 대상 instance와 AWS 관리 문서 `AWS-RunShellScript`에 대한 `ssm:SendCommand`, 대상의 Online 여부와 실행 결과를 확인할 최소 조회 권한만 가집니다. 애플리케이션 S3 key나 EC2 instance role을 GitHub에 공유하지 않습니다.
 
-EC2 명령은 원격 `develop`이 workflow의 정확한 commit인지, 서버의 추적 파일이 깨끗한지 확인하고 fast-forward만 허용합니다. 이후 commit SHA로 공용 Backend image를 한 번 빌드해 API와 evaluation worker를 함께 교체합니다. DB indicator를 포함한 `/actuator/health` 응답과 두 container의 실행 상태가 제한 시간 안에 정상이어야 성공합니다.
+EC2 명령은 원격 `develop`이 workflow의 정확한 commit인지, 서버의 추적 파일이 깨끗한지 확인하고 fast-forward만 허용합니다. 이후 commit SHA로 공용 Backend image를 한 번 빌드해 API와 evaluation worker를 함께 교체합니다. DB indicator를 포함한 `/actuator/health` 응답, 두 container의 실행 상태와 `RestartCount=0`을 확인하고 15초 안정화 뒤 같은 계약을 다시 통과해야 성공합니다. 이중 확인은 restart policy가 시작 직후의 crash를 잠시 `Running`으로 보이게 하는 구간을 정상 배포로 오인하지 않기 위한 것입니다.
 
 교체 전 image는 `rollback-<UTC 시각>` tag로 보존합니다. 새 image의 명령 실행 또는 health check가 실패하면 API와 Worker를 직전 image로 되돌리고 workflow를 실패 처리합니다. 이 rollback은 database migration이나 서버 Git checkout을 되돌리지 않으므로, Flyway migration은 항상 이전 애플리케이션과 호환되는 순방향 변경이어야 합니다.
 
@@ -73,7 +73,7 @@ EC2 명령은 원격 `develop`이 workflow의 정확한 commit인지, 서버의 
 ./scripts/tests/deploy-backend-test.sh
 ```
 
-이 테스트는 AWS나 운영 Docker를 호출하지 않고 mock command로 잘못된 SHA·dirty checkout 차단, 정확한 image tag 배포와 health check 실패 rollback을 확인합니다. 실제 OIDC·SSM·운영 네트워크는 첫 production 실행에서 별도로 검증합니다.
+이 테스트는 AWS나 운영 Docker를 호출하지 않고 mock command로 잘못된 SHA·dirty checkout 차단, 정확한 image tag 배포, health check 실패와 container 재시작의 rollback, 안정화 전후 재확인을 검증합니다. 실제 OIDC·SSM·운영 네트워크는 production 실행에서 별도로 검증합니다.
 
 ## CloudWatch 애플리케이션 로그
 

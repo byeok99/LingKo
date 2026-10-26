@@ -66,6 +66,13 @@ case "${1:-} ${2:-}" in
     target=${@: -1}
     if [[ " $* " == *"{{.Image}}"* && $target == "lingko-backend" ]]; then
       echo "sha256:previous"
+    elif [[ " $* " == *"{{.RestartCount}}"* ]]; then
+      deployed_tag=$(cat "$TEST_STATE" 2>/dev/null || true)
+      if [[ $target == "worker-container" && -n ${TEST_RESTART_TAG:-} && $deployed_tag == "$TEST_RESTART_TAG" ]]; then
+        echo "1"
+      else
+        echo "0"
+      fi
     else
       echo "true"
     fi
@@ -105,7 +112,7 @@ new_fixture() {
   printf 'APP_PORT=18080\n' >"$FIXTURE/repo/backend/.env"
   TEST_LOG="$FIXTURE/commands.log"
   TEST_STATE="$FIXTURE/deployed-tag"
-  export TEST_LOG TEST_STATE TEST_SHA="$TARGET_SHA"
+  export TEST_LOG TEST_STATE TEST_SHA="$TARGET_SHA" LINGKO_DEPLOY_STABILITY_SECONDS=0
   write_fake_commands "$FIXTURE/bin"
 }
 
@@ -146,6 +153,8 @@ test_deploys_exact_commit_image() {
   assert_contains "$TEST_LOG" "docker run --rm --entrypoint sh --log-driver awslogs --log-opt awslogs-region=us-east-1 --log-opt awslogs-group=/lingko/prod/api"
   assert_contains "$TEST_LOG" "docker run --rm --entrypoint sh --log-driver awslogs --log-opt awslogs-region=us-east-1 --log-opt awslogs-group=/lingko/prod/worker"
   assert_contains "$TEST_LOG" "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-deps backend evaluation-worker tag=$TARGET_SHA"
+  [[ $(grep -Fc 'docker inspect --format {{.RestartCount}} worker-container' "$TEST_LOG") -ge 2 ]] \
+    || fail "worker stability was not checked twice"
   cleanup_fixture
 }
 
@@ -195,6 +204,21 @@ test_rolls_back_failed_health_check() {
   cleanup_fixture
 }
 
+test_rolls_back_restarted_worker() {
+  new_fixture
+  export TEST_RESTART_TAG="$TARGET_SHA"
+  if PATH="$FIXTURE/bin:$PATH" \
+    LINGKO_DEPLOY_LOCK_DIR="$FIXTURE/lock" \
+    LINGKO_DEPLOY_HEALTH_ATTEMPTS=1 \
+    "$FIXTURE/repo/scripts/deploy-backend.sh" "$TARGET_SHA" >/dev/null 2>&1; then
+    fail "restarted worker reported healthy"
+  fi
+  grep -E "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-deps backend evaluation-worker tag=rollback-[0-9]+" "$TEST_LOG" >/dev/null \
+    || fail "rollback image was not restored after worker restart"
+  unset TEST_RESTART_TAG
+  cleanup_fixture
+}
+
 test_verifies_rollback_after_replacement_failure() {
   new_fixture
   export TEST_UP_FAIL_TAG="$TARGET_SHA"
@@ -218,6 +242,7 @@ test_deploys_exact_commit_image
 test_stops_before_replacement_when_awslogs_preflight_fails
 test_rejects_long_lived_aws_credentials
 test_rolls_back_failed_health_check
+test_rolls_back_restarted_worker
 test_verifies_rollback_after_replacement_failure
 
 echo "PASS: deploy-backend"
