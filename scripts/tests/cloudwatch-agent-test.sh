@@ -40,8 +40,7 @@ assert collected["statsd"] == {
     "service_address": ":8125",
     "metrics_collection_interval": 60,
     "metrics_aggregation_interval": 60,
-    "parse_data_dog_tags": True,
-    "percentiles": [50, 95],
+    "metric_separator": "_",
 }
 
 disk = collected["disk"]
@@ -82,6 +81,10 @@ grep -F 'gpg --batch' "$INSTALLER" >/dev/null \
   || fail "CloudWatch Agent 패키지 서명 검증이 없습니다."
 grep -F 'amazon-cloudwatch-agent-ctl' "$INSTALLER" >/dev/null \
   || fail "CloudWatch Agent 시작 명령이 없습니다."
+grep -F 'config-translator' "$INSTALLER" >/dev/null \
+  || fail "설치된 Agent schema를 사용한 동기 설정 검증이 없습니다."
+grep -F '"status": "running"' "$INSTALLER" >/dev/null \
+  || fail "Agent 자체 상태의 안정화 검증이 없습니다."
 grep -F 'systemctl enable amazon-cloudwatch-agent.service' "$INSTALLER" >/dev/null \
   || fail "재부팅 후 자동 시작 설정이 없습니다."
 
