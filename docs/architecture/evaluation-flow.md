@@ -157,4 +157,5 @@ DB의 음절·유형별 저장 MP4는 현재 매핑 버전(`phonology-v3`)과 �
 | 같은 Idempotency Key의 다른 요청 | 409 `IDEMPOTENCY_CONFLICT` |
 | 평가 기회 소진 | 429 `QUOTA_EXCEEDED` |
 | Worker 최종 실패 | 작업 상태 `FAILED`, `errorCode=EVALUATION_FAILED` |
+| Azure 발음 평가가 `AZURE_RECOGNITION_TIMEOUT_SECONDS`(기본 30초) 안에 응답하지 않음 | 호출을 취소하고 일시 장애로 재시도. 최대 시도 횟수를 넘으면 `FAILED`, `errorCode=EVALUATION_FAILED`, 예약 복구. 외부 호출 지표 outcome은 `timeout` |
 | 업로드 음성이 16-bit mono PCM WAV(48kHz 이하)가 아님 | 재시도 없이 즉시 `FAILED`, `errorCode=INVALID_AUDIO`, 예약 복구 |

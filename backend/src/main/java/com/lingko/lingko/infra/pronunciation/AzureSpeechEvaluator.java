@@ -13,6 +13,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Azure Speech 평가 응답을 LingKo 발음 평가 결과로 변환한다.
@@ -61,7 +65,10 @@ public class AzureSpeechEvaluator implements SpeechEvaluator {
             speechConfig.setOutputFormat(OutputFormat.Detailed);
             try (SpeechRecognizer recognizer = createRecognizer(speechConfig, audioConfig)) {
                 pronConfig.applyTo(recognizer);
-                try (SpeechRecognitionResult result = recognizer.recognizeOnceAsync().get()) {
+                try (SpeechRecognitionResult result = awaitRecognition(
+                        recognizer.recognizeOnceAsync(),
+                        settings.getRecognitionTimeoutSeconds()
+                )) {
                     if (result.getReason() == ResultReason.RecognizedSpeech) {
                         PronunciationAssessmentResult pronResult = PronunciationAssessmentResult.fromResult(result);
                         List<AssessmentResult.WordScore> wordScores = resultParser.parseReliableWordScores(
@@ -88,6 +95,11 @@ public class AzureSpeechEvaluator implements SpeechEvaluator {
                     throw new IllegalStateException("음성 인식에 실패했습니다: " + result.getReason());
                 }
             }
+        } catch (SpeechEvaluationTimeoutException exception) {
+            outcome = "timeout";
+            // 재시도 가능한 외부 지연이므로 stack trace 없이 경고로 남기고 Worker 재시도에 맡긴다.
+            log.warn("Azure 평가 시간 초과: timeoutSeconds={}", settings.getRecognitionTimeoutSeconds());
+            throw exception;
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("발음 평가가 중단되었습니다", exception);
@@ -96,6 +108,27 @@ public class AzureSpeechEvaluator implements SpeechEvaluator {
             throw new IllegalStateException("발음 평가 실패", e);
         } finally {
             telemetry.record("azure", outcome, System.nanoTime() - startedAt);
+        }
+    }
+
+    /**
+     * 인식 결과를 최대 {@code timeoutSeconds}초까지 기다린다.
+     *
+     * <p>timeout 없는 {@code Future.get()}은 공급자 응답이 오지 않으면 Worker 스레드를 영원히 묶는다.
+     * 시간이 지나면 future를 취소하고 {@link SpeechEvaluationTimeoutException}을 던져, 호출자의
+     * try-with-resources가 recognizer와 설정 객체를 닫게 한다.</p>
+     *
+     * @throws SpeechEvaluationTimeoutException 시간 안에 결과가 오지 않음
+     * @throws InterruptedException 대기 중 Worker 스레드가 중단됨
+     * @throws ExecutionException SDK 내부 호출이 실패함
+     */
+    static <T> T awaitRecognition(Future<T> recognition, long timeoutSeconds)
+            throws InterruptedException, ExecutionException {
+        try {
+            return recognition.get(timeoutSeconds, TimeUnit.SECONDS);
+        } catch (TimeoutException exception) {
+            recognition.cancel(true);
+            throw new SpeechEvaluationTimeoutException(timeoutSeconds, exception);
         }
     }
 

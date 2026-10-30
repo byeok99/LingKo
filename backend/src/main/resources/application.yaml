@@ -72,6 +72,8 @@ azure:
   secret-key: ${AZURE_SECRET_KEY:}
   region: ${AZURE_REGION:}
   language: ${AZURE_LANGUAGE:ko-KR}
+  # 평가 Worker는 한 번에 한 작업만 처리하므로 응답 없는 호출이 전체 평가를 멈추지 않게 상한을 둔다(1~120초).
+  recognition-timeout-seconds: ${AZURE_RECOGNITION_TIMEOUT_SECONDS:30}
 
 google:
   client-id: ${GOOGLE_CLIENT_ID:}
