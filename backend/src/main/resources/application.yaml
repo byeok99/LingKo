@@ -22,6 +22,15 @@ server:
   # proxy 없이 직접 공개하는 환경은 none으로 바꿔 header 해석을 끈다.
   forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:native}
 
+# OpenAPI 문서(/v3/api-docs)와 Swagger UI(/swagger-ui.html)는 로컬 개발에서만 쓴다.
+# 운영에 API 구조와 시험 호출 화면이 노출되지 않도록 기본값은 false이며, 로컬 .env에서만 true로 켠다.
+# 이 프로젝트는 Spring profile 대신 환경변수로 환경을 구분하므로 같은 방식을 따른다.
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:false}
+
 management:
   endpoints:
     web:
