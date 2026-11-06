@@ -249,7 +249,8 @@ backend/      Spring Boot API와 평가 Worker (같은 이미지)
   src/test/ · src/integrationTest/
 docs/         제품 · 아키텍처(ADR) · API · 데이터 · 보안 · 운영 · 법무 문서
 scripts/      배포 · CloudWatch · S3 권한 스크립트와 계약 테스트
-.github/      CI/CD workflow
+.github/      CI/CD workflow, Issue·PR 템플릿
+.claude/      Claude Code 프로젝트 스킬 (작업 지침은 CLAUDE.md)
 ```
 
 ## 시작하기
