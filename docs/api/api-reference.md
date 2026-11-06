@@ -575,4 +575,4 @@ X-LingKo-Internal-Token: <service-secret>
 - 필드 제거·이름 변경은 호환성 깨짐으로 취급합니다.
 - 앱과 백엔드 변경을 같은 PR 또는 순서가 보장된 PR로 배포합니다.
 - 인증 여부, 최대 크기, 페이지 범위, 오류 코드를 변경하면 이 문서를 함께 갱신합니다.
-- 운영 전에는 OpenAPI 자동 생성 도입을 권장합니다.
+- 로컬 개발에서는 springdoc이 생성한 OpenAPI 문서와 Swagger UI로 시험 호출할 수 있습니다(`SPRINGDOC_ENABLED=true`, [로컬 개발](../development/local-development.md#swagger-ui)). 운영에는 노출하지 않으며, 계약의 기준은 자동 생성 문서가 아니라 이 문서입니다.
