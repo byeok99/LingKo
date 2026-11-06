@@ -28,7 +28,7 @@ staged 파일을 기준으로 확인한다. 하나라도 빠지면 보완하거�
 - [ ] 기능·API·설정·데이터 모델이 바뀌었으면 관련 활성 문서도 함께 staged 되어 있다.
 - [ ] `docs/private/` 가 있으면 대응하는 `WORK_LOG.md` 가 갱신됐다(Git에는 포함되지 않는다).
 - [ ] 이미 적용된 Flyway migration 파일을 수정하지 않았다.
-- [ ] Secret, token, `.env` 류가 staged 되지 않았다: `git diff --staged | grep -iE "secret|password|token|api[_-]?key"` 결과를 확인한다.
+- [ ] Secret, token, `.env` 류가 staged 되지 않았다: `git diff --staged | grep -iE '^\+.*(secret|password|token|api[_-]?key)\s*[:=]\s*\S'` 결과를 확인한다. 값을 대입하는 줄만 잡으므로, 정책 문장 속 단어는 걸리지 않는다.
 - [ ] 변경 범위에 맞는 최소 검증을 실행했다(CLAUDE.md 「리뷰와 검증」 명령). 실행하지 못했으면 이유를 커밋 보고에 남긴다.
 
 ## 4. 메시지

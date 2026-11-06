@@ -44,6 +44,8 @@ git push
 gh api repos/{owner}/{repo}/pulls/<n>/comments/<comment_id>/replies --method POST -f body="<답글>"
 ```
 
+`<comment_id>` 는 스레드의 루트 코멘트(`in_reply_to_id` 가 null) id를 쓴다. GitHub은 답글에 대한 답글을 지원하지 않아 다른 id는 실패한다.
+
 답글 형식:
 - 반영: `<커밋 해시>에서 수정했습니다. <무엇을 어떻게>`
 - 반론: `<판단>. 근거: <코드·테스트·문서 위치>`
