@@ -28,7 +28,7 @@
 - [ ] API 계약이 바뀌었으면 `docs/api/` 문서와 앱 client를 함께 수정했다 (해당 없음이면 체크)
 - [ ] 설정·환경변수가 바뀌었으면 `.env.example`과 실행 문서를 갱신했다 (해당 없음이면 체크)
 - [ ] 이미 적용된 Flyway migration을 수정하지 않았다
-- [ ] 새 public 선언과 nullable·상태값·fallback 경로에 의도 주석을 달았다
+- [ ] 새 public 선언과 nullable·상태값·fallback 경로에 의도 주석을 달았다 (해당 없음이면 체크)
 - [ ] Secret·token·개인정보가 코드와 본문에 없다
 
 ## Stacked PR 의존 관계

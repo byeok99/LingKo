@@ -1,7 +1,7 @@
 ---
 name: 기능·작업
 about: 새 기능, 개선, 리팩터링, 운영·문서 작업
-title: "feat: "
+title: ""
 labels: enhancement
 ---
 
