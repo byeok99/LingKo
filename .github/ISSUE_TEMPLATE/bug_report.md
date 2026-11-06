@@ -5,7 +5,7 @@ title: "fix: "
 labels: bug
 ---
 
-<!-- 제목: `fix: <lowercase english imperative>`. 우선순위가 정해졌으면 앞에 [P0]~[P2]. -->
+<!-- 제목: `fix: <한국어 요약>` (요약은 명사형). 우선순위가 정해졌으면 앞에 [P0]~[P2]. -->
 <!-- token, Secret, 개인정보, 로그 전문은 넣지 않는다. 안내 주석은 작성 후 지운다. -->
 
 ## 현상

@@ -21,7 +21,7 @@ description: LingKo Pull Request 생성. 브랜치 범위 점검, push, 저장�
 
 ## 3. 제목
 
-`<type>: <lowercase english imperative>`. 커밋이 하나면 그 커밋 제목을 쓴다.
+`<type>: <한국어 요약>`. 커밋 제목과 같은 규칙(`commit` 스킬 「메시지」)이다. 커밋이 하나면 그 커밋 제목을 쓰고, 여러 개면 PR 전체 목적을 한 줄로 요약한다. 예: `docs: README 구체화와 시스템 설계도 추가`
 
 ## 4. 본문
 

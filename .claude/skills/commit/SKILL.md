@@ -1,6 +1,6 @@
 ---
 name: commit
-description: LingKo 커밋 절차. 브랜치 확인, 기능 단위 staging 분리, 주석·문서·WORK_LOG·테스트 점검 후 저장소 커밋 메시지 규칙(type: lowercase english imperative)으로 커밋한다. 사용자가 커밋을 요청할 때 또는 /commit 으로 호출한다.
+description: LingKo 커밋 절차. 브랜치 확인, 기능 단위 staging 분리, 주석·문서·WORK_LOG·테스트 점검 후 저장소 커밋 메시지 규칙(type: 한국어 요약)으로 커밋한다. 사용자가 커밋을 요청할 때 또는 /commit 으로 호출한다.
 ---
 
 # 커밋
@@ -33,10 +33,12 @@ staged 파일을 기준으로 확인한다. 하나라도 빠지면 보완하거�
 
 ## 4. 메시지
 
-- 제목: `<type>: <lowercase english imperative>`, 72자 이내, 마침표 없음.
-  - type: `feat` `fix` `chore` `docs` `refactor` `ci` `ops` `perf` `test`
-  - 예: `fix: fence stale evaluation workers by attempt and skip locked jobs`
-- 본문(선택): 무엇보다 **왜** 바꿨는지를 짧게. 관련 Issue가 있으면 `Refs #<n>`.
+- 제목: `<type>: <한국어 요약>`, 50자 안팎, 마침표 없음.
+  - type은 영어 소문자: `feat` `fix` `chore` `docs` `refactor` `ci` `ops` `perf` `test`
+  - 요약은 한국어로 쓰고 명사형으로 끝낸다(…추가, …수정, …제거). 코드 식별자·파일명·기술 용어는 원문 그대로 쓴다.
+  - 예: `fix: 오래된 평가 worker를 attempt로 차단하고 잠긴 작업 건너뛰기`
+- 본문(선택): 한국어로, 무엇보다 **왜** 바꿨는지를 짧게. 관련 Issue가 있으면 `Refs #<n>`.
+- 2026-11-06 이전 커밋은 영어 제목이다. 과거 커밋을 고치지 않는다.
 - 마지막 줄: 하네스가 지정한 attribution 줄(Co-Authored-By)을 붙인다.
 
 ```bash

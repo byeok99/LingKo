@@ -5,7 +5,7 @@ title: ""
 labels: enhancement
 ---
 
-<!-- 제목: `<type>: <lowercase english imperative>`. type: feat refactor perf chore docs ci ops. -->
+<!-- 제목: `<type>: <한국어 요약>` (요약은 명사형). type: feat refactor perf chore docs ci ops. -->
 <!-- 문서만 바꾸는 작업이면 라벨을 documentation으로 바꾼다. 안내 주석은 작성 후 지운다. -->
 
 ## 배경
