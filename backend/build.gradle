@@ -68,6 +68,9 @@ dependencies {
 	// 문서에 표가 많아 GFM table 확장을 함께 쓴다.
 	implementation 'org.commonmark:commonmark:0.24.0'
 	implementation 'org.commonmark:commonmark-ext-gfm-tables:0.24.0'
+	// 로컬 개발용 OpenAPI 문서·Swagger UI. 노출 여부는 SPRINGDOC_ENABLED(기본 false)로만 켠다.
+	// 2.8.x가 Spring Boot 3.4 지원 라인이다.
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
 }
 
 tasks.named('test') {

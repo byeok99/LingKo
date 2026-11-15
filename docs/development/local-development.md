@@ -18,6 +18,19 @@ Compose 포트와 DB 계정 설정:
 - Backend는 `APP_BIND_ADDRESS`(기본 `0.0.0.0`)에 공개합니다. TLS reverse proxy가 같은 host에 있으면 `127.0.0.1`로 제한해 평문 8080 직접 접근을 막습니다.
 - `DB_ROOT_PASSWORD`를 앱 계정 `DB_PASSWORD`와 다르게 설정하는 것을 권장합니다. 비우면 `DB_PASSWORD`를 사용하며 data volume 최초 초기화 때만 적용됩니다. 이미 초기화된 volume에 새 값만 넣으면 healthcheck가 실패하므로 먼저 MySQL에서 root 비밀번호를 바꾼 뒤 설정합니다.
 
+### Swagger UI
+
+로컬에서 API를 직접 호출해 볼 수 있도록 springdoc 기반 OpenAPI 문서를 제공합니다. 기본값은 꺼져 있으며 `SPRINGDOC_ENABLED=true`일 때만 열립니다. 운영 환경에서는 켜지 않습니다.
+
+```bash
+SPRINGDOC_ENABLED=true ./gradlew bootRun   # Compose는 backend/.env에 SPRINGDOC_ENABLED=true
+```
+
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- 인증이 필요한 API는 UI의 **Authorize**에 Access 토큰만 입력합니다. `Bearer ` 접두어는 자동으로 붙습니다.
+- 자동 생성 문서는 시험 호출용입니다. 계약의 기준은 [API 명세](../api/api-reference.md)입니다.
+
 가이드 영상 cache 범위는 외부 호출 없이 확인할 수 있습니다.
 
 ```bash
