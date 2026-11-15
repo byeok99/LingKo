@@ -1,0 +1,2 @@
+# 빈 Issue를 막아 모든 Issue가 bug_report 또는 task 템플릿을 거치게 한다.
+blank_issues_enabled: false
