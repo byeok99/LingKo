@@ -41,17 +41,22 @@ class ReviewAccessGuardTest {
     @Test
     @DisplayName("활성화된 심사용 접근은 정확한 코드에 지정 사용자 ID를 반환한다")
     void authorizesConfiguredReviewAccount() {
+        // When & Then
         assertThat(guard.authorizeAndConsume(VALID_CODE, "203.0.113.10")).isEqualTo(73L);
     }
 
     @Test
     @DisplayName("비활성화 상태와 잘못된 코드는 같은 인증 실패로 거부한다")
     void rejectsDisabledOrInvalidCode() {
+        // When & Then: 잘못된 코드
         assertThatThrownBy(() -> guard.authorizeAndConsume("wrong-code-with-enough-length", "203.0.113.10"))
                 .isInstanceOf(AuthException.class)
                 .hasMessage("Review access denied");
 
+        // Given: 비활성화
         settings.setEnabled(false);
+
+        // When & Then
         assertThatThrownBy(() -> guard.authorizeAndConsume(VALID_CODE, "203.0.113.11"))
                 .isInstanceOf(AuthException.class)
                 .hasMessage("Review access denied");
@@ -60,32 +65,42 @@ class ReviewAccessGuardTest {
     @Test
     @DisplayName("심사용 접근 설정은 비활성화일 때만 빈 Secret을 허용한다")
     void validatesRequiredSettingsWhenEnabled() {
+        // Given: 비활성화 기본값
         ReviewAccessSettings disabled = new ReviewAccessSettings();
+        // Then
         assertThat(disabled.isSecureWhenEnabled()).isTrue();
 
+        // When: Secret 없이 활성화
         disabled.setEnabled(true);
+        // Then
         assertThat(disabled.isSecureWhenEnabled()).isFalse();
 
+        // When: 필수 Secret을 채운다
         disabled.setCodeSha256(sha256HexUnchecked(VALID_CODE));
         disabled.setUserId(73L);
+        // Then
         assertThat(disabled.isSecureWhenEnabled()).isTrue();
     }
 
     @Test
     @DisplayName("같은 원격 주소의 심사용 로그인 시도는 설정된 시간 창에서 제한한다")
     void rateLimitsAttemptsPerRemoteAddress() {
+        // Given: 허용 횟수(2회)를 모두 실패로 소진한다
         assertThatThrownBy(() -> guard.authorizeAndConsume("first-wrong-code-with-enough-length", "203.0.113.10"))
                 .isInstanceOf(AuthException.class);
         assertThatThrownBy(() -> guard.authorizeAndConsume("second-wrong-code-with-enough-length", "203.0.113.10"))
                 .isInstanceOf(AuthException.class);
 
+        // When & Then: 시간 창 안에서는 정확한 코드도 제한한다
         assertThatThrownBy(() -> guard.authorizeAndConsume(VALID_CODE, "203.0.113.10"))
                 .isInstanceOfSatisfying(
                         ReviewAccessRateLimitExceededException.class,
                         exception -> assertThat(exception.retryAfterSeconds()).isEqualTo(60)
                 );
 
+        // When: 시간 창이 지난다
         clock.advanceSeconds(60);
+        // Then
         assertThat(guard.authorizeAndConsume(VALID_CODE, "203.0.113.10")).isEqualTo(73L);
     }
 

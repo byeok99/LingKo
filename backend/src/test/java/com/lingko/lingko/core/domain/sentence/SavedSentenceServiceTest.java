@@ -63,9 +63,11 @@ class SavedSentenceServiceTest {
     @Test
     @DisplayName("저장 토글은 서버의 실제 상태를 뒤집는다")
     void togglesFromServerState() {
+        // Given
         User user = persistUser("google-saved-1");
         Long sentenceId = persistSentence("내일 날씨가 어때요");
 
+        // When & Then
         assertThat(savedSentenceService.toggle(user.getUserIdx(), sentenceId).saved()).isTrue();
         assertThat(savedSentenceService.toggle(user.getUserIdx(), sentenceId).saved()).isFalse();
         assertThat(savedSentenceService.toggle(user.getUserIdx(), sentenceId).saved()).isTrue();
@@ -74,6 +76,7 @@ class SavedSentenceServiceTest {
     @Test
     @DisplayName("저장 목록은 최근 저장한 문장부터 반환하고 개수가 목록 길이와 일치한다")
     void listsRecentFirstWithMatchingCount() {
+        // Given
         User user = persistUser("google-saved-2");
         Long first = persistSentence("첫 문장이에요");
         Long second = persistSentence("두 번째 문장이에요");
@@ -82,8 +85,10 @@ class SavedSentenceServiceTest {
         savedSentenceService.toggle(user.getUserIdx(), second);
         entityManager.flush();
 
+        // When
         var response = savedSentenceService.findSaved(user.getUserIdx());
 
+        // Then
         // 화면 머리말의 개수가 목록과 어긋나면 사용자가 사라진 항목을 찾게 된다.
         assertThat(response.totalCount()).isEqualTo(response.items().size());
         assertThat(response.items()).hasSize(2);
@@ -93,8 +98,10 @@ class SavedSentenceServiceTest {
     @Test
     @DisplayName("존재하지 않거나 비활성인 문장은 저장할 수 없다")
     void rejectsUnknownSentence() {
+        // Given
         User user = persistUser("google-saved-3");
 
+        // When & Then
         assertThatThrownBy(() -> savedSentenceService.toggle(user.getUserIdx(), 9999L))
                 .isInstanceOf(SentenceNotFoundException.class);
     }
@@ -102,13 +109,16 @@ class SavedSentenceServiceTest {
     @Test
     @DisplayName("다른 사용자의 저장 목록은 보이지 않는다")
     void isolatesByUser() {
+        // Given
         User owner = persistUser("google-saved-4");
         User other = persistUser("google-saved-5");
         Long sentenceId = persistSentence("공유되지 않아요");
 
+        // When
         savedSentenceService.toggle(owner.getUserIdx(), sentenceId);
         entityManager.flush();
 
+        // Then
         assertThat(savedSentenceService.findSaved(other.getUserIdx()).items()).isEmpty();
         assertThat(savedSentenceService.findSavedSentenceIds(other.getUserIdx())).isEmpty();
     }

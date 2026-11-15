@@ -34,6 +34,7 @@ class EvaluationControllerPrepareTest {
     @Test
     @DisplayName("POST /api/pronunciation/prepare는 준비된 문장을 반환한다")
     void prepareCustomSentence() throws Exception {
+        // Given
         PronunciationPrepareResponse response = PronunciationPrepareResponse.builder()
                 .sentence(PronunciationPrepareResponse.SentenceResponse.builder()
                         .source("CUSTOM")
@@ -49,6 +50,7 @@ class EvaluationControllerPrepareTest {
                 .build();
         when(evaluationService.prepareCustomSentence("한국어를 배우고 있어요.")).thenReturn(response);
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/prepare")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"source\":\"CUSTOM\",\"text\":\"한국어를 배우고 있어요.\"}"))
@@ -63,6 +65,7 @@ class EvaluationControllerPrepareTest {
     @Test
     @DisplayName("CUSTOM prepare text가 비어 있으면 기존 validation 에러 포맷을 반환한다")
     void prepareCustomSentenceValidatesBlankText() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/prepare")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"source\":\"CUSTOM\",\"text\":\"   \"}"))
@@ -74,6 +77,7 @@ class EvaluationControllerPrepareTest {
     @Test
     @DisplayName("Phase 3 prepare는 RECOMMENDED 요청을 지원하지 않고 400을 반환한다")
     void prepareRecommendedSentenceIsNotSupportedInPhase3() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/prepare")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"source\":\"RECOMMENDED\",\"sentenceId\":1}"))
@@ -85,8 +89,10 @@ class EvaluationControllerPrepareTest {
     @Test
     @DisplayName("Phase 3 CUSTOM prepare text가 100자를 넘으면 validation 400을 반환한다")
     void prepareCustomSentenceValidatesLongTextAsBadRequest() throws Exception {
+        // Given
         String longText = "가".repeat(101);
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/prepare")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"source\":\"CUSTOM\",\"text\":\"" + longText + "\"}"))
@@ -98,6 +104,7 @@ class EvaluationControllerPrepareTest {
     @Test
     @DisplayName("convert text는 prepare와 같은 100자까지 허용한다")
     void convertAcceptsTextUpToPrepareLimit() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/convert")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"" + "가".repeat(100) + "\"}"))
@@ -107,8 +114,10 @@ class EvaluationControllerPrepareTest {
     @Test
     @DisplayName("convert text가 100자를 넘으면 공통 validation 에러를 반환한다")
     void convertValidatesLongTextAsBadRequest() throws Exception {
+        // Given
         String longText = "가".repeat(101);
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/convert")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"" + longText + "\"}"))
@@ -121,6 +130,7 @@ class EvaluationControllerPrepareTest {
     @Test
     @DisplayName("malformed JSON은 공통 invalid request 에러를 반환한다")
     void malformedJsonReturnsInvalidRequest() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/prepare")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"source\":\"CUSTOM\",\"text\":\"맛있겠다\""))

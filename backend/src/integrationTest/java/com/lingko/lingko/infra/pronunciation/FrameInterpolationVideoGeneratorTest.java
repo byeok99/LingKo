@@ -27,6 +27,7 @@ class FrameInterpolationVideoGeneratorTest {
     @Test
     @DisplayName("SyllableMapping 로드 확인")
     void mapping_load_test() {
+        // When & Then
         assertThat(syllableMappingUtil.getImageFrames("ㅂ", VideoType.MOUTH)).isNotEmpty();
         assertThat(syllableMappingUtil.getImageFrames("ㅂ", VideoType.TONGUE)).isNotEmpty();
         assertThat(syllableMappingUtil.getImageFrames("ㄱ", VideoType.MOUTH)).isEmpty();
@@ -36,16 +37,18 @@ class FrameInterpolationVideoGeneratorTest {
     @Test
     @DisplayName("이미지 URL 생성")
     void image_url_test() {
-        // ㅂ mouth
+        // When: ㅂ mouth
         String url = syllableMappingUtil.getImageFrames("ㅂ", VideoType.MOUTH).getFirst();
 
+        // Then
         System.out.println("ㅂ mouth URL: " + url);
         assertThat(url).contains("guides/mouth/");
         assertThat(url).contains("bilabial-consonants.png");
 
-        // ㄱ mouth (없음)
+        // When: ㄱ mouth (없음)
         List<String> gMouth = syllableMappingUtil.getImageFrames("ㄱ", VideoType.MOUTH);
 
+        // Then
         System.out.println("ㄱ mouth URL: " + gMouth);
         assertThat(gMouth).isEmpty();
     }
@@ -53,9 +56,10 @@ class FrameInterpolationVideoGeneratorTest {
     @Test
     @DisplayName("프레임 쌍 생성 - 가 (ㄱ+ㅏ)")
     void frame_pairs_ga_test() {
-        // 가 = ㄱ + ㅏ (tongue)
+        // When: 가 = ㄱ + ㅏ (tongue)
         List<List<String>> framePairs = syllableMappingUtil.createFramePairs("가", VideoType.TONGUE);
 
+        // Then
         System.out.println("=== 가 (tongue) ===");
         System.out.println("프레임 쌍 수: " + framePairs.size());
         framePairs.forEach(pair -> {
@@ -69,10 +73,11 @@ class FrameInterpolationVideoGeneratorTest {
     @Test
     @DisplayName("프레임 쌍 생성 - 가 (mouth, ㄱ 없음)")
     void frame_pairs_ga_mouth_test() {
-        // 가 = ㄱ + ㅏ (mouth)
+        // When: 가 = ㄱ + ㅏ (mouth)
         // ㄱ mouth 없음 → ㄱ 구간에서 ㅏ 자세 유지
         List<List<String>> framePairs = syllableMappingUtil.createFramePairs("가", VideoType.MOUTH);
 
+        // Then
         System.out.println("=== 가 (mouth) ===");
         System.out.println("프레임 쌍: " + framePairs);
 
@@ -85,14 +90,16 @@ class FrameInterpolationVideoGeneratorTest {
     @Tag("external")
     @DisplayName("영상 생성 - 바 (ㅂ+ㅏ)")
     void video_ba_test() {
-        // 바 = ㅂ + ㅏ
+        // Given: 바 = ㅂ + ㅏ
         List<List<String>> framePairs = syllableMappingUtil.createFramePairs("바", VideoType.MOUTH);
 
         System.out.println("\n=== 바 (mouth) ===");
         System.out.println("프레임 쌍 수: " + framePairs.size());
 
+        // When
         String s3Url = videoGenerator.generate(framePairs, "바", VideoType.MOUTH);
 
+        // Then
         System.out.println("S3 URL: " + s3Url);
         assertThat(s3Url).contains("videos/mouth");
         assertThat(s3Url).endsWith(".mp4");
@@ -102,14 +109,16 @@ class FrameInterpolationVideoGeneratorTest {
     @Tag("external")
     @DisplayName("영상 생성 - 각 (ㄱ+ㅏ+ㄱ, 병합)")
     void video_gak_test() {
-        // 각 = ㄱ + ㅏ + ㄱ
+        // Given: 각 = ㄱ + ㅏ + ㄱ
         List<List<String>> framePairs = syllableMappingUtil.createFramePairs("각", VideoType.TONGUE);
 
         System.out.println("\n=== 각 (tongue) ===");
         System.out.println("프레임 쌍 수: " + framePairs.size());
 
+        // When
         String s3Url = videoGenerator.generate(framePairs, "각", VideoType.TONGUE);
 
+        // Then
         System.out.println("S3 URL: " + s3Url);
         assertThat(s3Url).contains("videos/tongue");
         assertThat(framePairs).hasSize(2);  // 병합됨
@@ -119,13 +128,16 @@ class FrameInterpolationVideoGeneratorTest {
     @Tag("external")
     @DisplayName("정적 이미지 - 아")
     void static_image_b_test() {
+        // Given
         List<List<String>> framePairs = syllableMappingUtil.createFramePairs("아", VideoType.MOUTH);
 
         System.out.println("\n=== 아 (mouth) ===");
         System.out.println("프레임 쌍: " + framePairs);
 
+        // When
         String s3Url = videoGenerator.generate(framePairs, "아", VideoType.MOUTH);
 
+        // Then
         System.out.println("S3 URL: " + s3Url);
         assertThat(s3Url).contains("images/mouth");  // 정적 이미지
     }
@@ -137,7 +149,7 @@ class FrameInterpolationVideoGeneratorTest {
         // 밥 = ㅂ + ㅏ + ㅂ
         System.out.println("\n=== 밥 (mouth) 전체 플로우 ===");
 
-        // 1. 프레임 쌍 생성
+        // Given: 1. 프레임 쌍 생성
         List<List<String>> framePairs = syllableMappingUtil.createFramePairs("밥", VideoType.MOUTH);
 
         System.out.println("프레임 쌍 수: " + framePairs.size());
@@ -147,10 +159,10 @@ class FrameInterpolationVideoGeneratorTest {
             System.out.println("  " + file1 + " → " + file2);
         });
 
-        // 2. 영상 생성
+        // When: 2. 영상 생성
         String s3Url = videoGenerator.generate(framePairs, "밥", VideoType.MOUTH);
 
-        // 3. 검증
+        // Then: 3. 검증
         System.out.println("\n생성된 S3 URL: " + s3Url);
         assertThat(s3Url).isNotNull();
         assertThat(s3Url).contains("videos/mouth");
@@ -163,7 +175,7 @@ class FrameInterpolationVideoGeneratorTest {
     @Tag("external")
     @DisplayName("복잡한 음절 - 강 (ㄱ+ㅏ+ㅇ)")
     void complex_syllable_gang_test() {
-        // 강 = ㄱ + ㅏ + ㅇ
+        // Given: 강 = ㄱ + ㅏ + ㅇ
         System.out.println("\n=== 강 (tongue) ===");
 
         List<List<String>> framePairs = syllableMappingUtil.createFramePairs("강", VideoType.TONGUE);
@@ -176,8 +188,10 @@ class FrameInterpolationVideoGeneratorTest {
             System.out.println("  " + file1 + " → " + file2);
         });
 
+        // When
         String s3Url = videoGenerator.generate(framePairs, "강", VideoType.TONGUE);
 
+        // Then
         System.out.println("S3 URL: " + s3Url);
         assertThat(s3Url).isNotNull();
         assertThat(framePairs).hasSize(2);  // ㄱ→ㅏ, ㅏ→ㅇ

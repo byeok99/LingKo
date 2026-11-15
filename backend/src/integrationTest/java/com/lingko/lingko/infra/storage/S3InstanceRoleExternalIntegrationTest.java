@@ -25,6 +25,7 @@ class S3InstanceRoleExternalIntegrationTest {
 
     @Test
     void completesAudioLifecycleWithDefaultCredentialChain() throws Exception {
+        // Given
         AwsSettings settings = new AwsSettings();
         AwsSettings.S3 s3 = new AwsSettings.S3();
         s3.setBucket(System.getenv("AWS_S3_BUCKET"));
@@ -46,9 +47,12 @@ class S3InstanceRoleExternalIntegrationTest {
                     .PUT(HttpRequest.BodyPublishers.ofByteArray(wav))
                     .build();
 
+            // When & Then: presigned PUT 업로드
             HttpResponse<Void> response = HttpClient.newHttpClient()
                     .send(upload, HttpResponse.BodyHandlers.discarding());
             assertThat(response.statusCode()).isBetween(200, 299);
+
+            // When & Then: Worker 검증·다운로드
             storage.validateUploaded(userId, ticket.objectKey());
             var downloaded = storage.download(ticket.objectKey());
             try {
@@ -56,6 +60,8 @@ class S3InstanceRoleExternalIntegrationTest {
             } finally {
                 storage.deleteLocal(downloaded);
             }
+
+            // When & Then: 탈퇴 삭제
             assertThat(storage.deleteAllForUser(userId)).isGreaterThanOrEqualTo(1);
         }
     }

@@ -31,6 +31,7 @@ class FrameInterpolationVideoGeneratorCacheTest {
     @Test
     @DisplayName("새 전이 clip은 원본으로 cache하고 최종 영상만 한 번 호환 보정한다")
     void normalizesOnlyTheFinalVideoWhenGeneratingANewSegment() throws Exception {
+        // Given
         ReplicateApiClient replicateApiClient = mock(ReplicateApiClient.class);
         VideoMerger videoMerger = mock(VideoMerger.class);
         S3Uploader s3Uploader = mock(S3Uploader.class);
@@ -56,8 +57,10 @@ class FrameInterpolationVideoGeneratorCacheTest {
         when(s3Uploader.upload(anyString(), startsWith("videos/tongue/")))
                 .thenReturn("https://bucket/videos/tongue/final.mp4");
 
+        // When
         generator.generate(pairs, "가", VideoType.TONGUE);
 
+        // Then
         verify(normalizer, times(1)).normalize(any());
         verify(s3Uploader).upload(anyString(), startsWith("guide-segments/tongue/"));
         verify(s3Uploader).upload(anyString(), startsWith("videos/tongue/"));
@@ -67,6 +70,7 @@ class FrameInterpolationVideoGeneratorCacheTest {
     @Test
     @DisplayName("동일한 김 프레임 영상이 있으면 외부 보간을 다시 호출하지 않는다")
     void reusesCachedKimVideo() {
+        // Given
         ReplicateApiClient replicateApiClient = mock(ReplicateApiClient.class);
         VideoMerger videoMerger = mock(VideoMerger.class);
         S3Uploader s3Uploader = mock(S3Uploader.class);
@@ -85,8 +89,10 @@ class FrameInterpolationVideoGeneratorCacheTest {
         when(s3Uploader.findPublicUrl(startsWith("videos/tongue/tongue_phonology-v3_")))
                 .thenReturn(Optional.of("https://bucket/videos/tongue/cached.mp4"));
 
+        // When
         String result = generator.generate(pairs, "김", VideoType.TONGUE);
 
+        // Then
         assertThat(result).isEqualTo("https://bucket/videos/tongue/cached.mp4");
         verifyNoInteractions(replicateApiClient, videoMerger, urlValidator);
     }
@@ -94,6 +100,7 @@ class FrameInterpolationVideoGeneratorCacheTest {
     @Test
     @DisplayName("음절이 달라도 프레임 시퀀스가 같으면 같은 S3 영상을 조회한다")
     void sharesCachedVideoAcrossSyllablesWithTheSameFrames() {
+        // Given
         ReplicateApiClient replicateApiClient = mock(ReplicateApiClient.class);
         VideoMerger videoMerger = mock(VideoMerger.class);
         S3Uploader s3Uploader = mock(S3Uploader.class);
@@ -111,9 +118,11 @@ class FrameInterpolationVideoGeneratorCacheTest {
         when(s3Uploader.findPublicUrl(anyString()))
                 .thenReturn(Optional.of("https://bucket/videos/tongue/shared.mp4"));
 
+        // When
         generator.generate(pairs, "가", VideoType.TONGUE);
         generator.generate(pairs, "까", VideoType.TONGUE);
 
+        // Then
         var keyCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
         verify(s3Uploader, times(2)).findPublicUrl(keyCaptor.capture());
         assertThat(keyCaptor.getAllValues()).containsOnly(keyCaptor.getAllValues().get(0));
@@ -123,6 +132,7 @@ class FrameInterpolationVideoGeneratorCacheTest {
     @Test
     @DisplayName("완성 영상 cache miss여도 기존 전이 clip이 있으면 Replicate를 호출하지 않는다")
     void reusesCachedTransitionSegment() throws Exception {
+        // Given
         ReplicateApiClient replicateApiClient = mock(ReplicateApiClient.class);
         VideoMerger videoMerger = mock(VideoMerger.class);
         S3Uploader s3Uploader = mock(S3Uploader.class);
@@ -149,8 +159,10 @@ class FrameInterpolationVideoGeneratorCacheTest {
         when(s3Uploader.upload(anyString(), startsWith("videos/tongue/")))
                 .thenReturn("https://bucket/videos/tongue/final.mp4");
 
+        // When
         String result = generator.generate(pairs, "가", VideoType.TONGUE);
 
+        // Then
         assertThat(result).isEqualTo("https://bucket/videos/tongue/final.mp4");
         verify(replicateApiClient, never()).interpolate(anyString(), anyString());
         verify(s3Uploader, never()).upload(anyString(), startsWith("guide-segments/"));

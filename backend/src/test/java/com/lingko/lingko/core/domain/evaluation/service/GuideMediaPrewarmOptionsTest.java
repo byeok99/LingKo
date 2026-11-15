@@ -11,8 +11,10 @@ class GuideMediaPrewarmOptionsTest {
 
     @Test
     void defaultsToDryRunAndAllTypes() {
+        // When
         var options = GuideMediaPrewarmOptions.fromArgs(new String[0]);
 
+        // Then
         assertThat(options.dryRun()).isTrue();
         assertThat(options.type()).isNull();
         assertThat(options.offset()).isZero();
@@ -22,6 +24,7 @@ class GuideMediaPrewarmOptionsTest {
 
     @Test
     void parsesExplicitPaidExecutionBounds() {
+        // When
         var options = GuideMediaPrewarmOptions.fromArgs(new String[]{
                 "--prewarm-dry-run=false",
                 "--prewarm-type=tongue",
@@ -30,6 +33,7 @@ class GuideMediaPrewarmOptionsTest {
                 "--prewarm-continue-on-error=false"
         });
 
+        // Then
         assertThat(options.dryRun()).isFalse();
         assertThat(options.type()).isEqualTo(VideoType.TONGUE);
         assertThat(options.offset()).isEqualTo(10);
@@ -39,6 +43,7 @@ class GuideMediaPrewarmOptionsTest {
 
     @Test
     void rejectsNonPositiveLimit() {
+        // When & Then
         assertThatThrownBy(() -> GuideMediaPrewarmOptions.fromArgs(
                 new String[]{"--prewarm-limit=0"}
         )).isInstanceOf(IllegalArgumentException.class);
@@ -46,6 +51,7 @@ class GuideMediaPrewarmOptionsTest {
 
     @Test
     void rejectsInvalidBooleanInsteadOfAccidentallyEnablingPaidExecution() {
+        // When & Then
         assertThatThrownBy(() -> GuideMediaPrewarmOptions.fromArgs(
                 new String[]{"--prewarm-dry-run=flase"}
         )).isInstanceOf(IllegalArgumentException.class)

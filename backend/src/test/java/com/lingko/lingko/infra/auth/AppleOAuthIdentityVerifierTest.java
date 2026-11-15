@@ -63,8 +63,10 @@ class AppleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("유효한 Apple token은 nonce와 검증된 이메일을 포함한 신원으로 변환한다")
     void verifiesValidAppleIdentityToken() throws Exception {
+        // When
         OAuthIdentity identity = verifier.verify(token(builder()), RAW_NONCE);
 
+        // Then
         assertThat(identity.socialId()).isEqualTo("apple-sub-123");
         assertThat(identity.email()).isEqualTo("relay@privaterelay.appleid.com");
         assertThat(identity.name()).isNull();
@@ -74,6 +76,7 @@ class AppleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("다른 요청의 raw nonce로 Apple token을 재사용할 수 없다")
     void rejectsNonceMismatch() throws Exception {
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(
                 token(builder()),
                 "different-nonce-012345678901234567890"
@@ -83,6 +86,7 @@ class AppleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("다른 앱 audience로 발급된 Apple token을 거부한다")
     void rejectsWrongAudience() throws Exception {
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(
                 token(builder().audience("com.example.other")),
                 RAW_NONCE
@@ -92,6 +96,7 @@ class AppleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("Apple 이외 issuer로 발급된 token을 거부한다")
     void rejectsWrongIssuer() throws Exception {
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(
                 token(builder().issuer("https://example.com")),
                 RAW_NONCE
@@ -101,11 +106,13 @@ class AppleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("Apple 공개 key와 다른 key로 서명된 token을 거부한다")
     void rejectsUnknownSigningKey() throws Exception {
+        // Given
         RSAKey originalKey = signingKey;
         signingKey = new RSAKeyGenerator(2048).keyID("attacker-key").generate();
         String forgedToken = token(builder());
         signingKey = originalKey;
 
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(forgedToken, RAW_NONCE))
                 .isInstanceOf(AuthException.class);
     }
@@ -113,6 +120,7 @@ class AppleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("만료된 Apple token을 거부한다")
     void rejectsExpiredToken() throws Exception {
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(
                 token(builder().expirationTime(Date.from(NOW.minusSeconds(1)))),
                 RAW_NONCE
@@ -122,6 +130,7 @@ class AppleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("검증되지 않은 Apple 이메일 claim을 계정에 저장하지 않고 로그인을 거부한다")
     void rejectsUnverifiedEmail() throws Exception {
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(
                 token(builder().claim("email_verified", false)),
                 RAW_NONCE

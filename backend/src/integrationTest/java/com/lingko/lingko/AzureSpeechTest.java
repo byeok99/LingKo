@@ -36,14 +36,18 @@ public class AzureSpeechTest {
     @Test
     @DisplayName("Azure 발음 평가 기능 테스트")
     void testWithInterface() {
+        // When
         String filePath = "src/test/resources/speech_1766933005782.wav";
         String referenceText = "오늘은 좋은 기분으로 하루를 시작했다.";
 
+        // Then
         assertThat(azureSettings.getSecretKey()).isNotBlank();
         assertThat(azureSettings.getRegion()).isNotBlank();
 
+        // When
         AssessmentResult result = speechEvaluator.evaluate(filePath, referenceText);
 
+        // Then
         assertThat(result.getAccuracyScore()).isNotNull();
     }
 

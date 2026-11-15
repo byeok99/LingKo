@@ -23,11 +23,14 @@ class GoogleAdMobPublicKeyProviderTest {
     @DisplayName("Spring은 운영용 생성자를 선택해 AdMob 공개키 provider bean을 생성한다")
     void createsProviderThroughSpringConstructorInjection() {
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            // Given
             context.registerBean(WebClient.Builder.class, WebClient::builder);
             context.register(GoogleAdMobPublicKeyProvider.class);
 
+            // When
             context.refresh();
 
+            // Then
             assertThat(context.getBean(GoogleAdMobPublicKeyProvider.class)).isNotNull();
         }
     }
@@ -35,6 +38,7 @@ class GoogleAdMobPublicKeyProviderTest {
     @Test
     @DisplayName("fresh cache의 unknown key_id는 Google key server를 반복 호출하지 않는다")
     void cachesUnknownKeyMissesUntilRefresh() throws Exception {
+        // Given
         byte[] encodedKey = KeyPairGenerator.getInstance("EC").generateKeyPair()
                 .getPublic()
                 .getEncoded();
@@ -56,6 +60,7 @@ class GoogleAdMobPublicKeyProviderTest {
                 Clock.fixed(Instant.parse("2026-08-12T00:00:00Z"), ZoneOffset.UTC)
         );
 
+        // When & Then
         assertThat(provider.getKey(1234)).isNotNull();
         assertThat(provider.getKey(9999)).isNull();
         assertThat(provider.getKey(9999)).isNull();

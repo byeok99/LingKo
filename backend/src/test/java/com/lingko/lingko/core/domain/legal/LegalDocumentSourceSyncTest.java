@@ -30,6 +30,7 @@ class LegalDocumentSourceSyncTest {
     void 리소스_사본은_docs_legal_원본과_같아야_한다() throws IOException {
         for (LegalDocument document : LegalDocument.values()) {
             for (LegalLanguage language : LegalLanguage.values()) {
+                // Given
                 String resourcePath = document.resourcePath(language);
                 String fileName = resourcePath.substring(resourcePath.lastIndexOf('/') + 1);
                 Path source = SOURCE_DIRECTORY.resolve(fileName);
@@ -38,9 +39,11 @@ class LegalDocumentSourceSyncTest {
                         .as("원본 문서가 있어야 한다: %s", source)
                         .exists();
 
+                // When
                 String expected = Files.readString(source, StandardCharsets.UTF_8);
                 String actual = readResource(resourcePath);
 
+                // Then
                 assertThat(actual)
                         .as(
                                 "%s가 원본과 다르다. docs/legal의 문서를 고쳤다면 "

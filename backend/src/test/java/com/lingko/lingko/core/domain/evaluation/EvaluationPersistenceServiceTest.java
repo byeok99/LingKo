@@ -63,6 +63,7 @@ class EvaluationPersistenceServiceTest {
     @Test
     @DisplayName("평가 결과 저장 service는 log와 글자별 결과를 cascade 저장한다")
     void savesEvaluationResultWithCharacterDetails() {
+        // Given
         User user = persistUser();
         syllableRepository.save(Syllable.builder()
                 .syllableChar("마")
@@ -70,6 +71,7 @@ class EvaluationPersistenceServiceTest {
                 .tongueUrl("https://example.com/tongue/ma.png")
                 .build());
 
+        // When
         EvaluationLog saved = persistenceService.saveResult(
                 EvaluationPersistenceService.SaveEvaluationResultCommand.builder()
                         .user(user)
@@ -87,6 +89,7 @@ class EvaluationPersistenceServiceTest {
 
         entityManager.clear();
 
+        // Then
         EvaluationLog found = evaluationLogRepository.findById(saved.getEvaluationLogIdx()).orElseThrow();
         assertThat(found.getUser().getUserIdx()).isEqualTo(user.getUserIdx());
         assertThat(found.getSource()).isEqualTo(EvaluationLog.PracticeSource.RECOMMENDED);
@@ -111,6 +114,7 @@ class EvaluationPersistenceServiceTest {
     @Test
     @DisplayName("단어 점수는 한 번만 저장하고 하위 음절은 nullable 점수와 단어 위치를 보존한다")
     void savesWordScoresAndGuideOnlySyllables() {
+        // Given
         User user = persistUser();
         PracticeWordResultResponse kimchi = PracticeWordResultResponse.builder()
                 .position(0)
@@ -139,6 +143,7 @@ class EvaluationPersistenceServiceTest {
                 .words(List.of(kimchi))
                 .build();
 
+        // When
         EvaluationLog saved = persistenceService.saveResult(
                 EvaluationPersistenceService.SaveEvaluationResultCommand.builder()
                         .user(user)
@@ -150,6 +155,7 @@ class EvaluationPersistenceServiceTest {
         );
         entityManager.clear();
 
+        // Then
         EvaluationLog found = evaluationLogRepository.findById(saved.getEvaluationLogIdx()).orElseThrow();
         assertThat(found.getWordList()).singleElement().satisfies(word -> {
             assertThat(word.getPositionNo()).isZero();
@@ -163,6 +169,7 @@ class EvaluationPersistenceServiceTest {
     @Test
     @DisplayName("단어 점수를 신뢰할 수 없으면 파생 가능한 단어 행을 저장하지 않는다")
     void skipsWordRowsWhenWordScoresAreUnavailable() {
+        // Given
         User user = persistUser();
         // 단어 경계를 판단하지 못한 결과는 문장 전체를 한 단어처럼 담아 내려온다.
         String sentence = "김치".repeat(60);
@@ -196,6 +203,7 @@ class EvaluationPersistenceServiceTest {
                 .words(List.of(unreliableWord))
                 .build();
 
+        // When
         EvaluationLog saved = persistenceService.saveResult(
                 EvaluationPersistenceService.SaveEvaluationResultCommand.builder()
                         .user(user)
@@ -207,6 +215,7 @@ class EvaluationPersistenceServiceTest {
         );
         entityManager.clear();
 
+        // Then
         EvaluationLog found = evaluationLogRepository.findById(saved.getEvaluationLogIdx()).orElseThrow();
         // word_text 길이를 넘기는 문장 blob이 저장되지 않고, 음절만 단어 위치 없이 남는다.
         assertThat(found.getWordList()).isEmpty();
@@ -220,6 +229,7 @@ class EvaluationPersistenceServiceTest {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DisplayName("글자별 결과 저장 실패 시 평가 log도 rollback된다")
     void rollsBackLogWhenCharacterResultFails() {
+        // Given
         User user = persistUserOutsideTransaction();
 
         EvaluationPersistenceService.SaveEvaluationResultCommand command =
@@ -234,6 +244,7 @@ class EvaluationPersistenceServiceTest {
                         ))
                         .build();
 
+        // When & Then
         assertThatThrownBy(() -> persistenceService.saveResult(command))
                 .isInstanceOf(DataIntegrityViolationException.class);
 

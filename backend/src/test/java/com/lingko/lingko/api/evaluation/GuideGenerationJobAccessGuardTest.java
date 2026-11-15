@@ -57,6 +57,7 @@ class GuideGenerationJobAccessGuardTest {
     @Test
     @DisplayName("내부 token이 없거나 틀리면 인증 실패다")
     void rejectsMissingOrInvalidInternalToken() {
+        // When & Then
         assertThatThrownBy(() -> guard.authorizeAndConsume(null, null))
                 .isInstanceOf(AuthException.class);
         assertThatThrownBy(() -> guard.authorizeAndConsume("wrong", null))
@@ -67,8 +68,10 @@ class GuideGenerationJobAccessGuardTest {
     @DisplayName("활성 일반 사용자 token은 인증됐어도 내부 생성 권한이 없어 403 대상이다")
     @ExtendWith(OutputCaptureExtension.class)
     void rejectsAuthenticatedLearner(CapturedOutput output) {
+        // Given
         when(authenticator.authenticateBearer("Bearer learner-token")).thenReturn(42L);
 
+        // When & Then
         assertThatThrownBy(() -> guard.authorizeAndConsume(null, "Bearer learner-token"))
                 .isInstanceOf(GuideJobAccessDeniedException.class);
 
@@ -78,9 +81,11 @@ class GuideGenerationJobAccessGuardTest {
     @Test
     @DisplayName("유효하지 않은 일반 Bearer token도 401 대상과 감사 지표로 기록한다")
     void recordsInvalidBearerAsUnauthorized() {
+        // Given
         doThrow(new AuthException("invalid bearer"))
                 .when(authenticator).authenticateBearer("Bearer invalid-token");
 
+        // When & Then
         assertThatThrownBy(() -> guard.authorizeAndConsume(null, "Bearer invalid-token"))
                 .isInstanceOf(AuthException.class);
 
@@ -90,6 +95,7 @@ class GuideGenerationJobAccessGuardTest {
     @Test
     @DisplayName("정확한 내부 token은 고정된 감사 caller ID로 승인한다")
     void authorizesInternalCaller() {
+        // When & Then
         assertThat(guard.authorizeAndConsume(INTERNAL_TOKEN, null))
                 .isEqualTo("guide-internal-service");
     }
@@ -97,16 +103,20 @@ class GuideGenerationJobAccessGuardTest {
     @Test
     @DisplayName("같은 내부 호출자가 분당 제한을 넘으면 retry 시각이 있는 429 대상이다")
     void rateLimitsInternalCallerPerMinute() {
+        // Given: 분당 허용량(2회)을 소진한다
         guard.authorizeAndConsume(INTERNAL_TOKEN, null);
         guard.authorizeAndConsume(INTERNAL_TOKEN, null);
 
+        // When & Then
         assertThatThrownBy(() -> guard.authorizeAndConsume(INTERNAL_TOKEN, null))
                 .isInstanceOfSatisfying(
                         GuideJobRateLimitExceededException.class,
                         exception -> assertThat(exception.retryAfterSeconds()).isEqualTo(60)
                 );
 
+        // When: 1분이 지난다
         clock.advanceSeconds(60);
+        // Then
         assertThat(guard.authorizeAndConsume(INTERNAL_TOKEN, null))
                 .isEqualTo("guide-internal-service");
     }

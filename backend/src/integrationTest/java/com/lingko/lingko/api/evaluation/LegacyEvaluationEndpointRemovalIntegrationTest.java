@@ -27,6 +27,7 @@ class LegacyEvaluationEndpointRemovalIntegrationTest {
     @Test
     @DisplayName("과거 활성화 설정이 남아 있어도 multipart 평가 endpoint를 등록하지 않는다")
     void doesNotRegisterLegacyMultipartEvaluationEndpoint() {
+        // When & Then
         assertThat(handlerMapping.getHandlerMethods().keySet())
                 .noneMatch(this::isLegacyEvaluationPost);
     }

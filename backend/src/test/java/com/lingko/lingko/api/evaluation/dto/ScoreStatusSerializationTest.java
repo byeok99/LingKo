@@ -21,6 +21,7 @@ class ScoreStatusSerializationTest {
     @Test
     @DisplayName("점수 상태 enum은 기존 대문자 문자열 그대로 직렬화된다")
     void serializesScoreStatusAsUppercaseWireValue() throws Exception {
+        // Given
         PracticeWordResultResponse word = PracticeWordResultResponse.builder()
                 .position(0)
                 .text("안녕하세요")
@@ -29,6 +30,7 @@ class ScoreStatusSerializationTest {
                 .syllables(List.of())
                 .build();
 
+        // When & Then
         assertThat(objectMapper.writeValueAsString(word))
                 .contains("\"scoreStatus\":\"AVAILABLE\"");
 
@@ -43,6 +45,7 @@ class ScoreStatusSerializationTest {
     @Test
     @DisplayName("가이드 상태는 점수 상태와 다른 값 집합을 유지한다")
     void serializesGuideStatusAsItsOwnVocabulary() throws Exception {
+        // Given
         GuideCharacterResponse character = GuideCharacterResponse.builder()
                 .position(0)
                 .text("안")
@@ -50,8 +53,10 @@ class ScoreStatusSerializationTest {
                 .guideStatus(GuideStatus.AVAILABLE)
                 .build();
 
+        // When
         String json = objectMapper.writeValueAsString(character);
 
+        // Then
         // 점수를 신뢰할 수 없어도 가이드는 제공되는 조합이 정상 동작이다.
         assertThat(json).contains("\"scoreStatus\":\"UNAVAILABLE\"");
         assertThat(json).contains("\"guideStatus\":\"AVAILABLE\"");
@@ -60,6 +65,7 @@ class ScoreStatusSerializationTest {
     @Test
     @DisplayName("점수 유무에서 상태를 유도하는 규칙은 한곳에서만 정의된다")
     void derivesStatusFromNullableScore() {
+        // When & Then
         assertThat(ScoreStatus.ofNullableScore(null)).isEqualTo(ScoreStatus.UNAVAILABLE);
         assertThat(ScoreStatus.ofNullableScore(0)).isEqualTo(ScoreStatus.AVAILABLE);
         assertThat(ScoreStatus.AVAILABLE.isAvailable()).isTrue();

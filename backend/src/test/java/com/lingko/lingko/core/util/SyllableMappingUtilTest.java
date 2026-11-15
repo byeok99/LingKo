@@ -23,13 +23,16 @@ public class SyllableMappingUtilTest {
 
     @Test
     void testJsonLoad() {
+        // When & Then
         assertThat(util.getImageFrames("ㄱ", VideoType.TONGUE)).isNotEmpty();
     }
 
     @Test
     void imageFramesReturnAbsoluteHttpsUrls() {
+        // When
         String imageUrl = util.getImageFrames("ㅏ", VideoType.MOUTH).getFirst();
 
+        // Then
         assertThat(imageUrl)
                 .startsWith("https://lingko.s3.ap-northeast-2.amazonaws.com/guides/mouth/")
                 .endsWith(".png");
@@ -37,11 +40,14 @@ public class SyllableMappingUtilTest {
 
     @Test
     void imageFramesUseConfiguredS3BucketAndRegion() {
+        // Given
         SyllableMappingUtil configuredUtil = new SyllableMappingUtil(awsSettings("custom-bucket", "us-west-2"));
         configuredUtil.loadMapping();
 
+        // When
         String imageUrl = configuredUtil.getImageFrames("ㅏ", VideoType.MOUTH).getFirst();
 
+        // Then
         assertThat(imageUrl)
                 .startsWith("https://custom-bucket.s3.us-west-2.amazonaws.com/guides/mouth/")
                 .endsWith(".png");
@@ -49,6 +55,7 @@ public class SyllableMappingUtilTest {
 
     @Test
     void kimKeepsSourceTimelinesSynchronizedAndRemovesOnlyNoOpTransitions() {
+        // When & Then
         assertThat(util.createFrameSequence("김", VideoType.MOUTH))
                 .hasSameSizeAs(util.createFrameSequence("김", VideoType.TONGUE));
         assertThat(util.createFramePairs("김", VideoType.MOUTH))
@@ -61,6 +68,7 @@ public class SyllableMappingUtilTest {
 
     @Test
     void diphthongsReuseExistingAssetsAsOrderedFrames() {
+        // When & Then
         assertThat(util.createFrameSequence("으", VideoType.MOUTH))
                 .extracting(url -> url.substring(url.lastIndexOf('/') + 1))
                 .containsExactly("vowel-eu.png");
@@ -74,6 +82,7 @@ public class SyllableMappingUtilTest {
 
     @Test
     void hUsesTheFollowingVowelPostureWithoutPretendingToHaveAnOralShape() {
+        // When & Then
         assertThat(util.createFrameSequence("하", VideoType.TONGUE))
                 .allMatch(url -> url.endsWith("vowel-a.png"))
                 .hasSize(2);
@@ -82,6 +91,7 @@ public class SyllableMappingUtilTest {
 
     @Test
     void repeatedPostureBecomesAStaticGuideInsteadOfAPointlessVideo() {
+        // When & Then
         assertThat(util.createFramePairs("하", VideoType.TONGUE))
                 .singleElement()
                 .satisfies(pair -> assertThat(pair)
@@ -92,6 +102,7 @@ public class SyllableMappingUtilTest {
 
     @Test
     void commonSyllablesKeepExpectedMouthAndTongueTransitions() {
+        // When & Then
         assertThat(util.createFramePairs("한", VideoType.TONGUE))
                 .singleElement()
                 .satisfies(pair -> {
@@ -118,9 +129,11 @@ public class SyllableMappingUtilTest {
 
     @Test
     void sibilantOnsetUsesPalatalAllophoneOnlyBeforePalatalVowels() {
+        // When
         String plainSibilant = util.createFramePairs("사", VideoType.TONGUE).getFirst().getFirst();
         String palatalSibilant = util.createFramePairs("시", VideoType.TONGUE).getFirst().getFirst();
 
+        // Then
         assertThat(plainSibilant).contains("alveolar-fricative");
         assertThat(palatalSibilant).contains("allophone-s-ss");
         assertThat(palatalSibilant).isNotEqualTo(plainSibilant);
@@ -128,12 +141,14 @@ public class SyllableMappingUtilTest {
 
     @Test
     void emptyOrNullInputReturnsNoFramePairs() {
+        // When & Then
         assertThat(util.createFramePairs("", VideoType.MOUTH)).isEmpty();
         assertThat(util.createFramePairs(null, VideoType.TONGUE)).isEmpty();
     }
 
     @Test
     void onsetAndCodaRolesAreResolvedSeparately() {
+        // When & Then
         assertThat(util.resolveMappingKey("ㄹ", SyllableMappingUtil.SyllableRole.ONSET, null))
                 .isEqualTo("초성ㄹ");
         assertThat(util.resolveMappingKey("ㄹ", SyllableMappingUtil.SyllableRole.CODA, null))
@@ -144,6 +159,7 @@ public class SyllableMappingUtilTest {
 
     @Test
     void staticGuideUsesTheVowelTargetForBothTracks() {
+        // When & Then
         assertThat(util.getRepresentativeImageUrl("김", VideoType.MOUTH)).endsWith("vowel-i.png");
         assertThat(util.getRepresentativeImageUrl("김", VideoType.TONGUE)).endsWith("semi-vowel-y.png");
     }
@@ -151,8 +167,10 @@ public class SyllableMappingUtilTest {
     @Test
     void everyModernHangulSyllableHasSynchronizedMouthAndTongueTimelines() {
         for (char syllable = 0xAC00; syllable <= 0xD7A3; syllable++) {
+            // Given
             String text = String.valueOf(syllable);
 
+            // When & Then
             assertThat(util.createFrameSequence(text, VideoType.MOUTH))
                     .as("mouth frames for %s", text)
                     .isNotEmpty()

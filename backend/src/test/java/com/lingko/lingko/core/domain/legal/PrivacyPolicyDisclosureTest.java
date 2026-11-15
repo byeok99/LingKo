@@ -13,8 +13,10 @@ class PrivacyPolicyDisclosureTest {
 
     @Test
     void 한국어_처리방침은_미국_운영_리전과_로그_보관기간을_공개한다() throws IOException {
+        // When
         String policy = read("legal/privacy-policy.ko.md");
 
+        // Then
         assertThat(LegalConsentPolicy.CURRENT_DOCUMENT_VERSION).isEqualTo("2026-09-24");
         assertThat(policy)
                 .contains("미국 동부(버지니아 북부, us-east-1)")
@@ -23,8 +25,10 @@ class PrivacyPolicyDisclosureTest {
 
     @Test
     void 영어_처리방침은_미국_운영_리전과_로그_보관기간을_공개한다() throws IOException {
+        // When
         String policy = read("legal/privacy-policy.en.md");
 
+        // Then
         assertThat(policy)
                 .contains("US East (N. Virginia, us-east-1)")
                 .contains("14 days");

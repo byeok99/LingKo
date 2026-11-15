@@ -30,6 +30,7 @@ class RequestIdFilterTest {
     @Test
     @DisplayName("요청 ID가 없으면 서버 ID를 생성해 응답과 완료 로그에 같은 값으로 남긴다")
     void generatesRequestIdForResponseAndLog() throws Exception {
+        // Given
         RequestIdFilter filter = new RequestIdFilter(() -> "generated-request-id");
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/health");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -37,9 +38,11 @@ class RequestIdFilterTest {
         ListAppender<ILoggingEvent> appender = attach(logger);
 
         try {
+            // When
             filter.doFilter(request, response, (servletRequest, servletResponse) ->
                     assertThat(MDC.get(RequestIdContext.MDC_KEY)).isEqualTo("generated-request-id"));
 
+            // Then
             assertThat(response.getHeader(RequestIdFilter.HEADER_NAME)).isEqualTo("generated-request-id");
             assertThat(appender.list).singleElement().satisfies(event -> {
                 assertThat(event.getMDCPropertyMap())
@@ -56,15 +59,18 @@ class RequestIdFilterTest {
     @Test
     @DisplayName("기본 생성기는 충돌 가능성이 낮은 UUID v4를 사용한다")
     void defaultGeneratorUsesRandomUuid() throws Exception {
+        // Given
         RequestIdFilter filter = new RequestIdFilter();
         MockHttpServletResponse response = new MockHttpServletResponse();
 
+        // When
         filter.doFilter(
                 new MockHttpServletRequest("GET", "/health"),
                 response,
                 (request, servletResponse) -> { }
         );
 
+        // Then
         UUID requestId = UUID.fromString(response.getHeader(RequestIdFilter.HEADER_NAME));
         assertThat(requestId.version()).isEqualTo(4);
     }
@@ -72,48 +78,60 @@ class RequestIdFilterTest {
     @Test
     @DisplayName("안전한 외부 요청 ID는 그대로 사용한다")
     void reusesValidatedExternalRequestId() throws Exception {
+        // Given
         RequestIdFilter filter = new RequestIdFilter(() -> "generated-request-id");
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/health");
         request.addHeader(RequestIdFilter.HEADER_NAME, "client_01.trace-2");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
+        // When
         filter.doFilter(request, response, (servletRequest, servletResponse) ->
                 assertThat(MDC.get(RequestIdContext.MDC_KEY)).isEqualTo("client_01.trace-2"));
 
+        // Then
         assertThat(response.getHeader(RequestIdFilter.HEADER_NAME)).isEqualTo("client_01.trace-2");
     }
 
     @Test
     @DisplayName("제어하기 어려운 문자나 최대 길이를 넘긴 외부 ID는 서버 ID로 교체한다")
     void replacesUnsafeExternalRequestIds() throws Exception {
+        // Given
         Iterator<String> generatedIds = java.util.List.of("safe-one", "safe-two", "safe-three").iterator();
         RequestIdFilter filter = new RequestIdFilter(generatedIds::next);
 
+        // When & Then: 허용하지 않는 문자, 최대 길이 초과
         assertGeneratedId(filter, "unsafe/value", "safe-one");
         assertGeneratedId(filter, "a".repeat(65), "safe-two");
 
+        // Given: 같은 Header가 두 번 들어온 요청
         MockHttpServletRequest duplicateHeaderRequest = new MockHttpServletRequest("GET", "/health");
         duplicateHeaderRequest.addHeader(RequestIdFilter.HEADER_NAME, "first-id");
         duplicateHeaderRequest.addHeader(RequestIdFilter.HEADER_NAME, "second-id");
         MockHttpServletResponse response = new MockHttpServletResponse();
+        // When
         filter.doFilter(duplicateHeaderRequest, response, (request, servletResponse) ->
                 assertThat(MDC.get(RequestIdContext.MDC_KEY)).isEqualTo("safe-three"));
+        // Then
         assertThat(response.getHeader(RequestIdFilter.HEADER_NAME)).isEqualTo("safe-three");
     }
 
     @Test
     @DisplayName("연속 요청과 예외 경로 모두 이전 요청의 MDC 값을 남기지 않는다")
     void clearsRequestIdAfterSuccessAndFailure() throws Exception {
+        // Given
         Iterator<String> generatedIds = java.util.List.of("first-request", "second-request").iterator();
         RequestIdFilter filter = new RequestIdFilter(generatedIds::next);
 
+        // When: 정상 요청
         filter.doFilter(
                 new MockHttpServletRequest("GET", "/first"),
                 new MockHttpServletResponse(),
                 (request, response) -> assertThat(MDC.get(RequestIdContext.MDC_KEY)).isEqualTo("first-request")
         );
+        // Then
         assertThat(MDC.get(RequestIdContext.MDC_KEY)).isNull();
 
+        // When & Then: 예외 요청
         assertThatThrownBy(() -> filter.doFilter(
                 new MockHttpServletRequest("GET", "/second"),
                 new MockHttpServletResponse(),

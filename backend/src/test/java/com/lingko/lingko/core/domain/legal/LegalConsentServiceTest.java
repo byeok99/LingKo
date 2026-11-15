@@ -42,10 +42,13 @@ class LegalConsentServiceTest {
     @Test
     @DisplayName("현재 문서 버전 기록이 없는 사용자는 동의가 필요하다")
     void currentConsentIsRequiredWhenNoRecordExists() {
+        // Given
         User user = saveUser("google-1");
 
+        // When
         var status = legalConsentService.getStatus(user.getUserIdx());
 
+        // Then
         assertThat(status.required()).isTrue();
         assertThat(status.documentVersion()).isEqualTo(LegalConsentPolicy.CURRENT_DOCUMENT_VERSION);
     }
@@ -53,15 +56,18 @@ class LegalConsentServiceTest {
     @Test
     @DisplayName("필수 동의를 제출하면 서버 시각과 사용자 귀속으로 기록되고 재동의가 해제된다")
     void recordsCurrentConsentForAuthenticatedUser() {
+        // Given
         User user = saveUser("google-2");
         Instant clientAgreedAt = Instant.parse("2026-08-07T01:02:03Z");
 
+        // When
         var status = legalConsentService.record(
                 user.getUserIdx(),
                 new LegalConsentRequest(true, true, false,
                         LegalConsentPolicy.CURRENT_DOCUMENT_VERSION, clientAgreedAt)
         );
 
+        // Then
         assertThat(status.required()).isFalse();
         LegalConsent saved = legalConsentRepository.findAll().getFirst();
         assertThat(saved.getUser().getUserIdx()).isEqualTo(user.getUserIdx());
@@ -73,8 +79,10 @@ class LegalConsentServiceTest {
     @Test
     @DisplayName("이전 또는 임의 문서 버전으로 현재 동의를 충족할 수 없다")
     void rejectsUnknownDocumentVersion() {
+        // Given
         User user = saveUser("google-3");
 
+        // When & Then
         assertThatThrownBy(() -> legalConsentService.record(
                 user.getUserIdx(),
                 new LegalConsentRequest(true, true, false,
@@ -86,6 +94,7 @@ class LegalConsentServiceTest {
     @Test
     @DisplayName("이미 현재 버전에 동의한 사용자의 구버전 앱 재시도는 멱등 성공한다")
     void acceptsStaleRetryAfterCurrentConsentWasRecorded() {
+        // Given
         User user = saveUser("google-stale-retry");
         Instant firstAgreedAt = Instant.parse("2026-09-24T01:02:03Z");
         legalConsentService.record(
@@ -94,12 +103,14 @@ class LegalConsentServiceTest {
                         LegalConsentPolicy.CURRENT_DOCUMENT_VERSION, firstAgreedAt)
         );
 
+        // When
         var status = legalConsentService.record(
                 user.getUserIdx(),
                 new LegalConsentRequest(true, true, true,
                         "2026-09-12", Instant.parse("2026-09-25T01:02:03Z"))
         );
 
+        // Then
         assertThat(status.required()).isFalse();
         assertThat(status.documentVersion()).isEqualTo(LegalConsentPolicy.CURRENT_DOCUMENT_VERSION);
         assertThat(legalConsentRepository.findAll()).singleElement().satisfies(saved -> {
@@ -111,6 +122,7 @@ class LegalConsentServiceTest {
     @Test
     @DisplayName("다른 사용자의 동의 기록은 현재 사용자의 동의를 충족하지 않는다")
     void consentIsScopedToAuthenticatedUser() {
+        // Given
         User first = saveUser("google-4");
         User second = saveUser("google-5");
         legalConsentService.record(
@@ -119,6 +131,7 @@ class LegalConsentServiceTest {
                         LegalConsentPolicy.CURRENT_DOCUMENT_VERSION, Instant.now())
         );
 
+        // When & Then
         assertThat(legalConsentService.getStatus(first.getUserIdx()).required()).isFalse();
         assertThat(legalConsentService.getStatus(second.getUserIdx()).required()).isTrue();
     }

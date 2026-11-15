@@ -19,8 +19,10 @@ class PronunciationPrepareRequestTest {
     @Test
     @DisplayName("CUSTOM prepare 요청은 trim 후 비어 있지 않은 text가 필요하다")
     void customPrepareRequiresText() {
+        // Given
         PronunciationPrepareRequest request = new PronunciationPrepareRequest("CUSTOM", "   ", null);
 
+        // When & Then
         assertThat(validator.validate(request))
                 .anyMatch(violation -> violation.getPropertyPath().toString().equals("customTextValid"));
     }
@@ -28,8 +30,10 @@ class PronunciationPrepareRequestTest {
     @Test
     @DisplayName("CUSTOM prepare text는 100자 이하여야 한다")
     void customPrepareLimitsTextLength() {
+        // Given
         PronunciationPrepareRequest request = new PronunciationPrepareRequest("CUSTOM", "가".repeat(101), null);
 
+        // When & Then
         assertThat(validator.validate(request))
                 .anyMatch(violation -> violation.getPropertyPath().toString().equals("customTextLengthValid"));
     }
@@ -37,8 +41,10 @@ class PronunciationPrepareRequestTest {
     @Test
     @DisplayName("RECOMMENDED prepare 요청은 sentenceId가 필요하다")
     void recommendedPrepareRequiresSentenceId() {
+        // Given
         PronunciationPrepareRequest request = new PronunciationPrepareRequest("RECOMMENDED", null, null);
 
+        // When & Then
         assertThat(validator.validate(request))
                 .anyMatch(violation -> violation.getPropertyPath().toString().equals("recommendedSentenceIdValid"));
     }

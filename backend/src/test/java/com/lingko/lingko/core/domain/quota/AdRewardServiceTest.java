@@ -43,14 +43,17 @@ class AdRewardServiceTest {
     @Test
     @DisplayName("signed callback이 session token과 정책에 맞으면 1회 지급하고 완료 상태가 된다")
     void grantsVerifiedRewardOnce() {
+        // Given
         User user = saveUser();
         completePractice(user.getUserIdx());
         AdRewardSessionResponse session = rewardService.createSession(user.getUserIdx());
         VerifiedAdRewardCallback callback = callback(session.sessionToken(), "transaction-1");
 
+        // When
         rewardService.processVerifiedCallback(callback);
         rewardService.processVerifiedCallback(callback);
 
+        // Then
         assertThat(rewardService.getSessionStatus(user.getUserIdx(), session.sessionToken()).status())
                 .isEqualTo(AdRewardSessionStatus.COMPLETED);
         assertThat(rewardService.getSessionStatus(user.getUserIdx(), session.sessionToken()).credited())
@@ -64,11 +67,14 @@ class AdRewardServiceTest {
     @Test
     @DisplayName("세션 생성만으로는 quota를 지급하지 않는다")
     void doesNotTrustClientSessionCreation() {
+        // Given
         User user = saveUser();
         completePractice(user.getUserIdx());
 
+        // When
         rewardService.createSession(user.getUserIdx());
 
+        // Then
         assertThat(quotaService.getTodayQuota(user.getUserIdx()).remainingPractices()).isEqualTo(4);
         assertThat(receiptRepository.count()).isZero();
     }
@@ -76,6 +82,7 @@ class AdRewardServiceTest {
     @Test
     @DisplayName("같은 Google transaction은 다른 session에도 두 번 지급하지 않는다")
     void rejectsDuplicateGoogleTransactionAcrossSessions() {
+        // Given
         User first = saveUser("ssv-user-1");
         User second = saveUser("ssv-user-2");
         completePractice(first.getUserIdx());
@@ -83,9 +90,11 @@ class AdRewardServiceTest {
         AdRewardSessionResponse firstSession = rewardService.createSession(first.getUserIdx());
         AdRewardSessionResponse secondSession = rewardService.createSession(second.getUserIdx());
 
+        // When
         rewardService.processVerifiedCallback(callback(firstSession.sessionToken(), "transaction-1"));
         rewardService.processVerifiedCallback(callback(secondSession.sessionToken(), "transaction-1"));
 
+        // Then
         assertThat(quotaService.getTodayQuota(first.getUserIdx()).remainingPractices()).isEqualTo(5);
         assertThat(quotaService.getTodayQuota(second.getUserIdx()).remainingPractices()).isEqualTo(4);
         assertThat(receiptRepository.count()).isEqualTo(1);
@@ -94,14 +103,17 @@ class AdRewardServiceTest {
     @Test
     @DisplayName("새 세션을 만들어도 아직 유효한 이전 세션의 지연 callback은 지급된다")
     void keepsActivePendingSessionForDelayedCallback() {
+        // Given
         User user = saveUser();
         completePractice(user.getUserIdx());
         completePractice(user.getUserIdx());
         AdRewardSessionResponse first = rewardService.createSession(user.getUserIdx());
         AdRewardSessionResponse second = rewardService.createSession(user.getUserIdx());
 
+        // When
         rewardService.processVerifiedCallback(callback(first.sessionToken(), "transaction-late"));
 
+        // Then
         assertThat(rewardService.getSessionStatus(user.getUserIdx(), first.sessionToken()).credited())
                 .isTrue();
         assertThat(rewardService.getSessionStatus(user.getUserIdx(), second.sessionToken()).status())
@@ -112,12 +124,14 @@ class AdRewardServiceTest {
     @Test
     @DisplayName("유효 PENDING 세션이 상한이면 기존 대기 보상을 지우지 않고 새 생성을 거절한다")
     void rejectsSessionCreationAtPendingLimit() {
+        // Given
         User user = saveUser();
         completePractice(user.getUserIdx());
         for (int i = 0; i < 5; i++) {
             rewardService.createSession(user.getUserIdx());
         }
 
+        // When & Then
         assertThatThrownBy(() -> rewardService.createSession(user.getUserIdx()))
                 .isInstanceOf(AdRewardUnavailableException.class);
         assertThat(sessionRepository.count()).isEqualTo(5);

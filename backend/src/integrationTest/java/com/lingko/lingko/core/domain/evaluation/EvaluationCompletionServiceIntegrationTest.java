@@ -46,6 +46,7 @@ class EvaluationCompletionServiceIntegrationTest {
     @Test
     @DisplayName("quota 확정 실패 시 같은 transaction의 평가 결과 저장도 rollback한다")
     void rollsBackResultWhenQuotaConfirmationFails() {
+        // Given
         User user = userRepository.save(User.builder()
                 .socialId("confirmation-failure-user")
                 .socialType(User.SocialType.GOOGLE)
@@ -69,6 +70,7 @@ class EvaluationCompletionServiceIntegrationTest {
                                 .build())
                         .build();
 
+        // When & Then
         assertThatThrownBy(() -> completionService.complete(command, missingReservation))
                 .isInstanceOf(IllegalStateException.class);
 

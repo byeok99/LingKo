@@ -23,10 +23,12 @@ class PracticeQuotaMigrationTest {
         try (Connection connection = DriverManager.getConnection(
                 "jdbc:h2:mem:practice_quota_migration;MODE=MySQL;DATABASE_TO_UPPER=false"
         )) {
+            // When
             runMigration(connection, "V1__baseline_schema.sql");
             runMigration(connection, "V5__add_daily_practice_quota.sql");
             runMigration(connection, "V7__add_practice_quota_reservations.sql");
 
+            // Then
             assertColumnDefault(connection, "free_reserved", "0");
             assertColumnDefault(connection, "rewarded_reserved", "0");
         }
@@ -38,11 +40,13 @@ class PracticeQuotaMigrationTest {
         try (Connection connection = DriverManager.getConnection(
                 "jdbc:h2:mem:practice_energy_migration;MODE=MySQL;DATABASE_TO_UPPER=false"
         )) {
+            // When
             runMigration(connection, "V1__baseline_schema.sql");
             runMigration(connection, "V5__add_daily_practice_quota.sql");
             runMigration(connection, "V7__add_practice_quota_reservations.sql");
             runMigration(connection, "V14__add_hourly_practice_refill.sql");
 
+            // Then
             try (ResultSet columns = connection.getMetaData()
                     .getColumns(null, null, "daily_practice_quota", "next_refill_at")) {
                 assertThat(columns.next()).as("column next_refill_at exists").isTrue();
@@ -57,10 +61,12 @@ class PracticeQuotaMigrationTest {
         try (Connection connection = DriverManager.getConnection(
                 "jdbc:h2:mem:ad_reward_migration;MODE=MySQL;DATABASE_TO_UPPER=false"
         )) {
+            // When
             runMigration(connection, "V1__baseline_schema.sql");
             runMigration(connection, "V19__add_ad_reward_receipts.sql");
             runMigration(connection, "V20__secure_ad_rewards_with_ssv.sql");
 
+            // Then
             try (ResultSet columns = connection.getMetaData()
                     .getColumns(null, null, "ad_reward_sessions", "session_token_hash")) {
                 assertThat(columns.next()).as("session token hash exists").isTrue();

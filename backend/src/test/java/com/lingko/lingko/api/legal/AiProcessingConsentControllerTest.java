@@ -23,7 +23,10 @@ class AiProcessingConsentControllerTest {
 
     @Test
     void requiresAuthenticationForReadAndWrite() throws Exception {
+        // Given
         when(authenticator.authenticateBearer(null)).thenThrow(new AuthException("Missing bearer token"));
+
+        // When & Then
         mvc.perform(get("/api/legal/ai-consent")).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/legal/ai-consent").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"granted\":true,\"noticeVersion\":\"2026-09-12\"}"))
@@ -33,6 +36,7 @@ class AiProcessingConsentControllerTest {
 
     @Test
     void missingChoiceIsNotImplicitPermission() throws Exception {
+        // When & Then
         mvc.perform(post("/api/legal/ai-consent").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"noticeVersion\":\"2026-09-12\"}"))
                 .andExpect(status().isBadRequest());
@@ -41,12 +45,17 @@ class AiProcessingConsentControllerTest {
 
     @Test
     void usesAuthenticatedOwnerForReadAndWithdrawal() throws Exception {
+        // Given
         when(authenticator.authenticateBearer("Bearer test")).thenReturn(7L);
         when(service.getStatus(7L)).thenReturn(new AiProcessingConsentResponse(false, "2026-09-12", null));
-        mvc.perform(get("/api/legal/ai-consent").header("Authorization", "Bearer test"))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.granted").value(false));
         when(service.record(7L, false, "2026-09-12"))
                 .thenReturn(new AiProcessingConsentResponse(false, "2026-09-12", null));
+
+        // When & Then: 조회
+        mvc.perform(get("/api/legal/ai-consent").header("Authorization", "Bearer test"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.granted").value(false));
+
+        // When & Then: 철회 요청 본문의 userId는 무시하고 인증된 사용자로 기록한다
         mvc.perform(post("/api/legal/ai-consent").header("Authorization", "Bearer test")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"granted\":false,\"noticeVersion\":\"2026-09-12\",\"userId\":99}"))

@@ -23,6 +23,7 @@ class EvaluationJobMigrationTest {
         try (Connection connection = DriverManager.getConnection(
                 "jdbc:h2:mem:evaluation_job_migration;MODE=MySQL;DATABASE_TO_UPPER=false"
         )) {
+            // When
             runMigration(connection, "V1__baseline_schema.sql");
             runMigration(connection, "V8__add_evaluation_jobs.sql");
             runMigration(connection, "V9__add_evaluation_job_cleanup_index.sql");
@@ -31,6 +32,7 @@ class EvaluationJobMigrationTest {
             runMigration(connection, "V21__add_evaluation_job_phase.sql");
             runMigration(connection, "V23__add_ai_processing_consents.sql");
 
+            // Then
             assertColumn(connection, "evaluation_jobs", "status");
             assertColumn(connection, "evaluation_jobs", "phase");
             assertColumn(connection, "evaluation_jobs", "lease_expires_at");

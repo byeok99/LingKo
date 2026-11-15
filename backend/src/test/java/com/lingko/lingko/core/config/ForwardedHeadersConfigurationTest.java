@@ -28,8 +28,10 @@ class ForwardedHeadersConfigurationTest {
     @Test
     @DisplayName("기본 설정은 forwarded header를 해석하는 RemoteIpValve를 등록한다")
     void defaultConfigurationRegistersRemoteIpValve() {
+        // When
         TomcatServletWebServerFactory factory = customizedFactory(new MockPropertySource());
 
+        // Then
         assertThat(factory.getEngineValves())
                 .anySatisfy(valve -> assertThat(valve).isInstanceOf(RemoteIpValve.class));
     }
@@ -37,10 +39,12 @@ class ForwardedHeadersConfigurationTest {
     @Test
     @DisplayName("proxy 없는 환경은 none으로 header 해석을 끌 수 있다")
     void noneStrategyDisablesRemoteIpValve() {
+        // When
         TomcatServletWebServerFactory factory = customizedFactory(
                 new MockPropertySource().withProperty("SERVER_FORWARD_HEADERS_STRATEGY", "none")
         );
 
+        // Then
         assertThat(factory.getEngineValves())
                 .noneSatisfy(valve -> assertThat(valve).isInstanceOf(RemoteIpValve.class));
     }

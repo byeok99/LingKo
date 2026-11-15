@@ -47,14 +47,17 @@ class WeakSoundServiceTest {
     @Test
     @DisplayName("평균 점수가 낮은 음절부터 반환하고 로마자를 함께 제공한다")
     void returnsWeakestSoundsFirst() {
+        // Given
         User user = persistUser("google-weak-1");
         persistWords(user, entry("나비", 58), entry("나비", 62));
         persistWords(user, entry("오늘", 90), entry("오늘", 94));
         entityManager.flush();
         entityManager.clear();
 
+        // When
         WeakSoundListResponse response = weakSoundService.findWeakSounds(user.getUserIdx(), 10);
 
+        // Then
         // 어절 점수가 그 어절의 모든 음절에 귀속된다. 평균이 같으면 글자 순으로 고정한다.
         assertThat(response.items()).extracting("text")
                 .containsExactly("나", "비", "늘", "오");
@@ -67,6 +70,7 @@ class WeakSoundServiceTest {
     @Test
     @DisplayName("여러 어절에 걸친 같은 음절을 시도 횟수로 가중해 하나로 모은다")
     void aggregatesOneSoundAcrossWordsWeightedByAttempts() {
+        // Given
         User user = persistUser("google-weak-6");
         // 시: 3회 평균 50인 어절과 1회 90인 어절에 걸쳐 있다.
         persistWords(user, entry("시장", 40), entry("시장", 50), entry("시장", 60));
@@ -74,8 +78,10 @@ class WeakSoundServiceTest {
         entityManager.flush();
         entityManager.clear();
 
+        // When
         WeakSoundListResponse response = weakSoundService.findWeakSounds(user.getUserIdx(), 10);
 
+        // Then
         // 어절 평균을 단순 평균하면 (50+90)/2 = 70이 된다. 표본이 적은 어절이 평균을
         // 끌고 가지 않도록 시도 횟수로 가중해 (50*3 + 90*1)/4 = 60이어야 한다.
         assertThat(response.items())
@@ -90,13 +96,16 @@ class WeakSoundServiceTest {
     @Test
     @DisplayName("한 어절 안에서 같은 음절이 반복돼도 시도는 한 번으로 센다")
     void countsRepeatedSoundInOneWordOnce() {
+        // Given
         User user = persistUser("google-weak-7");
         persistWords(user, entry("가가", 50), entry("가가", 54));
         entityManager.flush();
         entityManager.clear();
 
+        // When
         WeakSoundListResponse response = weakSoundService.findWeakSounds(user.getUserIdx(), 10);
 
+        // Then
         // 글자가 두 번 나왔다고 두 배로 틀린 것이 아니다. 연습 2회는 시도 2회다.
         assertThat(response.items()).singleElement()
                 .satisfies(item -> assertThat(item.attemptCount()).isEqualTo(2));
@@ -105,11 +114,13 @@ class WeakSoundServiceTest {
     @Test
     @DisplayName("한글 음절이 아닌 문자는 학습 단위가 아니라 집계에서 뺀다")
     void ignoresNonHangulCharacters() {
+        // Given
         User user = persistUser("google-weak-8");
         persistWords(user, entry("A나?", 50), entry("A나?", 54));
         entityManager.flush();
         entityManager.clear();
 
+        // When & Then
         assertThat(weakSoundService.findWeakSounds(user.getUserIdx(), 10).items())
                 .extracting("text")
                 .containsExactly("나");
@@ -118,6 +129,7 @@ class WeakSoundServiceTest {
     @Test
     @DisplayName("한 번만 연습한 음절은 표본이 부족해 제외한다")
     void excludesSoundsPracticedOnce() {
+        // Given
         User user = persistUser("google-weak-2");
         // 우연한 한 번의 실수가 학습 목표로 승격되면 안 된다.
         persistWords(user, entry("처음", 10));
@@ -125,25 +137,30 @@ class WeakSoundServiceTest {
         entityManager.flush();
         entityManager.clear();
 
+        // When
         WeakSoundListResponse response = weakSoundService.findWeakSounds(user.getUserIdx(), 10);
 
+        // Then
         assertThat(response.items()).extracting("text").containsExactly("반", "복");
     }
 
     @Test
     @DisplayName("점수를 신뢰할 수 없어 저장하지 않은 어절은 집계에 넣지 않는다")
     void ignoresWordsWithoutScore() {
+        // Given
         User user = persistUser("google-weak-3");
         persistWords(user, entry("무점수", null), entry("무점수", null));
         entityManager.flush();
         entityManager.clear();
 
+        // When & Then
         assertThat(weakSoundService.findWeakSounds(user.getUserIdx(), 10).items()).isEmpty();
     }
 
     @Test
     @DisplayName("다른 사용자의 기록은 섞이지 않는다")
     void isolatesByUser() {
+        // Given
         User owner = persistUser("google-weak-4");
         User other = persistUser("google-weak-5");
         persistWords(owner, entry("내것", 50), entry("내것", 54));
@@ -151,6 +168,7 @@ class WeakSoundServiceTest {
         entityManager.flush();
         entityManager.clear();
 
+        // When & Then
         assertThat(weakSoundService.findWeakSounds(owner.getUserIdx(), 10).items())
                 .extracting("text")
                 .containsExactly("것", "내");
@@ -159,11 +177,13 @@ class WeakSoundServiceTest {
     @Test
     @DisplayName("한글 음절 한 글자가 아닌 조회는 빈 결과를 돌려준다")
     void returnsEmptyDetailForNonSyllableInput() {
+        // Given
         User user = persistUser("google-weak-9");
         persistWords(user, entry("가나", 50), entry("가나", 54));
         entityManager.flush();
         entityManager.clear();
 
+        // When & Then
         // '%'는 like 패턴 한가운데로 들어가므로 거르지 않으면 모든 어절이 잡힌다.
         // 화면이 "이 음절을 이만큼 연습했다"고 거짓을 말하게 되는 경로다.
         assertThat(weakSoundService.findSoundDetail(user.getUserIdx(), "%").practiced()).isEmpty();

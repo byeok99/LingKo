@@ -83,8 +83,10 @@ class AuthServiceTest {
     @Test
     @DisplayName("Google OAuth 로그인은 신규 사용자를 생성하고 JWT를 발급한다")
     void loginWithGoogleCreatesUserAndTokens() throws Exception {
+        // When
         AuthTokenResponse response = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
 
+        // Then
         assertThat(response.getTokenType()).isEqualTo("Bearer");
         assertThat(response.getAccessToken()).isNotBlank();
         assertThat(response.getRefreshToken()).isNotBlank();
@@ -109,6 +111,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("심사용 로그인은 미리 저장된 사용자에 새 세션을 발급하고 계정을 만들지 않는다")
     void loginReviewUserIssuesSessionForExistingAccount() {
+        // Given
         User reviewUser = User.builder()
                 .socialId("review-google-subject")
                 .socialType(User.SocialType.GOOGLE)
@@ -118,8 +121,10 @@ class AuthServiceTest {
         entityManager.persist(reviewUser);
         entityManager.flush();
 
+        // When
         AuthTokenResponse response = authService.loginReviewUser(reviewUser.getUserIdx());
 
+        // Then
         assertThat(response.getUser().getUserId()).isEqualTo(reviewUser.getUserIdx());
         assertThat(response.getAccessToken()).isNotBlank();
         assertThat(response.getRefreshToken()).isNotBlank();
@@ -130,6 +135,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("설정된 심사용 사용자가 없으면 인증 정보 노출 없이 로그인을 거부한다")
     void loginReviewUserRejectsMissingAccount() {
+        // When & Then
         assertThatThrownBy(() -> authService.loginReviewUser(999L))
                 .isInstanceOf(AuthException.class);
     }
@@ -137,6 +143,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("기존 Google 사용자는 중복 생성하지 않고 profile snapshot을 갱신한다")
     void loginWithGoogleReusesExistingUser() {
+        // Given
         User existing = User.builder()
                 .socialId("google-sub-123")
                 .socialType(User.SocialType.GOOGLE)
@@ -147,8 +154,10 @@ class AuthServiceTest {
         entityManager.flush();
         entityManager.clear();
 
+        // When
         AuthTokenResponse response = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
 
+        // Then
         assertThat(userRepository.count()).isEqualTo(1);
         assertThat(response.getUser().getUserId()).isEqualTo(existing.getUserIdx());
         User updated = userRepository.findById(existing.getUserIdx()).orElseThrow();
@@ -159,6 +168,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("Apple 로그인은 검증된 subject와 최초 제공 이름으로 사용자를 생성한다")
     void loginWithAppleCreatesUserFromVerifiedIdentity() {
+        // When
         AuthTokenResponse response = authService.loginWithOAuth(new OAuthLoginRequest(
                 " apple ",
                 " apple-token ",
@@ -166,6 +176,7 @@ class AuthServiceTest {
                 "  Apple   Learner  "
         ));
 
+        // Then
         User user = userRepository.findBySocialIdAndSocialType(
                 "apple-sub-456",
                 User.SocialType.APPLE
@@ -178,6 +189,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("Apple 재로그인에서 이름이 다시 오지 않아도 기존 profile 이름을 보존한다")
     void loginWithApplePreservesExistingNameWhenAppleOmitsIt() {
+        // Given
         User existing = User.builder()
                 .socialId("apple-sub-456")
                 .socialType(User.SocialType.APPLE)
@@ -188,6 +200,7 @@ class AuthServiceTest {
         entityManager.flush();
         entityManager.clear();
 
+        // When
         authService.loginWithOAuth(new OAuthLoginRequest(
                 "APPLE",
                 "apple-token",
@@ -195,6 +208,7 @@ class AuthServiceTest {
                 null
         ));
 
+        // Then
         User updated = userRepository.findById(existing.getUserIdx()).orElseThrow();
         assertThat(updated.getEmail()).isEqualTo("relay@privaterelay.appleid.com");
         assertThat(updated.getName()).isEqualTo("First Login Name");
@@ -203,6 +217,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("Google 로그인은 Apple 전용 client display name을 신뢰하지 않는다")
     void loginWithGoogleIgnoresClientDisplayName() {
+        // When
         AuthTokenResponse response = authService.loginWithOAuth(new OAuthLoginRequest(
                 "GOOGLE",
                 "nameless-google-token",
@@ -210,12 +225,14 @@ class AuthServiceTest {
                 "Untrusted Client Name"
         ));
 
+        // Then
         assertThat(response.getUser().getName()).isNull();
     }
 
     @Test
     @DisplayName("지원하지 않는 OAuth provider는 거부한다")
     void unsupportedProviderIsRejected() {
+        // When & Then
         assertThatThrownBy(() -> authService.loginWithOAuth(new OAuthLoginRequest("KAKAO", "valid-token")))
                 .isInstanceOf(AuthException.class)
                 .hasMessage("Unsupported OAuth provider");
@@ -224,10 +241,13 @@ class AuthServiceTest {
     @Test
     @DisplayName("JWT provider는 access token의 사용자와 세션 claim을 함께 파싱한다")
     void jwtProviderParsesAccessTokenClaims() {
+        // Given
         JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(7L);
 
+        // When
         JwtTokenProvider.AccessTokenClaims claims = jwtTokenProvider.parseAccessToken(tokens.accessToken());
 
+        // Then
         assertThat(claims.userId()).isEqualTo(7L);
         assertThat(claims.sessionId()).isEqualTo(tokens.refreshSessionId());
     }
@@ -235,8 +255,10 @@ class AuthServiceTest {
     @Test
     @DisplayName("JWT provider는 refresh token을 access token으로 사용할 수 없게 거부한다")
     void jwtProviderRejectsRefreshTokenAsAccessToken() {
+        // Given
         JwtTokenProvider.TokenPair tokens = jwtTokenProvider.issueTokens(7L);
 
+        // When & Then
         assertThatThrownBy(() -> jwtTokenProvider.parseAccessToken(tokens.refreshToken()))
                 .isInstanceOf(AuthException.class);
     }
@@ -244,14 +266,17 @@ class AuthServiceTest {
     @Test
     @DisplayName("Refresh Token 갱신은 같은 세션에서 token pair를 회전한다")
     void refreshRotatesTokenPair() {
+        // Given
         AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
         JwtTokenProvider.RefreshTokenClaims originalClaims =
                 jwtTokenProvider.parseRefreshToken(login.getRefreshToken());
 
+        // When
         AuthTokenResponse refreshed = authService.refresh(new RefreshTokenRequest(login.getRefreshToken()));
         JwtTokenProvider.RefreshTokenClaims refreshedClaims =
                 jwtTokenProvider.parseRefreshToken(refreshed.getRefreshToken());
 
+        // Then
         assertThat(refreshed.getAccessToken()).isNotEqualTo(login.getAccessToken());
         assertThat(refreshed.getRefreshToken()).isNotEqualTo(login.getRefreshToken());
         assertThat(refreshedClaims.sessionId()).isEqualTo(originalClaims.sessionId());
@@ -266,13 +291,16 @@ class AuthServiceTest {
     @Test
     @DisplayName("회전 전 Refresh Token 재사용은 세션 전체를 폐기한다")
     void reusedRefreshTokenRevokesSession() {
+        // Given
         AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
         AuthTokenResponse refreshed = authService.refresh(new RefreshTokenRequest(login.getRefreshToken()));
         String sessionId = jwtTokenProvider.parseRefreshToken(login.getRefreshToken()).sessionId();
 
+        // When & Then: 회전 전 token 재사용
         assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(login.getRefreshToken())))
                 .isInstanceOf(AuthException.class);
 
+        // Then: 세션이 폐기되어 최신 token도 쓸 수 없다
         RefreshTokenSession session = refreshTokenSessionRepository.findById(sessionId).orElseThrow();
         assertThat(session.isRevoked()).isTrue();
         assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(refreshed.getRefreshToken())))
@@ -282,13 +310,16 @@ class AuthServiceTest {
     @Test
     @DisplayName("로그아웃은 현재 Refresh Token 세션을 폐기한다")
     void logoutRevokesRefreshSession() {
+        // Given
         AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
         String sessionId = jwtTokenProvider.parseRefreshToken(login.getRefreshToken()).sessionId();
-
         assertThat(activeSessionAuthenticator.authenticateBearer("Bearer " + login.getAccessToken()))
                 .isEqualTo(login.getUser().getUserId());
+
+        // When
         authService.logout(new RefreshTokenRequest(login.getRefreshToken()));
 
+        // Then
         RefreshTokenSession session = refreshTokenSessionRepository.findById(sessionId).orElseThrow();
         assertThat(session.isRevoked()).isTrue();
         assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(login.getRefreshToken())))
@@ -301,13 +332,16 @@ class AuthServiceTest {
     @Test
     @DisplayName("회원 탈퇴 재확인은 Access Token 사용자와 현재 Refresh Token 소유자가 같아야 한다")
     void validatesCurrentRefreshTokenForAccountDeletion() {
+        // Given
         AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
 
+        // When & Then: 같은 사용자면 통과한다
         authService.validateCurrentRefreshToken(
                 login.getUser().getUserId(),
                 new RefreshTokenRequest(login.getRefreshToken())
         );
 
+        // When & Then: 다른 사용자면 거부한다
         assertThatThrownBy(() -> authService.validateCurrentRefreshToken(
                 login.getUser().getUserId() + 1,
                 new RefreshTokenRequest(login.getRefreshToken())
@@ -317,9 +351,11 @@ class AuthServiceTest {
     @Test
     @DisplayName("회전 전 Refresh Token으로는 회원 탈퇴를 승인하지 않는다")
     void rejectsStaleRefreshTokenForAccountDeletion() {
+        // Given
         AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
         authService.refresh(new RefreshTokenRequest(login.getRefreshToken()));
 
+        // When & Then
         assertThatThrownBy(() -> authService.validateCurrentRefreshToken(
                 login.getUser().getUserId(),
                 new RefreshTokenRequest(login.getRefreshToken())
@@ -329,6 +365,7 @@ class AuthServiceTest {
     @Test
     @DisplayName("DB 세션 절대 만료가 지나면 유효한 JWT도 갱신할 수 없다")
     void expiredDatabaseSessionIsRejected() {
+        // Given
         AuthTokenResponse login = authService.loginWithOAuth(new OAuthLoginRequest("GOOGLE", "valid-token"));
         String sessionId = jwtTokenProvider.parseRefreshToken(login.getRefreshToken()).sessionId();
         entityManager.createNativeQuery("""
@@ -340,6 +377,7 @@ class AuthServiceTest {
                 .executeUpdate();
         entityManager.clear();
 
+        // When & Then
         assertThatThrownBy(() -> authService.refresh(new RefreshTokenRequest(login.getRefreshToken())))
                 .isInstanceOf(AuthException.class);
     }

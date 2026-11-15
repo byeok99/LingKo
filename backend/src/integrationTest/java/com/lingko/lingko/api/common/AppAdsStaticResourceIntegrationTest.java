@@ -33,6 +33,7 @@ class AppAdsStaticResourceIntegrationTest {
     @Test
     @DisplayName("app-ads.txt는 인증 없이 plain text 판매자 레코드를 반환한다")
     void appAds는_공개_plainText로_열린다() throws Exception {
+        // When & Then
         mockMvc.perform(get("/app-ads.txt").accept(MediaType.TEXT_PLAIN))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
@@ -42,6 +43,7 @@ class AppAdsStaticResourceIntegrationTest {
     @Test
     @DisplayName("robots.txt는 AdMob 크롤러의 접근을 허용한다")
     void robots는_AdMob_크롤러를_허용한다() throws Exception {
+        // When & Then
         mockMvc.perform(get("/robots.txt").accept(MediaType.TEXT_PLAIN))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))

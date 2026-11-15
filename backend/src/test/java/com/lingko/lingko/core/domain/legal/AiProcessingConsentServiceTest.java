@@ -34,13 +34,17 @@ class AiProcessingConsentServiceTest {
 
     @Test
     void missingConsentDeniesTransmission() {
+        // When & Then
         assertThat(service.getStatus(7L).granted()).isFalse();
         assertThatThrownBy(() -> service.requireGranted(7L)).isInstanceOf(AiConsentRequiredException.class);
     }
 
     @Test
     void explicitGrantUsesServerTimeAndCurrentVersion() {
+        // When
         var status = service.record(7L, true, AiProcessingConsentService.CURRENT_VERSION);
+
+        // Then
         assertThat(status.granted()).isTrue();
         assertThat(status.recordedAt()).isEqualTo(now);
         verify(repository).saveAndFlush(argThat(record -> record.isGranted()
@@ -49,6 +53,7 @@ class AiProcessingConsentServiceTest {
 
     @Test
     void obsoleteNoticeCannotBeAccepted() {
+        // When & Then
         assertThatThrownBy(() -> service.record(7L, true, "2026-08-07"))
                 .isInstanceOf(IllegalArgumentException.class);
         verify(repository, never()).saveAndFlush(any());
@@ -56,18 +61,24 @@ class AiProcessingConsentServiceTest {
 
     @Test
     void withdrawalDeniesTransmission() {
+        // Given: 최신 이력이 철회
         when(repository.findFirstByUserUserIdxOrderByIdDesc(7L)).thenReturn(Optional.of(
                 AiProcessingConsent.record(user, AiProcessingConsentService.CURRENT_VERSION, false, now)));
+
+        // When & Then
         assertThatThrownBy(() -> service.requireGranted(7L)).isInstanceOf(AiConsentRequiredException.class);
     }
 
     @Test
     void newGrantDoesNotAuthorizeAnOldJob() {
+        // Given: 최신 동의 이력 ID는 22
         var latest = mock(AiProcessingConsent.class);
         when(latest.isGranted()).thenReturn(true);
         when(latest.getNoticeVersion()).thenReturn(AiProcessingConsentService.CURRENT_VERSION);
         when(latest.getId()).thenReturn(22L);
         when(repository.findFirstByUserUserIdxOrderByIdDesc(7L)).thenReturn(Optional.of(latest));
+
+        // When & Then: 이전 동의(21)나 동의 없이 만든 작업은 거부한다
         assertThat(service.requireGranted(7L)).isEqualTo(22L);
         assertThatThrownBy(() -> service.requireJobConsent(7L, 21L)).isInstanceOf(AiConsentRequiredException.class);
         assertThatThrownBy(() -> service.requireJobConsent(7L, null)).isInstanceOf(AiConsentRequiredException.class);

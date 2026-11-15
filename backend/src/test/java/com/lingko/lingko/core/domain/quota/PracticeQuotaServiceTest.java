@@ -63,10 +63,13 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("오늘 quota가 없으면 Asia/Seoul 날짜 기준으로 기본 5회 quota를 만든다")
     void createsDefaultTodayQuota() {
+        // Given
         User user = saveUser();
 
+        // When
         PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
 
+        // Then
         assertThat(response.date()).isEqualTo(LocalDate.of(2026, 6, 29));
         assertThat(response.freeLimit()).isEqualTo(5);
         assertThat(response.freeUsed()).isZero();
@@ -81,10 +84,13 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("평가 성공 차감은 무료 quota를 먼저 사용한다")
     void consumeFreeQuotaFirst() {
+        // Given
         User user = saveUser();
 
+        // When
         PracticeQuotaResponse response = completePractice(user.getUserIdx());
 
+        // Then
         assertThat(response.freeUsed()).isEqualTo(1);
         assertThat(response.rewardedAvailable()).isZero();
         assertThat(response.remainingPractices()).isEqualTo(4);
@@ -95,22 +101,28 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("한 시간마다 1회 충전되고 최대 5회에 도달하면 timer를 제거한다")
     void replenishesOnePracticeEveryHourUpToMaximum() {
+        // Given: 2회 사용
         User user = saveUser();
         completePractice(user.getUserIdx());
         completePractice(user.getUserIdx());
 
+        // Then: 첫 충전 예정 시각
         Instant firstRefillAt = clock.instant().plus(Duration.ofHours(1));
         assertThat(quotaService.getTodayQuota(user.getUserIdx()).nextRefillAt().toInstant())
                 .isEqualTo(firstRefillAt);
 
+        // When: 1시간 30분 경과
         clock.advance(Duration.ofHours(1).plusMinutes(30));
         PracticeQuotaResponse afterOneInterval = quotaService.getTodayQuota(user.getUserIdx());
+        // Then: 1회 충전되고 다음 timer가 이어진다
         assertThat(afterOneInterval.remainingPractices()).isEqualTo(4);
         assertThat(afterOneInterval.nextRefillAt().toInstant())
                 .isEqualTo(firstRefillAt.plus(Duration.ofHours(1)));
 
+        // When: 30분 추가 경과
         clock.advance(Duration.ofMinutes(30));
         PracticeQuotaResponse full = quotaService.getTodayQuota(user.getUserIdx());
+        // Then: 최대치에 도달하면 timer를 제거한다
         assertThat(full.remainingPractices()).isEqualTo(5);
         assertThat(full.nextRefillAt()).isNull();
     }
@@ -118,15 +130,18 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("추가 소모는 이미 진행 중인 자연 충전 timer를 초기화하지 않는다")
     void additionalConsumptionKeepsExistingRefillTimer() {
+        // Given
         User user = saveUser();
         completePractice(user.getUserIdx());
         Instant firstRefillAt = quotaService.getTodayQuota(user.getUserIdx())
                 .nextRefillAt()
                 .toInstant();
 
+        // When
         clock.advance(Duration.ofMinutes(20));
         PracticeQuotaResponse response = completePractice(user.getUserIdx());
 
+        // Then
         assertThat(response.remainingPractices()).isEqualTo(3);
         assertThat(response.nextRefillAt().toInstant()).isEqualTo(firstRefillAt);
     }
@@ -134,16 +149,19 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("날짜가 바뀌어도 자정 초기화 없이 1시간 충전 주기를 유지한다")
     void keepsHourlyRefillAcrossMidnight() {
+        // Given
         User user = saveUser();
         clock.advance(Duration.ofHours(23).plusMinutes(20));
         for (int attempt = 0; attempt < 5; attempt++) {
             completePractice(user.getUserIdx());
         }
 
+        // When
         Instant nextRefillAt = clock.instant().plus(Duration.ofHours(1));
         clock.advance(Duration.ofMinutes(20));
         PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
 
+        // Then
         assertThat(response.remainingPractices()).isZero();
         assertThat(response.date()).isEqualTo(LocalDate.of(2026, 6, 30));
         assertThat(response.nextRefillAt().toInstant()).isEqualTo(nextRefillAt);
@@ -153,13 +171,16 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("무료 quota를 모두 쓰면 보상 quota를 사용한다")
     void consumeRewardQuotaAfterFreeQuota() {
+        // Given
         User user = saveUser();
         exhaustFreePractices(user.getUserIdx());
         quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-1");
         quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-2");
 
+        // When
         PracticeQuotaResponse response = completePractice(user.getUserIdx());
 
+        // Then
         assertThat(response.freeUsed()).isEqualTo(5);
         assertThat(response.rewardedAvailable()).isEqualTo(1);
         assertThat(response.remainingPractices()).isEqualTo(1);
@@ -168,9 +189,11 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("남은 quota가 없으면 차감할 수 없다")
     void cannotConsumeWhenQuotaIsExhausted() {
+        // Given
         User user = saveUser();
         exhaustFreePractices(user.getUserIdx());
 
+        // When & Then
         assertThatThrownBy(() -> quotaService.reservePractice(user.getUserIdx()))
                 .isInstanceOf(QuotaExceededException.class);
     }
@@ -178,6 +201,7 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("무료 quota 예약을 취소하면 동일 날짜의 무료 사용량이 복구된다")
     void releasesReservedFreeQuota() {
+        // Given: 무료 quota 1회를 예약한 상태
         User user = saveUser();
 
         PracticeQuotaService.PracticeQuotaReservation reservation =
@@ -186,8 +210,11 @@ class PracticeQuotaServiceTest {
         assertThat(reserved.remainingPractices()).isEqualTo(4);
         assertThat(reserved.nextRefillAt().toInstant())
                 .isEqualTo(clock.instant().plus(Duration.ofHours(1)));
+
+        // When
         quotaService.releasePractice(reservation);
 
+        // Then
         PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
         assertThat(reservation.source()).isEqualTo(PracticeQuotaService.QuotaSource.FREE);
         assertThat(response.freeUsed()).isZero();
@@ -198,11 +225,13 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("이미 복구된 quota 예약은 최종 실패 처리가 반복돼도 false를 반환한다")
     void reportsAlreadyReleasedReservationWithoutThrowing() {
+        // Given
         User user = saveUser();
         PracticeQuotaService.PracticeQuotaReservation reservation =
                 quotaService.reservePractice(user.getUserIdx());
         quotaService.releasePractice(reservation);
 
+        // When & Then
         assertThat(quotaService.releasePracticeIfReserved(reservation)).isFalse();
         assertThat(quotaService.getTodayQuota(user.getUserIdx()).remainingPractices())
                 .isEqualTo(5);
@@ -211,12 +240,15 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("무료 quota 예약을 확정하면 예약량이 사용량으로 전환된다")
     void confirmsReservedFreeQuota() {
+        // Given
         User user = saveUser();
 
+        // When
         PracticeQuotaService.PracticeQuotaReservation reservation =
                 quotaService.reservePractice(user.getUserIdx());
         quotaService.confirmPractice(reservation);
 
+        // Then
         PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
         assertThat(response.freeUsed()).isEqualTo(1);
         assertThat(response.remainingPractices()).isEqualTo(4);
@@ -225,14 +257,17 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("보상 quota 예약을 취소하면 보상 횟수가 복구된다")
     void releasesReservedRewardedQuota() {
+        // Given
         User user = saveUser();
         exhaustFreePractices(user.getUserIdx());
         quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-for-release");
 
+        // When
         PracticeQuotaService.PracticeQuotaReservation reservation =
                 quotaService.reservePractice(user.getUserIdx());
         quotaService.releasePractice(reservation);
 
+        // Then
         PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
         assertThat(reservation.source()).isEqualTo(PracticeQuotaService.QuotaSource.REWARDED);
         assertThat(response.rewardedAvailable()).isEqualTo(1);
@@ -242,6 +277,7 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("광고 보상은 1회를 추가하되 진행 중인 자연 충전 timer를 바꾸지 않는다")
     void grantsOneAdRewardWithoutResettingRefillTimer() {
+        // Given
         User user = saveUser();
         completePractice(user.getUserIdx());
         completePractice(user.getUserIdx());
@@ -249,10 +285,12 @@ class PracticeQuotaServiceTest {
                 .nextRefillAt()
                 .toInstant();
 
+        // When
         clock.advance(Duration.ofMinutes(20));
         boolean credited = quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-123");
         PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
 
+        // Then
         assertThat(credited).isTrue();
         assertThat(response.rewardedAvailable()).isEqualTo(1);
         assertThat(response.remainingPractices()).isEqualTo(4);
@@ -263,14 +301,17 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("같은 광고 reward event는 재요청해도 한 번만 지급한다")
     void grantsSameRewardEventOnlyOnce() {
+        // Given
         User user = saveUser();
         completePractice(user.getUserIdx());
         completePractice(user.getUserIdx());
 
+        // When
         quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-123");
         boolean repeatedCredit = quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-123");
         PracticeQuotaResponse repeated = quotaService.getTodayQuota(user.getUserIdx());
 
+        // Then
         assertThat(repeatedCredit).isFalse();
         assertThat(repeated.rewardedAvailable()).isEqualTo(1);
         assertThat(repeated.remainingPractices()).isEqualTo(4);
@@ -280,11 +321,14 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("현재 기회가 최대 5회이면 광고 event를 기록하되 추가 지급하지 않는다")
     void doesNotExceedFivePractices() {
+        // Given
         User user = saveUser();
 
+        // When
         boolean credited = quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-event-at-max");
         PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
 
+        // Then
         assertThat(credited).isFalse();
         assertThat(response.remainingPractices()).isEqualTo(5);
         assertThat(response.rewardedAvailable()).isZero();
@@ -294,17 +338,22 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("진행 중 예약분까지 5회이면 보상하지 않아 예약 복구 뒤에도 5회를 넘지 않는다")
     void countsReservedPracticeTowardRewardCap() {
+        // Given
         User user = saveUser();
         // 잔여 4회 + 진행 중 예약 1회: 과거 기준(잔여 < 5)이면 지급되어 복구 후 6회가 됐다.
         PracticeQuotaService.PracticeQuotaReservation inFlight =
                 quotaService.reservePractice(user.getUserIdx());
         assertThat(quotaService.getTodayQuota(user.getUserIdx()).remainingPractices()).isEqualTo(4);
 
+        // When & Then: 예약분까지 5회라 보상 대상이 아니다
         assertThat(quotaService.canReceiveAdReward(user.getUserIdx())).isFalse();
+
+        // When: 보상 event가 와도 예약을 복구한다
         boolean credited = quotaService.grantVerifiedAdReward(user.getUserIdx(), "reward-during-evaluation");
         quotaService.releasePractice(inFlight);
         PracticeQuotaResponse response = quotaService.getTodayQuota(user.getUserIdx());
 
+        // Then
         assertThat(credited).isFalse();
         assertThat(response.remainingPractices()).isEqualTo(5);
     }
@@ -312,9 +361,11 @@ class PracticeQuotaServiceTest {
     @Test
     @DisplayName("예약이 없고 보유량이 5회 미만이면 광고 보상을 받을 수 있다")
     void allowsAdRewardBelowCap() {
+        // Given
         User user = saveUser();
         completePractice(user.getUserIdx());
 
+        // When & Then
         assertThat(quotaService.canReceiveAdReward(user.getUserIdx())).isTrue();
     }
 

@@ -22,6 +22,7 @@ class SyllableGuideSeedMigrationTest {
         try (Connection connection = DriverManager.getConnection(
                 "jdbc:h2:mem:syllable_guide_seed;MODE=MySQL;DATABASE_TO_UPPER=false"
         )) {
+            // Given: 기존 schema와 이미 저장된 가이드 행
             runMigration(connection, "V1__baseline_schema.sql");
             runMigration(connection, "V24__version_syllable_guide_cache.sql");
             connection.createStatement().executeUpdate("""
@@ -30,8 +31,11 @@ class SyllableGuideSeedMigrationTest {
                         ('바', 'https://guides/mouth/static.png', NULL),
                         ('각', NULL, 'https://guides/tongue/newer.mp4')
                     """);
+
+            // When
             runMigration(connection, "R__seed_generated_syllable_guides.sql");
 
+            // Then
             try (var statement = connection.prepareStatement("""
                     SELECT mouth_url, tongue_url, mouth_mapping_version, tongue_mapping_version
                     FROM syllables

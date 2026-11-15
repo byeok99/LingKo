@@ -46,6 +46,7 @@ class PracticeQuotaControllerTest {
     @Test
     @DisplayName("GET /api/quota/today는 JWT 사용자 기준 오늘 quota를 반환한다")
     void getTodayQuota() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(quotaService.getTodayQuota(7L)).thenReturn(new PracticeQuotaResponse(
                 LocalDate.of(2026, 6, 29),
@@ -57,6 +58,7 @@ class PracticeQuotaControllerTest {
                 OffsetDateTime.of(2026, 6, 29, 0, 48, 12, 0, ZoneOffset.ofHours(9))
         ));
 
+        // When & Then
         mockMvc.perform(get("/api/quota/today")
                         .header("Authorization", "Bearer valid-access-token"))
                 .andExpect(status().isOk())
@@ -72,9 +74,11 @@ class PracticeQuotaControllerTest {
     @Test
     @DisplayName("quota 조회는 Authorization bearer token이 필요하다")
     void authorizationHeaderIsRequired() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer(null))
                 .thenThrow(new AuthException("Missing bearer token"));
 
+        // When & Then
         mockMvc.perform(get("/api/quota/today"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
@@ -83,9 +87,11 @@ class PracticeQuotaControllerTest {
     @Test
     @DisplayName("유효하지 않은 bearer token은 401을 반환한다")
     void invalidBearerTokenReturnsUnauthorized() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer invalid-token"))
                 .thenThrow(new AuthException("Invalid access token"));
 
+        // When & Then
         mockMvc.perform(get("/api/quota/today")
                         .header("Authorization", "Bearer invalid-token"))
                 .andExpect(status().isUnauthorized())
@@ -95,12 +101,14 @@ class PracticeQuotaControllerTest {
     @Test
     @DisplayName("POST /api/quota/ad-reward-sessions는 인증 사용자용 1회성 SSV token을 만든다")
     void createsAdRewardSession() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(adRewardService.createSession(7L)).thenReturn(new AdRewardSessionResponse(
                 "ssv-session-token",
                 OffsetDateTime.of(2026, 6, 29, 1, 3, 12, 0, ZoneOffset.ofHours(9))
         ));
 
+        // When & Then
         mockMvc.perform(post("/api/quota/ad-reward-sessions")
                         .header("Authorization", "Bearer valid-access-token"))
                 .andExpect(status().isOk())
@@ -111,10 +119,12 @@ class PracticeQuotaControllerTest {
     @Test
     @DisplayName("GET /api/quota/ad-reward-sessions/{token}은 인증 사용자의 검증 상태를 반환한다")
     void getsAdRewardSessionStatus() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(adRewardService.getSessionStatus(7L, "ssv-session-token"))
                 .thenReturn(new AdRewardSessionStatusResponse(AdRewardSessionStatus.COMPLETED, true));
 
+        // When & Then
         mockMvc.perform(get("/api/quota/ad-reward-sessions/ssv-session-token")
                         .header("Authorization", "Bearer valid-access-token"))
                 .andExpect(status().isOk())
@@ -125,6 +135,7 @@ class PracticeQuotaControllerTest {
     @Test
     @DisplayName("기존 client 직접 보상 지급 endpoint는 더 이상 노출하지 않는다")
     void rejectsLegacyClientRewardClaim() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/quota/ad-rewards")
                         .header("Authorization", "Bearer valid-access-token")
                         .contentType("application/json")

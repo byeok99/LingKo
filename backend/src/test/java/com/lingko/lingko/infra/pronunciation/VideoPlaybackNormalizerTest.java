@@ -23,13 +23,16 @@ class VideoPlaybackNormalizerTest {
     @Test
     @DisplayName("FFmpeg 실행에 실패하면 예외 대신 원본 경로를 그대로 돌려준다")
     void fallsBackToSourceWhenFfmpegFails(@TempDir Path tempDir) throws Exception {
+        // Given
         FfmpegSettings settings = mock(FfmpegSettings.class);
         // 존재하지 않는 실행 파일로 실패를 강제한다.
         when(settings.getPath()).thenReturn(tempDir.resolve("no-such-ffmpeg").toString());
         Path source = Files.writeString(tempDir.resolve("guide.mp4"), "not-a-real-video");
 
+        // When
         Path result = new VideoPlaybackNormalizer(settings).normalize(source);
 
+        // Then
         assertThat(result).isEqualTo(source);
         // 실패한 보정의 부산물이 남아 임시 파일 정리 대상에서 새면 안 된다.
         assertThat(tempDir.resolve("normalized_guide.mp4")).doesNotExist();

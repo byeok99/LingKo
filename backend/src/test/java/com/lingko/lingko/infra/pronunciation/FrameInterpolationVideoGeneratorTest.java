@@ -20,6 +20,7 @@ class FrameInterpolationVideoGeneratorTest {
     @Test
     @DisplayName("urlPairs가 null이면 VideoGenerationException으로 변환한다")
     void generateRejectsNullUrlPairs() {
+        // Given
         FrameInterpolationVideoGenerator generator = new FrameInterpolationVideoGenerator(
                 mock(ReplicateApiClient.class),
                 mock(VideoMerger.class),
@@ -28,6 +29,7 @@ class FrameInterpolationVideoGeneratorTest {
                 mock(VideoPlaybackNormalizer.class)
         );
 
+        // When & Then
         assertThatThrownBy(() -> generator.generate(null, "가", VideoType.MOUTH))
                 .isInstanceOf(VideoGenerationException.class)
                 .hasMessageContaining("영상 생성 실패");

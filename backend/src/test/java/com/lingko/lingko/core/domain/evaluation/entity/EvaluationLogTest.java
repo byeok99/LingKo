@@ -19,6 +19,7 @@ class EvaluationLogTest {
     @Test
     @DisplayName("addSyllable은 aggregate 리스트와 역참조를 함께 설정한다")
     void addSyllableKeepsBidirectionalRelation() {
+        // Given
         EvaluationLog evaluationLog = EvaluationLog.builder()
                 .user(User.builder()
                         .socialId("social-id")
@@ -39,8 +40,10 @@ class EvaluationLogTest {
                 .tongueGuideUrl("https://example.com/tongue/bap.png")
                 .build();
 
+        // When
         evaluationLog.addSyllable(syllable);
 
+        // Then
         assertThat(evaluationLog.getSyllableList()).containsExactly(syllable);
         assertThat(syllable.getEvaluationLog()).isSameAs(evaluationLog);
         assertThat(syllable.getPositionNo()).isZero();
@@ -52,6 +55,7 @@ class EvaluationLogTest {
     @Test
     @DisplayName("addSyllable은 null을 허용하지 않는다")
     void addSyllableRejectsNull() {
+        // Given
         EvaluationLog evaluationLog = EvaluationLog.builder()
                 .user(User.builder()
                         .socialId("social-id")
@@ -64,6 +68,7 @@ class EvaluationLogTest {
                 .pronunciationScore(new BigDecimal("90.00"))
                 .build();
 
+        // When & Then
         assertThatThrownBy(() -> evaluationLog.addSyllable(null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("syllable must not be null");
@@ -72,6 +77,7 @@ class EvaluationLogTest {
     @Test
     @DisplayName("EvaluationLog는 평가 저장에 필요한 발음, 점수, 입력 source snapshot을 가진다")
     void evaluationLogKeepsEvaluationSnapshot() {
+        // When
         EvaluationLog evaluationLog = EvaluationLog.builder()
                 .user(User.builder()
                         .socialId("social-id")
@@ -90,6 +96,7 @@ class EvaluationLogTest {
                 .audioUrl("https://example.com/audio/evaluation.wav")
                 .build();
 
+        // Then
         assertThat(evaluationLog.getSource()).isEqualTo(EvaluationLog.PracticeSource.RECOMMENDED);
         assertThat(evaluationLog.getSentenceId()).isEqualTo(1L);
         assertThat(evaluationLog.getStandardPronunciation()).isEqualTo("마싯게따.");

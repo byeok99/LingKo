@@ -25,6 +25,7 @@ class EvaluationPersistenceMigrationTest {
         try (Connection connection = DriverManager.getConnection(
                 "jdbc:h2:mem:evaluation_persistence;MODE=MySQL;DATABASE_TO_UPPER=false"
         )) {
+            // When
             RunScript.execute(
                     connection,
                     new FileReader(
@@ -47,6 +48,7 @@ class EvaluationPersistenceMigrationTest {
                     )
             );
 
+            // Then
             assertColumn(connection, "evaluation_log", "source");
             assertColumn(connection, "evaluation_log", "sentence_id");
             assertColumn(connection, "evaluation_log", "standard_pronunciation");

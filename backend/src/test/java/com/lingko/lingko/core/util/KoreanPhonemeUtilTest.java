@@ -21,6 +21,7 @@ class KoreanPhonemeUtilTest {
             "꽃은, 꼬츤"
     })
     void testToPronunciation_연음화(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input))
                 .isEqualTo(expected);
     }
@@ -33,6 +34,7 @@ class KoreanPhonemeUtilTest {
             "밥물, 밤물"
     })
     void testToPronunciation_비음화(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input))
                 .isEqualTo(expected);
     }
@@ -45,6 +47,7 @@ class KoreanPhonemeUtilTest {
             "집세, 집쎄"
     })
     void testToPronunciation_경음화(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input))
                 .isEqualTo(expected);
     }
@@ -57,6 +60,7 @@ class KoreanPhonemeUtilTest {
             "붙이다, 부치다"
     })
     void testToPronunciation_구개음화(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input))
                 .isEqualTo(expected);
     }
@@ -67,6 +71,7 @@ class KoreanPhonemeUtilTest {
             "칼날, 칼랄"
     })
     void testToPronunciation_유음화(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input))
                 .isEqualTo(expected);
     }
@@ -81,6 +86,7 @@ class KoreanPhonemeUtilTest {
             "좋지, 조치"
     })
     void testToPronunciation_격음화(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input))
                 .isEqualTo(expected);
     }
@@ -95,6 +101,7 @@ class KoreanPhonemeUtilTest {
             "값, 갑"
     })
     void testToPronunciation_종성7음(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input))
                 .isEqualTo(expected);
     }
@@ -106,6 +113,7 @@ class KoreanPhonemeUtilTest {
             "앞, 압"
     })
     void testToPronunciation_어말받침도대표음으로바꾼다(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input)).isEqualTo(expected);
     }
 
@@ -117,6 +125,7 @@ class KoreanPhonemeUtilTest {
             "싫네, 실레"
     })
     void testToPronunciation_히읗탈락과격음화를문맥에맞게적용한다(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input)).isEqualTo(expected);
     }
 
@@ -129,6 +138,7 @@ class KoreanPhonemeUtilTest {
             "읊어, 을퍼"
     })
     void testToPronunciation_겹받침연음에서앞자음은받침에남긴다(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input)).isEqualTo(expected);
     }
 
@@ -141,17 +151,20 @@ class KoreanPhonemeUtilTest {
             "희망, 히망"
     })
     void testToPronunciation_겹받침과리을및의발음회귀를보호한다(String input, String expected) {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation(input)).isEqualTo(expected);
     }
 
     @Test
     void testToPronunciation_맛있겠다는대표음과경음화를적용한다() {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation("맛있겠다"))
                 .isEqualTo("마싣껟따");
     }
 
     @Test
     void testToPronunciation_비한글과공백은유지한다() {
+        // When & Then
         assertThat(KoreanPhonemeUtil.toPronunciation("밥이 good!"))
                 .isEqualTo("바비 good!");
     }

@@ -17,13 +17,16 @@ class GuideMediaPrewarmServiceTest {
 
     @Test
     void dryRunReportsSelectionWithoutCallingExternalGenerator() {
+        // Given
         GuideMediaPrewarmPlanner planner = mock(GuideMediaPrewarmPlanner.class);
         VideoGenerator generator = mock(VideoGenerator.class);
         when(planner.planAll()).thenReturn(items());
         GuideMediaPrewarmService service = new GuideMediaPrewarmService(planner, generator);
 
+        // When
         var report = service.prewarm(new GuideMediaPrewarmOptions(true, 0, 1, null, true));
 
+        // Then
         assertThat(report.planned()).isEqualTo(2);
         assertThat(report.plannedSegments()).isEqualTo(2);
         assertThat(report.selected()).isEqualTo(1);
@@ -35,6 +38,7 @@ class GuideMediaPrewarmServiceTest {
 
     @Test
     void continuesAfterOneItemFailsAndReportsBothOutcomes() {
+        // Given
         GuideMediaPrewarmPlanner planner = mock(GuideMediaPrewarmPlanner.class);
         when(planner.planAll()).thenReturn(items());
         AtomicInteger calls = new AtomicInteger();
@@ -46,8 +50,10 @@ class GuideMediaPrewarmServiceTest {
         };
         GuideMediaPrewarmService service = new GuideMediaPrewarmService(planner, generator);
 
+        // When
         var report = service.prewarm(new GuideMediaPrewarmOptions(false, 0, 2, null, true));
 
+        // Then
         assertThat(report.succeeded()).isOne();
         assertThat(report.failed()).isOne();
         assertThat(report.failedSignatures()).containsExactly("mouth-signature");
