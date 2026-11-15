@@ -24,11 +24,14 @@ class GuideGenerationJobServiceTest {
 
     @Test
     void submitCompletesJobWithGeneratedVideoUrl() {
+        // Given
         VideoGenerator generator = (urlPairs, syllable, type) -> "https://cdn.example.com/guides/ma.mp4";
         GuideGenerationJobService service = new GuideGenerationJobService(generator, Runnable::run);
 
+        // When
         var job = service.submit("마", VideoType.MOUTH, List.of(List.of("https://example.com/a.png", "https://example.com/b.png")));
 
+        // Then
         assertThat(job.getStatus()).isEqualTo(GuideGenerationJobStatus.COMPLETED);
         assertThat(job.getResultUrl()).isEqualTo("https://cdn.example.com/guides/ma.mp4");
         assertThat(job.getCacheKey()).isNotBlank();
@@ -37,6 +40,7 @@ class GuideGenerationJobServiceTest {
 
     @Test
     void submitReusesExistingJobForSameCacheKey() {
+        // Given
         AtomicInteger calls = new AtomicInteger();
         VideoGenerator generator = (urlPairs, syllable, type) -> {
             calls.incrementAndGet();
@@ -45,15 +49,18 @@ class GuideGenerationJobServiceTest {
         GuideGenerationJobService service = new GuideGenerationJobService(generator, Runnable::run);
         List<List<String>> urlPairs = List.of(List.of("https://example.com/a.png", "https://example.com/b.png"));
 
+        // When
         var first = service.submit("마", VideoType.MOUTH, urlPairs);
         var second = service.submit("마", VideoType.MOUTH, urlPairs);
 
+        // Then
         assertThat(second.getJobId()).isEqualTo(first.getJobId());
         assertThat(calls).hasValue(1);
     }
 
     @Test
     void submitSharesAJobWhenDifferentSyllablesUseTheSameFrameSequence() {
+        // Given
         AtomicInteger calls = new AtomicInteger();
         VideoGenerator generator = (urlPairs, syllable, type) -> {
             calls.incrementAndGet();
@@ -62,28 +69,34 @@ class GuideGenerationJobServiceTest {
         GuideGenerationJobService service = new GuideGenerationJobService(generator, Runnable::run);
         List<List<String>> urlPairs = List.of(List.of("https://example.com/a.png", "https://example.com/b.png"));
 
+        // When
         var first = service.submit("가", VideoType.TONGUE, urlPairs);
         var second = service.submit("까", VideoType.TONGUE, urlPairs);
 
+        // Then
         assertThat(second.getJobId()).isEqualTo(first.getJobId());
         assertThat(calls).hasValue(1);
     }
 
     @Test
     void submitMarksJobFailedWhenGeneratorFails() {
+        // Given
         VideoGenerator generator = (urlPairs, syllable, type) -> {
             throw new IllegalStateException("replicate timeout");
         };
         GuideGenerationJobService service = new GuideGenerationJobService(generator, Runnable::run);
 
+        // When
         var job = service.submit("마", VideoType.MOUTH, List.of(List.of("https://example.com/a.png", "https://example.com/b.png")));
 
+        // Then
         assertThat(job.getStatus()).isEqualTo(GuideGenerationJobStatus.FAILED);
         assertThat(job.getErrorMessage()).isEqualTo("Guide generation failed");
     }
 
     @Test
     void validatesEverySourceUrlBeforeRegisteringOrExecutingJob() {
+        // Given
         AtomicInteger generationCalls = new AtomicInteger();
         VideoGenerator generator = (urlPairs, syllable, type) -> {
             generationCalls.incrementAndGet();
@@ -101,6 +114,7 @@ class GuideGenerationJobServiceTest {
                 1
         );
 
+        // When & Then
         assertThatThrownBy(() -> service.submit(
                 "마",
                 VideoType.MOUTH,
@@ -111,6 +125,7 @@ class GuideGenerationJobServiceTest {
 
     @Test
     void rejectsDistinctJobWhileConcurrencySlotIsOccupiedAndReleasesItAfterCompletion() {
+        // Given
         AtomicReference<Runnable> pending = new AtomicReference<>();
         GuideGenerationJobService service = new GuideGenerationJobService(
                 (urlPairs, syllable, type) -> "https://cdn.example.com/guides/" + syllable + ".mp4",
@@ -119,14 +134,18 @@ class GuideGenerationJobServiceTest {
                 1
         );
 
+        // When: 동시 처리 슬롯을 점유한 상태에서 다른 작업을 요청한다
         service.submit("마", VideoType.MOUTH, List.of(List.of("https://replicate.delivery/a.png")));
+        // Then
         assertThatThrownBy(() -> service.submit(
                 "나",
                 VideoType.MOUTH,
                 List.of(List.of("https://replicate.delivery/b.png"))
         )).isInstanceOf(GuideJobCapacityExceededException.class);
 
+        // When: 선행 작업이 끝나 슬롯이 반환된다
         pending.get().run();
+        // Then
         assertThat(service.submit(
                 "나",
                 VideoType.MOUTH,

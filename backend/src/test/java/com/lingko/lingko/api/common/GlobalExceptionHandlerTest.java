@@ -41,6 +41,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("정상 요청은 응답 Header와 INFO 완료 로그에 같은 requestId를 사용한다")
     void successfulRequestAndLogShareRequestId() throws Exception {
+        // Given
         String requestId = "successful-request-01";
         when(evaluationService.convertToStandardPronunciation(anyString())).thenReturn("마시께따");
         Logger logger = (Logger) LoggerFactory.getLogger(RequestIdFilter.class);
@@ -49,6 +50,7 @@ class GlobalExceptionHandlerTest {
         logger.addAppender(appender);
 
         try {
+            // When & Then
             mockMvc.perform(post("/api/pronunciation/convert")
                             .header(RequestIdFilter.HEADER_NAME, requestId)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -74,8 +76,10 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("validation 실패는 응답 Header와 ErrorResponse에 같은 requestId를 반환한다")
     void validationFailureReturnsErrorResponse() throws Exception {
+        // Given
         String requestId = "validation-request-01";
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/convert")
                         .header(RequestIdFilter.HEADER_NAME, requestId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -93,11 +97,13 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("외부 연동 실패는 내부 URL을 노출하지 않는 고정 메시지를 반환한다")
     void videoGenerationFailureDoesNotExposeInternalDetails() throws Exception {
+        // Given
         when(evaluationService.convertToStandardPronunciation(anyString()))
                 .thenThrow(new VideoGenerationException(
                         "외부 미디어 URL 연결 실패: https://replicate.delivery/private/result.mp4"
                 ));
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/convert")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"맛있겠다\"}"))
@@ -110,6 +116,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("외부 연동 실패 로그에도 credential을 포함할 수 있는 URL 원문을 남기지 않는다")
     void videoGenerationFailureDoesNotExposeSourceUrlInLogs() {
+        // Given
         Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
@@ -120,8 +127,10 @@ class GlobalExceptionHandlerTest {
                     "외부 미디어 URL 연결 실패: https://example.invalid/result.mp4?token=sensitive"
             );
 
+            // When
             new GlobalExceptionHandler().handleVideoGeneration(failure);
 
+            // Then
             org.assertj.core.api.Assertions.assertThat(appender.list)
                     .hasSize(1)
                     .allSatisfy(event -> {
@@ -138,6 +147,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("예상하지 못한 500 예외는 상세 응답 없이 ERROR stack trace를 서버 로그에 남긴다")
     void unexpectedFailureIsLoggedWithoutExposingDetails() {
+        // Given
         Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
@@ -146,8 +156,10 @@ class GlobalExceptionHandlerTest {
         try {
             RuntimeException failure = new RuntimeException("database unavailable");
 
+            // When
             var response = new GlobalExceptionHandler().handleUnexpected(failure);
 
+            // Then
             org.assertj.core.api.Assertions.assertThat(response.getStatusCode().value()).isEqualTo(500);
             org.assertj.core.api.Assertions.assertThat(response.getBody().message())
                     .isEqualTo("Unexpected server error")
@@ -168,12 +180,14 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("존재하지 않는 경로는 ERROR 로그 없이 404 NOT_FOUND를 반환한다")
     void unknownPathReturnsNotFoundWithoutErrorLog() throws Exception {
+        // Given
         Logger logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
         logger.addAppender(appender);
 
         try {
+            // When & Then
             mockMvc.perform(get("/wp-login.php"))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("NOT_FOUND"));
@@ -190,6 +204,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("지원하지 않는 HTTP method는 405와 Allow Header를 반환한다")
     void unsupportedMethodReturnsMethodNotAllowed() throws Exception {
+        // When & Then
         mockMvc.perform(get("/api/pronunciation/convert"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(header().string("Allow", org.hamcrest.Matchers.containsString("POST")))
@@ -199,6 +214,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("JSON이 아닌 Content-Type은 415를 반환한다")
     void unsupportedMediaTypeReturns415() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/convert")
                         .contentType(MediaType.TEXT_PLAIN)
                         .content("맛있겠다"))
@@ -209,6 +225,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("malformed JSON은 Jackson 내부 메시지 대신 고정 메시지를 반환한다")
     void malformedJsonHidesParserDetails() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/convert")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":"))
@@ -220,6 +237,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("LingKo 코드의 IllegalArgumentException 메시지는 유지하고 라이브러리 원문은 숨긴다")
     void illegalArgumentMessageIsExposedOnlyForApplicationCode() {
+        // Given
         GlobalExceptionHandler handler = new GlobalExceptionHandler();
         IllegalArgumentException applicationFailure =
                 new IllegalArgumentException("Only WAV audio up to 10 MiB can be uploaded");
@@ -228,6 +246,7 @@ class GlobalExceptionHandlerTest {
                 () -> java.util.UUID.fromString("not-a-uuid")
         );
 
+        // When & Then
         org.assertj.core.api.Assertions.assertThat(handler.handleIllegalArgument(applicationFailure).getBody().message())
                 .isEqualTo("Only WAV audio up to 10 MiB can be uploaded");
         org.assertj.core.api.Assertions.assertThat(handler.handleIllegalArgument(libraryFailure).getBody().message())
@@ -237,6 +256,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("예상하지 못한 500 응답과 ERROR 로그는 같은 requestId로 연결된다")
     void unexpectedFailureResponseAndLogShareRequestId() throws Exception {
+        // Given
         String requestId = "unexpected-request-01";
         when(evaluationService.convertToStandardPronunciation(anyString()))
                 .thenThrow(new RuntimeException("database unavailable"));
@@ -246,6 +266,7 @@ class GlobalExceptionHandlerTest {
         logger.addAppender(appender);
 
         try {
+            // When & Then
             mockMvc.perform(post("/api/pronunciation/convert")
                             .header(RequestIdFilter.HEADER_NAME, requestId)
                             .contentType(MediaType.APPLICATION_JSON)

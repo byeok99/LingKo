@@ -43,6 +43,7 @@ class EvaluationHistoryControllerTest {
     @Test
     @DisplayName("GET /api/evaluations/me는 JWT principal 기준 학습 기록 page를 반환한다")
     void getMyEvaluationHistory() throws Exception {
+        // Given
         PracticeHistoryResponse response = PracticeHistoryResponse.builder()
                 .items(List.of(PracticeHistoryItemResponse.builder()
                         .evaluationLogId(10L)
@@ -72,6 +73,7 @@ class EvaluationHistoryControllerTest {
         when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
         when(historyService.findHistory(7L, 0, 10)).thenReturn(response);
 
+        // When & Then
         mockMvc.perform(get("/api/evaluations/me")
                         .header("Authorization", "Bearer valid-access-token")
                         .param("page", "0")
@@ -92,9 +94,11 @@ class EvaluationHistoryControllerTest {
     @Test
     @DisplayName("학습 기록은 Authorization bearer token이 필요하다")
     void authorizationHeaderIsRequired() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer(null))
                 .thenThrow(new AuthException("Missing bearer token"));
 
+        // When & Then
         mockMvc.perform(get("/api/evaluations/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
@@ -103,9 +107,11 @@ class EvaluationHistoryControllerTest {
     @Test
     @DisplayName("유효하지 않은 bearer token은 401을 반환한다")
     void invalidBearerTokenReturnsUnauthorized() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer invalid-token"))
                 .thenThrow(new AuthException("Invalid access token"));
 
+        // When & Then
         mockMvc.perform(get("/api/evaluations/me")
                         .header("Authorization", "Bearer invalid-token"))
                 .andExpect(status().isUnauthorized())
@@ -115,8 +121,10 @@ class EvaluationHistoryControllerTest {
     @Test
     @DisplayName("학습 기록 page size는 50 이하로 제한한다")
     void sizeMustBeAtMost50() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer valid-access-token")).thenReturn(7L);
 
+        // When & Then
         mockMvc.perform(get("/api/evaluations/me")
                         .header("Authorization", "Bearer valid-access-token")
                         .param("size", "51"))

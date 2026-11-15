@@ -38,11 +38,14 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("변환한 표준 발음을 SpeechEvaluator 기준 문장으로 사용한다")
     void evaluatesConvertedTextReference() {
+        // Given
         when(speechEvaluator.evaluate(anyString(), eq("바블 머거써요"))).thenReturn(assessmentResult());
 
+        // When
         String referenceText = service.convertToStandardPronunciation("밥을 먹었어요.");
         PracticeResultResponse response = evaluate(service, referenceText);
 
+        // Then
         assertThat(response.getOverallScore()).isEqualTo(87);
         assertThat(response.getGradeLabel()).isEqualTo("Good");
         assertThat(response.getScoreBreakdown().getAccuracy()).isEqualTo(88);
@@ -56,17 +59,21 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("추천 문장도 표준 발음 변환 결과를 SpeechEvaluator 기준 문장으로 사용한다")
     void evaluateWithRecommendedSentenceReference() {
+        // Given
         when(speechEvaluator.evaluate(anyString(), eq("마싣껟따"))).thenReturn(assessmentResult());
 
+        // When
         String referenceText = service.convertToStandardPronunciation("맛있겠다.");
         PracticeResultResponse response = evaluate(service, referenceText);
 
+        // Then
         assertThat(response.getOverallScore()).isEqualTo(87);
     }
 
     @Test
     @DisplayName("Worker가 내려받은 파일의 실제 WAV 구조가 잘못되면 외부 평가 전에 거부한다")
     void rejectsInvalidWavBytes() {
+        // When & Then
         assertThatThrownBy(() -> evaluate(service, new byte[]{1, 2, 3}, "가나"))
                 .isInstanceOf(com.lingko.lingko.core.domain.evaluation.exception.InvalidEvaluationAudioException.class)
                 .hasMessage("Invalid uploaded WAV audio");
@@ -75,6 +82,7 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("PCM WAV fmt 필드의 sampleRate, byteRate, blockAlign, channels, bitsPerSample은 서로 일관되어야 한다")
     void rejectsInconsistentWavFormatFields() {
+        // Given
         List<byte[]> invalidHeaders = List.of(
                 wavAudio(16000, 1, 16, 16000, 2),
                 wavAudio(16000, 1, 16, 32000, 4),
@@ -83,6 +91,7 @@ class EvaluationServiceResultTest {
                 wavAudio(16000, 1, 8, 16000, 1)
         );
 
+        // When & Then
         assertThat(invalidHeaders).allSatisfy(header ->
                 assertThatThrownBy(() -> evaluate(service, header, "가나"))
                         .isInstanceOf(com.lingko.lingko.core.domain.evaluation.exception.InvalidEvaluationAudioException.class)
@@ -93,6 +102,7 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("신뢰할 수 있는 Azure 글자 점수로 weakCharacters를 산출한다")
     void mapsReliableCharacterScores() {
+        // Given
         AssessmentResult result = AssessmentResult.builder()
                 .accuracyScore(70.0)
                 .fluencyScore(80.0)
@@ -107,8 +117,10 @@ class EvaluationServiceResultTest {
                 .build();
         when(speechEvaluator.evaluate(anyString(), eq("가나"))).thenReturn(result);
 
+        // When
         PracticeResultResponse response = evaluate(service, "가나");
 
+        // Then
         assertThat(response.getCharacterScoreStatus()).isEqualTo(ScoreStatus.AVAILABLE);
         assertThat(response.getCharacters()).extracting("score").containsExactly(92, 55);
         assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly(ScoreStatus.AVAILABLE);
@@ -121,10 +133,13 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("Azure가 한국어 글자 매핑을 제공하지 않으면 전체 점수를 글자 점수로 복제하지 않는다")
     void exposesCharacterScoreFallback() {
+        // Given
         when(speechEvaluator.evaluate(anyString(), eq("가나"))).thenReturn(assessmentResult());
 
+        // When
         PracticeResultResponse response = evaluate(service, "가나");
 
+        // Then
         assertThat(response.getCharacterScoreStatus()).isEqualTo(ScoreStatus.UNAVAILABLE);
         assertThat(response.getCharacters()).extracting("score").containsOnlyNulls();
         assertThat(response.getCharacters()).extracting("scoreStatus").containsOnly(ScoreStatus.UNAVAILABLE);
@@ -134,6 +149,7 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("신뢰할 수 있는 단어 점수를 기준 공백 단위로 묶고 음절은 가이드로만 제공한다")
     void groupsWordScoresWithSyllableGuides() {
+        // Given
         AssessmentResult result = AssessmentResult.builder()
                 .accuracyScore(82.0)
                 .fluencyScore(84.0)
@@ -151,8 +167,10 @@ class EvaluationServiceResultTest {
                 .build();
         when(speechEvaluator.evaluate(anyString(), eq("김치찌개 하나 주세요"))).thenReturn(result);
 
+        // When
         PracticeResultResponse response = evaluate(service, "김치찌개 하나 주세요");
 
+        // Then
         assertThat(response.getWordScoreStatus()).isEqualTo(ScoreStatus.AVAILABLE);
         // 화면이 어절·음절마다 로마자를 병기하므로 응답에 함께 실려야 한다.
         assertThat(response.getWords())
@@ -174,6 +192,7 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("글자 점수가 없어도 평가 결과의 김 가이드는 초중종성 이동 영상 URL을 사용한다")
     void usesTransitionVideosForKimResultWithoutCharacterScores() {
+        // Given
         GuideMediaResolver guideMediaResolver = mock(GuideMediaResolver.class);
         EvaluationService videoGuideService = new EvaluationService(
                 mappingUtil,
@@ -199,8 +218,10 @@ class EvaluationServiceResultTest {
                 VideoType.TONGUE
         )).thenReturn("https://guides/videos/tongue-kim.mp4");
 
+        // When
         PracticeResultResponse response = evaluate(videoGuideService, "김");
 
+        // Then
         assertThat(response.getCharacters()).singleElement().satisfies(character -> {
             assertThat(character.getScoreStatus()).isEqualTo(ScoreStatus.UNAVAILABLE);
             assertThat(character.getPhonemes()).containsExactly("ㄱ", "ㅣ", "ㅁ");
@@ -212,9 +233,11 @@ class EvaluationServiceResultTest {
     @Test
     @DisplayName("Worker 경로의 외부 평가 실패를 안정적인 도메인 예외로 변환한다")
     void wrapsExternalEvaluationFailure() {
+        // Given
         when(speechEvaluator.evaluate(anyString(), eq("가나")))
                 .thenThrow(new IllegalStateException("Azure unavailable"));
 
+        // When & Then
         assertThatThrownBy(() -> evaluate(service, "가나"))
                 .hasMessage("Speech evaluation failed");
     }

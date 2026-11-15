@@ -10,18 +10,23 @@ class MicrometerGuideGenerationJobTelemetryTest {
 
     @Test
     void recordsBoundedRequestAndCompletionMetrics() {
+        // Given
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         MicrometerGuideGenerationJobTelemetry telemetry = new MicrometerGuideGenerationJobTelemetry(registry);
 
+        // When
         telemetry.request("accepted");
         telemetry.jobStarted();
 
+        // Then
         assertThat(registry.counter("lingko.guide.jobs.requests", "outcome", "accepted").count())
                 .isEqualTo(1);
         assertThat(registry.get("lingko.guide.jobs.active").gauge().value()).isEqualTo(1);
 
+        // When
         telemetry.jobFinished("completed");
 
+        // Then
         assertThat(registry.get("lingko.guide.jobs.active").gauge().value()).isZero();
         assertThat(registry.counter("lingko.guide.jobs.completed", "outcome", "completed").count())
                 .isEqualTo(1);

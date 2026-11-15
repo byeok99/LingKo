@@ -43,6 +43,7 @@ class EvaluationJobControllerTest {
     @Test
     @DisplayName("인증 사용자는 WAV 직접 업로드용 Presigned URL을 발급받는다")
     void createsUploadTicket() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer access-token")).thenReturn(7L);
         when(jobService.prepareUpload(any(), any())).thenReturn(new EvaluationUploadResponse(
                 "evaluation-audio/7/audio-id.wav",
@@ -50,6 +51,7 @@ class EvaluationJobControllerTest {
                 Instant.parse("2026-07-27T01:10:00Z")
         ));
 
+        // When & Then
         mockMvc.perform(post("/api/evaluations/uploads")
                         .header("Authorization", "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -77,6 +79,7 @@ class EvaluationJobControllerTest {
     @Test
     @DisplayName("업로드된 object key로 평가 작업을 만들고 즉시 202를 반환한다")
     void createsEvaluationJob() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer access-token")).thenReturn(7L);
         when(jobService.createJob(any(), any(), any())).thenReturn(new EvaluationJobResponse(
                 "job-id",
@@ -88,6 +91,7 @@ class EvaluationJobControllerTest {
                 Instant.parse("2026-07-27T01:00:00Z")
         ));
 
+        // When & Then
         mockMvc.perform(post("/api/evaluations/jobs")
                         .header("Authorization", "Bearer access-token")
                         .header("Idempotency-Key", "evaluation-request-1")
@@ -117,6 +121,7 @@ class EvaluationJobControllerTest {
     @Test
     @DisplayName("인증 사용자는 자신이 만든 평가 작업 상태를 조회한다")
     void getsEvaluationJob() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer access-token")).thenReturn(7L);
         when(jobService.getJob(7L, "job-id")).thenReturn(new EvaluationJobResponse(
                 "job-id",
@@ -128,6 +133,7 @@ class EvaluationJobControllerTest {
                 Instant.parse("2026-07-27T01:00:01Z")
         ));
 
+        // When & Then
         mockMvc.perform(get("/api/evaluations/jobs/job-id")
                         .header("Authorization", "Bearer access-token"))
                 .andExpect(status().isOk())

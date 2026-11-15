@@ -34,6 +34,7 @@ class EvaluationJobProcessingServiceTest {
     @Test
     @DisplayName("쿼터 예약이 이미 사라졌어도 최종 실패 작업은 FAILED로 종결한다")
     void terminatesJobWhenQuotaReservationIsAlreadyMissing() {
+        // Given
         EvaluationJobRepository jobRepository = mock(EvaluationJobRepository.class);
         EvaluationPersistenceService persistenceService = mock(EvaluationPersistenceService.class);
         PracticeQuotaService quotaService = mock(PracticeQuotaService.class);
@@ -52,8 +53,10 @@ class EvaluationJobProcessingServiceTest {
                 Clock.fixed(now, ZoneOffset.UTC)
         );
 
+        // When
         boolean terminalFailure = service.fail(job, new IllegalStateException("missing S3 object"));
 
+        // Then
         assertThat(terminalFailure).isTrue();
         assertThat(job.getStatus()).isEqualTo(EvaluationJob.Status.FAILED);
         assertThat(job.getErrorCode()).isEqualTo("EVALUATION_FAILED");
@@ -64,6 +67,7 @@ class EvaluationJobProcessingServiceTest {
     @Test
     @DisplayName("업로드 음성 형식 오류는 첫 시도에서도 재시도 없이 INVALID_AUDIO로 종결하고 예약을 복구한다")
     void terminatesInvalidAudioWithoutRetry() {
+        // Given
         EvaluationJobRepository jobRepository = mock(EvaluationJobRepository.class);
         PracticeQuotaService quotaService = mock(PracticeQuotaService.class);
         EvaluationJobSettings settings = new EvaluationJobSettings();
@@ -95,11 +99,13 @@ class EvaluationJobProcessingServiceTest {
                 Clock.fixed(now, ZoneOffset.UTC)
         );
 
+        // When
         boolean terminalFailure = service.fail(
                 job,
                 new InvalidEvaluationAudioException("Invalid uploaded WAV audio")
         );
 
+        // Then
         assertThat(job.getAttemptCount()).isEqualTo(1);
         assertThat(terminalFailure).isTrue();
         assertThat(job.getStatus()).isEqualTo(EvaluationJob.Status.FAILED);
@@ -110,6 +116,7 @@ class EvaluationJobProcessingServiceTest {
     @Test
     @DisplayName("lease 만료 후 다른 시도가 재claim한 작업은 이전 시도가 완료·실패 처리할 수 없다")
     void staleAttemptCannotCompleteOrFailReclaimedJob() {
+        // Given
         EvaluationJobRepository jobRepository = mock(EvaluationJobRepository.class);
         EvaluationPersistenceService persistenceService = mock(EvaluationPersistenceService.class);
         PracticeQuotaService quotaService = mock(PracticeQuotaService.class);
@@ -132,6 +139,7 @@ class EvaluationJobProcessingServiceTest {
                 Clock.fixed(now, ZoneOffset.UTC)
         );
 
+        // When & Then
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.complete(
                 staleSnapshot,
                 com.lingko.lingko.api.evaluation.dto.PracticeResultResponse.builder().overallScore(80).build()

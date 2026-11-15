@@ -32,6 +32,7 @@ class SentenceServiceTest {
     @Test
     @DisplayName("active 추천 문장을 category와 limit으로 조회해 응답 DTO로 변환한다")
     void findRecommendedSentences() {
+        // Given
         RecommendedSentence sentence = recommendedSentence("FOOD");
         when(repository.findByActiveTrueAndCategoryCodeOrderBySortOrderAscSentenceIdAsc(
                 "FOOD",
@@ -42,8 +43,10 @@ class SentenceServiceTest {
                 GuideCharacterResponse.builder().position(0).text("마").pronunciationText("마").build()
         ));
 
+        // When
         RecommendedSentencesResponse response = service.findRecommendedSentences(10, "food");
 
+        // Then
         assertThat(response.items()).hasSize(1);
         assertThat(response.items().get(0).getSentenceId()).isEqualTo(1L);
         assertThat(response.items().get(0).getSource()).isEqualTo("RECOMMENDED");
@@ -57,22 +60,27 @@ class SentenceServiceTest {
     @Test
     @DisplayName("category가 없으면 전체 active 추천 문장을 조회한다")
     void findRecommendedSentencesWithoutCategory() {
+        // Given
         when(repository.findByActiveTrueOrderBySortOrderAscSentenceIdAsc(PageRequest.of(0, 20)))
                 .thenReturn(List.of());
 
+        // When
         service.findRecommendedSentences(20, null);
 
+        // Then
         verify(repository).findByActiveTrueOrderBySortOrderAscSentenceIdAsc(PageRequest.of(0, 20));
     }
 
     @Test
     @DisplayName("단건 조회는 active 문장만 반환한다")
     void getSentence() {
+        // Given
         RecommendedSentence sentence = recommendedSentence("FOOD");
         when(repository.findBySentenceIdAndActiveTrue(1L)).thenReturn(Optional.of(sentence));
         when(evaluationService.convertToStandardPronunciation("맛있겠다")).thenReturn("마싣껟따");
         when(evaluationService.buildGuideCharacters("마싣껟따")).thenReturn(List.of());
 
+        // When & Then
         assertThat(service.getSentence(1L).getOriginalText()).isEqualTo("맛있겠다");
     }
 

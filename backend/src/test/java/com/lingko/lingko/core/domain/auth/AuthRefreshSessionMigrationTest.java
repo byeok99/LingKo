@@ -23,9 +23,11 @@ class AuthRefreshSessionMigrationTest {
         try (Connection connection = DriverManager.getConnection(
                 "jdbc:h2:mem:auth_refresh_session;MODE=MySQL;DATABASE_TO_UPPER=false"
         )) {
+            // When
             runMigration(connection, "V1__baseline_schema.sql");
             runMigration(connection, "V6__add_auth_refresh_sessions.sql");
 
+            // Then
             assertColumn(connection, "auth_refresh_sessions", "session_id");
             assertColumn(connection, "auth_refresh_sessions", "current_token_hash");
             assertColumn(connection, "auth_refresh_sessions", "expires_at");

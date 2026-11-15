@@ -65,9 +65,11 @@ class S3EvaluationAudioStorageTest {
     @Test
     @DisplayName("업로드되지 않은 S3 object로 작업을 만들면 400 대상 입력 오류로 변환한다")
     void rejectsMissingUploadedObject() {
+        // Given
         when(s3Client.headObject(any(HeadObjectRequest.class)))
                 .thenThrow(S3Exception.builder().statusCode(404).message("Not Found").build());
 
+        // When & Then
         assertThatThrownBy(() -> storage.validateUploaded(
                 7L,
                 "evaluation-audio/7/missing.wav"
@@ -79,9 +81,11 @@ class S3EvaluationAudioStorageTest {
     @Test
     @DisplayName("S3 서비스 장애는 사용자 입력 오류로 숨기지 않는다")
     void preservesStorageServiceFailure() {
+        // Given
         when(s3Client.headObject(any(HeadObjectRequest.class)))
                 .thenThrow(S3Exception.builder().statusCode(503).message("Unavailable").build());
 
+        // When & Then
         assertThatThrownBy(() -> storage.validateUploaded(
                 7L,
                 "evaluation-audio/7/audio.wav"
@@ -93,6 +97,7 @@ class S3EvaluationAudioStorageTest {
     @Test
     @DisplayName("현재 직접 업로드 경계는 WAV 확장자·MIME·크기를 모두 검증한다")
     void rejectsInvalidDirectUploadMetadata() {
+        // When & Then
         // multipart Controller가 사라져도 파일 형식과 크기 정책은 presigned URL 발급 전에 유지되어야 한다.
         assertThatThrownBy(() -> storage.prepareUpload(7L, "recording.mp3", "audio/wav", 44))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -111,6 +116,7 @@ class S3EvaluationAudioStorageTest {
     @Test
     @DisplayName("회원 탈퇴 시 사용자 prefix의 모든 S3 object를 batch 삭제한다")
     void deletesAllObjectsForUserPrefix() {
+        // Given
         when(s3Client.listObjectsV2(any(ListObjectsV2Request.class)))
                 .thenReturn(
                         ListObjectsV2Response.builder()
@@ -126,8 +132,10 @@ class S3EvaluationAudioStorageTest {
         when(s3Client.listObjectVersions(any(ListObjectVersionsRequest.class)))
                 .thenReturn(ListObjectVersionsResponse.builder().build());
 
+        // When
         int deletedCount = storage.deleteAllForUser(7L);
 
+        // Then
         var listRequest = forClass(ListObjectsV2Request.class);
         verify(s3Client, org.mockito.Mockito.times(2)).listObjectsV2(listRequest.capture());
         assertThat(listRequest.getAllValues())
@@ -147,6 +155,7 @@ class S3EvaluationAudioStorageTest {
     @Test
     @DisplayName("회원 탈퇴 시 Versioning 버킷의 과거 object와 delete marker도 삭제한다")
     void deletesAllObjectVersionsForUserPrefix() {
+        // Given
         when(s3Client.listObjectsV2(any(ListObjectsV2Request.class)))
                 .thenReturn(ListObjectsV2Response.builder().build());
         when(s3Client.listObjectVersions(any(ListObjectVersionsRequest.class)))
@@ -166,8 +175,10 @@ class S3EvaluationAudioStorageTest {
         when(s3Client.deleteObjects(any(DeleteObjectsRequest.class)))
                 .thenReturn(DeleteObjectsResponse.builder().build());
 
+        // When
         int deletedCount = storage.deleteAllForUser(7L);
 
+        // Then
         var listRequest = forClass(ListObjectVersionsRequest.class);
         verify(s3Client, org.mockito.Mockito.times(2)).listObjectVersions(listRequest.capture());
         assertThat(listRequest.getAllValues())
@@ -187,9 +198,11 @@ class S3EvaluationAudioStorageTest {
     @Test
     @DisplayName("회원 탈퇴 S3 정리가 실패하면 DB 삭제를 막을 수 있도록 예외를 전파한다")
     void propagatesAccountAudioCleanupFailure() {
+        // Given
         when(s3Client.listObjectsV2(any(ListObjectsV2Request.class)))
                 .thenThrow(S3Exception.builder().statusCode(503).message("Unavailable").build());
 
+        // When & Then
         assertThatThrownBy(() -> storage.deleteAllForUser(7L))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Failed to delete account audio");
@@ -198,12 +211,15 @@ class S3EvaluationAudioStorageTest {
     @Test
     @DisplayName("S3 삭제 실패 로그에는 사용자별 음성 object key를 남기지 않는다")
     void omitsAudioObjectKeyFromOperationalLogs(CapturedOutput output) {
+        // Given
         String objectKey = "evaluation-audio/7/private-recording.wav";
         when(s3Client.deleteObject(any(software.amazon.awssdk.services.s3.model.DeleteObjectRequest.class)))
                 .thenThrow(S3Exception.builder().statusCode(503).message("Unavailable").build());
 
+        // When
         storage.delete(objectKey);
 
+        // Then
         assertThat(output).doesNotContain(objectKey);
     }
 }

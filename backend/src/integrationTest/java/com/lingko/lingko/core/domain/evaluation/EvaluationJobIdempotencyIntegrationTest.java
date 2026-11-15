@@ -123,6 +123,7 @@ class EvaluationJobIdempotencyIntegrationTest {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DisplayName("동일 사용자의 같은 Idempotency 요청 10개는 작업과 quota 예약을 한 번만 생성한다")
     void createsOneJobAndOneQuotaReservationForConcurrentDuplicates() throws Exception {
+        // Given
         User user = saveUser("idempotency-concurrent-user");
         aiConsentService.record(user.getUserIdx(), true,
                 com.lingko.lingko.core.domain.legal.service.AiProcessingConsentService.CURRENT_VERSION);
@@ -134,12 +135,14 @@ class EvaluationJobIdempotencyIntegrationTest {
         when(evaluationService.convertToStandardPronunciation(anyString()))
                 .thenReturn("안녕하세여.");
 
+        // When
         List<String> jobIds = runConcurrently(() -> jobService.createJob(
                 user.getUserIdx(),
                 "same-idempotency-key",
                 request
         ).jobId());
 
+        // Then
         assertThat(jobIds).hasSize(CONCURRENT_REQUESTS).containsOnly(jobIds.getFirst());
         assertThat(jobRepository.count()).isEqualTo(1);
 
@@ -155,6 +158,7 @@ class EvaluationJobIdempotencyIntegrationTest {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DisplayName("정리 작업은 보존 기간이 지난 완료 작업만 삭제하고 진행 중 작업은 유지한다")
     void deletesOnlyExpiredTerminalJobs() {
+        // Given
         User user = saveUser("idempotency-cleanup-user");
         EvaluationJob expiredSuccess = saveJob(user, "expired-success", "expired-success.wav");
         expiredSuccess.succeed("{}", NOW.minus(Duration.ofDays(8)));
@@ -170,8 +174,10 @@ class EvaluationJobIdempotencyIntegrationTest {
                 pending
         ));
 
+        // When
         int deleted = cleanupService.cleanupExpired();
 
+        // Then
         assertThat(deleted).isEqualTo(2);
         assertThat(jobRepository.findById(expiredSuccess.getJobId())).isEmpty();
         assertThat(jobRepository.findById(expiredFailure.getJobId())).isEmpty();
@@ -181,21 +187,36 @@ class EvaluationJobIdempotencyIntegrationTest {
 
     @Test
     void consentHistoryBlocksUploadAndOldJobsAfterRegrant() {
+        // Given
         User user = saveUser("consent-history-user");
         Long id = user.getUserIdx();
         var upload = new com.lingko.lingko.api.evaluation.dto.EvaluationUploadRequest("audio.wav", "audio/wav", 44);
+
+        // When & Then: 동의 전에는 업로드 티켓을 발급하지 않는다
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> jobService.prepareUpload(id, upload))
                 .isInstanceOf(com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException.class);
         org.mockito.Mockito.verifyNoInteractions(audioStorage);
         assertThat(quotaRepository.count()).isZero();
         assertThat(aiConsentService.getStatus(id).granted()).isFalse();
+
+        // When: 같은 버전으로 다시 동의한다
         aiConsentService.record(id, true, aiConsentService.CURRENT_VERSION);
         Long first = aiConsentService.requireGranted(id);
         aiConsentService.record(id, true, aiConsentService.CURRENT_VERSION);
+
+        // Then: 기존 동의 이력을 그대로 쓴다
         assertThat(aiConsentService.requireGranted(id)).isEqualTo(first);
+
+        // When: 철회한다
         aiConsentService.record(id, false, "older-client");
+
+        // Then
         assertThat(aiConsentService.getStatus(id).granted()).isFalse();
+
+        // When: 철회 후 다시 동의한다
         aiConsentService.record(id, true, aiConsentService.CURRENT_VERSION);
+
+        // Then: 새 동의 이력이 생기고 이전 동의로 만든 작업은 거부한다
         assertThat(aiConsentService.requireGranted(id)).isNotEqualTo(first);
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> aiConsentService.requireJobConsent(id, first))
                 .isInstanceOf(com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException.class);

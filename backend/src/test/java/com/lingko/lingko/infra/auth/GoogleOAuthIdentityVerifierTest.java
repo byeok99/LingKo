@@ -52,8 +52,10 @@ class GoogleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("유효한 Google token은 프로필 claim을 포함한 신원으로 변환한다")
     void verifiesValidGoogleIdToken() throws Exception {
+        // When
         OAuthIdentity identity = verifier.verify(token(builder()), null);
 
+        // Then
         assertThat(identity.socialId()).isEqualTo("google-sub-123");
         assertThat(identity.email()).isEqualTo("learner@example.com");
         assertThat(identity.name()).isEqualTo("Learner");
@@ -63,14 +65,17 @@ class GoogleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("scheme 없는 Google issuer도 허용한다")
     void acceptsIssuerWithoutScheme() throws Exception {
+        // When
         OAuthIdentity identity = verifier.verify(token(builder().issuer("accounts.google.com")), null);
 
+        // Then
         assertThat(identity.socialId()).isEqualTo("google-sub-123");
     }
 
     @Test
     @DisplayName("다른 OAuth client audience로 발급된 token을 거부한다")
     void rejectsWrongAudience() {
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(token(builder().audience("other-client")), null))
                 .isInstanceOf(AuthException.class);
     }
@@ -78,6 +83,7 @@ class GoogleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("Google 이외 issuer를 거부한다")
     void rejectsWrongIssuer() {
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(token(builder().issuer("https://example.com")), null))
                 .isInstanceOf(AuthException.class);
     }
@@ -85,6 +91,7 @@ class GoogleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("만료된 token을 거부한다")
     void rejectsExpiredToken() {
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(
                 token(builder().expirationTime(Date.from(NOW.minusSeconds(1)))),
                 null
@@ -94,6 +101,7 @@ class GoogleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("email_verified=false token을 거부한다")
     void rejectsUnverifiedEmail() {
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(token(builder().claim("email_verified", false)), null))
                 .isInstanceOf(AuthException.class);
     }
@@ -101,22 +109,26 @@ class GoogleOAuthIdentityVerifierTest {
     @Test
     @DisplayName("공개 key와 다른 key로 서명된 token을 거부한다")
     void rejectsForgedSignature() throws Exception {
+        // Given
         RSAKey original = signingKey;
         signingKey = new RSAKeyGenerator(2048).keyID("google-key-1").generate();
         String forged = token(builder());
         signingKey = original;
 
+        // When & Then
         assertThatThrownBy(() -> verifier.verify(forged, null)).isInstanceOf(AuthException.class);
     }
 
     @Test
     @DisplayName("공개 JWK를 가져오지 못하면 401이 아닌 공급자 일시 장애로 분류한다")
     void classifiesKeySourceOutageAsProviderUnavailable() throws Exception {
+        // Given
         JWKSource<SecurityContext> unavailable = (selector, context) -> {
             throw new KeySourceException("connect timed out");
         };
         GoogleOAuthIdentityVerifier outageVerifier = verifierWith(unavailable);
 
+        // When & Then
         assertThatThrownBy(() -> outageVerifier.verify(token(builder()), null))
                 .isInstanceOf(OAuthProviderUnavailableException.class);
     }

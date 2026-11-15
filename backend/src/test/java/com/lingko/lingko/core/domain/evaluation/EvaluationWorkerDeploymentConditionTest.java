@@ -31,6 +31,7 @@ class EvaluationWorkerDeploymentConditionTest {
     @Test
     @DisplayName("API 배포는 설정으로 DB Worker를 실행하지 않는다")
     void disablesWorkerInApiDeployment() {
+        // When & Then
         contextRunner
                 .withPropertyValues("evaluation.worker.enabled=false")
                 .run(context ->
@@ -41,6 +42,7 @@ class EvaluationWorkerDeploymentConditionTest {
     @Test
     @DisplayName("독립 Worker 배포는 실제 telemetry와 DB polling Worker를 함께 실행한다")
     void enablesWorkerInIndependentDeployment() {
+        // When & Then
         contextRunner
                 .withPropertyValues("evaluation.worker.enabled=true")
                 .run(context -> {

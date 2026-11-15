@@ -47,6 +47,7 @@ class EvaluationJobExecutorTest {
     @Test
     @DisplayName("평가 성공 시 결과를 완료 처리하고 S3 원본과 로컬 임시 파일을 삭제한다")
     void completesAndDeletesAudio() {
+        // Given
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
         when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
         Path audioPath = Path.of("/tmp/audio.wav");
@@ -64,8 +65,10 @@ class EvaluationJobExecutorTest {
                 org.mockito.ArgumentMatchers.any(Runnable.class)
         );
 
+        // When
         EvaluationJobExecutor.ExecutionResult outcome = executor.execute(job);
 
+        // Then
         assertThat(outcome).isEqualTo(EvaluationJobExecutor.ExecutionResult.COMPLETED);
         var ordered = inOrder(audioStorage, processingService, evaluationService);
         ordered.verify(audioStorage).download("evaluation-audio/7/audio.wav");
@@ -85,6 +88,7 @@ class EvaluationJobExecutorTest {
     @Test
     @DisplayName("재시도 실패는 S3 원본을 유지하고 로컬 임시 파일만 삭제한다")
     void keepsSourceForRetry() {
+        // Given
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
         when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
         Path audioPath = Path.of("/tmp/audio.wav");
@@ -99,8 +103,10 @@ class EvaluationJobExecutorTest {
         )).thenThrow(failure);
         when(processingService.fail(job, failure)).thenReturn(false);
 
+        // When
         EvaluationJobExecutor.ExecutionResult outcome = executor.execute(job);
 
+        // Then
         assertThat(outcome).isEqualTo(EvaluationJobExecutor.ExecutionResult.RETRY_SCHEDULED);
         verify(audioStorage, never()).delete("evaluation-audio/7/audio.wav");
         verify(audioStorage).deleteLocal(audioPath);
@@ -108,6 +114,7 @@ class EvaluationJobExecutorTest {
 
     @Test
     void withdrawalDuringDownloadPreventsExternalTransmission() {
+        // Given
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
         when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
         when(job.getAiConsentId()).thenReturn(21L);
@@ -118,6 +125,7 @@ class EvaluationJobExecutorTest {
         org.mockito.Mockito.doNothing().doThrow(failure).when(aiConsentService).requireJobConsent(7L, 21L);
         when(processingService.fail(job, failure)).thenReturn(true);
 
+        // When & Then
         assertThat(executor.execute(job)).isEqualTo(EvaluationJobExecutor.ExecutionResult.TERMINAL_FAILURE);
         org.mockito.Mockito.verifyNoInteractions(evaluationService);
         verify(audioStorage).delete("evaluation-audio/7/audio.wav");
@@ -126,12 +134,15 @@ class EvaluationJobExecutorTest {
 
     @Test
     void missingJobConsentPreventsDownloadAndTransmission() {
+        // Given
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
         when(job.getAiConsentId()).thenReturn(null);
         when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
         var failure = new com.lingko.lingko.core.domain.legal.service.AiConsentRequiredException();
         org.mockito.Mockito.doThrow(failure).when(aiConsentService).requireJobConsent(7L, null);
         when(processingService.fail(job, failure)).thenReturn(true);
+
+        // When & Then
         assertThat(executor.execute(job)).isEqualTo(EvaluationJobExecutor.ExecutionResult.TERMINAL_FAILURE);
         verify(audioStorage, never()).download(org.mockito.ArgumentMatchers.any());
         org.mockito.Mockito.verifyNoInteractions(evaluationService);
@@ -140,6 +151,7 @@ class EvaluationJobExecutorTest {
     @Test
     @DisplayName("lease를 잃은 시도는 외부 평가 전에 중단하고 실패 기록·S3 원본 삭제를 하지 않는다")
     void lostLeaseStopsWithoutTouchingStateOrSource() {
+        // Given
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
         when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
         when(job.getAudioObjectKey()).thenReturn("evaluation-audio/7/audio.wav");
@@ -149,8 +161,10 @@ class EvaluationJobExecutorTest {
                         new com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobLeaseLostException("job"))
                 .when(processingService).advancePhase(job, EvaluationJob.Phase.ANALYZING_SPEECH);
 
+        // When
         EvaluationJobExecutor.ExecutionResult outcome = executor.execute(job);
 
+        // Then
         assertThat(outcome).isEqualTo(EvaluationJobExecutor.ExecutionResult.LEASE_LOST);
         verify(evaluationService, never()).evaluatePronunciation(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
@@ -162,6 +176,7 @@ class EvaluationJobExecutorTest {
     @Test
     @DisplayName("최종 실패는 쿼터 보상 후 S3 원본을 삭제한다")
     void deletesSourceAfterTerminalFailure() {
+        // Given
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
         when(job.getUser()).thenReturn(com.lingko.lingko.core.domain.user.entity.User.builder().userIdx(7L).build());
         RuntimeException failure = new IllegalStateException("Azure unavailable");
@@ -169,8 +184,10 @@ class EvaluationJobExecutorTest {
         when(audioStorage.download("evaluation-audio/7/audio.wav")).thenThrow(failure);
         when(processingService.fail(job, failure)).thenReturn(true);
 
+        // When
         EvaluationJobExecutor.ExecutionResult outcome = executor.execute(job);
 
+        // Then
         assertThat(outcome).isEqualTo(EvaluationJobExecutor.ExecutionResult.TERMINAL_FAILURE);
         verify(audioStorage).delete("evaluation-audio/7/audio.wav");
     }

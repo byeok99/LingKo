@@ -29,11 +29,15 @@ class RecommendedSentenceMigrationTest {
     void expandedCatalogPreservesExistingSentencesAndBalancesCategories() throws Exception {
         try (Connection connection = DriverManager.getConnection(
                 "jdbc:h2:mem:expanded_sentences;MODE=MySQL;DATABASE_TO_UPPER=false")) {
+            // Given: 확장 전 seed 상태
             applyMigration(connection, "V2__recommended_sentences.sql");
             applyMigration(connection, "V12__remove_recommended_pronunciation.sql");
             List<String> originalRows = snapshot(connection);
+
+            // When
             applyMigration(connection, "V22__expand_recommended_sentences.sql");
 
+            // Then
             assertThat(snapshot(connection).subList(0, originalRows.size())).isEqualTo(originalRows);
             assertThat(snapshot(connection)).hasSize(48);
             try (var statement = connection.createStatement();
@@ -101,6 +105,7 @@ class RecommendedSentenceMigrationTest {
         try (Connection connection = DriverManager.getConnection(
                 "jdbc:h2:mem:recommended_sentences;MODE=MySQL;DATABASE_TO_UPPER=false"
         )) {
+            // When
             RunScript.execute(
                     connection,
                     new FileReader(
@@ -116,6 +121,7 @@ class RecommendedSentenceMigrationTest {
                     )
             );
 
+            // Then
             try (ResultSet resultSet = connection.createStatement()
                     .executeQuery("SELECT COUNT(*) FROM recommended_sentences WHERE active = TRUE")) {
                 resultSet.next();

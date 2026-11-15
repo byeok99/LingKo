@@ -38,6 +38,7 @@ class EvaluationPersistenceRepositoryTest {
     @Test
     @DisplayName("EvaluationLog는 확장된 평가 snapshot과 글자별 결과를 cascade 저장한다")
     void savesEvaluationSnapshotWithCharacterResults() {
+        // Given
         User user = User.builder()
                 .socialId("social-id")
                 .socialType(User.SocialType.GOOGLE)
@@ -73,9 +74,11 @@ class EvaluationPersistenceRepositoryTest {
                 .tongueGuideUrl("https://example.com/tongue/sit.png")
                 .build());
 
+        // When
         EvaluationLog saved = evaluationLogRepository.saveAndFlush(evaluationLog);
         entityManager.clear();
 
+        // Then
         EvaluationLog found = evaluationLogRepository.findById(saved.getEvaluationLogIdx()).orElseThrow();
         assertThat(found.getSource()).isEqualTo(EvaluationLog.PracticeSource.RECOMMENDED);
         assertThat(found.getSentenceId()).isEqualTo(1L);

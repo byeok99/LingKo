@@ -72,6 +72,7 @@ class EvaluationJobServiceTest {
     @Test
     @DisplayName("추천 문장 작업도 저장 발음 없이 현재 변환 규칙으로 대상을 생성한다")
     void createsRecommendedJobWithCurrentPronunciationRule() {
+        // Given
         EvaluationJobRequest request = new EvaluationJobRequest(
                 "evaluation-audio/7/audio.wav",
                 12L,
@@ -103,6 +104,7 @@ class EvaluationJobServiceTest {
                 ))
         )).thenReturn(created);
 
+        // When & Then
         assertThat(jobService.createJob(7L, "evaluation-key", request).jobId())
                 .isEqualTo("job-id");
         verify(audioStorage).validateUploaded(7L, request.objectKey());
@@ -111,6 +113,7 @@ class EvaluationJobServiceTest {
     @Test
     @DisplayName("완료된 동일 요청 재호출은 삭제된 S3 object를 확인하지 않고 기존 결과를 반환한다")
     void reusesCompletedIdempotentResponse() {
+        // Given
         EvaluationJobRequest request = new EvaluationJobRequest(
                 "evaluation-audio/7/audio.wav",
                 null,
@@ -120,6 +123,7 @@ class EvaluationJobServiceTest {
         when(jobRepository.findByUserUserIdxAndIdempotencyKey(7L, "evaluation-key"))
                 .thenReturn(Optional.of(existing));
 
+        // When & Then
         assertThat(jobService.createJob(7L, "evaluation-key", request).jobId())
                 .isEqualTo("job-id");
 
@@ -136,6 +140,7 @@ class EvaluationJobServiceTest {
     @Test
     @DisplayName("동일 Idempotency Key에 다른 payload를 사용하면 409 대상 충돌로 거부한다")
     void rejectsDifferentPayloadForSameKey() {
+        // Given
         EvaluationJobRequest original = new EvaluationJobRequest(
                 "evaluation-audio/7/audio.wav",
                 null,
@@ -145,6 +150,7 @@ class EvaluationJobServiceTest {
         when(jobRepository.findByUserUserIdxAndIdempotencyKey(7L, "evaluation-key"))
                 .thenReturn(Optional.of(existing));
 
+        // When & Then
         assertThatThrownBy(() -> jobService.createJob(
                 7L,
                 "evaluation-key",
@@ -159,6 +165,7 @@ class EvaluationJobServiceTest {
     @Test
     @DisplayName("완료 작업에 저장된 평가 결과 JSON을 응답 DTO로 복원한다")
     void restoresCompletedResultPayload() throws Exception {
+        // Given
         EvaluationJobRequest request = new EvaluationJobRequest(
                 "evaluation-audio/7/audio.wav",
                 null,
@@ -187,6 +194,7 @@ class EvaluationJobServiceTest {
         when(jobRepository.findByJobIdAndUserUserIdx("job-id", 7L))
                 .thenReturn(Optional.of(existing));
 
+        // When & Then
         assertThat(jobService.getJob(7L, "job-id").result())
                 .extracting(
                         PracticeResultResponse::getOverallScore,

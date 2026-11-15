@@ -93,6 +93,7 @@ class PracticeQuotaConcurrencyTest {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DisplayName("남은 quota 1회에 동시 예약 10개가 들어오면 정확히 1개만 성공한다")
     void allowsOnlyOneReservationWhenOnePracticeRemains() throws Exception {
+        // Given: 남은 quota 1회
         User user = saveUser("reservation-user-" + System.nanoTime());
         DailyPracticeQuota quota = DailyPracticeQuota.builder()
                 .user(user)
@@ -105,6 +106,7 @@ class PracticeQuotaConcurrencyTest {
                 .build();
         quotaRepository.saveAndFlush(quota);
 
+        // When
         List<ReservationOutcome> outcomes = runConcurrently(() -> {
             try {
                 quotaService.reservePractice(user.getUserIdx());
@@ -114,6 +116,7 @@ class PracticeQuotaConcurrencyTest {
             }
         });
 
+        // Then
         assertThat(outcomes).filteredOn(ReservationOutcome.SUCCESS::equals).hasSize(1);
         assertThat(outcomes).filteredOn(ReservationOutcome.QUOTA_EXCEEDED::equals).hasSize(9);
 
@@ -128,12 +131,15 @@ class PracticeQuotaConcurrencyTest {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DisplayName("신규 사용자의 오늘 quota 동시 조회는 사용자·날짜별 행을 하나만 만든다")
     void createsOnlyOneDailyQuotaRow() throws Exception {
+        // Given
         User user = saveUser("creation-user-" + System.nanoTime());
 
+        // When
         List<Integer> remainingCounts = runConcurrently(
                 () -> quotaService.getTodayQuota(user.getUserIdx()).remainingPractices()
         );
 
+        // Then
         assertThat(remainingCounts).containsOnly(5).hasSize(CONCURRENT_REQUESTS);
         assertThat(quotaRepository.count()).isEqualTo(1);
         assertThat(quotaRepository.findByUserUserIdxAndQuotaDate(user.getUserIdx(), QUOTA_DATE))
@@ -144,8 +150,10 @@ class PracticeQuotaConcurrencyTest {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DisplayName("동일 예약을 동시에 확정하거나 복구해도 상태 전이는 한 번만 반영된다")
     void appliesEachReservationTransitionOnlyOnce() throws Exception {
+        // Given
         User user = saveUser("transition-user-" + System.nanoTime());
 
+        // When: 같은 예약을 동시에 확정한다
         PracticeQuotaService.PracticeQuotaReservation confirmedReservation =
                 quotaService.reservePractice(user.getUserIdx());
         List<TransitionOutcome> confirmOutcomes = runConcurrently(() -> {
@@ -157,6 +165,7 @@ class PracticeQuotaConcurrencyTest {
             }
         });
 
+        // Then
         assertSingleTransition(confirmOutcomes);
         DailyPracticeQuota afterConfirm = quotaRepository
                 .findByUserUserIdxAndQuotaDate(user.getUserIdx(), QUOTA_DATE)
@@ -164,6 +173,7 @@ class PracticeQuotaConcurrencyTest {
         assertThat(afterConfirm.getFreeUsed()).isEqualTo(1);
         assertThat(afterConfirm.getFreeReserved()).isZero();
 
+        // When: 같은 예약을 동시에 복구한다
         PracticeQuotaService.PracticeQuotaReservation releasedReservation =
                 quotaService.reservePractice(user.getUserIdx());
         List<TransitionOutcome> releaseOutcomes = runConcurrently(() -> {
@@ -175,6 +185,7 @@ class PracticeQuotaConcurrencyTest {
             }
         });
 
+        // Then
         assertSingleTransition(releaseOutcomes);
         DailyPracticeQuota afterRelease = quotaRepository
                 .findByUserUserIdxAndQuotaDate(user.getUserIdx(), QUOTA_DATE)

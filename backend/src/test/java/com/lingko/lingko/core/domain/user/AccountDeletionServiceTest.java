@@ -38,6 +38,7 @@ class AccountDeletionServiceTest {
     @Test
     @DisplayName("현재 Refresh Token 확인 후 S3를 먼저 정리하고 DB 계정을 삭제한다")
     void deletesStorageBeforeDatabaseAccount() {
+        // Given
         RefreshTokenRequest request = new RefreshTokenRequest("refresh.jwt");
         when(audioStorage.deleteAllForUser(7L)).thenReturn(3);
         AccountDeletionService service = new AccountDeletionService(
@@ -46,8 +47,10 @@ class AccountDeletionServiceTest {
                 persistenceService
         );
 
+        // When
         service.deleteAccount(7L, request);
 
+        // Then
         InOrder order = inOrder(authService, audioStorage, persistenceService);
         order.verify(authService).validateCurrentRefreshToken(7L, request);
         order.verify(audioStorage).deleteAllForUser(7L);
@@ -57,6 +60,7 @@ class AccountDeletionServiceTest {
     @Test
     @DisplayName("S3 정리 실패 시 사용자 DB를 보존해 같은 탈퇴 요청을 재시도할 수 있다")
     void preservesDatabaseAccountWhenStorageCleanupFails() {
+        // Given
         RefreshTokenRequest request = new RefreshTokenRequest("refresh.jwt");
         when(audioStorage.deleteAllForUser(7L))
                 .thenThrow(new IllegalStateException("S3 unavailable"));
@@ -66,6 +70,7 @@ class AccountDeletionServiceTest {
                 persistenceService
         );
 
+        // When & Then
         assertThatThrownBy(() -> service.deleteAccount(7L, request))
                 .isInstanceOf(AccountDeletionUnavailableException.class);
 
@@ -75,6 +80,7 @@ class AccountDeletionServiceTest {
     @Test
     @DisplayName("회원 탈퇴 운영 로그에는 사용자 식별자를 남기지 않는다")
     void omitsUserIdentifierFromOperationalLogs(CapturedOutput output) {
+        // Given
         RefreshTokenRequest request = new RefreshTokenRequest("refresh.jwt");
         when(audioStorage.deleteAllForUser(7L)).thenReturn(3);
         AccountDeletionService service = new AccountDeletionService(
@@ -83,8 +89,10 @@ class AccountDeletionServiceTest {
                 persistenceService
         );
 
+        // When
         service.deleteAccount(7L, request);
 
+        // Then
         assertThat(output).doesNotContain("userId=7");
     }
 }

@@ -23,14 +23,17 @@ class AzureSpeechEvaluatorTimeoutTest {
     @Test
     @DisplayName("응답이 오지 않으면 설정 시간 뒤 timeout 예외를 던지고 future를 취소한다")
     void timesOutAndCancelsHangingRecognition() {
+        // Given
         CompletableFuture<String> neverCompletes = new CompletableFuture<>();
 
+        // When & Then
         long startedAt = System.nanoTime();
         assertThatThrownBy(() -> AzureSpeechEvaluator.awaitRecognition(neverCompletes, 1))
                 .isInstanceOf(SpeechEvaluationTimeoutException.class)
                 .hasMessageContaining("1초");
         long elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000;
 
+        // Then
         assertThat(neverCompletes.isCancelled()).isTrue();
         assertThat(elapsedMillis).isBetween(900L, 5_000L);
     }
@@ -38,6 +41,7 @@ class AzureSpeechEvaluatorTimeoutTest {
     @Test
     @DisplayName("시간 안에 끝난 인식 결과는 그대로 반환한다")
     void returnsCompletedRecognition() throws Exception {
+        // When & Then
         assertThat(AzureSpeechEvaluator.awaitRecognition(CompletableFuture.completedFuture("result"), 1))
                 .isEqualTo("result");
     }
@@ -45,8 +49,10 @@ class AzureSpeechEvaluatorTimeoutTest {
     @Test
     @DisplayName("SDK 호출 실패는 timeout과 구분해 ExecutionException으로 전달한다")
     void propagatesSdkFailureSeparatelyFromTimeout() {
+        // Given
         CompletableFuture<String> failed = CompletableFuture.failedFuture(new RuntimeException("auth failed"));
 
+        // When & Then
         assertThatThrownBy(() -> AzureSpeechEvaluator.awaitRecognition(failed, 1))
                 .isInstanceOf(ExecutionException.class);
     }
@@ -54,12 +60,15 @@ class AzureSpeechEvaluatorTimeoutTest {
     @Test
     @DisplayName("timeout 기본값은 30초이며 1~120초 범위 밖 설정은 거부한다")
     void validatesTimeoutRange() {
+        // Given
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         AzureSettings settings = new AzureSettings();
 
+        // Then: 기본값
         assertThat(settings.getRecognitionTimeoutSeconds()).isEqualTo(30);
         assertThat(validator.validate(settings)).isEmpty();
 
+        // When & Then: 범위 밖 값
         settings.setRecognitionTimeoutSeconds(0);
         assertThat(validator.validate(settings)).isNotEmpty();
         settings.setRecognitionTimeoutSeconds(121);

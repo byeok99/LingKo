@@ -95,14 +95,17 @@ class IndependentEvaluationWorkerIntegrationTest {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DisplayName("독립 DB Worker 1개가 평가 40건을 중복 없이 완료하고 quota를 정확히 확정한다")
     void processesJobsWithSingleIndependentWorker() {
+        // Given
         List<String> jobIds = createJobs();
         EvaluationJobWorker worker = createWorker();
 
+        // When & Then: 작업 수만큼만 처리하고 그 뒤에는 처리할 작업이 없다
         for (int index = 0; index < JOB_COUNT; index++) {
             assertThat(worker.processNext()).isTrue();
         }
         assertThat(worker.processNext()).isFalse();
 
+        // Then
         List<EvaluationJob> savedJobs = jobRepository.findAll();
         assertThat(savedJobs).hasSize(JOB_COUNT);
         assertThat(savedJobs)

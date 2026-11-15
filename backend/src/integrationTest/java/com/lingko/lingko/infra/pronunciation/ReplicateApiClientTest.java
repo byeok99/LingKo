@@ -29,11 +29,11 @@ public class ReplicateApiClientTest {
     @Test
     @DisplayName("Frame Interpolation Test")
     void interpolate_test() throws InterruptedException {
-        // 준비
+        // Given
         String frame1 = "https://lingko.s3.ap-northeast-2.amazonaws.com/guides/mouth/bilabial-consonants.png";
         String frame2 = "https://lingko.s3.ap-northeast-2.amazonaws.com/guides/mouth/vowel-a.png";
 
-        // 실행
+        // When
         String result = replicateApiClient.interpolate(frame1, frame2);
 
         // Then

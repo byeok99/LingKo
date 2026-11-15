@@ -48,9 +48,11 @@ class LegalConsentControllerTest {
     @Test
     @DisplayName("로그인 전에도 현재 동의 문서 버전을 캐시 없이 조회할 수 있다")
     void getPolicyDoesNotRequireAuthentication() throws Exception {
+        // Given
         when(legalConsentService.getPolicy())
                 .thenReturn(new LegalConsentPolicyResponse("2026-09-24"));
 
+        // When & Then
         mockMvc.perform(get("/api/legal/consent/policy"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Cache-Control", "no-store"))
@@ -62,10 +64,12 @@ class LegalConsentControllerTest {
     @Test
     @DisplayName("상태 조회는 Bearer token 사용자의 현재 동의 필요 여부를 반환한다")
     void getStatusUsesAuthenticatedUser() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer access.jwt")).thenReturn(7L);
         when(legalConsentService.getStatus(7L))
                 .thenReturn(new LegalConsentStatusResponse(true, "2026-08-07"));
 
+        // When & Then
         mockMvc.perform(get("/api/legal/consent")
                         .header("Authorization", "Bearer access.jwt"))
                 .andExpect(status().isOk())
@@ -76,9 +80,11 @@ class LegalConsentControllerTest {
     @Test
     @DisplayName("인증되지 않은 사용자는 동의 상태를 조회할 수 없다")
     void getStatusRequiresAuthentication() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer(null))
                 .thenThrow(new AuthException("Missing bearer token"));
 
+        // When & Then
         mockMvc.perform(get("/api/legal/consent"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
@@ -87,6 +93,7 @@ class LegalConsentControllerTest {
     @Test
     @DisplayName("필수 항목이 false인 제출은 저장 전에 거부한다")
     void submitRejectsMissingRequiredConsent() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/legal/consent")
                         .header("Authorization", "Bearer access.jwt")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -104,10 +111,12 @@ class LegalConsentControllerTest {
     @Test
     @DisplayName("제출 사용자는 body가 아니라 Bearer token에서 결정한다")
     void submitUsesAuthenticatedUser() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer access.jwt")).thenReturn(7L);
         when(legalConsentService.record(eq(7L), any()))
                 .thenReturn(new LegalConsentStatusResponse(false, "2026-08-07"));
 
+        // When & Then
         mockMvc.perform(post("/api/legal/consent")
                         .header("Authorization", "Bearer access.jwt")
                         .contentType(MediaType.APPLICATION_JSON)

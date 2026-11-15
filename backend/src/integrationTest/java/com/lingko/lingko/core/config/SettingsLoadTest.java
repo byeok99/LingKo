@@ -26,9 +26,11 @@ public class SettingsLoadTest {
     @Test
     @DisplayName("Azure 설정값이 YAML에서 제대로 로드되어야 한다.")
     void azureSettingsLoadTest() {
+        // When
         String key = azureSettings.getSecretKey();
         String region = azureSettings.getRegion();
 
+        // Then
         assertThat(key).isNotEmpty();
         assertThat(region).isNotEmpty();
     }
@@ -36,7 +38,7 @@ public class SettingsLoadTest {
     @Test
     @DisplayName("JWT 설정값이 YAML에서 제대로 로드되어야 한다.")
     void jwtSettingsLoadTest() {
-        // 준비 및 실행
+        // When
         int expireMinutes = jwtSettings.getAccessTokenExpireMinutes();
         String algorithm = jwtSettings.getAlgorithm();
 

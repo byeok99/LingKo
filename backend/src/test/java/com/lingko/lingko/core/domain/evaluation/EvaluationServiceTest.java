@@ -20,15 +20,14 @@ public class EvaluationServiceTest {
     @Test
     @DisplayName("표준 발음 변환 기능 테스트")
     void convertToStandardPronunciationTest() {
-        // 준비
+        // Given
         String text = "밥을 먹었어요.";
 
-        // 실행
+        // When
         String result = service.convertToStandardPronunciation(text);
 
-        // 검증
+        // Then
         assertThat(result).isEqualTo("바블 머거써요");
-
         System.out.println(result);
     }
 }

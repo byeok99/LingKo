@@ -54,6 +54,7 @@ class GuideGenerationJobControllerTest {
     @Test
     @DisplayName("POST /api/pronunciation/guide-jobs는 비동기 가이드 생성 job을 생성한다")
     void createGuideGenerationJob() throws Exception {
+        // Given
         GuideGenerationJobResponse response = GuideGenerationJobResponse.builder()
                 .jobId("job-1")
                 .status(GuideGenerationJobStatus.PENDING)
@@ -66,6 +67,7 @@ class GuideGenerationJobControllerTest {
                 eq(List.of(List.of("https://example.com/a.png", "https://example.com/b.png")))
         )).thenReturn(response);
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/guide-jobs")
                         .header("X-LingKo-Internal-Token", INTERNAL_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -85,6 +87,7 @@ class GuideGenerationJobControllerTest {
     @Test
     @DisplayName("GET /api/pronunciation/guide-jobs/{jobId}는 job 상태를 반환한다")
     void getGuideGenerationJob() throws Exception {
+        // Given
         GuideGenerationJobResponse response = GuideGenerationJobResponse.builder()
                 .jobId("job-1")
                 .status(GuideGenerationJobStatus.COMPLETED)
@@ -93,6 +96,7 @@ class GuideGenerationJobControllerTest {
                 .build();
         when(guideGenerationJobService.find("job-1")).thenReturn(Optional.of(response));
 
+        // When & Then
         mockMvc.perform(get("/api/pronunciation/guide-jobs/job-1")
                         .header("X-LingKo-Internal-Token", INTERNAL_TOKEN))
                 .andExpect(status().isOk())
@@ -103,8 +107,10 @@ class GuideGenerationJobControllerTest {
     @Test
     @DisplayName("존재하지 않는 guide job은 404를 반환한다")
     void getMissingGuideGenerationJob() throws Exception {
+        // Given
         when(guideGenerationJobService.find("missing")).thenReturn(Optional.empty());
 
+        // When & Then
         mockMvc.perform(get("/api/pronunciation/guide-jobs/missing")
                         .header("X-LingKo-Internal-Token", INTERNAL_TOKEN))
                 .andExpect(status().isNotFound())
@@ -114,6 +120,7 @@ class GuideGenerationJobControllerTest {
     @Test
     @DisplayName("guide job 요청은 빈 syllable을 거부한다")
     void createGuideGenerationJobValidatesSyllable() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/guide-jobs")
                         .header("X-LingKo-Internal-Token", INTERNAL_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -131,9 +138,11 @@ class GuideGenerationJobControllerTest {
     @Test
     @DisplayName("내부 인증이 없으면 생성하지 않고 401을 반환한다")
     void createRequiresInternalAuthentication() throws Exception {
+        // Given
         doThrow(new AuthException("missing internal token"))
                 .when(accessGuard).authorizeAndConsume(null, null);
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/guide-jobs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validRequest()))
@@ -146,9 +155,11 @@ class GuideGenerationJobControllerTest {
     @Test
     @DisplayName("활성 일반 사용자는 내부 생성 권한이 없어 403을 반환한다")
     void createRejectsLearnerAuthorization() throws Exception {
+        // Given
         doThrow(new GuideJobAccessDeniedException())
                 .when(accessGuard).authorizeAndConsume(null, "Bearer learner-token");
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/guide-jobs")
                         .header("Authorization", "Bearer learner-token")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -162,9 +173,11 @@ class GuideGenerationJobControllerTest {
     @Test
     @DisplayName("내부 호출자 분당 제한을 넘으면 Retry-After와 429를 반환한다")
     void createRateLimitsInternalCaller() throws Exception {
+        // Given
         doThrow(new GuideJobRateLimitExceededException(17))
                 .when(accessGuard).authorizeAndConsume(INTERNAL_TOKEN, null);
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/guide-jobs")
                         .header("X-LingKo-Internal-Token", INTERNAL_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -179,12 +192,14 @@ class GuideGenerationJobControllerTest {
     @Test
     @DisplayName("실행 슬롯이 가득 차면 Retry-After와 429를 반환한다")
     void createRejectsWhenGenerationCapacityIsFull() throws Exception {
+        // Given
         when(accessGuard.authorizeAndConsume(INTERNAL_TOKEN, null))
                 .thenReturn("guide-internal-service");
         when(guideGenerationJobService.submit(eq("마"), eq(VideoType.MOUTH), eq(List.of(
                 List.of("https://replicate.delivery/a.png", "https://replicate.delivery/b.png")
         )))).thenThrow(new GuideJobCapacityExceededException());
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/guide-jobs")
                         .header("X-LingKo-Internal-Token", INTERNAL_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -197,10 +212,12 @@ class GuideGenerationJobControllerTest {
     @Test
     @DisplayName("URL 하나가 최대 길이를 넘으면 job을 등록하지 않는다")
     void createRejectsOversizedUrl() throws Exception {
+        // Given
         when(accessGuard.authorizeAndConsume(INTERNAL_TOKEN, null))
                 .thenReturn("guide-internal-service");
         String oversizedUrl = "https://replicate.delivery/" + "a".repeat(2_100);
 
+        // When & Then
         mockMvc.perform(post("/api/pronunciation/guide-jobs")
                         .header("X-LingKo-Internal-Token", INTERNAL_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)

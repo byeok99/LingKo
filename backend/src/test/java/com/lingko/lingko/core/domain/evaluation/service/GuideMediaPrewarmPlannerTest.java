@@ -21,8 +21,10 @@ class GuideMediaPrewarmPlannerTest {
 
     @Test
     void plansEveryUniqueDynamicSequenceAcrossModernHangul() {
+        // When
         var plan = planner.planAll();
 
+        // Then
         assertThat(plan).hasSize(693);
         assertThat(plan.stream().filter(item -> item.type() == VideoType.MOUTH)).hasSize(61);
         assertThat(plan.stream().filter(item -> item.type() == VideoType.TONGUE)).hasSize(632);

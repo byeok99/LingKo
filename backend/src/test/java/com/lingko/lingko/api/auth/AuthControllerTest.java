@@ -56,6 +56,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("심사용 로그인은 원격 주소별 접근 코드를 검증한 뒤 지정 계정 세션을 반환한다")
     void reviewLoginVerifiesAccessCodeBeforeIssuingSession() throws Exception {
+        // Given
         String accessCode = "0000";
         when(reviewAccessGuard.authorizeAndConsume(accessCode, "203.0.113.10")).thenReturn(7L);
         when(authService.loginReviewUser(7L)).thenReturn(AuthTokenResponse.builder()
@@ -66,6 +67,7 @@ class AuthControllerTest {
                 .user(AuthUserResponse.builder().userId(7L).build())
                 .build());
 
+        // When & Then
         mockMvc.perform(post("/api/auth/review/login")
                         .with(request -> {
                             request.setRemoteAddr("203.0.113.10");
@@ -84,6 +86,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("심사용 접근 코드는 4자 미만의 값을 요청 경계에서 거부한다")
     void reviewLoginValidatesAccessCode() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/auth/review/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("accessCode", "000"))))
@@ -97,10 +100,12 @@ class AuthControllerTest {
     @Test
     @DisplayName("심사용 로그인 시도 제한은 Retry-After가 있는 429로 반환한다")
     void reviewLoginReturnsRateLimitResponse() throws Exception {
+        // Given
         String accessCode = "review-code-for-controller-test";
         when(reviewAccessGuard.authorizeAndConsume(accessCode, "127.0.0.1"))
                 .thenThrow(new ReviewAccessRateLimitExceededException(120));
 
+        // When & Then
         mockMvc.perform(post("/api/auth/review/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("accessCode", accessCode))))
@@ -114,6 +119,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Google OAuth 로그인은 access/refresh token과 사용자 정보를 반환한다")
     void googleOauthLoginReturnsTokens() throws Exception {
+        // Given
         when(authService.loginWithOAuth(any())).thenReturn(AuthTokenResponse.builder()
                 .tokenType("Bearer")
                 .accessToken("access.jwt")
@@ -127,6 +133,7 @@ class AuthControllerTest {
                         .build())
                 .build());
 
+        // When & Then
         mockMvc.perform(post("/api/auth/oauth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
@@ -145,6 +152,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Apple OAuth 로그인은 identity token과 raw nonce를 함께 받는다")
     void appleOauthLoginAcceptsIdentityTokenAndRawNonce() throws Exception {
+        // Given
         when(authService.loginWithOAuth(any())).thenReturn(AuthTokenResponse.builder()
                 .tokenType("Bearer")
                 .accessToken("access.jwt")
@@ -153,6 +161,7 @@ class AuthControllerTest {
                 .user(AuthUserResponse.builder().userId(9L).build())
                 .build());
 
+        // When & Then
         mockMvc.perform(post("/api/auth/oauth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
@@ -168,6 +177,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Apple OAuth 로그인은 raw nonce가 없으면 요청 경계에서 거부한다")
     void appleOauthLoginRequiresRawNonce() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/auth/oauth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
@@ -181,6 +191,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("idToken은 필수다")
     void idTokenIsRequired() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/auth/oauth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
@@ -194,8 +205,10 @@ class AuthControllerTest {
     @Test
     @DisplayName("검증 실패한 OAuth token은 401을 반환한다")
     void invalidOauthTokenReturnsUnauthorized() throws Exception {
+        // Given
         when(authService.loginWithOAuth(any())).thenThrow(new AuthException("Invalid OAuth token"));
 
+        // When & Then
         mockMvc.perform(post("/api/auth/oauth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
@@ -209,6 +222,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Refresh Token 갱신은 회전된 token pair를 반환한다")
     void refreshReturnsRotatedTokens() throws Exception {
+        // Given
         when(authService.refresh(any())).thenReturn(AuthTokenResponse.builder()
                 .tokenType("Bearer")
                 .accessToken("next-access.jwt")
@@ -221,6 +235,7 @@ class AuthControllerTest {
                         .build())
                 .build());
 
+        // When & Then
         mockMvc.perform(post("/api/auth/token/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
@@ -234,8 +249,10 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그아웃은 현재 Refresh Token 세션을 폐기하고 204를 반환한다")
     void logoutRevokesSession() throws Exception {
+        // Given
         doNothing().when(authService).logout(any(RefreshTokenRequest.class));
 
+        // When & Then
         mockMvc.perform(post("/api/auth/logout")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
@@ -247,6 +264,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Refresh Token은 빈 값일 수 없다")
     void refreshTokenIsRequired() throws Exception {
+        // When & Then
         mockMvc.perform(post("/api/auth/token/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
@@ -259,8 +277,10 @@ class AuthControllerTest {
     @Test
     @DisplayName("폐기된 Refresh Token은 401을 반환한다")
     void revokedRefreshTokenReturnsUnauthorized() throws Exception {
+        // Given
         when(authService.refresh(any())).thenThrow(new AuthException("Refresh token revoked"));
 
+        // When & Then
         mockMvc.perform(post("/api/auth/token/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
@@ -273,8 +293,10 @@ class AuthControllerTest {
     @Test
     @DisplayName("회원 탈퇴는 Access Token과 현재 Refresh Token을 검증하고 204를 반환한다")
     void deleteAccountRemovesAuthenticatedUser() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer access.jwt")).thenReturn(7L);
 
+        // When & Then
         mockMvc.perform(delete("/api/auth/account")
                         .header("Authorization", "Bearer access.jwt")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -292,6 +314,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("회원 탈퇴 S3 정리 실패는 내부 원인을 숨긴 재시도 가능 503으로 반환한다")
     void deleteAccountReturnsSafeRetryableFailure() throws Exception {
+        // Given
         when(activeSessionAuthenticator.authenticateBearer("Bearer access.jwt")).thenReturn(7L);
         doThrow(new AccountDeletionUnavailableException(
                 new IllegalStateException("sensitive S3 detail")
@@ -300,6 +323,7 @@ class AuthControllerTest {
                 new RefreshTokenRequest("current-refresh.jwt")
         );
 
+        // When & Then
         mockMvc.perform(delete("/api/auth/account")
                         .header("Authorization", "Bearer access.jwt")
                         .contentType(MediaType.APPLICATION_JSON)

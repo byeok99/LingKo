@@ -33,13 +33,16 @@ class EvaluationJobWorkerTest {
     @Test
     @DisplayName("claim 가능한 DB 작업이 있으면 공통 실행기로 전달한다")
     void executesClaimedJob() {
+        // Given
         EvaluationJob job = org.mockito.Mockito.mock(EvaluationJob.class);
         when(processingService.claimNext()).thenReturn(Optional.of(job));
         when(executor.execute(job)).thenReturn(EvaluationJobExecutor.ExecutionResult.COMPLETED);
         EvaluationJobWorker worker = new EvaluationJobWorker(processingService, executor, telemetry);
 
+        // When
         boolean processed = worker.processNext();
 
+        // Then
         org.assertj.core.api.Assertions.assertThat(processed).isTrue();
         verify(executor).execute(job);
         verify(telemetry).heartbeat();
@@ -49,11 +52,14 @@ class EvaluationJobWorkerTest {
     @Test
     @DisplayName("claim 가능한 DB 작업이 없으면 실행기를 호출하지 않는다")
     void skipsWhenNoJobIsClaimable() {
+        // Given
         when(processingService.claimNext()).thenReturn(Optional.empty());
         EvaluationJobWorker worker = new EvaluationJobWorker(processingService, executor, telemetry);
 
+        // When
         boolean processed = worker.processNext();
 
+        // Then
         org.assertj.core.api.Assertions.assertThat(processed).isFalse();
         verify(executor, never()).execute(org.mockito.ArgumentMatchers.any());
         verify(telemetry).heartbeat();

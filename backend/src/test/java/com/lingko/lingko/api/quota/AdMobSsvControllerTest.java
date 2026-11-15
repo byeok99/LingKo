@@ -31,12 +31,14 @@ class AdMobSsvControllerTest {
     @Test
     @DisplayName("Google signed callback의 raw query를 검증하고 200을 반환한다")
     void acceptsVerifiedCallback() throws Exception {
+        // Given
         String query = "ad_unit=3927267131&signature=signed&key_id=1";
         VerifiedAdRewardCallback callback = new VerifiedAdRewardCallback(
                 "3927267131", "token", 1, "pronunciation_chance", 1L, "transaction"
         );
         when(verifier.verify(query)).thenReturn(callback);
 
+        // When & Then
         mockMvc.perform(get("/api/quota/ad-rewards/ssv?" + query))
                 .andExpect(status().isOk());
 

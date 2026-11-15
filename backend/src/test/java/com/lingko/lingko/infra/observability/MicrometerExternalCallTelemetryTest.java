@@ -10,11 +10,14 @@ class MicrometerExternalCallTelemetryTest {
 
     @Test
     void recordsProviderOutcomeAndDuration() {
+        // Given
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         MicrometerExternalCallTelemetry telemetry = new MicrometerExternalCallTelemetry(registry);
 
+        // When
         telemetry.record("azure", "success", 2_000_000L);
 
+        // Then
         assertThat(registry.get("lingko.external.requests")
                 .tags("provider", "azure", "outcome", "success").counter().count()).isEqualTo(1);
         assertThat(registry.get("lingko.external.duration")
@@ -23,12 +26,15 @@ class MicrometerExternalCallTelemetryTest {
 
     @Test
     void deniesMetricsOutsideTheCloudWatchAllowlist() {
+        // Given
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         registry.config().meterFilter(new ObservabilityConfig().cloudWatchMetricAllowlist());
 
+        // When
         registry.counter("unbounded.user.metric", "userId", "7").increment();
         registry.counter("lingko.evaluation.executions", "outcome", "completed").increment();
 
+        // Then
         assertThat(registry.find("unbounded.user.metric").counter()).isNull();
         assertThat(registry.get("lingko.evaluation.executions").counter().count()).isEqualTo(1);
     }

@@ -47,6 +47,7 @@ class EvaluationHistoryServiceTest {
     @Test
     @DisplayName("학습 기록 service는 최신 기록 page와 최고 점수를 반환한다")
     void findsHistoryPageWithBestScore() {
+        // Given
         User user = persistUser("history-user");
         User otherUser = persistUser("other-user");
         Syllable syllable = Syllable.builder().syllableChar("마").build();
@@ -78,8 +79,10 @@ class EvaluationHistoryServiceTest {
         evaluationLogRepository.flush();
         entityManager.clear();
 
+        // When
         PracticeHistoryResponse response = historyService.findHistory(user.getUserIdx(), 0, 1);
 
+        // Then
         assertThat(response.getItems()).hasSize(1);
         assertThat(response.getItems().get(0).getEvaluationLogId()).isEqualTo(newer.getEvaluationLogIdx());
         assertThat(response.getItems().get(0).getOriginalText()).isEqualTo("맛있겠다.");

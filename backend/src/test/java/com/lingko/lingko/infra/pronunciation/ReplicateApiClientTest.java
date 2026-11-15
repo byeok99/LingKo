@@ -28,6 +28,7 @@ class ReplicateApiClientTest {
     @Test
     @DisplayName("Prediction 생성이 429이면 제한된 횟수 안에서 재시도한다")
     void retriesPredictionCreationAfterRateLimit() {
+        // Given
         AtomicInteger createAttempts = new AtomicInteger();
         WebClient webClient = webClient(request -> {
             if (request.method() == HttpMethod.POST && request.url().getPath().equals("/v1/predictions")) {
@@ -39,9 +40,11 @@ class ReplicateApiClientTest {
             return response(HttpStatus.OK, "{\"status\":\"succeeded\",\"output\":\"https://delivery/video.mp4\"}");
         });
 
+        // When
         String result = new ReplicateApiClient(webClient, new ObjectMapper(), retrySettings())
                 .interpolate("https://guides/frame-1.png", "https://guides/frame-2.png");
 
+        // Then
         assertThat(result).isEqualTo("https://delivery/video.mp4");
         assertThat(createAttempts).hasValue(2);
     }
@@ -49,6 +52,7 @@ class ReplicateApiClientTest {
     @Test
     @DisplayName("Prediction polling timeout이면 원격 작업을 취소한다")
     void cancelsPredictionAfterPollingTimeout() {
+        // Given
         List<String> requests = new CopyOnWriteArrayList<>();
         List<String> cancelAfterHeaders = new CopyOnWriteArrayList<>();
         WebClient webClient = webClient(request -> {
@@ -65,6 +69,7 @@ class ReplicateApiClientTest {
         ReplicateSettings settings = retrySettings();
         settings.setMaxPollAttempts(1);
 
+        // When & Then
         assertThatThrownBy(() -> new ReplicateApiClient(webClient, new ObjectMapper(), settings)
                 .interpolate("https://guides/frame-1.png", "https://guides/frame-2.png"))
                 .isInstanceOf(VideoGenerationException.class)
@@ -80,10 +85,12 @@ class ReplicateApiClientTest {
     @Test
     @DisplayName("Replicate API key가 없으면 명확한 예외를 던진다")
     void validateSettingsRejectsMissingApiKey() {
+        // Given
         ReplicateSettings settings = new ReplicateSettings();
         settings.setVersion("model-version");
         ReplicateApiClient client = new ReplicateApiClient(WebClient.create(), new ObjectMapper(), settings);
 
+        // When & Then
         assertThatThrownBy(client::validateSettings)
                 .isInstanceOf(VideoGenerationException.class)
                 .hasMessage("Replicate API key is not configured");
@@ -92,10 +99,12 @@ class ReplicateApiClientTest {
     @Test
     @DisplayName("Replicate model version이 없으면 명확한 예외를 던진다")
     void validateSettingsRejectsMissingVersion() {
+        // Given
         ReplicateSettings settings = new ReplicateSettings();
         settings.setApiKey("short");
         ReplicateApiClient client = new ReplicateApiClient(WebClient.create(), new ObjectMapper(), settings);
 
+        // When & Then
         assertThatThrownBy(client::validateSettings)
                 .isInstanceOf(VideoGenerationException.class)
                 .hasMessage("Replicate model version is not configured");

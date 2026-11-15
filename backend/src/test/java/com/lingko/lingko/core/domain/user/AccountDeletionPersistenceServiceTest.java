@@ -65,6 +65,7 @@ class AccountDeletionPersistenceServiceTest {
     @Test
     @DisplayName("탈퇴 사용자의 세션·작업·결과·쿼터를 삭제하고 공유 음절은 유지한다")
     void deletesAllUserOwnedDatabaseRecords() {
+        // Given
         User user = userRepository.saveAndFlush(User.builder()
                 .socialId("account-delete-user")
                 .socialType(User.SocialType.GOOGLE)
@@ -112,8 +113,10 @@ class AccountDeletionPersistenceServiceTest {
                 .build());
         evaluationLogRepository.saveAndFlush(log);
 
+        // When
         deletionService.deleteUserData(user.getUserIdx());
 
+        // Then
         assertThat(userRepository.count()).isZero();
         assertThat(refreshTokenSessionRepository.count()).isZero();
         assertThat(evaluationJobRepository.count()).isZero();

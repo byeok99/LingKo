@@ -46,17 +46,20 @@ class GuideMediaResolverTest {
     @Test
     @DisplayName("DB에 저장된 김 혀 영상은 서버 재시작 후 외부 생성을 건너뛴다")
     void reusesPersistedGuideVideo() {
+        // Given
         when(syllableRepository.findById("김")).thenReturn(Optional.of(Syllable.builder()
                 .syllableChar("김")
                 .tongueUrl("https://guides/videos/tongue-kim.mp4")
                 .tongueMappingVersion(GuideMediaVersion.CURRENT)
                 .build()));
 
+        // When
         String result = resolver.resolveForEvaluation(
                 "김",
                 VideoType.TONGUE
         );
 
+        // Then
         assertThat(result).endsWith("tongue-kim.mp4");
         verifyNoInteractions(videoGenerator, syllableMappingUtil);
     }
@@ -64,6 +67,7 @@ class GuideMediaResolverTest {
     @Test
     @DisplayName("김은 초중종성 프레임 이동을 입과 혀 영상으로 반환한다")
     void resolvesKimTransitionsAsVideos() {
+        // Given
         List<List<String>> mouthPairs = List.of(List.of("mouth-i.png", "mouth-m.png"));
         List<List<String>> tonguePairs = List.of(
                 List.of("tongue-g.png", "tongue-i.png"),
@@ -78,6 +82,7 @@ class GuideMediaResolverTest {
         when(videoGenerator.generate(tonguePairs, "김", VideoType.TONGUE))
                 .thenReturn("https://guides/videos/tongue-kim.mp4");
 
+        // When & Then
         assertThat(resolver.resolveForEvaluation("김", VideoType.MOUTH))
                 .endsWith("mouth-kim.mp4");
         assertThat(resolver.resolveForEvaluation("김", VideoType.TONGUE))
@@ -92,9 +97,11 @@ class GuideMediaResolverTest {
     @Test
     @DisplayName("프레임이 하나뿐이면 외부 영상 생성 없이 이미지를 유지한다")
     void keepsSingleFrameAsStaticImage() {
+        // Given
         when(syllableMappingUtil.createFramePairs("아", VideoType.MOUTH))
                 .thenReturn(List.of(List.of("mouth-a.png")));
 
+        // When & Then
         assertThat(resolver.resolveForEvaluation("아", VideoType.MOUTH))
                 .isEqualTo("mouth-a.png");
         verify(videoGenerator, never()).generate(
@@ -107,6 +114,7 @@ class GuideMediaResolverTest {
     @Test
     @DisplayName("영상 생성 실패 시 평가 결과를 막지 않고 첫 이미지로 대체한다")
     void fallsBackToFirstFrameWhenGenerationFails() {
+        // Given
         List<List<String>> pairs = List.of(
                 List.of("tongue-g.png", "tongue-i.png"),
                 List.of("tongue-i.png", "tongue-m.png")
@@ -116,6 +124,7 @@ class GuideMediaResolverTest {
         when(videoGenerator.generate(pairs, "김", VideoType.TONGUE))
                 .thenThrow(new VideoGenerationException("generation failed"));
 
+        // When & Then
         assertThat(resolver.resolveForEvaluation("김", VideoType.TONGUE))
                 .isEqualTo("tongue-g.png");
     }
@@ -123,6 +132,7 @@ class GuideMediaResolverTest {
     @Test
     @DisplayName("예전 매핑으로 만든 DB 영상은 재사용하지 않는다")
     void ignoresPersistedVideoFromAnOlderMappingVersion() {
+        // Given
         when(syllableRepository.findById("김")).thenReturn(Optional.of(Syllable.builder()
                 .syllableChar("김")
                 .tongueUrl("https://guides/videos/tongue-kim-old.mp4")
@@ -133,6 +143,7 @@ class GuideMediaResolverTest {
         when(videoGenerator.generate(pairs, "김", VideoType.TONGUE))
                 .thenReturn("https://guides/videos/tongue-kim-new.mp4");
 
+        // When & Then
         assertThat(resolver.resolveForEvaluation("김", VideoType.TONGUE))
                 .endsWith("tongue-kim-new.mp4");
     }

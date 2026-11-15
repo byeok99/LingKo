@@ -20,6 +20,7 @@ class MicrometerEvaluationJobTelemetryTest {
 
     @Test
     void recordsBacklogHeartbeatAndOutcome() {
+        // Given
         EvaluationJobRepository repository = mock(EvaluationJobRepository.class);
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         Instant now = Instant.parse("2026-10-23T00:00:00Z");
@@ -30,12 +31,14 @@ class MicrometerEvaluationJobTelemetryTest {
         when(repository.countByStatusAndLeaseExpiresAtBefore(EvaluationJob.Status.PROCESSING, now))
                 .thenReturn(2L);
 
+        // When
         MicrometerEvaluationJobTelemetry telemetry =
                 new MicrometerEvaluationJobTelemetry(repository, registry, clock);
         telemetry.refreshBacklog();
         telemetry.heartbeat();
         telemetry.record(EvaluationJobExecutor.ExecutionResult.TERMINAL_FAILURE, 1_000_000L);
 
+        // Then
         assertThat(registry.get("lingko.evaluation.pending").gauge().value()).isEqualTo(3);
         assertThat(registry.get("lingko.evaluation.oldest.pending.age.seconds").gauge().value()).isEqualTo(90);
         assertThat(registry.get("lingko.evaluation.expired.leases").gauge().value()).isEqualTo(2);

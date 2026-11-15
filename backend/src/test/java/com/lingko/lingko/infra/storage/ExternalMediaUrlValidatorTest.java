@@ -24,10 +24,12 @@ class ExternalMediaUrlValidatorTest {
     @Test
     @DisplayName("허용된 HTTPS host와 공인 IP는 통과한다")
     void validateAllowsKnownHttpsHost() throws Exception {
+        // Given
         ExternalMediaUrlValidator validator = new ExternalMediaUrlValidator(
                 host -> new InetAddress[]{uncheckedAddress("203.0.113.10")}
         );
 
+        // When & Then
         assertThatCode(() -> validator.validate("https://replicate.delivery/output/video.mp4"))
                 .doesNotThrowAnyException();
     }
@@ -35,8 +37,10 @@ class ExternalMediaUrlValidatorTest {
     @Test
     @DisplayName("HTTP URL은 거부한다")
     void validateRejectsHttpUrl() {
+        // Given
         ExternalMediaUrlValidator validator = validatorWithPublicAddress();
 
+        // When & Then
         assertThatThrownBy(() -> validator.validate("http://replicate.delivery/output/video.mp4"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("HTTPS URL만 허용");
@@ -45,9 +49,11 @@ class ExternalMediaUrlValidatorTest {
     @Test
     @DisplayName("비어 있거나 파싱할 수 없는 URL은 원문을 노출하지 않고 거부한다")
     void validateRejectsBlankOrMalformedUrlWithoutLeakingIt() {
+        // Given
         ExternalMediaUrlValidator validator = validatorWithPublicAddress();
         String malformedUrl = "https://replicate.delivery/%zz?token=must-not-leak";
 
+        // When & Then
         assertThatThrownBy(() -> validator.validate(" "))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("비어있음");
@@ -60,9 +66,11 @@ class ExternalMediaUrlValidatorTest {
     @Test
     @DisplayName("allowlist 밖 host는 거부한다")
     void validateRejectsUnknownHost() {
+        // Given
         ExternalMediaUrlValidator validator = validatorWithPublicAddress();
         String sensitiveUrl = "https://example.com/video.mp4?token=must-not-leak";
 
+        // When & Then
         assertThatThrownBy(() -> validator.validate(sensitiveUrl))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("허용되지 않은 외부 미디어 host")
@@ -72,10 +80,12 @@ class ExternalMediaUrlValidatorTest {
     @Test
     @DisplayName("허용 host라도 private IP로 해석되면 거부한다")
     void validateRejectsPrivateResolvedAddress() throws Exception {
+        // Given
         ExternalMediaUrlValidator validator = new ExternalMediaUrlValidator(
                 host -> new InetAddress[]{uncheckedAddress("127.0.0.1")}
         );
 
+        // When & Then
         assertThatThrownBy(() -> validator.validate("https://replicate.delivery/output/video.mp4"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("내부망 외부 미디어 URL");
@@ -84,12 +94,14 @@ class ExternalMediaUrlValidatorTest {
     @Test
     @DisplayName("설정된 S3 bucket과 region의 guide URL을 허용한다")
     void validateAllowsConfiguredS3Host() {
+        // Given
         ExternalMediaUrlValidator validator = new ExternalMediaUrlValidator(
                 awsSettings("custom-bucket", "us-west-2"),
                 host -> new InetAddress[]{uncheckedAddress("203.0.113.10")},
                 url -> new FakeHttpURLConnection(url, 200, 1024)
         );
 
+        // When & Then
         assertThatCode(() -> validator.validate("https://custom-bucket.s3.us-west-2.amazonaws.com/guides/mouth/vowel-a.png"))
                 .doesNotThrowAnyException();
     }
@@ -97,12 +109,14 @@ class ExternalMediaUrlValidatorTest {
     @Test
     @DisplayName("외부 미디어 URL 리다이렉트는 거부한다")
     void openConnectionRejectsRedirect() {
+        // Given
         ExternalMediaUrlValidator validator = new ExternalMediaUrlValidator(
                 awsSettings("lingko", "ap-northeast-2"),
                 host -> new InetAddress[]{uncheckedAddress("203.0.113.10")},
                 url -> new FakeHttpURLConnection(url, 302, 0)
         );
 
+        // When & Then
         assertThatThrownBy(() -> validator.openConnection("https://replicate.delivery/output/video.mp4"))
                 .isInstanceOf(VideoGenerationException.class)
                 .hasMessageContaining("리다이렉트");
@@ -111,12 +125,14 @@ class ExternalMediaUrlValidatorTest {
     @Test
     @DisplayName("Content-Length가 제한을 초과하면 거부한다")
     void openConnectionRejectsLargeContentLength() {
+        // Given
         ExternalMediaUrlValidator validator = new ExternalMediaUrlValidator(
                 awsSettings("lingko", "ap-northeast-2"),
                 host -> new InetAddress[]{uncheckedAddress("203.0.113.10")},
                 url -> new FakeHttpURLConnection(url, 200, ExternalMediaUrlValidator.MAX_DOWNLOAD_BYTES + 1)
         );
 
+        // When & Then
         assertThatThrownBy(() -> validator.openConnection("https://replicate.delivery/output/video.mp4"))
                 .isInstanceOf(VideoGenerationException.class)
                 .hasMessageContaining("크기 제한 초과");
@@ -125,6 +141,7 @@ class ExternalMediaUrlValidatorTest {
     @Test
     @DisplayName("성공 응답만 다운로드 연결로 반환하고 공급자 오류는 거부한다")
     void openConnectionAcceptsSuccessAndRejectsProviderError() {
+        // Given
         ExternalMediaUrlValidator successValidator = new ExternalMediaUrlValidator(
                 awsSettings("lingko", "ap-northeast-2"),
                 host -> new InetAddress[]{uncheckedAddress("203.0.113.10")},
@@ -136,6 +153,7 @@ class ExternalMediaUrlValidatorTest {
                 url -> new FakeHttpURLConnection(url, 503, 0)
         );
 
+        // When & Then
         assertThatCode(() -> successValidator.openConnection("https://replicate.delivery/output/video.mp4"))
                 .doesNotThrowAnyException();
         assertThatThrownBy(() -> errorValidator.openConnection("https://replicate.delivery/output/video.mp4"))

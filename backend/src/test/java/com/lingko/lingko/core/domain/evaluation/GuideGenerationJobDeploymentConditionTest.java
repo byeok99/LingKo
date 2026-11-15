@@ -24,6 +24,7 @@ class GuideGenerationJobDeploymentConditionTest {
     @Test
     @DisplayName("기본 운영 설정은 guide-jobs Controller를 등록하지 않는다")
     void disablesGuideJobsApiByDefault() {
+        // When & Then
         contextRunner.run(context ->
                 assertThat(context).doesNotHaveBean(GuideGenerationJobController.class)
         );
@@ -32,6 +33,7 @@ class GuideGenerationJobDeploymentConditionTest {
     @Test
     @DisplayName("명시적으로 활성화한 환경만 guide-jobs Controller를 등록한다")
     void enablesGuideJobsApiExplicitly() {
+        // When & Then
         contextRunner
                 .withPropertyValues("guide-generation.jobs.api-enabled=true")
                 .run(context ->

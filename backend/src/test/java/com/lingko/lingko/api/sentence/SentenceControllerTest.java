@@ -35,6 +35,7 @@ class SentenceControllerTest {
     @Test
     @DisplayName("추천 문장 목록을 반환한다")
     void getRecommendedSentences() throws Exception {
+        // Given
         PracticeSentenceResponse sentence = PracticeSentenceResponse.builder()
                 .sentenceId(1L)
                 .source("RECOMMENDED")
@@ -50,6 +51,7 @@ class SentenceControllerTest {
         when(sentenceService.findRecommendedSentences(20, "FOOD"))
                 .thenReturn(new RecommendedSentencesResponse(List.of(sentence)));
 
+        // When & Then
         mockMvc.perform(get("/api/sentences/recommended")
                         .param("limit", "20")
                         .param("category", "FOOD"))
@@ -64,6 +66,7 @@ class SentenceControllerTest {
     @Test
     @DisplayName("추천 문장 limit은 50 이하로 제한한다")
     void limitMustBeAtMost50() throws Exception {
+        // When & Then
         mockMvc.perform(get("/api/sentences/recommended")
                         .param("limit", "51"))
                 .andExpect(status().isBadRequest())
@@ -73,6 +76,7 @@ class SentenceControllerTest {
     @Test
     @DisplayName("추천 문장 단건을 반환한다")
     void getSentence() throws Exception {
+        // Given
         PracticeSentenceResponse sentence = PracticeSentenceResponse.builder()
                 .sentenceId(1L)
                 .source("RECOMMENDED")
@@ -87,6 +91,7 @@ class SentenceControllerTest {
                 .build();
         when(sentenceService.getSentence(1L)).thenReturn(sentence);
 
+        // When & Then
         mockMvc.perform(get("/api/sentences/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sentenceId").value(1L))
@@ -96,8 +101,10 @@ class SentenceControllerTest {
     @Test
     @DisplayName("active 추천 문장이 없으면 404를 반환한다")
     void getSentenceReturnsNotFound() throws Exception {
+        // Given
         when(sentenceService.getSentence(404L)).thenThrow(new SentenceNotFoundException(404L));
 
+        // When & Then
         mockMvc.perform(get("/api/sentences/404"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("SENTENCE_NOT_FOUND"));
