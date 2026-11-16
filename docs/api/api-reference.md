@@ -511,49 +511,6 @@ Authorization: Bearer <access-token>
 
 Google AdMob 전용 공개 callback입니다. query 원문의 ECDSA-SHA256 서명을 Google rotating public key로 검증한 뒤 `ad_unit`, `reward_item`, `reward_amount`, `custom_data`, 전역 고유 `transaction_id`를 확인합니다. 같은 transaction은 한 번만 처리하며 기존 `nextRefillAt`은 바꾸지 않습니다. 클라이언트가 직접 지급하는 과거 `POST /api/quota/ad-rewards`는 지급 로직을 제거하고 `410 Gone`만 반환합니다.
 
-## 가이드 생성 작업
-
-### `POST /api/pronunciation/guide-jobs`
-
-비용이 발생하는 내부 운영용 비동기 작업 생성 API입니다. 기본 설정에서는 Controller 자체가 등록되지 않으며, `GUIDE_JOBS_API_ENABLED=true`와 32자 이상의 `GUIDE_JOBS_INTERNAL_TOKEN`이 함께 설정된 환경에서만 열립니다.
-
-요청 헤더:
-
-```http
-X-LingKo-Internal-Token: <service-secret>
-```
-
-```json
-{
-  "syllable": "가",
-  "type": "MOUTH",
-  "urlPairs": [
-    ["https://.../start.png", "https://.../end.png"]
-  ]
-}
-```
-
-성공 시 `202 Accepted`와 작업 ID, 상태, 캐시 키를 반환합니다.
-
-- 일반 사용자 Bearer Token에는 생성 권한이 없으며 `403 GUIDE_JOB_FORBIDDEN`을 반환합니다.
-- 내부 호출자는 기본 분당 2회로 제한되며 초과 시 `429 GUIDE_JOB_RATE_LIMITED`와 `Retry-After`를 반환합니다.
-- 서로 다른 생성 작업은 기본 동시 1개만 실행하며 슬롯이 차면 `429 GUIDE_JOB_CAPACITY_EXCEEDED`를 반환합니다.
-- `syllable`은 한글 음절 1자, `urlPairs`는 최대 10쌍, URL은 항목당 최대 2,048자입니다.
-- 외부 미디어는 HTTPS와 허용된 S3·Replicate host만 허용하며 DNS 결과의 사설·loopback 주소, redirect, 25MiB 초과 응답을 거부합니다.
-
-### `GET /api/pronunciation/guide-jobs/{jobId}`
-
-생성과 같은 내부 service token이 필요합니다. 상태 조회는 외부 생성 비용을 만들지 않으므로 생성 요청의 분당 한도를 소비하지 않습니다.
-
-상태 후보:
-
-- `PENDING`
-- `PROCESSING`
-- `COMPLETED`
-- `FAILED`
-
-작업 상태는 현재 서버 프로세스 메모리에만 존재합니다.
-
 ## 공통 오류 형식
 
 모든 HTTP 응답은 로그 상관관계에 사용하는 `X-Request-Id` Header를 포함합니다. 오류 본문의
