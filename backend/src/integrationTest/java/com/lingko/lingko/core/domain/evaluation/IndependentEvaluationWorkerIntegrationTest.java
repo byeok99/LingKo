@@ -10,6 +10,7 @@ import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobCreationSer
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobExecutor;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobProcessingService;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobService;
+import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobTelemetry;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationJobWorker;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
 import com.lingko.lingko.core.domain.quota.entity.DailyPracticeQuota;
@@ -168,7 +169,7 @@ class IndependentEvaluationWorkerIntegrationTest {
                 evaluationService,
                 aiConsentService
         );
-        return new EvaluationJobWorker(processingService, executor);
+        return new EvaluationJobWorker(processingService, executor, EvaluationJobTelemetry.NOOP);
     }
 
     private void clearDatabase() {

@@ -1,5 +1,9 @@
 package com.lingko.lingko.core.domain.evaluation;
 
+import com.lingko.lingko.core.domain.evaluation.repository.SyllableRepository;
+import com.lingko.lingko.core.domain.evaluation.service.GuideMediaResolver;
+import com.lingko.lingko.core.domain.evaluation.service.VideoGenerator;
+import com.lingko.lingko.core.domain.evaluation.service.SpeechEvaluator;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
 import com.lingko.lingko.core.util.SyllableMappingUtil;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +19,7 @@ import static org.mockito.Mockito.mock;
  */
 public class EvaluationServiceTest {
 
-    private final EvaluationService service = new EvaluationService(mock(SyllableMappingUtil.class));
+    private final EvaluationService service = new EvaluationService(mock(SpeechEvaluator.class), new GuideMediaResolver(mock(SyllableMappingUtil.class), mock(VideoGenerator.class), mock(SyllableRepository.class)));
 
     @Test
     @DisplayName("표준 발음 변환 기능 테스트")

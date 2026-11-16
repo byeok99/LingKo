@@ -1,5 +1,9 @@
 package com.lingko.lingko.core.domain.sentence;
 
+import com.lingko.lingko.core.domain.evaluation.repository.SyllableRepository;
+import com.lingko.lingko.core.domain.evaluation.service.GuideMediaResolver;
+import com.lingko.lingko.core.domain.evaluation.service.VideoGenerator;
+import com.lingko.lingko.core.domain.evaluation.service.SpeechEvaluator;
 import com.lingko.lingko.api.sentence.dto.SavedSentenceResponse;
 import com.lingko.lingko.core.domain.evaluation.service.EvaluationService;
 import com.lingko.lingko.core.domain.sentence.entity.RecommendedSentence;
@@ -44,7 +48,7 @@ class SavedSentenceServiceTest {
         /** 표준 발음 변환은 이 테스트의 관심사가 아니라 실제 구현을 그대로 쓴다. */
         @Bean
         EvaluationService evaluationService() {
-            return new EvaluationService(mock(SyllableMappingUtil.class));
+            return new EvaluationService(mock(SpeechEvaluator.class), new GuideMediaResolver(mock(SyllableMappingUtil.class), mock(VideoGenerator.class), mock(SyllableRepository.class)));
         }
     }
 

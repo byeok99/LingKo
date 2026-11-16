@@ -1,7 +1,6 @@
 package com.lingko.lingko.core.domain.evaluation.service;
 
 import com.lingko.lingko.core.domain.evaluation.entity.EvaluationJob;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,6 @@ public class EvaluationJobWorker {
     private final EvaluationJobTelemetry telemetry;
 
     /** 운영 Worker에는 실제 telemetry를 주입해 처리와 관측의 생명주기를 함께 구성한다. */
-    @Autowired
     public EvaluationJobWorker(
             EvaluationJobProcessingService processingService,
             EvaluationJobExecutor executor,
@@ -35,11 +33,6 @@ public class EvaluationJobWorker {
         this.processingService = processingService;
         this.executor = executor;
         this.telemetry = telemetry;
-    }
-
-    /** 관측 bean을 구성하지 않는 격리 통합 환경에서도 기존 Worker 계약을 재사용한다. */
-    public EvaluationJobWorker(EvaluationJobProcessingService processingService, EvaluationJobExecutor executor) {
-        this(processingService, executor, EvaluationJobTelemetry.NOOP);
     }
 
     @Scheduled(fixedDelayString = "${evaluation.worker.poll-delay-ms:1000}")
