@@ -55,7 +55,10 @@ dependencies {
 	// 비용 유발 guide job의 요청·실행 지표를 MeterRegistry에 기록한다.
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	// 기존 EC2 CloudWatch Agent의 UDP 수집 경로를 재사용해 애플리케이션 AWS 자격 증명을 분리한다.
-	runtimeOnly 'io.micrometer:micrometer-registry-statsd'
+	// allowlist를 StatsD registry에만 걸기 위해 타입을 참조하므로 compile classpath에 둔다.
+	implementation 'io.micrometer:micrometer-registry-statsd'
+	// 로컬 부하 측정용 Prometheus scrape 경로. export는 기본 꺼짐이며 docker-compose.observability.yml에서만 켠다.
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 	// Apple identity token의 RS256 서명과 JWK rotation을 검증한다.
 	implementation 'com.nimbusds:nimbus-jose-jwt:10.9.1'
     testImplementation 'com.h2database:h2'
