@@ -3,9 +3,6 @@ package com.lingko.lingko.api.common;
 import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationException;
 import com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobConflictException;
 import com.lingko.lingko.core.domain.evaluation.exception.EvaluationJobNotFoundException;
-import com.lingko.lingko.core.domain.evaluation.exception.GuideJobAccessDeniedException;
-import com.lingko.lingko.core.domain.evaluation.exception.GuideJobCapacityExceededException;
-import com.lingko.lingko.core.domain.evaluation.exception.GuideJobRateLimitExceededException;
 import com.lingko.lingko.core.domain.auth.exception.AuthException;
 import com.lingko.lingko.core.domain.auth.exception.OAuthProviderUnavailableException;
 import com.lingko.lingko.core.domain.auth.exception.ReviewAccessRateLimitExceededException;
@@ -151,26 +148,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .header(HttpHeaders.RETRY_AFTER, Long.toString(exception.retryAfterSeconds()))
                 .body(ErrorResponse.of("REVIEW_ACCESS_RATE_LIMITED", "Too many review access attempts"));
-    }
-
-    @ExceptionHandler(GuideJobAccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleGuideJobAccessDenied(GuideJobAccessDeniedException exception) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ErrorResponse.of("GUIDE_JOB_FORBIDDEN", "Guide generation is not available to this user"));
-    }
-
-    @ExceptionHandler(GuideJobRateLimitExceededException.class)
-    public ResponseEntity<ErrorResponse> handleGuideJobRateLimit(GuideJobRateLimitExceededException exception) {
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                .header(HttpHeaders.RETRY_AFTER, Long.toString(exception.retryAfterSeconds()))
-                .body(ErrorResponse.of("GUIDE_JOB_RATE_LIMITED", "Too many guide generation requests"));
-    }
-
-    @ExceptionHandler(GuideJobCapacityExceededException.class)
-    public ResponseEntity<ErrorResponse> handleGuideJobCapacity(GuideJobCapacityExceededException exception) {
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                .header(HttpHeaders.RETRY_AFTER, "5")
-                .body(ErrorResponse.of("GUIDE_JOB_CAPACITY_EXCEEDED", "Guide generation is busy"));
     }
 
     @ExceptionHandler(SentenceNotFoundException.class)

@@ -235,7 +235,6 @@ CASCADE 삭제합니다. `evaluation_jobs.ai_consent_id`는 생성 당시 허용
 - 엔티티와 실제 Flyway 스키마가 항상 일치하도록 테스트합니다.
 - `sentence_id`는 추천 문장 참조지만 현재 엔티티 연관관계가 아닌 값으로 저장됩니다.
 - `evaluation_log`와 `evaluation_jobs`의 `standard_pronunciation`은 평가 당시 기준을 재현하기 위한 snapshot이며 추천 콘텐츠의 정답 원천이 아닙니다.
-- 가이드 생성 작업은 DB 모델이 없으며 현재 메모리에만 저장됩니다.
 - Refresh Token 원문은 저장하지 않고 현재 토큰의 SHA-256 해시만 저장합니다.
 - 평가 작업은 MySQL을 상태의 원본으로 사용하며 Worker 재시작 후에도 재시도할 수 있습니다.
 - 평가 성공 시 결과는 `evaluation_log`와 `evaluation_jobs.result_payload`에 저장되고 원본 S3 객체는 삭제합니다.

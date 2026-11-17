@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+### Removed
+
+- 기본 비활성화 상태로 쓰이지 않던 내부 가이드 생성 HTTP API(`/api/pronunciation/guide-jobs`) 제거. 가이드 영상 사전 생성은 `guidePrewarm` 도구가 담당
+
 ### Documentation
 
 - 프로젝트 전체 README와 문서 인덱스 추가
