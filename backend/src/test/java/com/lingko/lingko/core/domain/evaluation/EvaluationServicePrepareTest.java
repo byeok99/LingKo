@@ -1,5 +1,9 @@
 package com.lingko.lingko.core.domain.evaluation;
 
+import com.lingko.lingko.core.domain.evaluation.repository.SyllableRepository;
+import com.lingko.lingko.core.domain.evaluation.service.GuideMediaResolver;
+import com.lingko.lingko.core.domain.evaluation.service.VideoGenerator;
+import com.lingko.lingko.core.domain.evaluation.service.SpeechEvaluator;
 import com.lingko.lingko.api.evaluation.dto.GuideStatus;
 import com.lingko.lingko.api.evaluation.dto.GuideCharacterResponse;
 import com.lingko.lingko.api.evaluation.dto.PronunciationPrepareResponse;
@@ -29,7 +33,7 @@ class EvaluationServicePrepareTest {
                 .thenReturn("https://guides/mouth/a.png");
         when(mappingUtil.getRepresentativeImageUrl("마", VideoType.TONGUE))
                 .thenReturn("https://guides/tongue/a.png");
-        EvaluationService service = new EvaluationService(mappingUtil);
+        EvaluationService service = new EvaluationService(mock(SpeechEvaluator.class), new GuideMediaResolver(mappingUtil, mock(VideoGenerator.class), mock(SyllableRepository.class)));
 
         // When
         PronunciationPrepareResponse response = service.prepareCustomSentence("  맛있겠다.!?  ");
@@ -60,7 +64,7 @@ class EvaluationServicePrepareTest {
         // 이전 구현은 guideType을 그대로 문장에 끼워 넣어 사용자에게
         // "Focus on none placement"라는 문구를 노출했다.
         SyllableMappingUtil mappingUtil = mock(SyllableMappingUtil.class);
-        EvaluationService service = new EvaluationService(mappingUtil);
+        EvaluationService service = new EvaluationService(mock(SpeechEvaluator.class), new GuideMediaResolver(mappingUtil, mock(VideoGenerator.class), mock(SyllableRepository.class)));
 
         // When
         PronunciationPrepareResponse response = service.prepareCustomSentence("마");

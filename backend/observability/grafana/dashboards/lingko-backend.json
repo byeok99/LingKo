@@ -1,0 +1,936 @@
+{
+  "uid": "lingko-backend-perf",
+  "title": "LingKo Backend 부하 측정",
+  "tags": [
+    "lingko",
+    "perf"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": false,
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "annotations": {
+    "list": []
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "k6 부하 (k6 run -o experimental-prometheus-rw)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "가상 사용자 수와 요청률",
+      "description": "k6를 remote write로 실행했을 때만 값이 있다",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "k6_vus",
+          "legendFormat": "VUs"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "sum(rate(k6_http_reqs_total[$__rate_interval]))",
+          "legendFormat": "req/s"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "k6 응답시간 p95 (클라이언트 측정)",
+      "description": "K6_PROMETHEUS_RW_TREND_STATS에 p(95)를 넣어야 생긴다",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 3,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "max by (name) (k6_http_req_duration_p95)",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "API 요청 (서버 측정, actuator 제외)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 4,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "endpoint별 요청률",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "id": 5,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "sum by (method, uri) (rate(http_server_requests_seconds_count{uri!~\"/actuator.*\"}[$__rate_interval]))",
+          "legendFormat": "{{method}} {{uri}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "endpoint별 응답시간 p95",
+      "description": "Micrometer client-side percentile(application.yaml의 0.5·0.95). 인스턴스 하나 기준이다",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 6,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "max by (method, uri) (http_server_requests_seconds{quantile=\"0.95\",uri!~\"/actuator.*\"})",
+          "legendFormat": "{{method}} {{uri}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "상태 코드별 요청률",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 7,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "sum by (status) (rate(http_server_requests_seconds_count{uri!~\"/actuator.*\"}[$__rate_interval]))",
+          "legendFormat": "{{status}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "오류율 (5xx 비율)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 8,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "(sum(rate(http_server_requests_seconds_count{status=~\"5..\",uri!~\"/actuator.*\"}[$__rate_interval])) / clamp_min(sum(rate(http_server_requests_seconds_count{uri!~\"/actuator.*\"}[$__rate_interval])), 1e-9)) or vector(0)",
+          "legendFormat": "5xx"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Tomcat · HikariCP (포화 지점 찾기)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 9,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Tomcat 요청 thread",
+      "description": "busy가 max에 붙으면 요청이 accept queue에서 대기하기 시작한다",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "id": 10,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "tomcat_threads_busy_threads",
+          "legendFormat": "busy"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "tomcat_threads_current_threads",
+          "legendFormat": "current"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "tomcat_threads_config_max_threads",
+          "legendFormat": "max"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "HikariCP 연결",
+      "description": "pending이 0보다 크면 DB 연결 pool이 병목이다",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 11,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "hikaricp_connections_active",
+          "legendFormat": "active"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "hikaricp_connections_idle",
+          "legendFormat": "idle"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "hikaricp_connections_pending",
+          "legendFormat": "pending (대기 중인 요청)"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "hikaricp_connections_max",
+          "legendFormat": "max"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "HikariCP 연결 획득 대기시간",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 35
+      },
+      "id": 12,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "rate(hikaricp_connections_acquire_seconds_sum[$__rate_interval]) / clamp_min(rate(hikaricp_connections_acquire_seconds_count[$__rate_interval]), 1e-9)",
+          "legendFormat": "평균"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "hikaricp_connections_acquire_seconds_max",
+          "legendFormat": "최대"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "HikariCP 연결 사용시간",
+      "description": "요청 하나가 DB 연결을 잡고 있는 시간. query 수·N+1의 영향이 여기 드러난다",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 35
+      },
+      "id": 13,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "rate(hikaricp_connections_usage_seconds_sum[$__rate_interval]) / clamp_min(rate(hikaricp_connections_usage_seconds_count[$__rate_interval]), 1e-9)",
+          "legendFormat": "평균"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "hikaricp_connections_usage_seconds_max",
+          "legendFormat": "최대"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "JVM",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      },
+      "id": 14,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU 사용률",
+      "description": "container에 할당된 CPU 기준. 100%에 붙으면 CPU 병목이다",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 44
+      },
+      "id": 15,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "process_cpu_usage",
+          "legendFormat": "JVM process"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "system_cpu_usage",
+          "legendFormat": "container 전체"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Heap 메모리",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 44
+      },
+      "id": 16,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "sum(jvm_memory_used_bytes{area=\"heap\"})",
+          "legendFormat": "used"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "sum(jvm_memory_committed_bytes{area=\"heap\"})",
+          "legendFormat": "committed"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "sum(jvm_memory_max_bytes{area=\"heap\"})",
+          "legendFormat": "max"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "GC 일시정지 시간 비율",
+      "description": "1초 중 GC로 멈춘 시간의 비율",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 52
+      },
+      "id": 17,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "sum by (gc) (rate(jvm_gc_pause_seconds_sum[$__rate_interval]))",
+          "legendFormat": "{{gc}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "JVM thread",
+      "description": "blocked가 늘면 lock 경합이다. 원인은 thread dump로 확인한다",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lingko-prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 52
+      },
+      "id": 18,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "jvm_threads_live_threads",
+          "legendFormat": "live"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "jvm_threads_peak_threads",
+          "legendFormat": "peak"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lingko-prometheus"
+          },
+          "expr": "sum by (state) (jvm_threads_states_threads{state=~\"blocked|waiting|timed-waiting\"})",
+          "legendFormat": "{{state}}"
+        }
+      ]
+    }
+  ]
+}

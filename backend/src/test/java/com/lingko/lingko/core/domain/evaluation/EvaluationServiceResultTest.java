@@ -1,5 +1,7 @@
 package com.lingko.lingko.core.domain.evaluation;
 
+import com.lingko.lingko.core.domain.evaluation.repository.SyllableRepository;
+import com.lingko.lingko.core.domain.evaluation.service.VideoGenerator;
 import com.lingko.lingko.api.evaluation.dto.ScoreStatus;
 import com.lingko.lingko.api.evaluation.dto.PracticeResultResponse;
 import com.lingko.lingko.core.domain.evaluation.dto.AssessmentResult;
@@ -33,7 +35,7 @@ class EvaluationServiceResultTest {
 
     private final SyllableMappingUtil mappingUtil = mock(SyllableMappingUtil.class);
     private final SpeechEvaluator speechEvaluator = mock(SpeechEvaluator.class);
-    private final EvaluationService service = new EvaluationService(mappingUtil, speechEvaluator);
+    private final EvaluationService service = new EvaluationService(speechEvaluator, new GuideMediaResolver(mappingUtil, mock(VideoGenerator.class), mock(SyllableRepository.class)));
 
     @Test
     @DisplayName("변환한 표준 발음을 SpeechEvaluator 기준 문장으로 사용한다")
@@ -194,11 +196,7 @@ class EvaluationServiceResultTest {
     void usesTransitionVideosForKimResultWithoutCharacterScores() {
         // Given
         GuideMediaResolver guideMediaResolver = mock(GuideMediaResolver.class);
-        EvaluationService videoGuideService = new EvaluationService(
-                mappingUtil,
-                speechEvaluator,
-                guideMediaResolver
-        );
+        EvaluationService videoGuideService = new EvaluationService(speechEvaluator, guideMediaResolver);
         AssessmentResult result = AssessmentResult.builder()
                 .accuracyScore(70.0)
                 .fluencyScore(75.0)

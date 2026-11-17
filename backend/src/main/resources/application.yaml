@@ -60,6 +60,12 @@ management:
         port: ${MANAGEMENT_STATSD_METRICS_EXPORT_PORT:8125}
         flavor: datadog
         polling-frequency: 60s
+  prometheus:
+    metrics:
+      export:
+        # 로컬 부하 측정에서만 켠다. registry가 classpath에 있으면 Boot 기본값이 true이므로 명시적으로 끈다.
+        # 꺼져 있으면 /actuator/prometheus endpoint 자체가 만들어지지 않는다. 노출 목록(health)도 별도로 막는다.
+        enabled: ${MANAGEMENT_PROMETHEUS_METRICS_EXPORT_ENABLED:false}
 
 logging:
   pattern:
