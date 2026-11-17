@@ -13,8 +13,6 @@ import com.lingko.lingko.core.domain.evaluation.exception.VideoGenerationExcepti
 import com.lingko.lingko.core.util.KoreanPhonemeUtil;
 import com.lingko.lingko.core.util.KoreanRomanizationUtil;
 import com.lingko.lingko.core.util.PracticeSentenceNormalizer;
-import com.lingko.lingko.core.util.SyllableMappingUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -39,28 +37,7 @@ public class EvaluationService {
     private final GuideMediaResolver guideMediaResolver;
     private final SpeechEvaluator speechEvaluator;
 
-    public EvaluationService(SyllableMappingUtil syllableMappingUtil) {
-        this(
-                syllableMappingUtil,
-                null,
-                new GuideMediaResolver(syllableMappingUtil, null)
-        );
-    }
-
     public EvaluationService(
-            SyllableMappingUtil syllableMappingUtil,
-            SpeechEvaluator speechEvaluator
-    ) {
-        this(
-                syllableMappingUtil,
-                speechEvaluator,
-                new GuideMediaResolver(syllableMappingUtil, null)
-        );
-    }
-
-    @Autowired
-    public EvaluationService(
-            SyllableMappingUtil syllableMappingUtil,
             SpeechEvaluator speechEvaluator,
             GuideMediaResolver guideMediaResolver
     ) {
@@ -320,7 +297,7 @@ public class EvaluationService {
                     throw new InvalidEvaluationAudioException("Invalid uploaded WAV audio");
                 }
             }
-            AssessmentResult assessmentResult = requireSpeechEvaluator()
+            AssessmentResult assessmentResult = speechEvaluator
                     .evaluate(audioPath.toString(), referenceText);
             onSpeechAnalyzed.run();
             return toPracticeResult(referenceText, assessmentResult);
@@ -546,14 +523,6 @@ public class EvaluationService {
             return "Understandable — one sound to refine";
         }
         return "Needs work — start with the red words";
-    }
-
-    private SpeechEvaluator requireSpeechEvaluator() {
-        if (speechEvaluator == null) {
-            throw new VideoGenerationException("Speech evaluator is not configured");
-        }
-
-        return speechEvaluator;
     }
 
 }

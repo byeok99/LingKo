@@ -6,7 +6,6 @@ import com.lingko.lingko.core.domain.evaluation.repository.SyllableRepository;
 import com.lingko.lingko.core.util.GuideMediaVersion;
 import com.lingko.lingko.core.util.SyllableMappingUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,7 +25,6 @@ public class GuideMediaResolver {
     private final VideoGenerator videoGenerator;
     private final SyllableRepository syllableRepository;
 
-    @Autowired
     public GuideMediaResolver(
             SyllableMappingUtil syllableMappingUtil,
             VideoGenerator videoGenerator,
@@ -35,13 +33,6 @@ public class GuideMediaResolver {
         this.syllableMappingUtil = syllableMappingUtil;
         this.videoGenerator = videoGenerator;
         this.syllableRepository = syllableRepository;
-    }
-
-    public GuideMediaResolver(
-            SyllableMappingUtil syllableMappingUtil,
-            VideoGenerator videoGenerator
-    ) {
-        this(syllableMappingUtil, videoGenerator, null);
     }
 
     public String resolveStatic(String syllable, VideoType videoType) {
@@ -56,7 +47,7 @@ public class GuideMediaResolver {
 
         List<List<String>> framePairs = syllableMappingUtil.createFramePairs(syllable, videoType);
         String fallbackUrl = firstFrame(framePairs);
-        if (fallbackUrl == null || isStaticFrame(framePairs) || videoGenerator == null) {
+        if (fallbackUrl == null || isStaticFrame(framePairs)) {
             return fallbackUrl;
         }
 
@@ -80,7 +71,7 @@ public class GuideMediaResolver {
     }
 
     private String findPersistedVideo(String syllable, VideoType videoType) {
-        if (syllableRepository == null || syllable == null || syllable.isBlank()) {
+        if (syllable == null || syllable.isBlank()) {
             return null;
         }
         return syllableRepository.findById(syllable.trim())
@@ -95,7 +86,7 @@ public class GuideMediaResolver {
     }
 
     private void saveGeneratedVideo(String syllable, VideoType videoType, String generatedUrl) {
-        if (syllableRepository == null || !isVideoUrl(generatedUrl)) {
+        if (!isVideoUrl(generatedUrl)) {
             return;
         }
         try {
