@@ -115,14 +115,20 @@ public interface DailyPracticeQuotaRepository extends JpaRepository<DailyPractic
             @Param("quotaDate") LocalDate quotaDate
     );
 
+    /**
+     * 실패한 무료 예약을 되돌리고, 그것이 유일한 예약이며 확정 사용량도 없으면 충전 timer를 지운다.
+     *
+     * <p>MySQL은 SET 항목을 왼쪽부터 평가하며 뒤 항목이 앞에서 바뀐 값을 본다(H2·표준 SQL은 원래 값).
+     * timer 판정을 감소보다 먼저 두어야 두 DB 모두 감소 전 {@code free_reserved}로 판단한다.</p>
+     */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
             UPDATE daily_practice_quota
-            SET free_reserved = free_reserved - 1,
-                next_refill_at = CASE
+            SET next_refill_at = CASE
                     WHEN free_used = 0 AND free_reserved = 1 THEN NULL
                     ELSE next_refill_at
                 END,
+                free_reserved = free_reserved - 1,
                 updated_at = CURRENT_TIMESTAMP
             WHERE user_idx = :userId
               AND quota_date = :quotaDate
