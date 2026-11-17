@@ -1,0 +1,12 @@
+# Grafana 시작 시 Prometheus datasource를 자동 등록한다. dashboard JSON이 uid로 참조한다.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: lingko-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: 5s

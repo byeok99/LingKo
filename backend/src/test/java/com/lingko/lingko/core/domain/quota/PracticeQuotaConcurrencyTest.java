@@ -195,6 +195,32 @@ class PracticeQuotaConcurrencyTest {
         assertThat(afterRelease.remainingPractices()).isEqualTo(4);
     }
 
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @DisplayName("무료 예약 둘 중 하나만 복구하면 충전 timer를 유지하고 마지막 복구에서만 지운다")
+    void keepsRefillTimerUntilLastFreeReservationIsReleased() {
+        // Given: 확정 사용량 없이 무료 예약 2개가 진행 중이다
+        User user = saveUser("release-timer-user-" + System.nanoTime());
+        PracticeQuotaService.PracticeQuotaReservation first = quotaService.reservePractice(user.getUserIdx());
+        PracticeQuotaService.PracticeQuotaReservation second = quotaService.reservePractice(user.getUserIdx());
+
+        // When: 하나만 복구한다
+        quotaService.releasePractice(first);
+
+        // Then: 남은 예약이 있으므로 timer가 유지된다 (MySQL SET 평가 순서 회귀)
+        assertThat(currentQuota(user).getNextRefillAt()).isNotNull();
+
+        // When: 마지막 예약도 복구한다
+        quotaService.releasePractice(second);
+
+        // Then
+        assertThat(currentQuota(user).getNextRefillAt()).isNull();
+    }
+
+    private DailyPracticeQuota currentQuota(User user) {
+        return quotaRepository.findByUserUserIdxAndQuotaDate(user.getUserIdx(), QUOTA_DATE).orElseThrow();
+    }
+
     private User saveUser(String socialId) {
         return userRepository.saveAndFlush(User.builder()
                 .socialId(socialId)

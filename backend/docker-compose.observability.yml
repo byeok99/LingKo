@@ -1,0 +1,71 @@
+# 로컬 부하 측정용 관측 스택. 기본 docker-compose.yml 위에 겹쳐서만 쓴다.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --build mysql backend prometheus grafana
+#
+# 운영 Compose(docker-compose.prod.yml)와 함께 쓰지 않는다. backend의 metrics endpoint를 열고
+# Prometheus·Grafana를 띄우므로, 모든 host port는 127.0.0.1에만 공개한다.
+
+services:
+  backend:
+    # 이 모드에서는 /actuator/prometheus가 API와 같은 port에 열린다. 기본 compose의 0.0.0.0 공개를
+    # 그대로 두면 같은 네트워크의 다른 기기에서 지표를 읽을 수 있으므로, port 목록을 loopback으로 교체한다.
+    ports: !override
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    environment:
+      # application.yaml의 기본값(false, health만 노출)을 이 override에서만 뒤집는다.
+      MANAGEMENT_PROMETHEUS_METRICS_EXPORT_ENABLED: "true"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,prometheus"
+      # Tomcat busy·current thread 지표는 MBean registry가 켜져야 Micrometer가 수집한다.
+      # 요청 thread 포화를 보려면 필요하지만 운영 기본값은 Boot 기본(false)을 유지한다.
+      SERVER_TOMCAT_MBEANREGISTRY_ENABLED: "true"
+      METRICS_ENVIRONMENT: "local-perf"
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: lingko-prometheus
+    depends_on:
+      - backend
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      # 측정 데이터는 실행 단위로 비교하므로 오래 보관하지 않는다.
+      - --storage.tsdb.retention.time=7d
+      # k6가 `-o experimental-prometheus-rw`로 결과를 밀어 넣을 수 있게 remote write 수신을 연다.
+      - --web.enable-remote-write-receiver
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    container_name: lingko-grafana
+    depends_on:
+      - prometheus
+    environment:
+      # loopback 전용 로컬 도구라 로그인 없이 바로 dashboard를 연다. 외부에 공개하는 환경에서는 쓰지 않는다.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  prometheus_data:
+  grafana_data:

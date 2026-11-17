@@ -16,9 +16,9 @@ Spring stdout → Docker awslogs              ┘
 - Dashboard: `LingKo-Prod`
 - 공통 dimension: `InstanceId`, `environment=prod`, `service=api|worker`
 - `userId`, `requestId`, `jobId`, 문장과 S3 object key는 Metric dimension으로 사용하지 않습니다.
-- `/actuator/health`만 노출하며 정상은 `200 {"status":"UP"}`, DB 장애는 상세 정보 없이 `503 {"status":"DOWN"}`입니다.
+- `/actuator/health`만 노출하며 정상은 `200 {"status":"UP"}`, DB 장애는 상세 정보 없이 `503 {"status":"DOWN"}`입니다. `/actuator/prometheus`는 로컬 부하 측정용 관측 스택([로컬 개발](../development/local-development.md#부하-측정용-관측-스택))에서만 열고 운영에서는 만들지 않습니다.
 
-StatsD는 기존 CloudWatch Agent를 재사용합니다. 애플리케이션이 CloudWatch API로 직접 push하지 않으므로 CloudWatch 장애나 UDP 유실이 요청 처리를 막지 않으며, 같은 지표를 두 경로로 중복 전송하지 않습니다. export allowlist는 JVM heap, GC pause, live thread, HTTP, HikariCP와 `lingko.*`만 허용합니다.
+StatsD는 기존 CloudWatch Agent를 재사용합니다. 애플리케이션이 CloudWatch API로 직접 push하지 않으므로 CloudWatch 장애나 UDP 유실이 요청 처리를 막지 않으며, 같은 지표를 두 경로로 중복 전송하지 않습니다. export allowlist는 JVM heap, GC pause, live thread, HTTP, HikariCP와 `lingko.*`만 허용합니다. allowlist는 StatsD registry에만 적용하므로, 로컬 Prometheus registry는 CPU·Tomcat thread·HikariCP 대기시간 같은 진단 지표까지 모두 수집합니다.
 
 Agent JSON에는 설치 version의 공식 schema가 허용하는 `service_address`, 수집·집계 주기와 `metric_separator`만 사용합니다. CloudWatch Agent는 `#tag:value`가 포함된 StatsD 형식을 지원하므로 legacy Telegraf 속성인 `parse_data_dog_tags`를 JSON에 추가하지 않습니다. p50·p95 생성은 Agent의 비지원 `percentiles` 속성이 아니라 Spring의 `management.metrics.distribution.percentiles`가 책임집니다.
 

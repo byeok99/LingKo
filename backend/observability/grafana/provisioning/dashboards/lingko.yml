@@ -1,0 +1,11 @@
+# /var/lib/grafana/dashboards의 JSON을 LingKo 폴더에 자동 등록한다.
+# 저장소 파일이 기준이므로 UI에서 고친 내용은 재시작 시 덮어써진다(allowUiUpdates: false).
+apiVersion: 1
+
+providers:
+  - name: lingko
+    folder: LingKo
+    type: file
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards
