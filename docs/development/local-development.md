@@ -31,6 +31,47 @@ SPRINGDOC_ENABLED=true ./gradlew bootRun   # Compose는 backend/.env에 SPRINGDO
 - 인증이 필요한 API는 UI의 **Authorize**에 Access 토큰만 입력합니다. `Bearer ` 접두어는 자동으로 붙습니다.
 - 자동 생성 문서는 시험 호출용입니다. 계약의 기준은 [API 명세](../api/api-reference.md)입니다.
 
+### 부하 측정용 관측 스택
+
+부하를 걸면서 서버 내부(요청 thread, DB 연결 pool, CPU, GC)를 시간축으로 보기 위한 Prometheus·Grafana 구성입니다. 기본 Compose 위에 override 파일을 겹쳐서만 씁니다. 평가 Worker는 Azure·Replicate 비용이 생기므로 띄우지 않습니다.
+
+```bash
+cd backend
+docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --build mysql backend prometheus grafana
+```
+
+- Grafana: `http://127.0.0.1:3000` → **LingKo > LingKo Backend 부하 측정**. loopback 전용이라 로그인 없이 열립니다.
+- Prometheus: `http://127.0.0.1:9090`. Backend의 `/actuator/prometheus`를 5초마다 수집합니다.
+- override는 Backend에 `MANAGEMENT_PROMETHEUS_METRICS_EXPORT_ENABLED=true`, `MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,prometheus`, `SERVER_TOMCAT_MBEANREGISTRY_ENABLED=true`를 넣습니다. 기본 Compose와 운영에서는 셋 다 꺼져 있습니다.
+- 이 모드에서는 Backend(8080), Prometheus(9090), Grafana(3000)를 모두 `127.0.0.1`에만 엽니다. metrics가 API와 같은 port에 열리므로 `APP_BIND_ADDRESS` 설정과 관계없이 같은 네트워크의 다른 기기에서는 접근할 수 없습니다. 휴대폰 실기기로 로컬 API를 붙여야 하면 기본 Compose로 실행합니다.
+- 설정은 `backend/observability/`에 있습니다. Dashboard JSON이 기준이라 Grafana UI에서 고친 내용은 재시작하면 사라집니다.
+
+k6 결과를 같은 dashboard에 함께 그리려면 Prometheus remote write로 내보냅니다. `p(95)`를 넣어야 k6 응답시간 패널이 생깁니다.
+
+```bash
+K6_PROMETHEUS_RW_SERVER_URL=http://127.0.0.1:9090/api/v1/write \
+K6_PROMETHEUS_RW_TREND_STATS="p(95),avg,max" \
+k6 run -o experimental-prometheus-rw <script.js>
+```
+
+병목 위치를 좁히는 기준:
+
+| 신호 | 의미 |
+|---|---|
+| Tomcat busy thread가 max에 붙음 | 요청 thread 포화. 이후 요청은 accept queue에서 대기 |
+| HikariCP pending > 0, 획득 대기시간 증가 | DB 연결 pool 부족 또는 느린 query |
+| JVM CPU가 container 할당량에 붙음 | CPU 병목. 아래 명령으로 thread dump를 떠 어떤 코드가 CPU를 쓰는지 확인 |
+| JVM thread blocked 증가 | lock 경합 |
+
+실행 image는 JRE라 `jcmd`·`jstack`이 없습니다. SIGQUIT을 보내면 JVM이 종료하지 않고 thread dump를 stdout에 씁니다. 부하 중 몇 초 간격으로 2~3회 떠서 같은 위치에 머무는 thread를 찾습니다.
+
+```bash
+docker exec lingko-backend kill -3 1
+docker logs --since 10s lingko-backend 2>&1 | sed -n '/Full thread dump/,$p'
+```
+
+정리할 때는 `docker compose -f docker-compose.yml -f docker-compose.observability.yml down`을 씁니다. 측정 데이터 volume까지 지우려면 `-v`를 붙이되 MySQL 데이터도 함께 지워지니 주의합니다.
+
 가이드 영상 cache 범위는 외부 호출 없이 확인할 수 있습니다.
 
 ```bash
