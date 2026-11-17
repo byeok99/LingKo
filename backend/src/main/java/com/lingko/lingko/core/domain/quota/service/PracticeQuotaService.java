@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.Optional;
 
 /**
  * Practice 할당량 업무 규칙을 조율한다.
@@ -145,12 +144,9 @@ public class PracticeQuotaService {
     }
 
     private DailyPracticeQuota findOrCreateCurrentQuota(Long userId) {
-        Optional<DailyPracticeQuota> existingQuota = quotaRepository.findCurrentByUserForUpdate(userId);
-        if (existingQuota.isPresent()) {
-            return replenish(existingQuota.get());
-        }
-
-        // 잠글 energy 행이 없는 최초 생성 경쟁은 항상 존재하는 user 행으로 직렬화한다.
+        // 항상 user 행을 먼저 잠근다. quota 행이 없을 때 quota를 먼저 잠그면 MySQL이 빈 범위에 gap lock을 잡고,
+        // 그 상태로 user lock을 기다리는 동안 user lock을 가진 다른 요청의 INSERT가 그 gap lock에 막혀 deadlock이 난다.
+        // 평가 작업 생성·동의 기록도 user → quota 순서로 잠그므로 같은 순서를 지킨다.
         User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new AuthException("Authenticated user not found"));
         // Repeatable Read snapshot 재조회 대신 locking read로 앞선 transaction이 만든 현재 행을 확인한다.
