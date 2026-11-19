@@ -11,7 +11,7 @@ spring:
     enabled: false
 
 jwt:
-  secret-key: integration-test-secret-key
+  secret-key: integration-test-secret-key-0123456789
   access-token-expire-minutes: 30
   refresh-token-expire-days: 14
   algorithm: HS256

@@ -179,6 +179,14 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop
 
 H2와 외부 서비스 대역을 사용하는 테스트는 MySQL의 실제 잠금·실행 계획이나 Azure·S3 응답시간을 검증한 것으로 해석하지 않습니다. JaCoCo 보고서가 존재하는 것과 커버리지 임계값을 강제하는 것은 별개입니다.
 
+### E2E 테스트 세션
+
+E2E 테스트는 소셜 로그인 화면 대신 `e2e` 프로필 전용 `POST /test-support/sessions`로 세션을 받습니다. 응답은 실제 로그인과 같은 `AuthTokenResponse`입니다.
+
+- 기본(`consented=true`): 고정 테스트 사용자를 재사용하고 약관·AI 처리 동의를 기록합니다.
+- `consented=false`: 동의 화면 흐름을 시험하도록 동의 기록 없는 새 사용자를 매번 만듭니다.
+- 로컬 Backend에서만 `SPRING_PROFILES_ACTIVE=e2e`로 켭니다. 인증 없이 세션을 발급하므로 운영에는 절대 설정하지 않으며, 프로필이 없으면 경로가 404임을 `TestSupportEndpointDisabledIntegrationTest`가 보장합니다.
+
 법무 문서를 변경할 때 `LegalDocumentSourceSyncTest`로 문서 원본과 서버 제공 리소스의 일치를 확인합니다. 기기 녹음·Presigned PUT·로그인 capability는 해당 플랫폼에서 별도 실행 확인이 필요합니다.
 
 ## 문제를 재현할 때
