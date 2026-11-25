@@ -35,6 +35,7 @@ class E2eQuotaControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.remainingPractices").value(3))
                 .andExpect(jsonPath("$.freeLimit").value(5))
+                .andExpect(jsonPath("$.rewardedAvailable").value(0))
                 .andExpect(jsonPath("$.nextRefillAt").isNotEmpty());
 
         mockMvc.perform(get("/api/quota/today").header("Authorization", "Bearer " + token))
