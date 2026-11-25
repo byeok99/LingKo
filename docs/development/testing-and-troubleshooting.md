@@ -187,6 +187,17 @@ E2E 테스트는 소셜 로그인 화면 대신 `e2e` 프로필 전용 `POST /te
 - `consented=false`: 동의 화면 흐름을 시험하도록 동의 기록 없는 새 사용자를 매번 만듭니다.
 - 로컬 Backend에서만 `SPRING_PROFILES_ACTIVE=e2e`로 켭니다. 인증 없이 세션을 발급하므로 운영에는 절대 설정하지 않으며, 프로필이 없으면 경로가 404임을 `TestSupportEndpointDisabledIntegrationTest`가 보장합니다.
 
+### Appium E2E 테스트
+
+루트 `e2e/`는 Backend와 의존성을 섞지 않는 독립 Gradle 프로젝트입니다. 시뮬레이터와 Appium 서버가 필요하므로 CI에서 실행하지 않고 로컬에서 수동으로 실행합니다.
+
+1. Backend를 `e2e` 프로필로 실행합니다(`SPRING_PROFILES_ACTIVE=local,e2e`).
+2. 앱을 E2E entry point로 실행합니다: `cd app && LINGKO_FLUTTER_TARGET=lib/main_e2e.dart LINGKO_API_BASE_URL=http://127.0.0.1:8080 ./scripts/run-local.sh ios`
+3. Appium 서버를 실행합니다: `appium`
+4. 테스트를 실행합니다: `cd e2e && ./gradlew test`
+
+요소는 화면 문구(iOS accessibility label, Android content-desc)로 찾습니다. 문구와 찾는 방법은 `e2e/.../pages/` 의 Page 클래스에만 두므로, 앱 문구가 바뀌면 해당 Page 클래스의 상수를 함께 고칩니다.
+
 법무 문서를 변경할 때 `LegalDocumentSourceSyncTest`로 문서 원본과 서버 제공 리소스의 일치를 확인합니다. 기기 녹음·Presigned PUT·로그인 capability는 해당 플랫폼에서 별도 실행 확인이 필요합니다.
 
 ## 문제를 재현할 때

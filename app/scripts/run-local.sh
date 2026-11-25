@@ -237,4 +237,9 @@ if [[ -n "$device_id" ]]; then
   flutter_args=(-d "$device_id" "${flutter_args[@]}")
 fi
 
+# E2E처럼 다른 진입점(lib/main_e2e.dart 등)으로 실행할 때만 -t를 붙인다.
+if [[ -n "${LINGKO_FLUTTER_TARGET:-}" ]]; then
+  flutter_args+=(-t "$LINGKO_FLUTTER_TARGET")
+fi
+
 exec flutter run "${flutter_args[@]}"

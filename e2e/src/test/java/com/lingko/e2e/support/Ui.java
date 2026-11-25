@@ -1,0 +1,135 @@
+package com.lingko.e2e.support;
+
+import io.appium.java_client.AppiumBy;
+import io.appium.java_client.AppiumDriver;
+import io.appium.java_client.ios.IOSDriver;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.Rectangle;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.PointerInput;
+import org.openqa.selenium.interactions.Sequence;
+
+/** 화면 글자로 요소를 찾고 스크롤한다. OS별 차이는 이 클래스 안에서만 처리한다. */
+public final class Ui {
+
+    public enum Scroll { TOWARD_BOTTOM, TOWARD_TOP }
+
+    private static final int MAX_SWIPES = 5;
+
+    private Ui() {
+    }
+
+    /** 화면 글자와 정확히 같은 요소. iOS name/label, Android content-desc에 맞춰진다. */
+    public static By text(String exact) {
+        return AppiumBy.accessibilityId(exact);
+    }
+
+    /** 글자가 합쳐진 요소(문장 카드 등)를 일부 글자로 찾는다. */
+    public static By textContaining(AppiumDriver driver, String part) {
+        if (isIos(driver)) {
+            return AppiumBy.iOSNsPredicateString("label CONTAINS " + predicateQuote(part));
+        }
+        return AppiumBy.androidUIAutomator(
+                "new UiSelector().descriptionContains(" + javaQuote(part) + ")");
+    }
+
+    /** 입력칸 안의 글자는 label이 아니라 iOS는 value, Android는 text에 들어간다. */
+    public static By inputContaining(AppiumDriver driver, String part) {
+        if (isIos(driver)) {
+            return AppiumBy.iOSNsPredicateString(
+                    "(type == 'XCUIElementTypeTextField' OR type == 'XCUIElementTypeTextView')"
+                            + " AND value CONTAINS " + predicateQuote(part));
+        }
+        return AppiumBy.androidUIAutomator(
+                "new UiSelector().className(\"android.widget.EditText\").textContains("
+                        + javaQuote(part) + ")");
+    }
+
+    /** 화면에 보일 때까지 정해진 방향으로 스크롤한다. */
+    public static WebElement scrollIntoView(AppiumDriver driver, By locator, Scroll direction) {
+        for (int i = 0; i <= MAX_SWIPES; i++) {
+            List<WebElement> found = driver.findElements(locator);
+            if (!found.isEmpty() && found.get(0).isDisplayed()) {
+                return found.get(0);
+            }
+            swipe(driver, direction);
+        }
+        throw new NoSuchElementException("스크롤해도 찾지 못함: " + locator);
+    }
+
+    /** 화면 글자가 여러 후보 중 하나와 정확히 같은 요소. 가로 목록의 기준점을 잡을 때 쓴다. */
+    public static By anyText(AppiumDriver driver, List<String> exacts) {
+        if (isIos(driver)) {
+            String names = String.join(", ", exacts.stream().map(Ui::predicateQuote).toList());
+            return AppiumBy.iOSNsPredicateString("name IN {" + names + "}");
+        }
+        String regex = "^(" + String.join("|", exacts.stream().map(Pattern::quote).toList()) + ")$";
+        return AppiumBy.androidUIAutomator("new UiSelector().descriptionMatches(" + javaQuote(regex) + ")");
+    }
+
+    /**
+     * 가로로 스크롤되는 줄(카테고리 탭 등)에서 target이 보일 때까지 그 줄만 민다.
+     * 화면 전체를 미는 swipe는 세로 목록이 먼저 반응하므로 rowItem의 높이에서만 끌어 준다.
+     * 끝 방향으로 먼저 밀고, 못 찾으면 처음 방향으로 되돌아오며 찾는다.
+     */
+    public static WebElement swipeRowIntoView(AppiumDriver driver, By target, WebElement rowItem) {
+        Rectangle row = rowItem.getRect();
+        int y = row.getY() + row.getHeight() / 2;
+        int width = driver.manage().window().getSize().width;
+        for (int i = 0; i <= MAX_SWIPES * 2; i++) {
+            List<WebElement> found = driver.findElements(target);
+            if (!found.isEmpty() && found.get(0).isDisplayed()) {
+                return found.get(0);
+            }
+            boolean towardEnd = i < MAX_SWIPES;
+            drag(driver, y, towardEnd ? width * 8 / 10 : width * 2 / 10, towardEnd ? width * 2 / 10 : width * 8 / 10);
+        }
+        throw new NoSuchElementException("가로로 밀어도 찾지 못함: " + target);
+    }
+
+    // W3C 터치 동작은 iOS·Android에 같은 코드로 동작한다
+    private static void drag(AppiumDriver driver, int y, int fromX, int toX) {
+        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+        Sequence drag = new Sequence(finger, 0)
+                .addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), fromX, y))
+                .addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+                .addAction(finger.createPointerMove(Duration.ofMillis(300), PointerInput.Origin.viewport(), toX, y))
+                .addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+        driver.perform(List.of(drag));
+    }
+
+    private static void swipe(AppiumDriver driver, Scroll direction) {
+        // 아래 내용을 보려면 손가락은 위로 민다
+        String finger = direction == Scroll.TOWARD_BOTTOM ? "up" : "down";
+        if (isIos(driver)) {
+            driver.executeScript("mobile: swipe", Map.of("direction", finger));
+            return;
+        }
+        Dimension size = driver.manage().window().getSize();
+        driver.executeScript("mobile: swipeGesture", Map.of(
+                "left", size.width / 10,
+                "top", size.height / 3,
+                "width", size.width * 8 / 10,
+                "height", size.height / 3,
+                "direction", finger,
+                "percent", 0.75));
+    }
+
+    private static boolean isIos(AppiumDriver driver) {
+        return driver instanceof IOSDriver;
+    }
+
+    private static String predicateQuote(String value) {
+        return "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'";
+    }
+
+    private static String javaQuote(String value) {
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+    }
+}
