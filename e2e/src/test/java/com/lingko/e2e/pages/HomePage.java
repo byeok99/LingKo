@@ -4,10 +4,12 @@ import com.lingko.e2e.support.Ui;
 import com.lingko.e2e.support.Ui.Scroll;
 import io.appium.java_client.AppiumDriver;
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -25,6 +27,10 @@ public class HomePage {
     private static final String ENERGY_PREFIX = "Practice energy ";
     private static final Pattern ENERGY_LABEL =
             Pattern.compile("Practice energy (\\d+) of (\\d+), (?:(\\d+):(\\d{2}) until refill|maximum)");
+    private static final String CUSTOM_PRACTICE = "Practice my own sentence";
+    // 앱 SentenceCard _BookmarkButton의 Semantics label과 같다
+    private static final String SAVED_BOOKMARK = "Saved. Tap to remove";
+    private static final List<String> BOOKMARK_LABELS = List.of("Save this sentence", SAVED_BOOKMARK);
 
     private final AppiumDriver driver;
     private final WebDriverWait wait;
@@ -66,6 +72,45 @@ public class HomePage {
     public PracticePage openSentence(String sentence) {
         Ui.scrollIntoView(driver, Ui.textStartingWith(driver, sentence), Scroll.TOWARD_BOTTOM).click();
         return new PracticePage(driver).waitUntilLoaded();
+    }
+
+    /** 'Practice my own sentence'로 빈 입력칸의 연습 화면을 연다. */
+    public PracticePage openCustomPractice() {
+        Ui.scrollIntoView(driver, Ui.textStartingWith(driver, CUSTOM_PRACTICE), Scroll.TOWARD_BOTTOM).click();
+        return new PracticePage(driver).waitUntilInputReady();
+    }
+
+    /** 문장 카드의 북마크가 저장 상태('Saved. Tap to remove')인지. */
+    public boolean isSaved(String sentence) {
+        return SAVED_BOOKMARK.equals(Ui.labelOf(driver, bookmarkOf(sentence)));
+    }
+
+    /**
+     * 문장 카드의 북마크를 눌러 저장 상태를 뒤집고, 화면 표시가 바뀔 때까지 기다린다.
+     * 앱은 화면부터 바꾸고 서버에 요청하므로, 이 메서드가 끝나도 서버 반영은 따로 확인해야 한다.
+     */
+    public HomePage toggleSaved(String sentence) {
+        boolean before = isSaved(sentence);
+        bookmarkOf(sentence).click();
+        wait.until(d -> isSaved(sentence) != before);
+        return this;
+    }
+
+    /**
+     * 카드마다 같은 label의 북마크가 있어 글자로는 하나를 고를 수 없다.
+     * 대상 카드와 세로 중심이 가장 가까운 북마크를 그 카드의 것으로 본다(북마크는 카드 행 오른쪽에 같은 높이로 있다).
+     */
+    private WebElement bookmarkOf(String sentence) {
+        WebElement card = Ui.scrollIntoView(driver, Ui.textStartingWith(driver, sentence), Scroll.TOWARD_BOTTOM);
+        int cardCenterY = centerY(card);
+        return driver.findElements(Ui.anyText(driver, BOOKMARK_LABELS)).stream()
+                .min(Comparator.comparingInt(bookmark -> Math.abs(centerY(bookmark) - cardCenterY)))
+                .orElseThrow(() -> new NoSuchElementException("문장 카드의 북마크를 찾지 못함: " + sentence));
+    }
+
+    private static int centerY(WebElement element) {
+        Rectangle rect = element.getRect();
+        return rect.getY() + rect.getHeight() / 2;
     }
 
     public boolean showsEmptyCategory(String tabText) {

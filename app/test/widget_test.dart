@@ -2482,45 +2482,6 @@ void main() {
     expect(find.textContaining('voice unavailable'), findsNothing);
   });
 
-  testWidgets('Practice tab shows input length validation errors', (
-    WidgetTester tester,
-  ) async {
-    final api = FakePronunciationApi(
-      error: 'text must be 100 characters or fewer',
-    );
-    await tester.pumpWidget(
-      LingKoApp(
-        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
-        pronunciationApi: api,
-        sentenceApi: FakeSentenceApi(),
-        evaluationApi: FakeEvaluationApi(),
-        authService: FakeAppAuthService(restoreExistingSession: true),
-        audioRecorderService: FakeAudioRecorderService(),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(_navigationLabel('Practice'));
-    await tester.pumpAndSettle();
-
-    final longText = '가' * 101;
-    await tester.enterText(
-      find.byKey(const ValueKey('practice-sentence-field')),
-      longText,
-    );
-    await tester.pump(const Duration(milliseconds: 700));
-    await tester.pumpAndSettle();
-
-    expect(api.lastText, longText);
-    expect(
-      find.text(
-        'We could not prepare this sentence. Check the text and connection, then try again.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Record'), findsNothing);
-  });
-
   testWidgets('Practice ignores stale automatic pronunciation responses', (
     WidgetTester tester,
   ) async {
@@ -2588,6 +2549,41 @@ void main() {
     expect(fieldAfterResponses.controller?.text, '둘째 문장');
     expect(find.text('둘째 표준 발음'), findsOneWidget);
     expect(find.text('첫 표준 발음'), findsNothing);
+  });
+
+  // 서버 100자 상한(TC-019) 경계: 101자는 서버에 보내지 않고 이유를 알려 주고, 100자는 그대로 준비 요청한다.
+  // 서버 400을 그대로 보이면 일반 준비 실패 문구라 사용자가 길이 때문인지 알 수 없었다.
+  testWidgets('Practice blocks sentences over 100 characters with the limit reason', (
+    WidgetTester tester,
+  ) async {
+    final api = FakePronunciationApi();
+    await tester.pumpWidget(
+      LingKoApp(
+        aiProcessingConsentApi: FakeAiProcessingConsentApi(),
+        pronunciationApi: api,
+        sentenceApi: FakeSentenceApi(),
+        evaluationApi: FakeEvaluationApi(),
+        authService: FakeAppAuthService(restoreExistingSession: true),
+        audioRecorderService: FakeAudioRecorderService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(_navigationLabel('Practice'));
+    await tester.pumpAndSettle();
+    final sentenceField = find.byKey(const ValueKey('practice-sentence-field'));
+    const limitMessage =
+        'Sentences can be up to 100 characters. Shorten it and try again.';
+
+    await tester.enterText(sentenceField, '가' * 101);
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(api.requestedTexts, isEmpty);
+    expect(find.text(limitMessage), findsOneWidget);
+    expect(find.text('Record'), findsNothing);
+
+    await tester.enterText(sentenceField, '가' * 100);
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(api.requestedTexts, ['가' * 100]);
+    expect(find.text(limitMessage), findsNothing);
   });
 
   testWidgets(
