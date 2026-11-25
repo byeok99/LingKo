@@ -29,7 +29,10 @@ public abstract class BaseTest {
                 .setDeviceName(DEVICE_NAME)
                 .setPlatformVersion(PLATFORM_VERSION)
                 .setBundleId(BUNDLE_ID)
-                .setNoReset(true);
+                .setNoReset(true)
+                // noReset이면 기본값이 false라 앞 테스트가 끝낸 화면을 그대로 이어받는다. 테스트가 서버 상태를 바꾼 뒤
+                // 화면이 그 값을 다시 읽고 항상 홈에서 시작하도록 세션마다 앱을 새로 실행한다(앱 데이터는 noReset으로 유지)
+                .setForceAppLaunch(true);
         driver = new IOSDriver(new URL(APPIUM_URL), options);
     }
 
