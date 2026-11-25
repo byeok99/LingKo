@@ -213,8 +213,11 @@ class PrimaryButton extends StatelessWidget {
             shadowColor: Colors.transparent,
           ),
           onPressed: isLoading ? null : onPressed,
+          // 자식 Text가 같은 글자를 다시 내보내면 label이 "Record\nRecord"로 합쳐져 VoiceOver가 두 번 읽고
+          // E2E가 버튼 이름으로 찾지 못한다. 버튼의 접근성 이름은 이 label 하나로만 노출한다.
           child: Semantics(
             label: isLoading ? '$label in progress' : label,
+            excludeSemantics: true,
             child: child,
           ),
         ),
