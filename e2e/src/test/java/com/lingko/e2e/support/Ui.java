@@ -51,6 +51,15 @@ public final class Ui {
                 "new UiSelector().descriptionStartsWith(" + javaQuote(part) + ")");
     }
 
+    /** 화면의 글자 입력칸. 연습 화면처럼 입력칸이 하나뿐인 화면에서 쓴다. */
+    public static By textInput(AppiumDriver driver) {
+        if (isIos(driver)) {
+            return AppiumBy.iOSNsPredicateString(
+                    "type == 'XCUIElementTypeTextField' OR type == 'XCUIElementTypeTextView'");
+        }
+        return AppiumBy.className("android.widget.EditText");
+    }
+
     /** 입력칸 안의 글자는 label이 아니라 iOS는 value, Android는 text에 들어간다. */
     public static By inputContaining(AppiumDriver driver, String part) {
         if (isIos(driver)) {

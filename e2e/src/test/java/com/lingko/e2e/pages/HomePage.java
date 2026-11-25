@@ -27,6 +27,7 @@ public class HomePage {
     private static final String ENERGY_PREFIX = "Practice energy ";
     private static final Pattern ENERGY_LABEL =
             Pattern.compile("Practice energy (\\d+) of (\\d+), (?:(\\d+):(\\d{2}) until refill|maximum)");
+    private static final String CUSTOM_PRACTICE = "Practice my own sentence";
     // 앱 SentenceCard _BookmarkButton의 Semantics label과 같다
     private static final String SAVED_BOOKMARK = "Saved. Tap to remove";
     private static final List<String> BOOKMARK_LABELS = List.of("Save this sentence", SAVED_BOOKMARK);
@@ -71,6 +72,12 @@ public class HomePage {
     public PracticePage openSentence(String sentence) {
         Ui.scrollIntoView(driver, Ui.textStartingWith(driver, sentence), Scroll.TOWARD_BOTTOM).click();
         return new PracticePage(driver).waitUntilLoaded();
+    }
+
+    /** 'Practice my own sentence'로 빈 입력칸의 연습 화면을 연다. */
+    public PracticePage openCustomPractice() {
+        Ui.scrollIntoView(driver, Ui.textStartingWith(driver, CUSTOM_PRACTICE), Scroll.TOWARD_BOTTOM).click();
+        return new PracticePage(driver).waitUntilInputReady();
     }
 
     /** 문장 카드의 북마크가 저장 상태('Saved. Tap to remove')인지. */
