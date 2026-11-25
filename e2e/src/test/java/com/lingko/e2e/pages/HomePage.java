@@ -5,6 +5,8 @@ import com.lingko.e2e.support.Ui.Scroll;
 import io.appium.java_client.AppiumDriver;
 import java.time.Duration;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -19,6 +21,10 @@ public class HomePage {
     // 앱 _SentenceCategory.label 순서와 같다
     private static final List<String> CATEGORY_TABS =
             List.of("Daily", "Food", "Travel", "Study", "Work", "Health");
+    // 앱 ProgressPanel의 Semantics label과 같다: "Practice energy 3 of 5, 59:41 until refill" 또는 "..., maximum"
+    private static final String ENERGY_PREFIX = "Practice energy ";
+    private static final Pattern ENERGY_LABEL =
+            Pattern.compile("Practice energy (\\d+) of (\\d+), (?:(\\d+):(\\d{2}) until refill|maximum)");
 
     private final AppiumDriver driver;
     private final WebDriverWait wait;
@@ -65,5 +71,41 @@ public class HomePage {
     public boolean showsEmptyCategory(String tabText) {
         String title = String.format(EMPTY_CATEGORY_TITLE, tabText);
         return !driver.findElements(Ui.textContaining(driver, title)).isEmpty();
+    }
+
+    /**
+     * 평가 기회 캡슐의 값을 읽는다. 값이 접근성 label 하나에 모여 있어 그 문장을 해석한다.
+     *
+     * <p>quota 응답이 늦으면 캡슐이 잠시 'Loading practice energy'이고, 실패하면 'Practice energy unavailable'이다.
+     * 둘 다 형식에 맞지 않으므로 "N of M" 형식이 나타날 때까지 기다린다.</p>
+     */
+    public PracticeEnergy practiceEnergy() {
+        return wait.until(d -> {
+            for (WebElement capsule : d.findElements(Ui.textContaining(driver, ENERGY_PREFIX))) {
+                Matcher matcher = ENERGY_LABEL.matcher(Ui.labelOf(driver, capsule));
+                if (matcher.find()) {
+                    return PracticeEnergy.from(matcher);
+                }
+            }
+            return null;
+        });
+    }
+
+    /**
+     * 홈 캡슐에 보이는 평가 기회.
+     *
+     * <p>{@code untilRefill}이 null이면 최대치 보유('maximum')라 카운트다운이 없다는 뜻이다.
+     * 화면은 초 단위 'mm:ss'로 보여 주므로 비교할 때 1초 안팎의 오차를 감안한다.</p>
+     */
+    public record PracticeEnergy(int remaining, int limit, Duration untilRefill) {
+
+        static PracticeEnergy from(Matcher matcher) {
+            Duration untilRefill = matcher.group(3) == null
+                    ? null
+                    : Duration.ofMinutes(Long.parseLong(matcher.group(3)))
+                            .plusSeconds(Long.parseLong(matcher.group(4)));
+            return new PracticeEnergy(
+                    Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)), untilRefill);
+        }
     }
 }

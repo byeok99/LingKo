@@ -85,6 +85,12 @@ public final class Ui {
         return AppiumBy.androidUIAutomator("new UiSelector().descriptionMatches(" + javaQuote(regex) + ")");
     }
 
+    /** 요소의 화면 글자(접근성 label). iOS는 label, Android는 content-desc 속성에 들어 있다. */
+    public static String labelOf(AppiumDriver driver, WebElement element) {
+        String label = element.getAttribute(isIos(driver) ? "label" : "content-desc");
+        return label == null ? "" : label;
+    }
+
     /**
      * 가로로 스크롤되는 줄(카테고리 탭 등)에서 target이 보일 때까지 그 줄만 민다.
      * 화면 전체를 미는 swipe는 세로 목록이 먼저 반응하므로 rowItem의 높이에서만 끌어 준다.
