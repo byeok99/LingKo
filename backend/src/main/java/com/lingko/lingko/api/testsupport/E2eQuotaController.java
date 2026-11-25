@@ -33,13 +33,14 @@ class E2eQuotaController {
     /**
      * 남은 자연 충전 기회를 {@code remaining}(0~5)회로 맞춘다. 범위 밖 값은 400이다.
      *
-     * <p>고정 사용자가 아직 없으면, 즉 세션을 한 번도 발급하지 않았으면 404다.</p>
+     * <p>고정 사용자가 아직 없으면, 즉 세션을 한 번도 발급하지 않았으면 409다. 404로 응답하면
+     * 프로필이 꺼진 경우와 구분되지 않아, E2E가 실패했을 때 원인을 알 수 없다.</p>
      */
     @PutMapping("/quota")
     public ResponseEntity<PracticeQuotaResponse> setQuota(@RequestParam @Min(0) @Max(5) int remaining) {
         return userRepository
                 .findBySocialIdAndSocialType(E2eSessionController.E2E_SOCIAL_ID, User.SocialType.GOOGLE)
                 .map(user -> ResponseEntity.ok(quotaSetupService.setRemaining(user.getUserIdx(), remaining)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElseGet(() -> ResponseEntity.status(409).build());
     }
 }
