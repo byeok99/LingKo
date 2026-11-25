@@ -18,6 +18,13 @@ import '../widgets/romanized_pronunciation.dart';
 import '../widgets/shared_widgets.dart';
 
 const Duration _sentencePreparationDelay = Duration(milliseconds: 700);
+
+/// 자유 문장 최대 길이. 서버 `PronunciationPrepareRequest`·`EvaluationJobRequest`의 100자 상한과 같아야 한다.
+/// 정리(문장부호·기호 제거, 공백 정규화) 후 길이를 UTF-16 단위로 센다. Dart `String.length`와 Java
+/// `String.length()`가 같은 단위라 화면 판단과 서버 판단이 어긋나지 않는다.
+const int _maxCustomSentenceLength = 100;
+const String _customSentenceTooLongMessage =
+    'Sentences can be up to $_maxCustomSentenceLength characters. Shorten it and try again.';
 const PracticeSentenceInputFormatter _customSentenceInputFormatter =
     PracticeSentenceInputFormatter();
 
@@ -134,15 +141,18 @@ class _PracticeScreenState extends State<PracticeScreen> {
     final alreadyPrepared =
         widget.sentence != null &&
         text == normalizePracticeSentenceText(widget.sentence!.text);
+    // 서버도 거부하지만, 그 400은 일반 준비 실패 문구로만 보여 원인을 알 수 없다.
+    // 길이 초과는 서버에 보내지 않고 화면에서 바로 이유를 알려 준다.
+    final isTooLong = text.length > _maxCustomSentenceLength;
 
     unawaited(_stopSpeechBestEffort());
     setState(() {
       isPreparingCustomSentence = false;
-      customSentenceError = null;
+      customSentenceError = isTooLong ? _customSentenceTooLongMessage : null;
       speechError = null;
     });
 
-    if (text.isEmpty || alreadyPrepared) {
+    if (text.isEmpty || alreadyPrepared || isTooLong) {
       return;
     }
 
