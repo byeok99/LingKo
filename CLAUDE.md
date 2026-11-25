@@ -45,6 +45,8 @@ backend/      Spring Boot 3.4 / Java 21 / MySQL 8 / Flyway
   src/test/                          단위 테스트
   src/integrationTest/               통합 테스트 (별도 sourceSet)
 
+e2e/          Appium E2E 테스트 (독립 Gradle 프로젝트, 로컬 수동 실행: cd e2e && ./gradlew test)
+
 docs/         api / architecture(+adr) / data / development / overview /
               security / legal / engineering / operations / design
   private/        Git 제외 개인 운영 문서·과거 자료·작업 이력 (로컬에만 있음)

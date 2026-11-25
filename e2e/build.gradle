@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // java-client가 Selenium 4를 전이 의존성으로 가져온다
+    testImplementation 'io.appium:java-client:9.3.0'
+    testImplementation platform('org.junit:junit-bom:5.11.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// 시뮬레이터·Appium 서버·e2e 프로필 backend가 있어야 하므로 backend CI와 분리해 수동 실행한다
+test {
+    useJUnitPlatform()
+}
