@@ -39,6 +39,18 @@ public final class Ui {
                 "new UiSelector().descriptionContains(" + javaQuote(part) + ")");
     }
 
+    /**
+     * 합쳐진 글자가 part로 시작하는 요소. 문장 카드처럼 label이 "문장 + 로마자 + 번역"인 요소를 문장으로 고를 때 쓴다.
+     * CONTAINS로 찾으면 짧은 문장이 다른 카드 문장 안에 들어 있을 때(예: "물"과 "물 한 잔 주세요") 엉뚱한 카드를 집는다.
+     */
+    public static By textStartingWith(AppiumDriver driver, String part) {
+        if (isIos(driver)) {
+            return AppiumBy.iOSNsPredicateString("label BEGINSWITH " + predicateQuote(part));
+        }
+        return AppiumBy.androidUIAutomator(
+                "new UiSelector().descriptionStartsWith(" + javaQuote(part) + ")");
+    }
+
     /** 입력칸 안의 글자는 label이 아니라 iOS는 value, Android는 text에 들어간다. */
     public static By inputContaining(AppiumDriver driver, String part) {
         if (isIos(driver)) {

@@ -59,6 +59,15 @@ public class HomePage {
         }
     }
 
+    /**
+     * 문장 카드를 눌러 연습 화면으로 간다. 화면을 옮기는 메서드는 다음 Page를 돌려줘 여정 테스트에서 그대로 이어 쓴다.
+     * 카테고리 미리보기 개수 안의 문장만 찾는다. 'Show N more'로 숨겨진 문장은 아직 다루지 않는다.
+     */
+    public PracticePage openSentence(String sentence) {
+        Ui.scrollIntoView(driver, Ui.textStartingWith(driver, sentence), Scroll.TOWARD_BOTTOM).click();
+        return new PracticePage(driver).waitUntilLoaded();
+    }
+
     public boolean showsEmptyCategory(String tabText) {
         String title = String.format(EMPTY_CATEGORY_TITLE, tabText);
         return !driver.findElements(Ui.textContaining(driver, title)).isEmpty();

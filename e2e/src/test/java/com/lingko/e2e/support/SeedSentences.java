@@ -15,10 +15,12 @@ public final class SeedSentences {
     }
 
     public static final String DAILY_FIRST = "천천히 말씀해 주세요";
+    // Notion TC-014 Test Data와 같은 값이다. 시드가 바뀌면 TC와 이 값을 함께 고친다
+    public static final String FOOD_FIRST = "맛있겠다";
 
     public static final List<Seed> FIRST_BY_CATEGORY = List.of(
             new Seed("Daily", DAILY_FIRST),
-            new Seed("Food", "맛있겠다"),
+            new Seed("Food", FOOD_FIRST),
             new Seed("Travel", "지하철역이 어디예요"),
             new Seed("Study", "한국어를 배우고 있어요"),
             new Seed("Work", "회사에 늦었어요"),
