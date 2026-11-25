@@ -85,6 +85,19 @@ public final class Ui {
         return AppiumBy.androidUIAutomator("new UiSelector().descriptionMatches(" + javaQuote(regex) + ")");
     }
 
+    /**
+     * 하단 탭. Flutter가 탭 label 뒤에 "Tab 4 of 4" 같은 위치 정보를 붙이므로("Profile\nTab 4 of 4"),
+     * 탭 이름으로 시작하면서 탭 표시가 있는 요소로 찾는다. 같은 글자로 시작하는 화면 제목과 섞이지 않게 하기 위해서다.
+     */
+    public static By bottomTab(AppiumDriver driver, String tabName) {
+        if (isIos(driver)) {
+            return AppiumBy.iOSNsPredicateString(
+                    "label BEGINSWITH " + predicateQuote(tabName) + " AND label CONTAINS 'Tab '");
+        }
+        return AppiumBy.androidUIAutomator(
+                "new UiSelector().descriptionMatches(" + javaQuote("^" + Pattern.quote(tabName) + "\\s+Tab .*") + ")");
+    }
+
     /** 요소의 화면 글자(접근성 label). iOS는 label, Android는 content-desc 속성에 들어 있다. */
     public static String labelOf(AppiumDriver driver, WebElement element) {
         String label = element.getAttribute(isIos(driver) ? "label" : "content-desc");

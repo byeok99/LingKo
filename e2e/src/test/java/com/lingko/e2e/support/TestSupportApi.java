@@ -72,6 +72,29 @@ public final class TestSupportApi {
         throw new IllegalStateException("두 번 뒤집어도 저장 해제되지 않았다: sentenceId=" + sentenceId);
     }
 
+    /**
+     * 서버 저장 목록에 문장이 들어올 때까지 기다린다.
+     * 앱은 저장 버튼을 누르면 화면부터 바꾸고 서버에 요청하므로(낙관적 갱신), 화면만 보고 앱을 끄면 요청이 끊길 수 있다.
+     * 앱을 다시 실행하기 전에 서버 반영을 이것으로 확인한다. 시간 안에 반영되지 않으면 실패한다.
+     */
+    public static void waitUntilSentenceSaved(String accessToken, long sentenceId, Duration timeout) {
+        long deadline = System.nanoTime() + timeout.toNanos();
+        while (System.nanoTime() < deadline) {
+            String body = send(authorized(HttpRequest.newBuilder(
+                    API_URL.resolve("/api/sentences/saved")), accessToken).GET());
+            if (body.contains("\"sentenceId\":" + sentenceId + ",")) {
+                return;
+            }
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("저장 반영 대기가 중단됐다", e);
+            }
+        }
+        throw new IllegalStateException(timeout.toSeconds() + "초 안에 서버 저장 목록에 반영되지 않았다: sentenceId=" + sentenceId);
+    }
+
     private static HttpRequest.Builder authorized(HttpRequest.Builder builder, String accessToken) {
         return builder.header("Authorization", "Bearer " + accessToken);
     }

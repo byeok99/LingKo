@@ -1,6 +1,7 @@
 package com.lingko.e2e.support;
 
 import io.appium.java_client.AppiumDriver;
+import io.appium.java_client.InteractsWithApps;
 import io.appium.java_client.ios.IOSDriver;
 import io.appium.java_client.ios.options.XCUITestOptions;
 import java.net.MalformedURLException;
@@ -34,6 +35,16 @@ public abstract class BaseTest {
             driver = openSession();
         }
         return driver;
+    }
+
+    /**
+     * 같은 세션에서 앱을 완전히 종료한 뒤 다시 실행한다. "재실행해도 상태가 유지된다" 같은 TC에서 쓴다.
+     * 재실행한 앱은 서버에서 데이터를 다시 받으므로, 화면 상태가 아니라 서버·기기 저장 상태를 확인하게 된다.
+     */
+    protected void relaunchApp() {
+        InteractsWithApps apps = (InteractsWithApps) driver();
+        apps.terminateApp(BUNDLE_ID);
+        apps.activateApp(BUNDLE_ID);
     }
 
     @AfterEach
