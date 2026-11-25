@@ -185,7 +185,8 @@ E2E 테스트는 소셜 로그인 화면 대신 `e2e` 프로필 전용 `POST /te
 
 - 기본(`consented=true`): 고정 테스트 사용자를 재사용하고 약관·AI 처리 동의를 기록합니다.
 - `consented=false`: 동의 화면 흐름을 시험하도록 동의 기록 없는 새 사용자를 매번 만듭니다.
-- 로컬 Backend에서만 `SPRING_PROFILES_ACTIVE=e2e`로 켭니다. 인증 없이 세션을 발급하므로 운영에는 절대 설정하지 않으며, 프로필이 없으면 경로가 404임을 `TestSupportEndpointDisabledIntegrationTest`가 보장합니다.
+- `PUT /test-support/quota?remaining=<0~5>`: 고정 테스트 사용자의 평가 기회를 지정한 값으로 맞추고 `GET /api/quota/today`와 같은 응답을 돌려줍니다. 5회 미만이면 다음 충전 시각은 지금부터 1시간 뒤이고 5회면 `null`입니다. 광고 보상 기회는 0으로 둡니다. 기존 quota 행을 새로 만들기 때문에 진행 중 평가의 예약도 사라집니다. 평가가 진행 중이지 않을 때만 호출하세요. 세션을 한 번도 발급하지 않았으면 409입니다(404는 `e2e` 프로필이 꺼져 있다는 뜻).
+- 로컬 Backend에서만 `SPRING_PROFILES_ACTIVE=e2e`로 켭니다. 인증 없이 세션을 발급하고 상태를 바꾸므로 운영에는 절대 설정하지 않습니다. 프로필이 없으면 두 경로 모두 404임을 `TestSupportEndpointDisabledIntegrationTest`가 보장합니다.
 
 ### Appium E2E 테스트
 
