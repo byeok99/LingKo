@@ -3,6 +3,9 @@ package com.lingko.e2e.pages;
 import com.lingko.e2e.support.Ui;
 import io.appium.java_client.AppiumDriver;
 import java.time.Duration;
+import java.util.List;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -114,7 +117,7 @@ public class PracticePage {
         try {
             wait.until(ExpectedConditions.presenceOfElementLocated(Ui.textContaining(driver, LENGTH_LIMIT_MESSAGE)));
             return true;
-        } catch (org.openqa.selenium.TimeoutException notShown) {
+        } catch (TimeoutException notShown) {
             return false;
         }
     }
@@ -122,6 +125,42 @@ public class PracticePage {
     /** 표준 발음 영역이 지금 있는지. 준비되지 않은 문장은 표준 발음이 없어야 하므로 기다리지 않고 현재 상태만 본다. */
     public boolean showsStandardPronunciation() {
         return !driver.findElements(Ui.textContaining(driver, STANDARD_PRONUNCIATION)).isEmpty();
+    }
+
+    /**
+     * 표준 발음 영역에 보이는 발음 글자. 영역이 없으면 빈 문자열이다.
+     * 접근성 트리에서 이 영역은 다른 글자와 한 label로 합쳐지고 줄바꿈으로 구분되므로, 영역 제목 바로 다음 줄을 발음으로 읽는다.
+     */
+    public String standardPronunciation() {
+        for (WebElement element : driver.findElements(Ui.textContaining(driver, STANDARD_PRONUNCIATION))) {
+            List<String> lines = List.of(Ui.labelOf(driver, element).split("\n"));
+            int title = lines.indexOf(STANDARD_PRONUNCIATION);
+            if (title >= 0 && title + 1 < lines.size()) {
+                return lines.get(title + 1).trim();
+            }
+        }
+        return "";
+    }
+
+    /**
+     * 표준 발음이 expected가 될 때까지 기다린 뒤 화면 값을 돌려준다. 시간 안에 안 바뀌면 마지막으로 본 값을 돌려주므로
+     * 호출자는 반환값을 expected와 비교해 판정하고, 실패 메시지에 실제 값을 남긴다.
+     * 같은 화면에서 문장을 바꾸면 새 결과가 올 때까지 앞 문장 발음이 남아 있어, 영역이 보이는 것만으로는 새 결과인지 알 수 없다.
+     */
+    public String waitForStandardPronunciation(String expected) {
+        try {
+            wait.until(d -> {
+                try {
+                    return expected.equals(standardPronunciation());
+                } catch (StaleElementReferenceException redrawn) {
+                    // 결과가 바뀌며 영역을 다시 그리는 중이다. 다음 확인에서 새 요소를 찾는다
+                    return false;
+                }
+            });
+        } catch (TimeoutException notChanged) {
+            // 판정은 호출자의 assert가 맡는다
+        }
+        return standardPronunciation();
     }
 
     /** 녹음 버튼이 지금 있는지. 준비되지 않은 문장은 녹음할 수 없어야 하므로 기다리지 않고 현재 상태만 본다. */

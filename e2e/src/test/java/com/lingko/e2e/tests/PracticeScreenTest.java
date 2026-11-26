@@ -105,6 +105,32 @@ class PracticeScreenTest extends BaseTest {
         }
     }
 
+    @Nested
+    @DisplayName("TC-021 표준 발음은 음운 규칙(연음·비음화 등)을 적용한 소리대로 표시된다")
+    class PhonologicalRules {
+
+        // TC Test Data. 기대값은 backend 음운 규칙 결과이므로 규칙이 바뀌면 TC와 함께 고친다
+        private static final String LINKING = "음악을 들어요";
+        private static final String LINKING_PRONUNCIATION = "으마글 드러요";
+        private static final String NASALIZATION = "감사합니다";
+        private static final String NASALIZATION_PRONUNCIATION = "감사함니다";
+
+        @Test
+        @DisplayName("'음악을 들어요'는 '으마글 드러요'로, '감사합니다'는 '감사함니다'로 표시된다")
+        void showsPronunciationAfterRules() {
+            // 발음 준비만 확인하고 녹음하지 않으므로 평가 기회 사전조건은 두지 않는다
+            PracticePage practice = new HomePage(driver()).waitUntilLoaded().openCustomPractice();
+            String linking = practice.typeSentence(LINKING).waitForStandardPronunciation(LINKING_PRONUNCIATION);
+            String nasalization = practice.typeSentence(NASALIZATION)
+                    .waitForStandardPronunciation(NASALIZATION_PRONUNCIATION);
+
+            assertAll(
+                    () -> assertEquals(LINKING_PRONUNCIATION, linking, "연음이 적용되어야 한다: " + LINKING),
+                    () -> assertEquals(NASALIZATION_PRONUNCIATION, nasalization,
+                            "비음화가 적용되어야 한다: " + NASALIZATION));
+        }
+    }
+
     /**
      * TC Test Data 조건에 맞는 정확한 길이의 한글 문장. 공백은 포함하되 연속·앞뒤 공백과 문장부호·이모지는 없다.
      * 앱과 서버는 정리(문장부호 제거·공백 정규화) 후 길이를 세므로, 정리해도 길이가 그대로인 문장을 만든다.
