@@ -19,6 +19,8 @@ public class PracticePage {
     private static final String RECORD_BUTTON = "Record";
     // 녹음 중 가운데 멈춤 버튼의 접근성 label. 화면 글자는 'Stop'이지만 label은 이 값이다
     private static final String STOP_AND_ANALYZE = "Stop and analyze";
+    // 녹음 중 왼쪽 취소 버튼의 접근성 label. 화면 글자는 'Cancel'이다
+    private static final String CANCEL_RECORDING = "Cancel recording";
     // 앱 practice_screen.dart의 마이크 권한 거부 안내 문구
     private static final String MICROPHONE_DENIED_MESSAGE =
             "Microphone access is required. Allow access in device settings, then retry.";
@@ -216,6 +218,25 @@ public class PracticePage {
     /** 녹음 화면의 멈춤 버튼이 누를 수 있게 될 때까지 기다려 돌려준다. 시간 안에 녹음이 시작되지 않으면 실패한다. */
     public WebElement waitUntilRecording() {
         return wait.until(ExpectedConditions.elementToBeClickable(Ui.text(STOP_AND_ANALYZE)));
+    }
+
+    /** 녹음 중 왼쪽 'Cancel' 버튼으로 녹음을 취소한다. 앱은 녹음 파일을 지우고 평가를 보내지 않는다. */
+    public PracticePage cancelRecording() {
+        driver.findElement(Ui.text(CANCEL_RECORDING)).click();
+        return this;
+    }
+
+    /**
+     * 녹음 시작 전 상태로 돌아왔는지. 녹음 화면이 닫히고, 녹음이 남지 않아 'Retry with this recording' 대신
+     * 'Record' 버튼이 보여야 한다. 시간 안에 Record가 안 보이면 false다.
+     */
+    public boolean isBackBeforeRecording() {
+        try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(Ui.text(RECORD_BUTTON)));
+        } catch (TimeoutException notShown) {
+            return false;
+        }
+        return !isRecording() && driver.findElements(Ui.text(RETRY_WITH_RECORDING)).isEmpty();
     }
 
     /** 지금 녹음 중인지. 녹음이 시작되지 않아야 하는 경우를 확인하므로 기다리지 않는다. */

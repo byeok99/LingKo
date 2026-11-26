@@ -258,6 +258,49 @@ class PracticeScreenTest extends BaseTest {
         }
     }
 
+    @Nested
+    @DisplayName("TC-026 녹음 중 취소하면 녹음이 폐기되고 평가 요청이 생성되지 않는다")
+    class RecordingCancelled {
+
+        // TC Test Data: 시작 평가 기회 3회. 5회가 아니어야 '차감 없음'과 '최대치 유지'가 구분된다
+        private static final int PRACTICES = 3;
+        private static final String SENTENCE = "감사합니다";
+        // 테스트 발화 1건에 해당하는 녹음 시간
+        private static final Duration RECORD_FOR = Duration.ofSeconds(2);
+
+        private String accessToken;
+        private int historyBefore;
+
+        // AI 처리 동의는 E2E 앱이 시작할 때 다시 기록하므로 따로 맞추지 않는다(TC-024 참고)
+        @BeforeEach
+        void given() {
+            Simulator.setMicrophoneAllowed(true);
+            accessToken = TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(PRACTICES);
+            historyBefore = TestSupportApi.evaluationHistoryCount(accessToken);
+        }
+
+        @Test
+        @DisplayName("녹음 중 'Cancel'을 고르면 녹음 전 화면으로 돌아오고 기회 3회·기록 수가 그대로다")
+        void cancelDiscardsRecording() throws InterruptedException {
+            PracticePage practice = new HomePage(driver()).waitUntilLoaded()
+                    .openCustomPractice()
+                    .typeSentence(SENTENCE)
+                    .tapRecord();
+            practice.waitUntilRecording();
+            Thread.sleep(RECORD_FOR.toMillis());
+            boolean backBeforeRecording = practice.cancelRecording().isBackBeforeRecording();
+
+            // 기대결과 2·3은 화면 대신 서버 값으로 본다. 취소 경로는 서버에 아무것도 보내지 않아야 하기 때문이다
+            assertAll(
+                    () -> assertTrue(backBeforeRecording, "녹음이 남지 않은 녹음 전 화면으로 돌아와야 한다"),
+                    () -> assertEquals(PRACTICES, TestSupportApi.currentPractices(accessToken).remaining(),
+                            "평가 기회가 차감되지 않아야 한다"),
+                    () -> assertEquals(historyBefore, TestSupportApi.evaluationHistoryCount(accessToken),
+                            "새 연습 기록이 생기지 않아야 한다"));
+        }
+    }
+
     /**
      * TC Test Data 조건에 맞는 정확한 길이의 한글 문장. 공백은 포함하되 연속·앞뒤 공백과 문장부호·이모지는 없다.
      * 앱과 서버는 정리(문장부호 제거·공백 정규화) 후 길이를 세므로, 정리해도 길이가 그대로인 문장을 만든다.
