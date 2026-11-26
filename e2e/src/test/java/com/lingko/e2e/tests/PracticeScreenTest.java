@@ -4,8 +4,10 @@ import com.lingko.e2e.pages.AiConsentPage;
 import com.lingko.e2e.pages.HomePage;
 import com.lingko.e2e.pages.PracticePage;
 import com.lingko.e2e.support.BaseTest;
+import com.lingko.e2e.support.Simulator;
 import com.lingko.e2e.support.TestSupportApi;
 import java.time.Duration;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -179,9 +181,10 @@ class PracticeScreenTest extends BaseTest {
         private String accessToken;
         private int historyBefore;
 
-        // 사전조건 hook: 앱을 띄우기 전에 서버에서 기회 3회를 맞추고, 비교 기준이 될 기록 수를 남긴다
+        // 사전조건 hook: 앱을 띄우기 전에 마이크 허용·서버 기회 3회를 맞추고, 비교 기준이 될 기록 수를 남긴다
         @BeforeEach
         void given() {
+            Simulator.setMicrophoneAllowed(true);
             accessToken = TestSupportApi.ensureE2eUser();
             TestSupportApi.setRemainingPractices(PRACTICES);
             historyBefore = TestSupportApi.evaluationHistoryCount(accessToken);
@@ -207,6 +210,51 @@ class PracticeScreenTest extends BaseTest {
                             "평가 기회가 차감되지 않아야 한다"),
                     () -> assertEquals(historyBefore, TestSupportApi.evaluationHistoryCount(accessToken),
                             "새 연습 기록이 생기지 않아야 한다"));
+        }
+    }
+
+    @Nested
+    @DisplayName("TC-025 마이크 권한 거부 시 녹음을 시작하지 않고 권한 안내를 표시한다")
+    class MicrophoneDenied {
+
+        private static final String SENTENCE = "감사합니다";
+
+        // 권한 변경은 실행 중인 앱을 종료시키므로 앱을 띄우기 전인 hook에서 거부 상태를 만든다
+        @BeforeEach
+        void given() {
+            givenPracticesAvailable();
+            Simulator.setMicrophoneAllowed(false);
+        }
+
+        // 녹음하는 다른 TC(TC-024 등)가 권한 거부 상태를 물려받지 않도록, 실패해도 허용으로 되돌린다
+        @AfterEach
+        void restoreMicrophone() {
+            Simulator.setMicrophoneAllowed(true);
+        }
+
+        @Test
+        @DisplayName("권한이 없으면 녹음 대신 권한 안내가 나오고, 허용한 뒤에는 녹음이 시작된다")
+        void showsGuideThenRecordsAfterAllowing() {
+            PracticePage denied = new HomePage(driver()).waitUntilLoaded()
+                    .openCustomPractice()
+                    .typeSentence(SENTENCE)
+                    .tapRecord();
+            boolean guideShown = denied.showsMicrophoneDeniedMessage();
+            boolean recordingWhileDenied = denied.isRecording();
+
+            // 기기 설정에서 허용하는 단계. iOS가 권한을 바꾸며 앱을 종료하므로 다시 실행해 연습 화면으로 돌아간다
+            Simulator.setMicrophoneAllowed(true);
+            relaunchApp();
+            new HomePage(driver()).waitUntilLoaded()
+                    .openCustomPractice()
+                    .typeSentence(SENTENCE)
+                    .tapRecord()
+                    .waitUntilRecording();
+
+            // 녹음 시작은 바로 위 waitUntilRecording이 시간 안에 확인하지 못하면 실패로 처리한다(기대결과 2)
+            assertAll(
+                    () -> assertTrue(guideShown, "마이크 권한 안내가 표시되어야 한다"),
+                    () -> assertFalse(recordingWhileDenied, "권한이 없으면 녹음이 시작되지 않아야 한다"));
         }
     }
 

@@ -199,6 +199,8 @@ E2E 테스트는 소셜 로그인 화면 대신 `e2e` 프로필 전용 `POST /te
 
 요소는 화면 문구(iOS accessibility label, Android content-desc)로 찾습니다. 문구와 찾는 방법은 `e2e/.../pages/` 의 Page 클래스에만 두므로, 앱 문구가 바뀌면 해당 Page 클래스의 상수를 함께 고칩니다.
 
+녹음 TC는 권한 팝업을 누르지 않고 `xcrun simctl privacy`로 시뮬레이터의 LingKo 마이크 권한을 직접 허용·거부합니다. 그래서 macOS·Xcode가 필요하고, 실행 후 시뮬레이터 권한은 허용 상태로 남습니다. 권한을 바꾸면 iOS가 실행 중인 앱을 종료하므로 테스트는 앱을 다시 실행합니다. 시뮬레이터를 여러 대 켜 둔 경우 `-Dios.udid=<UDID>`로 대상을 지정합니다.
+
 법무 문서를 변경할 때 `LegalDocumentSourceSyncTest`로 문서 원본과 서버 제공 리소스의 일치를 확인합니다. 기기 녹음·Presigned PUT·로그인 capability는 해당 플랫폼에서 별도 실행 확인이 필요합니다.
 
 ## 문제를 재현할 때

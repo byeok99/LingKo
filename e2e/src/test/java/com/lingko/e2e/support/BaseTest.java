@@ -24,7 +24,8 @@ public abstract class BaseTest {
     private static final String APPIUM_URL = System.getProperty("appium.url", "http://127.0.0.1:4723");
     private static final String DEVICE_NAME = System.getProperty("ios.device", "iPhone 15 LingKo");
     private static final String PLATFORM_VERSION = System.getProperty("ios.version", "18.3");
-    private static final String BUNDLE_ID = "com.byeok.lingko";
+    // Simulator가 같은 앱의 권한을 바꿀 때도 쓴다
+    static final String BUNDLE_ID = "com.byeok.lingko";
 
     // null이면 이 테스트에서 아직 앱을 띄우지 않았다는 뜻이다
     private AppiumDriver driver;
