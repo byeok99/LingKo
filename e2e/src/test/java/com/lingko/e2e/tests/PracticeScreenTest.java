@@ -131,6 +131,40 @@ class PracticeScreenTest extends BaseTest {
         }
     }
 
+    @Nested
+    @DisplayName("TC-022 로마자 발음은 표준 발음의 소리를 기준으로 음절과 단어 경계를 구분해 표시된다")
+    class RomanizedPronunciation {
+
+        // TC Test Data. 로마자는 원문이 아니라 표준 발음에서 파생되므로 표준 발음과 함께 둔다
+        private static final String LINKING = "음악을 들어요";
+        private static final String LINKING_PRONUNCIATION = "으마글 드러요";
+        private static final String LINKING_ROMANIZED = "eu-ma-geul deu-reo-yo";
+        private static final String NASALIZATION = "감사합니다";
+        private static final String NASALIZATION_PRONUNCIATION = "감사함니다";
+        private static final String NASALIZATION_ROMANIZED = "gam-sa-ham-ni-da";
+
+        @Test
+        @DisplayName("'음악을 들어요'는 'eu-ma-geul deu-reo-yo'로, '감사합니다'는 'gam-sa-ham-ni-da'로 표시된다")
+        void showsRomanizationOfStandardPronunciation() {
+            // 발음 준비만 확인하고 녹음하지 않으므로 평가 기회 사전조건은 두지 않는다
+            PracticePage practice = new HomePage(driver()).waitUntilLoaded().openCustomPractice();
+            // 표준 발음이 바뀐 것을 확인한 뒤 읽어야 앞 문장의 로마자와 섞이지 않는다
+            String linkingPronunciation = practice.typeSentence(LINKING)
+                    .waitForStandardPronunciation(LINKING_PRONUNCIATION);
+            String linkingRomanized = practice.romanizedPronunciation();
+            String nasalizationPronunciation = practice.typeSentence(NASALIZATION)
+                    .waitForStandardPronunciation(NASALIZATION_PRONUNCIATION);
+            String nasalizationRomanized = practice.romanizedPronunciation();
+
+            assertAll(
+                    () -> assertEquals(LINKING_PRONUNCIATION, linkingPronunciation, "표준 발음: " + LINKING),
+                    () -> assertEquals(LINKING_ROMANIZED, linkingRomanized, "로마자 발음: " + LINKING),
+                    () -> assertEquals(NASALIZATION_PRONUNCIATION, nasalizationPronunciation,
+                            "표준 발음: " + NASALIZATION),
+                    () -> assertEquals(NASALIZATION_ROMANIZED, nasalizationRomanized, "로마자 발음: " + NASALIZATION));
+        }
+    }
+
     /**
      * TC Test Data 조건에 맞는 정확한 길이의 한글 문장. 공백은 포함하되 연속·앞뒤 공백과 문장부호·이모지는 없다.
      * 앱과 서버는 정리(문장부호 제거·공백 정규화) 후 길이를 세므로, 정리해도 길이가 그대로인 문장을 만든다.

@@ -127,16 +127,30 @@ public class PracticePage {
         return !driver.findElements(Ui.textContaining(driver, STANDARD_PRONUNCIATION)).isEmpty();
     }
 
-    /**
-     * 표준 발음 영역에 보이는 발음 글자. 영역이 없으면 빈 문자열이다.
-     * 접근성 트리에서 이 영역은 다른 글자와 한 label로 합쳐지고 줄바꿈으로 구분되므로, 영역 제목 바로 다음 줄을 발음으로 읽는다.
-     */
+    /** 표준 발음 영역에 보이는 발음 글자. 영역이 없으면 빈 문자열이다. */
     public String standardPronunciation() {
+        return pronunciationCardLine(1);
+    }
+
+    /**
+     * 표준 발음 영역에서 발음 바로 아래 줄에 보이는 로마자 발음. 영역이 없으면 빈 문자열이다.
+     * 표준 발음과 같은 준비 결과로 함께 그려지므로, {@link #waitForStandardPronunciation(String)} 뒤에 읽으면 같은 문장의 값이다.
+     * 서버가 로마자를 주지 않으면 앱이 이 줄을 그리지 않아 다른 글자가 올 수 있으니, 호출자는 기대값과 정확히 비교한다.
+     */
+    public String romanizedPronunciation() {
+        return pronunciationCardLine(2);
+    }
+
+    /**
+     * 표준 발음 영역 제목에서 offset만큼 아래 줄. 줄이 없으면 빈 문자열이다.
+     * 접근성 트리에서 이 영역은 다른 글자와 한 label로 합쳐지고 줄바꿈으로 구분되므로, 제목 줄을 기준으로 위치를 센다.
+     */
+    private String pronunciationCardLine(int offset) {
         for (WebElement element : driver.findElements(Ui.textContaining(driver, STANDARD_PRONUNCIATION))) {
             List<String> lines = List.of(Ui.labelOf(driver, element).split("\n"));
             int title = lines.indexOf(STANDARD_PRONUNCIATION);
-            if (title >= 0 && title + 1 < lines.size()) {
-                return lines.get(title + 1).trim();
+            if (title >= 0 && title + offset < lines.size()) {
+                return lines.get(title + offset).trim();
             }
         }
         return "";
