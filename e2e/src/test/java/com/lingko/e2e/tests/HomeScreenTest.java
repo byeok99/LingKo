@@ -38,6 +38,7 @@ class HomeScreenTest extends BaseTest {
                 "Daily 탭에 시드 문장이 보여야 한다: " + SeedSentences.DAILY_FIRST);
     }
 
+    // Notion TC 번호가 없는 회귀 테스트다. 6개 상황 모두에 문장이 내려오는지(추천 문장 limit=50 가정)를 지킨다
     @Test
     @DisplayName("모든 상황 탭에 서버 문장이 보인다 (추천 문장 limit=50 가정 보호)")
     void everyCategoryShowsServerSentences() {
@@ -55,11 +56,46 @@ class HomeScreenTest extends BaseTest {
     }
 
     @Nested
+    @DisplayName("TC-014 상황 칩을 선택하면 그 상황의 추천 문장이 표시된다")
+    class CategoryFilter {
+
+        // 사전조건은 기본 시드 상태라 따로 맞추지 않는다. 대상 문장은 각 상황의 첫 문장이라 미리보기(3개) 안에 항상 있다
+        @Test
+        @DisplayName("Food는 Food 문장만, Travel은 Travel 문장만 보인다")
+        void showsOnlySelectedCategorySentences() {
+            String food = SeedSentences.FOOD_FIRST;
+            String travel = SeedSentences.TRAVEL_FIRST;
+            HomePage home = new HomePage(driver()).waitUntilLoaded();
+
+            // 기대결과 1과 2는 탭을 바꿔 가며 이어서 확인하므로, 앞 단계 결과를 먼저 모아 둔 뒤 함께 보고한다.
+            // "보이지 않음"은 locator가 아무것도 못 찾아도 통과하므로, 같은 locator로 보이는 카드를 찾는 것도 함께 확인해
+            // 없음 결과가 의미 있게 한다
+            home.selectCategory("Food");
+            boolean foodShowsFood = home.showsSentence(food) && home.hasSentenceCard(food);
+            boolean foodHidesTravel = !home.hasSentenceCard(travel);
+
+            home.selectCategory("Travel");
+            boolean travelShowsTravel = home.showsSentence(travel) && home.hasSentenceCard(travel);
+            boolean travelHidesFood = !home.hasSentenceCard(food);
+
+            assertAll(
+                    () -> assertTrue(foodShowsFood, "Food를 고르면 '" + food + "'가 보여야 한다"),
+                    () -> assertTrue(foodHidesTravel, "Food를 고르면 Travel 문장 '" + travel + "'는 보이지 않아야 한다"),
+                    () -> assertTrue(travelShowsTravel, "Travel을 고르면 '" + travel + "'가 보여야 한다"),
+                    () -> assertTrue(travelHidesFood, "Travel을 고르면 Food 문장 '" + food + "'는 보이지 않아야 한다"));
+        }
+    }
+
+    @Nested
     @DisplayName("TC-013 홈에 남은 평가 기회와 다음 충전까지 남은 시간이 표시된다")
     class RemainingPractices {
 
         // 화면은 초 단위로 줄고 조회 시점도 달라, 정확히 같은 값 대신 이 범위 안에 들면 일치로 본다
         private static final Duration COUNTDOWN_TOLERANCE = Duration.ofSeconds(5);
+        // 자연 충전 간격. 카운트다운은 이 값을 넘을 수 없다(기대결과 2)
+        private static final Duration REFILL_INTERVAL = Duration.ofHours(1);
+        // TC는 10초 뒤 다시 보라고 하지만, 1초마다 줄어드는 값이라 "줄어들 때까지" 기다리면 같은 것을 더 빨리 확인한다
+        private static final Duration COUNTDOWN_TICK_TIMEOUT = Duration.ofSeconds(15);
 
         private ServerQuota serverQuota;
         private long quotaSetAtNanos;
@@ -73,9 +109,10 @@ class HomeScreenTest extends BaseTest {
         }
 
         @Test
-        @DisplayName("남은 기회·최대 기회·카운트다운이 서버 값과 같다")
+        @DisplayName("3/5와 서버와 같은 카운트다운이 보이고, 카운트다운이 줄어든다")
         void showsRemainingPracticesAndRefillCountdown() {
-            PracticeEnergy energy = new HomePage(driver()).waitUntilLoaded().practiceEnergy();
+            HomePage home = new HomePage(driver()).waitUntilLoaded();
+            PracticeEnergy energy = home.practiceEnergy();
 
             // 서버가 알려 준 남은 시간에서 그 뒤 흐른 시간을 빼면 지금 화면에 보여야 할 값이다
             Duration expectedUntilRefill = serverQuota.timeUntilRefill()
@@ -92,12 +129,16 @@ class HomeScreenTest extends BaseTest {
                                 "다음 충전까지 남은 시간이 서버와 " + COUNTDOWN_TOLERANCE.toSeconds()
                                         + "초 안에서 같아야 한다. 화면=" + energy.untilRefill()
                                         + ", 기대=" + expectedUntilRefill);
-                    });
+                        assertTrue(energy.untilRefill().compareTo(REFILL_INTERVAL) <= 0,
+                                "카운트다운은 60:00을 넘지 않아야 한다: " + energy.untilRefill());
+                    },
+                    // 기대결과 3: 처음 읽은 값보다 작아질 때까지 기다리고, 시간 안에 안 줄면 실패한다
+                    () -> home.waitUntilCountdownBelow(energy.untilRefill(), COUNTDOWN_TICK_TIMEOUT));
         }
     }
 
     @Nested
-    @DisplayName("TC-014 추천 문장을 선택하면 같은 문장으로 연습을 시작할 수 있다")
+    @DisplayName("TC-015 추천 문장을 선택하면 같은 문장으로 연습 화면이 열린다")
     class SentenceSelection {
 
         // 평가 기회가 0이면 연습 화면 버튼이 'No practices left'로 바뀌어 Record를 기다리던 진입 확인이 실패한다.

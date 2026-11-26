@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SavedSentenceTest extends BaseTest {
 
     @Nested
-    @DisplayName("TC-018 저장한 문장은 다시 조회해도 저장 상태가 유지된다")
+    @DisplayName("TC-016 저장한 문장은 다시 조회해도 저장 상태가 유지된다")
     class SavedAcrossRelaunch {
 
         // 앱을 새로 실행하면 홈은 Daily 탭에서 시작하므로 그 첫 문장을 대상으로 한다
