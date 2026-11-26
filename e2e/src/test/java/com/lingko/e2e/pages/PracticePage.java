@@ -64,7 +64,7 @@ public class PracticePage {
      * 긴 문장은 입력칸·표준 발음 영역이 커지고 키보드도 떠 있어 녹음 버튼이 화면 밖에 있으므로 버튼까지 스크롤한다.
      * Flutter는 화면 밖 요소를 접근성 트리에서 빼므로, 스크롤하기 전에 버튼 존재를 기다리면 찾지 못한다.
      * Appium hideKeyboard는 쓰지 않는다. 키보드를 내리면 Flutter 입력칸 포커스 연결이 끊겨 다시 눌러도
-     * 입력·지우기가 무시되는 것을 확인했다(TC-019). 키보드를 둔 채 스크롤해도 버튼까지 닿는다.
+     * 입력·지우기가 무시되는 것을 확인했다(자유 문장 100자 TC 작업 중). 키보드를 둔 채 스크롤해도 버튼까지 닿는다.
      */
     public PracticePage waitUntilPrepared() {
         wait.until(ExpectedConditions.presenceOfElementLocated(Ui.textContaining(driver, STANDARD_PRONUNCIATION)));
@@ -80,6 +80,11 @@ public class PracticePage {
         } catch (org.openqa.selenium.TimeoutException notShown) {
             return false;
         }
+    }
+
+    /** 표준 발음 영역이 지금 있는지. 준비되지 않은 문장은 표준 발음이 없어야 하므로 기다리지 않고 현재 상태만 본다. */
+    public boolean showsStandardPronunciation() {
+        return !driver.findElements(Ui.textContaining(driver, STANDARD_PRONUNCIATION)).isEmpty();
     }
 
     /** 녹음 버튼이 지금 있는지. 준비되지 않은 문장은 녹음할 수 없어야 하므로 기다리지 않고 현재 상태만 본다. */

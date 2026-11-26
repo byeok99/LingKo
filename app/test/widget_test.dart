@@ -2551,7 +2551,7 @@ void main() {
     expect(find.text('첫 표준 발음'), findsNothing);
   });
 
-  // 서버 100자 상한(TC-019) 경계: 101자는 서버에 보내지 않고 이유를 알려 주고, 100자는 그대로 준비 요청한다.
+  // 서버 100자 상한 경계(TC-017 100자 가능, TC-018 101자 안내): 101자는 서버에 보내지 않고 이유를 알려 주고, 100자는 그대로 준비 요청한다.
   // 서버 400을 그대로 보이면 일반 준비 실패 문구라 사용자가 길이 때문인지 알 수 없었다.
   testWidgets('Practice blocks sentences over 100 characters with the limit reason', (
     WidgetTester tester,

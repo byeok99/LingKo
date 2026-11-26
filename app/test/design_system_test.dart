@@ -151,7 +151,7 @@ void main() {
     );
 
     // 자식 Text까지 합쳐지면 "Record\nRecord"가 되어 VoiceOver가 두 번 읽고,
-    // Appium이 접근성 이름 'Record'로 버튼을 찾지 못한다(E2E TC-014 회귀).
+    // Appium이 접근성 이름 'Record'로 버튼을 찾지 못한다(E2E TC-015 회귀).
     expect(tester.getSemantics(find.byType(FilledButton)).label, 'Record');
     semantics.dispose();
   });

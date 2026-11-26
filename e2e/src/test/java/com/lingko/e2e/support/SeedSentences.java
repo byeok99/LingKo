@@ -15,13 +15,15 @@ public final class SeedSentences {
     }
 
     public static final String DAILY_FIRST = "천천히 말씀해 주세요";
-    // Notion TC-014 Test Data와 같은 값이다. 시드가 바뀌면 TC와 이 값을 함께 고친다
+    // Notion TC-015가 고르는 Food 첫 번째 추천 문장이다. 시드 순서나 문구가 바뀌면 이 값을 고친다
     public static final String FOOD_FIRST = "맛있겠다";
+    // Notion TC-014 Test Data의 Travel 첫 번째 추천 문장이다. 시드가 바뀌면 TC와 이 값을 함께 고친다
+    public static final String TRAVEL_FIRST = "지하철역이 어디예요";
 
     public static final List<Seed> FIRST_BY_CATEGORY = List.of(
             new Seed("Daily", DAILY_FIRST),
             new Seed("Food", FOOD_FIRST),
-            new Seed("Travel", "지하철역이 어디예요"),
+            new Seed("Travel", TRAVEL_FIRST),
             new Seed("Study", "한국어를 배우고 있어요"),
             new Seed("Work", "회사에 늦었어요"),
             new Seed("Health", "병원에 가야 해요"));

@@ -19,7 +19,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * 자유 문장 100자 상한이 평가 작업 생성 경계에서도 지켜지는지 검증한다(Notion TC-019 기대결과 3·4).
+ * 자유 문장 100자 상한이 평가 작업 생성 경계에서도 지켜지는지 검증한다.
+ * 앱은 100자를 넘으면 요청을 보내지 않고 안내를 보이지만(Notion TC-018), 서버 검증이 최종 경계라 따로 보호한다.
  *
  * <p>준비 API 경계는 {@code EvaluationControllerPrepareTest}가 맡는다. 여기서는 앱을 거치지 않고 101자를
  * 평가 작업 요청으로 직접 보냈을 때 거부되고, 그 거부가 작업 생성이나 평가 기회 차감으로 이어지지 않는지 본다.

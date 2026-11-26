@@ -113,6 +113,14 @@ public class HomePage {
         return rect.getY() + rect.getHeight() / 2;
     }
 
+    /**
+     * 문장 카드가 지금 목록에 있는지 스크롤 없이 확인한다. "다른 상황의 문장이 보이지 않는다"처럼 없음을 확인할 때 쓴다.
+     * 홈은 선택한 상황의 카드만 그리므로, 트리에 없으면 화면 어디에도 없다. 있음 확인은 스크롤하는 {@link #showsSentence}를 쓴다.
+     */
+    public boolean hasSentenceCard(String sentence) {
+        return !driver.findElements(Ui.textStartingWith(driver, sentence)).isEmpty();
+    }
+
     public boolean showsEmptyCategory(String tabText) {
         String title = String.format(EMPTY_CATEGORY_TITLE, tabText);
         return !driver.findElements(Ui.textContaining(driver, title)).isEmpty();
@@ -133,6 +141,17 @@ public class HomePage {
                 }
             }
             return null;
+        });
+    }
+
+    /**
+     * 캡슐의 카운트다운이 {@code before}보다 작아질 때까지 기다린다. 시간 안에 줄지 않으면(멈춘 카운트다운) 실패한다.
+     * 화면 값만 다시 읽으므로 서버를 다시 조회하지 않아도 앱의 1초 타이머가 동작하는지 확인할 수 있다.
+     */
+    public PracticeEnergy waitUntilCountdownBelow(Duration before, Duration timeout) {
+        return new WebDriverWait(driver, timeout).until(d -> {
+            PracticeEnergy now = practiceEnergy();
+            return now.untilRefill() != null && now.untilRefill().compareTo(before) < 0 ? now : null;
         });
     }
 
