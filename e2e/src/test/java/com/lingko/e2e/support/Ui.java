@@ -107,6 +107,16 @@ public final class Ui {
                 "new UiSelector().descriptionMatches(" + javaQuote("^" + Pattern.quote(tabName) + "\\s+Tab .*") + ")");
     }
 
+    /**
+     * 입력칸에 실제로 들어 있는 글자. 비어 있으면 빈 문자열이다.
+     * iOS는 비어 있을 때 {@code getText()}가 placeholder와 label을 돌려줘 "비어 있음"을 판단할 수 없으므로
+     * {@code value} 속성을 읽는다(비면 null). Android는 EditText의 text를 읽는다.
+     */
+    public static String inputValue(AppiumDriver driver, WebElement input) {
+        String value = isIos(driver) ? input.getAttribute("value") : input.getText();
+        return value == null ? "" : value;
+    }
+
     /** 요소의 화면 글자(접근성 label). iOS는 label, Android는 content-desc 속성에 들어 있다. */
     public static String labelOf(AppiumDriver driver, WebElement element) {
         String label = element.getAttribute(isIos(driver) ? "label" : "content-desc");

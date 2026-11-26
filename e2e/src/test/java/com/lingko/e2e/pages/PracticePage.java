@@ -18,6 +18,10 @@ public class PracticePage {
     private static final String STANDARD_PRONUNCIATION = "STANDARD PRONUNCIATION";
     // 앱 practice_screen.dart의 자유 문장 길이 초과 안내 앞부분
     private static final String LENGTH_LIMIT_MESSAGE = "Sentences can be up to 100 characters";
+    // 앱 practice_screen.dart의 서버 준비 실패 안내 앞부분
+    private static final String PREPARE_FAILURE_MESSAGE = "We could not prepare this sentence";
+    // 앱 준비 지연 0.7초에 요청·화면 갱신 여유를 더한 값
+    private static final Duration PREPARATION_DELAY_MARGIN = Duration.ofMillis(2000);
 
     private final AppiumDriver driver;
     private final WebDriverWait wait;
@@ -42,21 +46,54 @@ public class PracticePage {
     /**
      * 입력칸을 비우고 문장을 입력한다. 앱은 입력이 0.7초 멈추면 서버에 발음 준비를 요청하므로,
      * 결과 확인은 {@link #waitUntilPrepared()}나 {@link #showsLengthLimitMessage()}로 기다려서 한다.
+     * 앱이 지우지 않는 문장(한글·공백)만 넣는다. 입력이 조용히 무시되면 뒤 검증이 엉뚱한 이유로 실패하므로 결과를 바로 확인한다.
      */
     public PracticePage typeSentence(String sentence) {
+        String typed = typeRaw(sentence).inputText();
+        if (!sentence.equals(typed)) {
+            throw new IllegalStateException("입력칸에 문장이 그대로 들어가지 않았다. 기대 " + sentence.length()
+                    + "자, 실제 " + typed.length() + "자: " + typed);
+        }
+        return this;
+    }
+
+    /**
+     * 입력칸을 비우고 글자를 넣되 결과는 확인하지 않는다. 문장부호처럼 앱이 입력 즉시 지우는 글자를 넣을 때 쓰고,
+     * 남은 내용은 {@link #inputText()}로 따로 확인한다.
+     */
+    public PracticePage typeRaw(String text) {
         // 앞 단계에서 녹음 버튼까지 내려갔으면 입력칸이 화면 위로 밀려나 입력이 닿지 않으므로 맨 위로 올린다
         Ui.scrollIntoView(driver, Ui.text(SCREEN_TITLE), Ui.Scroll.TOWARD_TOP);
         WebElement input = driver.findElement(Ui.textInput(driver));
         input.click();
         input.clear();
-        input.sendKeys(sentence);
-        // 입력이 조용히 무시되면 뒤의 검증이 엉뚱한 이유로 실패하므로, 여기서 입력 결과를 먼저 확인한다
-        String typed = driver.findElement(Ui.textInput(driver)).getText();
-        if (!sentence.equals(typed)) {
-            throw new IllegalStateException("입력칸에 문장이 그대로 들어가지 않았다. 기대 " + sentence.length()
-                    + "자, 실제 " + (typed == null ? 0 : typed.length()) + "자: " + typed);
+        input.sendKeys(text);
+        return this;
+    }
+
+    /** 입력칸에 지금 남아 있는 글자. 비어 있으면 빈 문자열이다(placeholder는 포함하지 않는다). */
+    public String inputText() {
+        return Ui.inputValue(driver, driver.findElement(Ui.textInput(driver)));
+    }
+
+    /**
+     * 앱이 발음 준비를 요청하는 지연(0.7초)이 확실히 지날 때까지 기다린다.
+     * "준비가 시작되지 않는다"처럼 무언가가 나타나지 않음을 확인하려면 조건으로 기다릴 수 없어 고정 시간을 둔다.
+     */
+    public PracticePage waitPastPreparationDelay() {
+        try {
+            Thread.sleep(PREPARATION_DELAY_MARGIN.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("준비 지연 대기가 중단됐다", e);
         }
         return this;
+    }
+
+    /** 입력 관련 오류 안내(준비 실패, 길이 초과)가 지금 보이는지. 기다리지 않고 현재 상태만 본다. */
+    public boolean showsAnyInputError() {
+        return !driver.findElements(Ui.textContaining(driver, PREPARE_FAILURE_MESSAGE)).isEmpty()
+                || !driver.findElements(Ui.textContaining(driver, LENGTH_LIMIT_MESSAGE)).isEmpty();
     }
 
     /**

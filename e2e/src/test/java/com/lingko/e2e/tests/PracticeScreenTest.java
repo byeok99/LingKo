@@ -74,6 +74,37 @@ class PracticeScreenTest extends BaseTest {
         }
     }
 
+    @Nested
+    @DisplayName("TC-019 문장부호만 입력하면 입력창에 남지 않고 발음 준비가 시작되지 않는다")
+    class PunctuationOnly {
+
+        // 앱은 입력과 붙여넣기 단계에서 문장부호·기호를 지운다(PracticeSentenceInputFormatter)
+        private static final String PUNCTUATION = ".,?!";
+        // 입력 동작 확인용. 앱이 지우지 않는 글자다
+        private static final String HANGUL = "안녕";
+
+        @Test
+        @DisplayName("'.,?!'를 입력하면 입력창이 비고 표준 발음·오류 안내가 나오지 않는다")
+        void punctuationIsDroppedWithoutPreparation() {
+            PracticePage practice = new HomePage(driver()).waitUntilLoaded()
+                    .openCustomPractice()
+                    .typeRaw(PUNCTUATION)
+                    .waitPastPreparationDelay();
+            String afterPunctuation = practice.inputText();
+            boolean prepared = practice.showsStandardPronunciation();
+            boolean errorShown = practice.showsAnyInputError();
+
+            // 입력 자체가 막혀도 입력창은 비어 보이므로, 같은 입력칸에 한글은 들어가는지 확인해 위 결과가 의미 있게 한다
+            String afterHangul = practice.typeRaw(HANGUL).inputText();
+
+            assertAll(
+                    () -> assertEquals("", afterPunctuation, "문장부호는 입력창에 남지 않아야 한다"),
+                    () -> assertFalse(prepared, "문장부호만으로는 표준 발음이 준비되지 않아야 한다"),
+                    () -> assertFalse(errorShown, "문장부호만 입력했을 때 오류 안내가 나오지 않아야 한다"),
+                    () -> assertEquals(HANGUL, afterHangul, "같은 입력칸에 한글은 들어가야 한다(입력 동작 확인)"));
+        }
+    }
+
     /**
      * TC Test Data 조건에 맞는 정확한 길이의 한글 문장. 공백은 포함하되 연속·앞뒤 공백과 문장부호·이모지는 없다.
      * 앱과 서버는 정리(문장부호 제거·공백 정규화) 후 길이를 세므로, 정리해도 길이가 그대로인 문장을 만든다.
