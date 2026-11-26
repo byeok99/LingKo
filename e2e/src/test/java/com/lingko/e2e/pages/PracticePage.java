@@ -4,6 +4,8 @@ import com.lingko.e2e.support.Ui;
 import io.appium.java_client.AppiumDriver;
 import java.time.Duration;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
@@ -21,6 +23,12 @@ public class PracticePage {
     private static final String STOP_AND_ANALYZE = "Stop and analyze";
     // 녹음 중 왼쪽 취소 버튼의 접근성 label. 화면 글자는 'Cancel'이다
     private static final String CANCEL_RECORDING = "Cancel recording";
+    // 녹음 중 오른쪽 다시 녹음 버튼. 화면 글자와 접근성 label이 같다
+    private static final String RESTART_RECORDING = "Restart";
+    // 녹음 경과 시간 원형 표시의 접근성 label 앞부분과 전체 형식(앱 _RecordingView)
+    private static final String RECORDING_DURATION = "Recording duration";
+    private static final Pattern RECORDING_DURATION_LABEL =
+            Pattern.compile("Recording duration (\\d+) minutes (\\d+) seconds");
     // 앱 practice_screen.dart의 마이크 권한 거부 안내 문구
     private static final String MICROPHONE_DENIED_MESSAGE =
             "Microphone access is required. Allow access in device settings, then retry.";
@@ -218,6 +226,39 @@ public class PracticePage {
     /** 녹음 화면의 멈춤 버튼이 누를 수 있게 될 때까지 기다려 돌려준다. 시간 안에 녹음이 시작되지 않으면 실패한다. */
     public WebElement waitUntilRecording() {
         return wait.until(ExpectedConditions.elementToBeClickable(Ui.text(STOP_AND_ANALYZE)));
+    }
+
+    /** 녹음 중 오른쪽 'Restart' 버튼으로 지금까지의 녹음을 버리고 처음부터 다시 녹음한다. */
+    public PracticePage restartRecording() {
+        driver.findElement(Ui.text(RESTART_RECORDING)).click();
+        return this;
+    }
+
+    /**
+     * 녹음 화면의 경과 시간(초). 녹음 화면이 아니면 -1이다.
+     * 화면의 "0:03"은 접근성 트리에서 "Recording duration 0 minutes 03 seconds" label로 보이므로 그 값을 읽는다.
+     */
+    public int recordingSeconds() {
+        for (WebElement element : driver.findElements(Ui.textContaining(driver, RECORDING_DURATION))) {
+            Matcher matcher = RECORDING_DURATION_LABEL.matcher(Ui.labelOf(driver, element));
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1)) * 60 + Integer.parseInt(matcher.group(2));
+            }
+        }
+        return -1;
+    }
+
+    /** 경과 시간이 atLeast초 이상이 될 때까지 기다려 그 값을 돌려준다. 시간 안에 안 되면 실패한다. */
+    public int waitUntilRecordingSeconds(int atLeast) {
+        return wait.until(d -> {
+            try {
+                int seconds = recordingSeconds();
+                return seconds >= atLeast ? seconds : null;
+            } catch (StaleElementReferenceException redrawn) {
+                // 경과 시간은 0.1초마다 다시 그려지므로 읽는 사이에 요소가 바뀔 수 있다. 다음 확인에서 다시 읽는다
+                return null;
+            }
+        });
     }
 
     /** 녹음 중 왼쪽 'Cancel' 버튼으로 녹음을 취소한다. 앱은 녹음 파일을 지우고 평가를 보내지 않는다. */

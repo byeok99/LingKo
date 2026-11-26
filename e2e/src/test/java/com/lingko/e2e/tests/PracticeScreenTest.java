@@ -302,6 +302,50 @@ class PracticeScreenTest extends BaseTest {
     }
 
     /**
+     * 기대결과 1(Restart 후 경과 시간이 0:00부터 다시 올라간다)만 자동화한다.
+     * 기대결과 2·3(평가 결과 화면, 기록 1건)은 평가를 끝까지 마쳐야 하는데, 로컬 backend에 S3·Azure 자격증명이 없어
+     * 업로드 티켓 발급부터 실패하므로 평가 환경이 준비되면 이어서 자동화한다.
+     */
+    @Nested
+    @DisplayName("TC-027 녹음 중 'Restart'를 누르면 처음부터 다시 녹음된다")
+    class RecordingRestarted {
+
+        private static final String SENTENCE = "감사합니다";
+        // TC Test Steps: 경과 시간이 0:03 이상이 될 때까지 녹음한 뒤 Restart
+        private static final int SECONDS_BEFORE_RESTART = 3;
+
+        @BeforeEach
+        void given() {
+            Simulator.setMicrophoneAllowed(true);
+            givenPracticesAvailable();
+        }
+
+        @Test
+        @DisplayName("0:03 이상 녹음하다 'Restart'를 누르면 경과 시간이 0:00부터 다시 올라간다")
+        void restartResetsElapsedTime() {
+            PracticePage practice = new HomePage(driver()).waitUntilLoaded()
+                    .openCustomPractice()
+                    .typeSentence(SENTENCE)
+                    .tapRecord();
+            practice.waitUntilRecording();
+            int beforeRestart = practice.waitUntilRecordingSeconds(SECONDS_BEFORE_RESTART);
+            int afterRestart = practice.restartRecording().recordingSeconds();
+            // 0으로 돌아간 것만 보면 멈춘 타이머와 구분되지 않으므로 다시 올라가는 것까지 본다
+            int resumed = practice.waitUntilRecordingSeconds(afterRestart + 1);
+            // 평가를 보내지 않도록 정리한다. 남은 녹음은 평가 기회와 무관하다
+            practice.cancelRecording();
+
+            assertAll(
+                    () -> assertTrue(beforeRestart >= SECONDS_BEFORE_RESTART,
+                            "Restart 전에 0:03 이상 녹음되어야 한다: " + beforeRestart + "초"),
+                    // Restart를 누르고 값을 읽기까지 수백 ms가 걸려 0:01이 보일 수 있으므로 1초까지 허용한다
+                    () -> assertTrue(afterRestart >= 0 && afterRestart <= 1,
+                            "Restart 직후 경과 시간이 0:00부터 다시 시작해야 한다: " + afterRestart + "초"),
+                    () -> assertTrue(resumed > afterRestart, "Restart 뒤 경과 시간이 다시 올라가야 한다"));
+        }
+    }
+
+    /**
      * TC Test Data 조건에 맞는 정확한 길이의 한글 문장. 공백은 포함하되 연속·앞뒤 공백과 문장부호·이모지는 없다.
      * 앱과 서버는 정리(문장부호 제거·공백 정규화) 후 길이를 세므로, 정리해도 길이가 그대로인 문장을 만든다.
      */
