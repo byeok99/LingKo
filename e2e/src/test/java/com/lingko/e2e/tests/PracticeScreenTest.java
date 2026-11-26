@@ -1,9 +1,11 @@
 package com.lingko.e2e.tests;
 
+import com.lingko.e2e.pages.AiConsentPage;
 import com.lingko.e2e.pages.HomePage;
 import com.lingko.e2e.pages.PracticePage;
 import com.lingko.e2e.support.BaseTest;
 import com.lingko.e2e.support.TestSupportApi;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -162,6 +164,49 @@ class PracticeScreenTest extends BaseTest {
                     () -> assertEquals(NASALIZATION_PRONUNCIATION, nasalizationPronunciation,
                             "표준 발음: " + NASALIZATION),
                     () -> assertEquals(NASALIZATION_ROMANIZED, nasalizationRomanized, "로마자 발음: " + NASALIZATION));
+        }
+    }
+
+    @Nested
+    @DisplayName("TC-024 AI 처리 동의를 거부하면 평가가 시작되지 않고 평가 기회가 차감되지 않는다")
+    class AiConsentDeclined {
+
+        // TC Test Data: 평가 기회 3회. 5회가 아니어야 '차감 없음'과 '최대치 유지'가 구분된다
+        private static final int PRACTICES = 3;
+        private static final String SENTENCE = "감사합니다";
+        private static final Duration RECORD_FOR = Duration.ofSeconds(2);
+
+        private String accessToken;
+        private int historyBefore;
+
+        // 사전조건 hook: 앱을 띄우기 전에 서버에서 기회 3회를 맞추고, 비교 기준이 될 기록 수를 남긴다
+        @BeforeEach
+        void given() {
+            accessToken = TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(PRACTICES);
+            historyBefore = TestSupportApi.evaluationHistoryCount(accessToken);
+        }
+
+        @Test
+        @DisplayName("동의 화면에서 'Not now'를 고르면 연습 화면으로 돌아오고 기회 3회·기록 수가 그대로다")
+        void declineKeepsQuotaAndHistory() {
+            HomePage home = new HomePage(driver()).waitUntilLoaded();
+            // 동의 철회는 hook이 아니라 앱이 뜬 뒤에 한다. E2E 앱(main_e2e.dart)은 시작할 때 테스트 세션을 받으며
+            // AI 동의를 다시 기록하므로, 앱보다 먼저 철회하면 되살아난다. 앱은 평가 요청 때마다 동의 상태를 새로 조회한다
+            TestSupportApi.withdrawAiConsent(accessToken);
+            PracticePage practice = home.openCustomPractice()
+                    .typeSentence(SENTENCE)
+                    .recordAndRequestEvaluation(RECORD_FOR);
+            new AiConsentPage(driver()).waitUntilLoaded().declineSending();
+            boolean backWithRecording = practice.showsKeptRecording();
+
+            // 기대결과 2는 화면 대신 서버 값으로 본다. 거절 경로는 서버에 아무것도 보내지 않아야 하기 때문이다
+            assertAll(
+                    () -> assertTrue(backWithRecording, "평가 없이 녹음을 보존한 연습 화면으로 돌아와야 한다"),
+                    () -> assertEquals(PRACTICES, TestSupportApi.currentPractices(accessToken).remaining(),
+                            "평가 기회가 차감되지 않아야 한다"),
+                    () -> assertEquals(historyBefore, TestSupportApi.evaluationHistoryCount(accessToken),
+                            "새 연습 기록이 생기지 않아야 한다"));
         }
     }
 

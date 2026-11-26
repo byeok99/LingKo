@@ -95,6 +95,38 @@ public final class TestSupportApi {
         throw new IllegalStateException(timeout.toSeconds() + "초 안에 서버 저장 목록에 반영되지 않았다: sentenceId=" + sentenceId);
     }
 
+    /**
+     * 사용자의 AI 처리 동의를 철회 상태로 맞춘다. 앱과 같은 사용자 API를 쓰며, 앱은 동의되지 않은 사용자가 평가를 요청하면
+     * 전송 전에 동의 화면을 띄운다. 고정 사용자는 {@link #ensureE2eUser()}나 E2E 앱 시작 때마다 다시 동의 상태가 되므로
+     * 앱을 띄운 뒤에 불러야 하고, 이 상태는 다음 테스트에 남지 않는다.
+     * 철회 이력은 남으므로 "동의 이력이 전혀 없음"과는 서버 기록이 다르다.
+     */
+    public static void withdrawAiConsent(String accessToken) {
+        // 안내 문서 버전은 서버가 현재 버전을 알려주는 대로 따른다. 버전이 다르면 서버가 거부한다
+        String status = send(authorized(HttpRequest.newBuilder(API_URL.resolve("/api/legal/ai-consent")), accessToken).GET());
+        String version = ServerQuota.required(status, "\"noticeVersion\":\"([^\"]+)\"");
+        String body = send(authorized(HttpRequest.newBuilder(API_URL.resolve("/api/legal/ai-consent")), accessToken)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(
+                        "{\"granted\":false,\"noticeVersion\":\"" + version + "\"}")));
+        if (!body.contains("\"granted\":false")) {
+            throw new IllegalStateException("AI 처리 동의가 철회되지 않았다: " + body);
+        }
+    }
+
+    /** 사용자의 전체 평가(연습) 기록 수. 앱 기록 탭과 같은 API의 {@code totalItems}다. */
+    public static int evaluationHistoryCount(String accessToken) {
+        String body = send(authorized(HttpRequest.newBuilder(
+                API_URL.resolve("/api/evaluations/me?size=1")), accessToken).GET());
+        return Integer.parseInt(ServerQuota.required(body, "\"totalItems\":(\\d+)"));
+    }
+
+    /** 고정 사용자의 현재 평가 기회. 값을 바꾸지 않고 앱 {@code GET /api/quota/today}로 조회한다. */
+    public static ServerQuota currentPractices(String accessToken) {
+        return ServerQuota.parse(send(authorized(HttpRequest.newBuilder(
+                API_URL.resolve("/api/quota/today")), accessToken).GET()));
+    }
+
     private static HttpRequest.Builder authorized(HttpRequest.Builder builder, String accessToken) {
         return builder.header("Authorization", "Bearer " + accessToken);
     }

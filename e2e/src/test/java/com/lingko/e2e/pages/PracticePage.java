@@ -17,6 +17,10 @@ public class PracticePage {
     private static final String SCREEN_TITLE = "Practice";
     // 평가 기회가 0이면 같은 버튼이 'No practices left'로 바뀌므로, 이 글자를 기다리는 테스트는 기회가 있어야 한다
     private static final String RECORD_BUTTON = "Record";
+    // 녹음 중 가운데 멈춤 버튼의 접근성 label. 화면 글자는 'Stop'이지만 label은 이 값이다
+    private static final String STOP_AND_ANALYZE = "Stop and analyze";
+    // 녹음이 남아 있을 때(평가 실패·동의 거절) Record 자리에 보이는 버튼
+    private static final String RETRY_WITH_RECORDING = "Retry with this recording";
     // 준비가 끝나면 입력칸 아래에 표준 발음 영역이 생긴다. 접근성 트리에서는 입력칸 label에 합쳐져 보인다
     private static final String STANDARD_PRONUNCIATION = "STANDARD PRONUNCIATION";
     // 앱 practice_screen.dart의 자유 문장 길이 초과 안내 앞부분
@@ -175,6 +179,39 @@ public class PracticePage {
             // 판정은 호출자의 assert가 맡는다
         }
         return standardPronunciation();
+    }
+
+    /**
+     * 녹음을 시작하고 recordFor만큼 말한 뒤 "Stop and analyze"로 멈춰 평가를 요청한다.
+     * 앱은 멈추는 즉시 평가 전송을 시작하므로, 이 메서드가 끝나면 AI 처리 동의 화면이나 평가 진행 화면이 뜬다.
+     * 시뮬레이터 마이크 권한이 미리 허용되어 있어야 한다(권한 팝업은 다루지 않는다).
+     */
+    public PracticePage recordAndRequestEvaluation(Duration recordFor) {
+        waitUntilPrepared();
+        driver.findElement(Ui.text(RECORD_BUTTON)).click();
+        WebElement stop = wait.until(ExpectedConditions.elementToBeClickable(Ui.text(STOP_AND_ANALYZE)));
+        try {
+            // 녹음 길이가 0에 가까우면 평가 전에 녹음 오류로 끝날 수 있어 잠시 녹음한다
+            Thread.sleep(recordFor.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("녹음 대기가 중단됐다", e);
+        }
+        stop.click();
+        return this;
+    }
+
+    /**
+     * 평가를 보내지 않고 돌아왔을 때의 연습 화면인지. 앱은 동의 거절 시 녹음을 지우지 않고 보존하므로
+     * 'Record' 대신 'Retry with this recording' 버튼이 보인다. 시간 안에 안 보이면 false다.
+     */
+    public boolean showsKeptRecording() {
+        try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(Ui.text(RETRY_WITH_RECORDING)));
+            return true;
+        } catch (TimeoutException notShown) {
+            return false;
+        }
     }
 
     /** 녹음 버튼이 지금 있는지. 준비되지 않은 문장은 녹음할 수 없어야 하므로 기다리지 않고 현재 상태만 본다. */
