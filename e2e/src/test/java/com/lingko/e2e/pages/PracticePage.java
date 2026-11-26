@@ -17,6 +17,13 @@ public class PracticePage {
     private static final String SCREEN_TITLE = "Practice";
     // 평가 기회가 0이면 같은 버튼이 'No practices left'로 바뀌므로, 이 글자를 기다리는 테스트는 기회가 있어야 한다
     private static final String RECORD_BUTTON = "Record";
+    // 녹음 중 가운데 멈춤 버튼의 접근성 label. 화면 글자는 'Stop'이지만 label은 이 값이다
+    private static final String STOP_AND_ANALYZE = "Stop and analyze";
+    // 앱 practice_screen.dart의 마이크 권한 거부 안내 문구
+    private static final String MICROPHONE_DENIED_MESSAGE =
+            "Microphone access is required. Allow access in device settings, then retry.";
+    // 녹음이 남아 있을 때(평가 실패·동의 거절) Record 자리에 보이는 버튼
+    private static final String RETRY_WITH_RECORDING = "Retry with this recording";
     // 준비가 끝나면 입력칸 아래에 표준 발음 영역이 생긴다. 접근성 트리에서는 입력칸 label에 합쳐져 보인다
     private static final String STANDARD_PRONUNCIATION = "STANDARD PRONUNCIATION";
     // 앱 practice_screen.dart의 자유 문장 길이 초과 안내 앞부분
@@ -127,16 +134,30 @@ public class PracticePage {
         return !driver.findElements(Ui.textContaining(driver, STANDARD_PRONUNCIATION)).isEmpty();
     }
 
-    /**
-     * 표준 발음 영역에 보이는 발음 글자. 영역이 없으면 빈 문자열이다.
-     * 접근성 트리에서 이 영역은 다른 글자와 한 label로 합쳐지고 줄바꿈으로 구분되므로, 영역 제목 바로 다음 줄을 발음으로 읽는다.
-     */
+    /** 표준 발음 영역에 보이는 발음 글자. 영역이 없으면 빈 문자열이다. */
     public String standardPronunciation() {
+        return pronunciationCardLine(1);
+    }
+
+    /**
+     * 표준 발음 영역에서 발음 바로 아래 줄에 보이는 로마자 발음. 영역이 없으면 빈 문자열이다.
+     * 표준 발음과 같은 준비 결과로 함께 그려지므로, {@link #waitForStandardPronunciation(String)} 뒤에 읽으면 같은 문장의 값이다.
+     * 서버가 로마자를 주지 않으면 앱이 이 줄을 그리지 않아 다른 글자가 올 수 있으니, 호출자는 기대값과 정확히 비교한다.
+     */
+    public String romanizedPronunciation() {
+        return pronunciationCardLine(2);
+    }
+
+    /**
+     * 표준 발음 영역 제목에서 offset만큼 아래 줄. 줄이 없으면 빈 문자열이다.
+     * 접근성 트리에서 이 영역은 다른 글자와 한 label로 합쳐지고 줄바꿈으로 구분되므로, 제목 줄을 기준으로 위치를 센다.
+     */
+    private String pronunciationCardLine(int offset) {
         for (WebElement element : driver.findElements(Ui.textContaining(driver, STANDARD_PRONUNCIATION))) {
             List<String> lines = List.of(Ui.labelOf(driver, element).split("\n"));
             int title = lines.indexOf(STANDARD_PRONUNCIATION);
-            if (title >= 0 && title + 1 < lines.size()) {
-                return lines.get(title + 1).trim();
+            if (title >= 0 && title + offset < lines.size()) {
+                return lines.get(title + offset).trim();
             }
         }
         return "";
@@ -161,6 +182,68 @@ public class PracticePage {
             // 판정은 호출자의 assert가 맡는다
         }
         return standardPronunciation();
+    }
+
+    /**
+     * 녹음을 시작하고 recordFor만큼 말한 뒤 "Stop and analyze"로 멈춰 평가를 요청한다.
+     * 앱은 멈추는 즉시 평가 전송을 시작하므로, 이 메서드가 끝나면 AI 처리 동의 화면이나 평가 진행 화면이 뜬다.
+     * 마이크 권한은 호출 전에 {@code Simulator.setMicrophoneAllowed(true)}로 허용해 둔다(권한 팝업은 다루지 않는다).
+     */
+    public PracticePage recordAndRequestEvaluation(Duration recordFor) {
+        WebElement stop = tapRecord().waitUntilRecording();
+        try {
+            // 녹음 길이가 0에 가까우면 평가 전에 녹음 오류로 끝날 수 있어 잠시 녹음한다
+            Thread.sleep(recordFor.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("녹음 대기가 중단됐다", e);
+        }
+        stop.click();
+        return this;
+    }
+
+    /**
+     * 표준 발음 준비를 기다린 뒤 녹음 버튼을 누른다. 녹음이 실제로 시작됐는지는 확인하지 않는다.
+     * 마이크 권한이 없으면 앱은 녹음 대신 권한 안내를 띄우므로, 결과는 {@link #waitUntilRecording()}이나
+     * {@link #showsMicrophoneDeniedMessage()}로 따로 확인한다.
+     */
+    public PracticePage tapRecord() {
+        waitUntilPrepared();
+        driver.findElement(Ui.text(RECORD_BUTTON)).click();
+        return this;
+    }
+
+    /** 녹음 화면의 멈춤 버튼이 누를 수 있게 될 때까지 기다려 돌려준다. 시간 안에 녹음이 시작되지 않으면 실패한다. */
+    public WebElement waitUntilRecording() {
+        return wait.until(ExpectedConditions.elementToBeClickable(Ui.text(STOP_AND_ANALYZE)));
+    }
+
+    /** 지금 녹음 중인지. 녹음이 시작되지 않아야 하는 경우를 확인하므로 기다리지 않는다. */
+    public boolean isRecording() {
+        return !driver.findElements(Ui.text(STOP_AND_ANALYZE)).isEmpty();
+    }
+
+    /** 마이크 권한 거부 안내가 나타나는지. 시간 안에 안 보이면 false다. */
+    public boolean showsMicrophoneDeniedMessage() {
+        try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(Ui.textContaining(driver, MICROPHONE_DENIED_MESSAGE)));
+            return true;
+        } catch (TimeoutException notShown) {
+            return false;
+        }
+    }
+
+    /**
+     * 평가를 보내지 않고 돌아왔을 때의 연습 화면인지. 앱은 동의 거절 시 녹음을 지우지 않고 보존하므로
+     * 'Record' 대신 'Retry with this recording' 버튼이 보인다. 시간 안에 안 보이면 false다.
+     */
+    public boolean showsKeptRecording() {
+        try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(Ui.text(RETRY_WITH_RECORDING)));
+            return true;
+        } catch (TimeoutException notShown) {
+            return false;
+        }
     }
 
     /** 녹음 버튼이 지금 있는지. 준비되지 않은 문장은 녹음할 수 없어야 하므로 기다리지 않고 현재 상태만 본다. */

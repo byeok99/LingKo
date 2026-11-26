@@ -1,9 +1,13 @@
 package com.lingko.e2e.tests;
 
+import com.lingko.e2e.pages.AiConsentPage;
 import com.lingko.e2e.pages.HomePage;
 import com.lingko.e2e.pages.PracticePage;
 import com.lingko.e2e.support.BaseTest;
+import com.lingko.e2e.support.Simulator;
 import com.lingko.e2e.support.TestSupportApi;
+import java.time.Duration;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -128,6 +132,129 @@ class PracticeScreenTest extends BaseTest {
                     () -> assertEquals(LINKING_PRONUNCIATION, linking, "연음이 적용되어야 한다: " + LINKING),
                     () -> assertEquals(NASALIZATION_PRONUNCIATION, nasalization,
                             "비음화가 적용되어야 한다: " + NASALIZATION));
+        }
+    }
+
+    @Nested
+    @DisplayName("TC-022 로마자 발음은 표준 발음의 소리를 기준으로 음절과 단어 경계를 구분해 표시된다")
+    class RomanizedPronunciation {
+
+        // TC Test Data. 로마자는 원문이 아니라 표준 발음에서 파생되므로 표준 발음과 함께 둔다
+        private static final String LINKING = "음악을 들어요";
+        private static final String LINKING_PRONUNCIATION = "으마글 드러요";
+        private static final String LINKING_ROMANIZED = "eu-ma-geul deu-reo-yo";
+        private static final String NASALIZATION = "감사합니다";
+        private static final String NASALIZATION_PRONUNCIATION = "감사함니다";
+        private static final String NASALIZATION_ROMANIZED = "gam-sa-ham-ni-da";
+
+        @Test
+        @DisplayName("'음악을 들어요'는 'eu-ma-geul deu-reo-yo'로, '감사합니다'는 'gam-sa-ham-ni-da'로 표시된다")
+        void showsRomanizationOfStandardPronunciation() {
+            // 발음 준비만 확인하고 녹음하지 않으므로 평가 기회 사전조건은 두지 않는다
+            PracticePage practice = new HomePage(driver()).waitUntilLoaded().openCustomPractice();
+            // 표준 발음이 바뀐 것을 확인한 뒤 읽어야 앞 문장의 로마자와 섞이지 않는다
+            String linkingPronunciation = practice.typeSentence(LINKING)
+                    .waitForStandardPronunciation(LINKING_PRONUNCIATION);
+            String linkingRomanized = practice.romanizedPronunciation();
+            String nasalizationPronunciation = practice.typeSentence(NASALIZATION)
+                    .waitForStandardPronunciation(NASALIZATION_PRONUNCIATION);
+            String nasalizationRomanized = practice.romanizedPronunciation();
+
+            assertAll(
+                    () -> assertEquals(LINKING_PRONUNCIATION, linkingPronunciation, "표준 발음: " + LINKING),
+                    () -> assertEquals(LINKING_ROMANIZED, linkingRomanized, "로마자 발음: " + LINKING),
+                    () -> assertEquals(NASALIZATION_PRONUNCIATION, nasalizationPronunciation,
+                            "표준 발음: " + NASALIZATION),
+                    () -> assertEquals(NASALIZATION_ROMANIZED, nasalizationRomanized, "로마자 발음: " + NASALIZATION));
+        }
+    }
+
+    @Nested
+    @DisplayName("TC-024 AI 처리 동의를 거부하면 평가가 시작되지 않고 평가 기회가 차감되지 않는다")
+    class AiConsentDeclined {
+
+        // TC Test Data: 평가 기회 3회. 5회가 아니어야 '차감 없음'과 '최대치 유지'가 구분된다
+        private static final int PRACTICES = 3;
+        private static final String SENTENCE = "감사합니다";
+        private static final Duration RECORD_FOR = Duration.ofSeconds(2);
+
+        private String accessToken;
+        private int historyBefore;
+
+        // 사전조건 hook: 앱을 띄우기 전에 마이크 허용·서버 기회 3회를 맞추고, 비교 기준이 될 기록 수를 남긴다
+        @BeforeEach
+        void given() {
+            Simulator.setMicrophoneAllowed(true);
+            accessToken = TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(PRACTICES);
+            historyBefore = TestSupportApi.evaluationHistoryCount(accessToken);
+        }
+
+        @Test
+        @DisplayName("동의 화면에서 'Not now'를 고르면 연습 화면으로 돌아오고 기회 3회·기록 수가 그대로다")
+        void declineKeepsQuotaAndHistory() {
+            HomePage home = new HomePage(driver()).waitUntilLoaded();
+            // 동의 철회는 hook이 아니라 앱이 뜬 뒤에 한다. E2E 앱(main_e2e.dart)은 시작할 때 테스트 세션을 받으며
+            // AI 동의를 다시 기록하므로, 앱보다 먼저 철회하면 되살아난다. 앱은 평가 요청 때마다 동의 상태를 새로 조회한다
+            TestSupportApi.withdrawAiConsent(accessToken);
+            PracticePage practice = home.openCustomPractice()
+                    .typeSentence(SENTENCE)
+                    .recordAndRequestEvaluation(RECORD_FOR);
+            new AiConsentPage(driver()).waitUntilLoaded().declineSending();
+            boolean backWithRecording = practice.showsKeptRecording();
+
+            // 기대결과 2는 화면 대신 서버 값으로 본다. 거절 경로는 서버에 아무것도 보내지 않아야 하기 때문이다
+            assertAll(
+                    () -> assertTrue(backWithRecording, "평가 없이 녹음을 보존한 연습 화면으로 돌아와야 한다"),
+                    () -> assertEquals(PRACTICES, TestSupportApi.currentPractices(accessToken).remaining(),
+                            "평가 기회가 차감되지 않아야 한다"),
+                    () -> assertEquals(historyBefore, TestSupportApi.evaluationHistoryCount(accessToken),
+                            "새 연습 기록이 생기지 않아야 한다"));
+        }
+    }
+
+    @Nested
+    @DisplayName("TC-025 마이크 권한 거부 시 녹음을 시작하지 않고 권한 안내를 표시한다")
+    class MicrophoneDenied {
+
+        private static final String SENTENCE = "감사합니다";
+
+        // 권한 변경은 실행 중인 앱을 종료시키므로 앱을 띄우기 전인 hook에서 거부 상태를 만든다
+        @BeforeEach
+        void given() {
+            givenPracticesAvailable();
+            Simulator.setMicrophoneAllowed(false);
+        }
+
+        // 녹음하는 다른 TC(TC-024 등)가 권한 거부 상태를 물려받지 않도록, 실패해도 허용으로 되돌린다
+        @AfterEach
+        void restoreMicrophone() {
+            Simulator.setMicrophoneAllowed(true);
+        }
+
+        @Test
+        @DisplayName("권한이 없으면 녹음 대신 권한 안내가 나오고, 허용한 뒤에는 녹음이 시작된다")
+        void showsGuideThenRecordsAfterAllowing() {
+            PracticePage denied = new HomePage(driver()).waitUntilLoaded()
+                    .openCustomPractice()
+                    .typeSentence(SENTENCE)
+                    .tapRecord();
+            boolean guideShown = denied.showsMicrophoneDeniedMessage();
+            boolean recordingWhileDenied = denied.isRecording();
+
+            // 기기 설정에서 허용하는 단계. iOS가 권한을 바꾸며 앱을 종료하므로 다시 실행해 연습 화면으로 돌아간다
+            Simulator.setMicrophoneAllowed(true);
+            relaunchApp();
+            new HomePage(driver()).waitUntilLoaded()
+                    .openCustomPractice()
+                    .typeSentence(SENTENCE)
+                    .tapRecord()
+                    .waitUntilRecording();
+
+            // 녹음 시작은 바로 위 waitUntilRecording이 시간 안에 확인하지 못하면 실패로 처리한다(기대결과 2)
+            assertAll(
+                    () -> assertTrue(guideShown, "마이크 권한 안내가 표시되어야 한다"),
+                    () -> assertFalse(recordingWhileDenied, "권한이 없으면 녹음이 시작되지 않아야 한다"));
         }
     }
 
