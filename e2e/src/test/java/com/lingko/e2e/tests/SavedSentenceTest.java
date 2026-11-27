@@ -2,16 +2,19 @@ package com.lingko.e2e.tests;
 
 import com.lingko.e2e.pages.BottomTabs;
 import com.lingko.e2e.pages.HomePage;
+import com.lingko.e2e.pages.SavedSentencesPage;
 import com.lingko.e2e.support.BaseTest;
 import com.lingko.e2e.support.SeedSentences;
 import com.lingko.e2e.support.TestSupportApi;
 import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -61,6 +64,74 @@ class SavedSentenceTest extends BaseTest {
                     () -> assertTrue(relaunched.isSaved(SENTENCE), "재실행 후 홈 카드가 저장 상태여야 한다: " + SENTENCE),
                     () -> assertTrue(BottomTabs.openProfile(driver()).openSavedSentences().showsSentence(SENTENCE),
                             "프로필 'Saved sentences' 목록에 문장이 있어야 한다: " + SENTENCE));
+        }
+    }
+
+    /**
+     * Notion TC-046·047은 Daily 추천 → Travel 추천 → 자유 문장을 저장한 상태를 전제한다. 지금 제품은 자유 문장을
+     * 저장할 수 없어(서버는 추천 문장 id만 저장, 연습 화면에 저장 버튼 없음) 추천 문장 2개로 사전조건을 만든다.
+     * 그래서 기대 개수는 2이고, 'My own' 필터는 빈 안내가 보이는 것으로 확인한다.
+     */
+    private static String givenDailyThenTravelSaved() {
+        String accessToken = TestSupportApi.ensureE2eUser();
+        TestSupportApi.clearSavedSentences(accessToken);
+        TestSupportApi.ensureSentenceSaved(accessToken,
+                TestSupportApi.recommendedSentenceId(accessToken, SeedSentences.DAILY_FIRST));
+        TestSupportApi.ensureSentenceSaved(accessToken,
+                TestSupportApi.recommendedSentenceId(accessToken, SeedSentences.TRAVEL_FIRST));
+        return accessToken;
+    }
+
+    @Nested
+    @DisplayName("TC-046 저장한 문장 목록은 최근 저장순으로 표시된다")
+    class SavedListOrder {
+
+        @BeforeEach
+        void given() {
+            givenDailyThenTravelSaved();
+        }
+
+        @Test
+        @DisplayName("나중에 저장한 Travel 문장이 위, 먼저 저장한 Daily 문장이 아래에 있고 '2 sentences'가 보인다")
+        void showsMostRecentFirst() {
+            new HomePage(driver()).waitUntilLoaded();
+            SavedSentencesPage saved = BottomTabs.openProfile(driver()).openSavedSentences();
+
+            assertAll(
+                    () -> assertEquals(List.of(SeedSentences.TRAVEL_FIRST, SeedSentences.DAILY_FIRST),
+                            saved.visibleSentencesInOrder(List.of(SeedSentences.DAILY_FIRST, SeedSentences.TRAVEL_FIRST)),
+                            "최근에 저장한 문장이 위에 있어야 한다"),
+                    () -> assertTrue(saved.showsCount(2), "목록 위에 '2 sentences'가 보여야 한다"));
+        }
+    }
+
+    @Nested
+    @DisplayName("TC-047 저장한 문장 목록에서 분류 필터를 선택하면 해당 분류의 문장만 표시된다")
+    class SavedListFilter {
+
+        private static final List<String> SAVED = List.of(SeedSentences.DAILY_FIRST, SeedSentences.TRAVEL_FIRST);
+
+        @BeforeEach
+        void given() {
+            givenDailyThenTravelSaved();
+        }
+
+        @Test
+        @DisplayName("'Daily'는 Daily 문장만, 'Travel'은 Travel 문장만 보이고, 'My own'은 빈 안내가 보인다")
+        void filtersByCategory() {
+            new HomePage(driver()).waitUntilLoaded();
+            SavedSentencesPage saved = BottomTabs.openProfile(driver()).openSavedSentences();
+
+            List<String> daily = saved.selectFilter("Daily").visibleSentencesInOrder(SAVED);
+            List<String> travel = saved.selectFilter("Travel").visibleSentencesInOrder(SAVED);
+            List<String> own = saved.selectFilter("My own").visibleSentencesInOrder(SAVED);
+            boolean ownEmptyShown = saved.showsEmptyFilter("My own");
+
+            assertAll(
+                    () -> assertEquals(List.of(SeedSentences.DAILY_FIRST), daily, "'Daily'는 Daily 문장 1개만 보여야 한다"),
+                    () -> assertEquals(List.of(SeedSentences.TRAVEL_FIRST), travel, "'Travel'은 Travel 문장 1개만 보여야 한다"),
+                    () -> assertEquals(List.of(), own, "'My own'은 추천 문장을 보이지 않아야 한다"),
+                    () -> assertTrue(ownEmptyShown, "'My own'에 저장 문장이 없으면 빈 안내가 보여야 한다"));
         }
     }
 }
