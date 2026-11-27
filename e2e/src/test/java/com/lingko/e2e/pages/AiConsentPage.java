@@ -16,6 +16,8 @@ public class AiConsentPage {
     private static final String SCREEN_TITLE = "AI assessment privacy";
     // 동의하지 않은 상태에서 보이는 거절 버튼. 이미 동의한 상태라면 같은 자리에 'Close'가 보인다
     private static final String DECLINE_BUTTON = "Not now — do not send";
+    // 이미 동의한 상태에서만 보이는 철회 버튼
+    private static final String WITHDRAW_BUTTON = "Withdraw permission";
 
     private final AppiumDriver driver;
     private final WebDriverWait wait;
@@ -29,6 +31,16 @@ public class AiConsentPage {
     public AiConsentPage waitUntilLoaded() {
         wait.until(ExpectedConditions.presenceOfElementLocated(Ui.text(SCREEN_TITLE)));
         return this;
+    }
+
+    /**
+     * 이미 동의한 상태에서 'Withdraw permission'으로 동의를 철회한다. 앱은 서버에 철회를 저장한 뒤 화면을 닫고
+     * 이 화면을 연 곳(프로필)으로 돌아간다. 저장에 실패하면 화면에 머물며 오류 안내를 띄운다.
+     */
+    public void withdrawPermission() {
+        Ui.scrollIntoView(driver, Ui.text(WITHDRAW_BUTTON), Ui.Scroll.TOWARD_BOTTOM).click();
+        // 화면 제목은 프로필 메뉴 글자와 같아 닫힘 판단에 쓸 수 없다. 이 화면에만 있는 철회 버튼이 사라지면 닫힌 것이다
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(Ui.text(WITHDRAW_BUTTON)));
     }
 
     /** 거절 버튼은 화면 아래쪽에 있어 작은 기기에서는 스크롤해야 보인다. 누르면 앱은 연습 화면으로 돌아간다. */

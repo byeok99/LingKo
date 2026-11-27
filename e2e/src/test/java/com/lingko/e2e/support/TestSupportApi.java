@@ -8,6 +8,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,6 +72,48 @@ public final class TestSupportApi {
             }
         }
         throw new IllegalStateException("두 번 뒤집어도 저장 해제되지 않았다: sentenceId=" + sentenceId);
+    }
+
+    /**
+     * 사용자의 저장 문장을 모두 해제한다. 저장 목록 순서·개수를 보는 TC가 이전 실행이나 다른 TC가 남긴 저장에 흔들리지 않게 한다.
+     * 해제 API는 상태를 뒤집으므로 지금 저장된 것만 한 번씩 뒤집는다.
+     */
+    public static void clearSavedSentences(String accessToken) {
+        for (long sentenceId : savedSentenceIds(accessToken)) {
+            ensureSentenceNotSaved(accessToken, sentenceId);
+        }
+        if (!savedSentenceIds(accessToken).isEmpty()) {
+            throw new IllegalStateException("저장 문장이 모두 해제되지 않았다: " + savedSentenceIds(accessToken));
+        }
+    }
+
+    /**
+     * 문장을 "저장됨" 상태로 맞춘다. 서버는 저장 시각 최신순으로 목록을 돌려주므로, 순서를 보는 TC는 기대하는 순서대로 이 메서드를 부른다.
+     * 서버 API는 현재 상태를 뒤집으므로 뒤집은 결과가 해제면 한 번 더 뒤집는다.
+     */
+    public static void ensureSentenceSaved(String accessToken, long sentenceId) {
+        for (int i = 0; i < 2; i++) {
+            String body = send(authorized(HttpRequest.newBuilder(
+                    API_URL.resolve("/api/sentences/saved/" + sentenceId)), accessToken)
+                    .method("PATCH", HttpRequest.BodyPublishers.noBody()));
+            if (body.contains("\"saved\":true")) {
+                return;
+            }
+        }
+        throw new IllegalStateException("두 번 뒤집어도 저장되지 않았다: sentenceId=" + sentenceId);
+    }
+
+    /** 서버 저장 목록의 문장 id. 서버가 주는 순서(최근 저장순) 그대로다. */
+    public static List<Long> savedSentenceIds(String accessToken) {
+        String body = send(authorized(HttpRequest.newBuilder(
+                API_URL.resolve("/api/sentences/saved")), accessToken).GET());
+        // shortcut: 항목 맨 앞 "sentenceId" 다음에 "source"가 오는 응답 순서에 기댄다. 구조가 바뀌면 JSON 라이브러리로 바꾼다
+        Matcher matcher = Pattern.compile("\\{\"sentenceId\":(\\d+),\"source\"").matcher(body);
+        List<Long> ids = new ArrayList<>();
+        while (matcher.find()) {
+            ids.add(Long.parseLong(matcher.group(1)));
+        }
+        return ids;
     }
 
     /**
@@ -137,6 +181,18 @@ public final class TestSupportApi {
      */
     public static ServerQuota setRemainingPractices(int remaining) {
         String body = send(HttpRequest.newBuilder(API_URL.resolve("/test-support/quota?remaining=" + remaining))
+                .PUT(HttpRequest.BodyPublishers.noBody()));
+        return ServerQuota.parse(body);
+    }
+
+    /**
+     * 남은 기회는 두고 다음 자연 충전 시각만 지금부터 {@code secondsFromNow}초 뒤로 옮긴 뒤, 충전이 반영된 서버 값을 돌려준다.
+     * 음수(-3599까지)면 "1시간이 지난" 상태가 되어 운영 충전 규칙대로 1회 충전된다. 충전 대기가 없으면(5회) 409로 실패한다.
+     * backend에 {@code PUT /test-support/quota/next-refill}(#177)이 있어야 한다.
+     */
+    public static ServerQuota moveNextRefill(int secondsFromNow) {
+        String body = send(HttpRequest.newBuilder(
+                        API_URL.resolve("/test-support/quota/next-refill?secondsFromNow=" + secondsFromNow))
                 .PUT(HttpRequest.BodyPublishers.noBody()));
         return ServerQuota.parse(body);
     }

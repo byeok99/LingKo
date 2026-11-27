@@ -28,6 +28,8 @@ public class HomePage {
     private static final Pattern ENERGY_LABEL =
             Pattern.compile("Practice energy (\\d+) of (\\d+), (?:(\\d+):(\\d{2}) until refill|maximum)");
     private static final String CUSTOM_PRACTICE = "Practice my own sentence";
+    // 평가 기회 캡슐 옆 광고 보상 버튼의 Semantics label. 앱은 최대치(MAX)일 때 이 버튼을 그리지 않는다
+    private static final String ADD_PRACTICE_BUTTON = "Add one practice";
     // 앱 SentenceCard _BookmarkButton의 Semantics label과 같다
     private static final String SAVED_BOOKMARK = "Saved. Tap to remove";
     private static final List<String> BOOKMARK_LABELS = List.of("Save this sentence", SAVED_BOOKMARK);
@@ -142,6 +144,16 @@ public class HomePage {
             }
             return null;
         });
+    }
+
+    /**
+     * 광고를 보고 기회를 받는 'Add one practice' 버튼이 지금 있는지. 기다리지 않으므로
+     * {@link #practiceEnergy()}로 캡슐이 그려진 뒤에 부른다(그 전이면 버튼이 아직 없어 false가 나온다).
+     */
+    public boolean showsAddPracticeButton() {
+        // 버튼은 독립 요소가 아니라 캡슐 label 끝에 합쳐져 보인다("Practice energy 4 of 5, ...\n4/5\n59:43\nAdd one practice").
+        // 그래서 정확히 일치가 아니라 포함으로 찾는다. 정확히 일치로 찾으면 버튼이 있어도 항상 false가 된다
+        return !driver.findElements(Ui.textContaining(driver, ADD_PRACTICE_BUTTON)).isEmpty();
     }
 
     /**
