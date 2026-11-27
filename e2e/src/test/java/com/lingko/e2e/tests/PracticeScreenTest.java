@@ -2,11 +2,13 @@ package com.lingko.e2e.tests;
 
 import com.lingko.e2e.pages.AiConsentPage;
 import com.lingko.e2e.pages.HomePage;
+import com.lingko.e2e.pages.HomePage.PracticeEnergy;
 import com.lingko.e2e.pages.PracticePage;
 import com.lingko.e2e.support.BaseTest;
 import com.lingko.e2e.support.Simulator;
 import com.lingko.e2e.support.TestSupportApi;
 import java.time.Duration;
+import org.openqa.selenium.WebElement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -390,6 +393,44 @@ class PracticeScreenTest extends BaseTest {
                             "녹음은 0:10에 끝나야 한다. 마지막으로 본 경과 시간: " + lastSeen + "초"),
                     // 동의 화면이 떴다는 것은 녹음 파일이 만들어져 평가 요청 단계로 넘어갔다는 뜻이다
                     () -> assertTrue(recordingKept, "자동 종료된 녹음이 남아 있어야 한다"));
+        }
+    }
+
+    @Nested
+    @DisplayName("TC-029 평가 기회가 0회이면 평가를 시작할 수 없고 충전 안내가 표시된다")
+    class NoPracticesLeft {
+
+        private static final String SENTENCE = "감사합니다";
+        // 비활성 버튼을 누른 뒤 녹음이 시작되지 않았음을 확인하기 전 기다리는 시간. 녹음은 누르면 1초 안에 화면이 바뀐다
+        private static final Duration AFTER_TAP = Duration.ofSeconds(2);
+
+        // 기회 0은 서버 기준값이다. 마이크 권한을 허용해 두어야 "권한 때문에 녹음이 안 된 것"과 구분된다
+        @BeforeEach
+        void given() {
+            Simulator.setMicrophoneAllowed(true);
+            TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(0);
+        }
+
+        @Test
+        @DisplayName("홈에 0/5와 충전 카운트다운이 보이고, 연습 화면 버튼은 'No practices left'로 비활성이며 눌러도 녹음되지 않는다")
+        void cannotRecordWithoutPractices() throws InterruptedException {
+            HomePage home = new HomePage(driver()).waitUntilLoaded();
+            PracticeEnergy energy = home.practiceEnergy();
+
+            PracticePage practice = home.openCustomPractice().typeSentence(SENTENCE);
+            WebElement button = practice.waitForNoPracticesLeftButton();
+            boolean enabled = button.isEnabled();
+            button.click();
+            Thread.sleep(AFTER_TAP.toMillis());
+            boolean recording = practice.isRecording();
+
+            assertAll(
+                    () -> assertEquals(0, energy.remaining(), "홈에 남은 기회 0이 보여야 한다"),
+                    () -> assertEquals(5, energy.limit(), "홈에 최대 기회 5가 보여야 한다"),
+                    () -> assertNotNull(energy.untilRefill(), "기회가 0이면 다음 충전까지 남은 시간이 보여야 한다"),
+                    () -> assertFalse(enabled, "'No practices left' 버튼은 비활성이어야 한다"),
+                    () -> assertFalse(recording, "버튼을 눌러도 녹음이 시작되지 않아야 한다"));
         }
     }
 

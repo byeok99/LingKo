@@ -19,6 +19,8 @@ public class PracticePage {
     private static final String SCREEN_TITLE = "Practice";
     // 평가 기회가 0이면 같은 버튼이 'No practices left'로 바뀌므로, 이 글자를 기다리는 테스트는 기회가 있어야 한다
     private static final String RECORD_BUTTON = "Record";
+    // 평가 기회가 0이면 Record 버튼이 이 글자로 바뀌고 비활성이 된다(앱 practice_screen.dart quotaExhausted)
+    private static final String NO_PRACTICES_LEFT = "No practices left";
     // 녹음 중 가운데 멈춤 버튼의 접근성 label. 화면 글자는 'Stop'이지만 label은 이 값이다
     private static final String STOP_AND_ANALYZE = "Stop and analyze";
     // 녹음 중 왼쪽 취소 버튼의 접근성 label. 화면 글자는 'Cancel'이다
@@ -127,6 +129,16 @@ public class PracticePage {
         wait.until(ExpectedConditions.presenceOfElementLocated(Ui.textContaining(driver, STANDARD_PRONUNCIATION)));
         Ui.scrollIntoView(driver, Ui.text(RECORD_BUTTON), Ui.Scroll.TOWARD_BOTTOM);
         return this;
+    }
+
+    /**
+     * 평가 기회가 0일 때 Record 자리에 보이는 'No practices left' 버튼을 기다려 돌려준다.
+     * 표준 발음이 준비된 뒤에 버튼이 그려지므로 준비를 먼저 기다리고, 키보드에 가려질 수 있어 버튼까지 스크롤한다.
+     * 기회가 남아 있으면 같은 자리에 'Record'가 보여 시간 안에 찾지 못하고 실패한다.
+     */
+    public WebElement waitForNoPracticesLeftButton() {
+        wait.until(ExpectedConditions.presenceOfElementLocated(Ui.textContaining(driver, STANDARD_PRONUNCIATION)));
+        return Ui.scrollIntoView(driver, Ui.text(NO_PRACTICES_LEFT), Ui.Scroll.TOWARD_BOTTOM);
     }
 
     /** 길이 초과 안내가 나타나는지. 앱은 이 경우 서버에 보내지 않으므로 바로 표시된다. */
