@@ -39,4 +39,14 @@ class E2eQuotaControllerTest {
         assertThat(controller.setQuota(3).getStatusCode().value()).isEqualTo(409);
         verify(quotaSetupService, never()).setRemaining(anyLong(), anyInt());
     }
+
+    @Test
+    @DisplayName("고정 사용자가 없으면 충전 시각 이동도 409이고 quota를 바꾸지 않는다")
+    void moveNextRefillReturnsConflictWhenE2eUserMissing() {
+        when(userRepository.findBySocialIdAndSocialType(any(), any(User.SocialType.class)))
+                .thenReturn(Optional.empty());
+
+        assertThat(controller.moveNextRefill(-1).getStatusCode().value()).isEqualTo(409);
+        verify(quotaSetupService, never()).moveNextRefill(anyLong(), any());
+    }
 }

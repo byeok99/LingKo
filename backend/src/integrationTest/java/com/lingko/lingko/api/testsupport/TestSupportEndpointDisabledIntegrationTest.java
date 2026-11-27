@@ -32,4 +32,11 @@ class TestSupportEndpointDisabledIntegrationTest {
         mockMvc.perform(put("/test-support/quota").param("remaining", "3"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @DisplayName("e2e 프로필이 없으면 충전 시각 이동 경로도 404다")
+    void nextRefillEndpointDoesNotExistWithoutE2eProfile() throws Exception {
+        mockMvc.perform(put("/test-support/quota/next-refill").param("secondsFromNow", "-1"))
+                .andExpect(status().isNotFound());
+    }
 }

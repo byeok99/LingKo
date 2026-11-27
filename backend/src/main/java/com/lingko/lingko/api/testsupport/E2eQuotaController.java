@@ -5,6 +5,7 @@ import com.lingko.lingko.core.domain.quota.service.E2eQuotaSetupService;
 import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
 import jakarta.validation.constraints.Max;
+import java.time.Duration;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -41,6 +42,23 @@ class E2eQuotaController {
         return userRepository
                 .findBySocialIdAndSocialType(E2eSessionController.E2E_SOCIAL_ID, User.SocialType.GOOGLE)
                 .map(user -> ResponseEntity.ok(quotaSetupService.setRemaining(user.getUserIdx(), remaining)))
+                .orElseGet(() -> ResponseEntity.status(409).build());
+    }
+
+    /**
+     * 고정 사용자의 다음 자연 충전 시각만 지금부터 {@code secondsFromNow}초 뒤로 옮기고, 충전이 반영된 앱 조회 결과를 돌려준다.
+     * 음수면 이미 지난 시각이라 바로 1회 충전된다. 하한을 -3599초로 둔 이유는 한 번 호출에 충전이 1회만 일어나게 해
+     * "호출 1번 = 1시간 경과"로 읽히게 하려는 것이다(-3600초부터는 2회 충전된다). 범위 밖은 400이다.
+     *
+     * <p>고정 사용자가 없거나, 5회 보유처럼 충전 대기가 없어 옮길 시각이 없으면 409다.</p>
+     */
+    @PutMapping("/quota/next-refill")
+    public ResponseEntity<PracticeQuotaResponse> moveNextRefill(
+            @RequestParam @Min(-3599) @Max(3600) int secondsFromNow) {
+        return userRepository
+                .findBySocialIdAndSocialType(E2eSessionController.E2E_SOCIAL_ID, User.SocialType.GOOGLE)
+                .flatMap(user -> quotaSetupService.moveNextRefill(user.getUserIdx(), Duration.ofSeconds(secondsFromNow)))
+                .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(409).build());
     }
 }
