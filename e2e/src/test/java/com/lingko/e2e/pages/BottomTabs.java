@@ -9,6 +9,12 @@ public final class BottomTabs {
     private BottomTabs() {
     }
 
+    /** 기록 탭. 도착 여부는 화면 상태(기록 있음·없음·오류)마다 달라 기다리지 않고, 확인은 ReviewPage 메서드가 기다려서 한다. */
+    public static ReviewPage openReview(AppiumDriver driver) {
+        driver.findElement(Ui.bottomTab(driver, "Review")).click();
+        return new ReviewPage(driver);
+    }
+
     public static ProfilePage openProfile(AppiumDriver driver) {
         driver.findElement(Ui.bottomTab(driver, "Profile")).click();
         return new ProfilePage(driver).waitUntilLoaded();
