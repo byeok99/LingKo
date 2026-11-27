@@ -117,6 +117,17 @@ public final class Ui {
         return value == null ? "" : value;
     }
 
+    /**
+     * 화면의 모든 글자 요소. 점수 숫자처럼 label 하나만으로는 어느 항목인지 알 수 없어, 위치(좌표)로 짝을 지어야 할 때 쓴다.
+     * Flutter가 Semantics로 묶은 영역은 여러 글자가 한 요소 label에 줄바꿈으로 합쳐져 나온다.
+     */
+    public static By staticTexts(AppiumDriver driver) {
+        if (isIos(driver)) {
+            return AppiumBy.iOSNsPredicateString("type == 'XCUIElementTypeStaticText'");
+        }
+        return AppiumBy.className("android.widget.TextView");
+    }
+
     /** 요소의 화면 글자(접근성 label). iOS는 label, Android는 content-desc 속성에 들어 있다. */
     public static String labelOf(AppiumDriver driver, WebElement element) {
         String label = element.getAttribute(isIos(driver) ? "label" : "content-desc");
