@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -17,6 +18,10 @@ public class ProfilePage {
     private static final String SAVED_SENTENCES_MENU = "Saved sentences";
     // 앱 ProfileScreen의 AI 처리 동의 관리 메뉴 글자
     private static final String AI_CONSENT_MENU = "AI assessment privacy";
+    // UMP 광고 동의 대상 지역에서만 보이는 메뉴
+    private static final String ADVERTISING_PRIVACY_MENU = "Advertising privacy";
+    // 앱 InlineBannerAd의 Semantics label
+    private static final String BANNER_AD = "Advertisement";
 
     private final AppiumDriver driver;
     private final WebDriverWait wait;
@@ -59,6 +64,35 @@ public class ProfilePage {
             }
         }
         return shown;
+    }
+
+    /**
+     * 배너 광고가 보이는지. 앱 InlineBannerAd는 광고를 받아 그리면 'Advertisement' Semantics로 감싼다.
+     * 테스트 광고를 네트워크로 받아야 하므로 시간 안에 기다리고, 안 보이면 false다.
+     */
+    public boolean showsBannerAd() {
+        try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(Ui.text(BANNER_AD)));
+            return true;
+        } catch (TimeoutException notShown) {
+            return false;
+        }
+    }
+
+    /**
+     * 'Advertising privacy' 메뉴가 settle만큼 기다린 뒤에도 없는지. 앱은 프로필을 연 뒤 UMP에 비동기로 물어 대상 지역일 때만
+     * 메뉴를 추가하는데, 조회가 끝났다는 신호가 화면에 없어 고정 시간을 둔다. 메뉴는 'AI assessment privacy' 바로 아래라
+     * 그 메뉴가 보이도록 스크롤한 뒤 확인한다.
+     */
+    public boolean advertisingPrivacyHiddenAfter(Duration settle) {
+        Ui.scrollIntoView(driver, Ui.textStartingWith(driver, AI_CONSENT_MENU), Scroll.TOWARD_BOTTOM);
+        try {
+            Thread.sleep(settle.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("UMP 조회 대기가 중단됐다", e);
+        }
+        return driver.findElements(Ui.textStartingWith(driver, ADVERTISING_PRIVACY_MENU)).isEmpty();
     }
 
     /** 'AI assessment privacy'로 AI 처리 동의 관리 화면을 연다. 앱은 서버에서 현재 상태를 조회한 뒤 화면을 띄운다. */

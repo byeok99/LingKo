@@ -67,6 +67,54 @@ class ProfileScreenTest extends BaseTest {
      * 문서는 인앱 Safari 화면으로 열리는데, XCUITest로는 그 '완료' 버튼을 누를 수 없기 때문이다({@link LegalDocumentPage}).
      * 그래서 두 번째 문서를 열기 전에 앱을 다시 실행해 Safari 화면을 정리한다.
      */
+    /**
+     * 프로필 탭 배너만 확인한다. 기록 탭 배너는 연습 기록이 있을 때만 그려지는데(review_screen.dart), 로컬은 평가가
+     * 성공하지 않아 기록이 0건이다. 배너가 콘텐츠를 가리지 않는지는 화면 배치 판단이라 수동 확인으로 남긴다.
+     */
+    @Nested
+    @DisplayName("TC-052 기록 탭과 프로필 탭에 배너 광고가 표시된다")
+    class BannerAd {
+
+        @BeforeEach
+        void given() {
+            TestSupportApi.ensureE2eUser();
+        }
+
+        @Test
+        @DisplayName("프로필 탭에 배너 광고가 보인다")
+        void showsBannerOnProfile() {
+            new HomePage(driver()).waitUntilLoaded();
+
+            assertTrue(BottomTabs.openProfile(driver()).showsBannerAd(), "프로필 탭에 배너 광고가 보여야 한다");
+        }
+    }
+
+    /**
+     * 앱에는 UMP 디버그 지역을 고르는 설정이 없어, 시뮬레이터가 EEA 밖(UMP 미대상)이라는 실행 환경에 기댄다.
+     * EEA로 설정된 기기에서 돌리면 메뉴가 보이는 것이 정상이므로 이 TC는 실패한다.
+     */
+    @Nested
+    @DisplayName("TC-054 UMP 미대상 지역에서는 'Advertising privacy' 메뉴가 표시되지 않는다")
+    class AdvertisingPrivacyHidden {
+
+        // 앱이 프로필을 연 뒤 UMP 초기화·요건 조회를 마칠 때까지 두는 시간
+        private static final Duration UMP_SETTLE = Duration.ofSeconds(5);
+
+        @BeforeEach
+        void given() {
+            TestSupportApi.ensureE2eUser();
+        }
+
+        @Test
+        @DisplayName("프로필 메뉴에 'Advertising privacy'가 없다")
+        void hidesAdvertisingPrivacyMenu() {
+            new HomePage(driver()).waitUntilLoaded();
+
+            assertTrue(BottomTabs.openProfile(driver()).advertisingPrivacyHiddenAfter(UMP_SETTLE),
+                    "UMP 미대상 지역에서는 'Advertising privacy' 메뉴가 없어야 한다");
+        }
+    }
+
     @Nested
     @DisplayName("TC-051 로그인 후 프로필의 문서 메뉴에서 이용약관과 개인정보 처리방침을 각각 열 수 있다")
     class LegalDocuments {
