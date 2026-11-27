@@ -229,7 +229,7 @@ public class WeakSoundService {
                 log.getStandardPronunciation(),
                 KoreanRomanizationUtil.romanize(log.getStandardPronunciation()),
                 word.getScore(),
-                log.getCreatedAt()
+                log.getCreatedInstant()
         );
     }
 

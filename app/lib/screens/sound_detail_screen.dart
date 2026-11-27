@@ -458,11 +458,13 @@ class _SuggestedList extends StatelessWidget {
 }
 
 /// 목록에서는 연·월·일까지만 보여준다. 초 단위는 학습 이력에서 의미가 없다.
+/// 서버는 UTC 시점(`...Z`)을 보내므로 기기 시간으로 바꾼 뒤 날짜를 고른다. 바꾸지 않으면 자정 근처 기록의 날짜가 하루 어긋난다.
 String _formatDate(DateTime? value) {
   if (value == null) {
     return '';
   }
-  final month = value.month.toString().padLeft(2, '0');
-  final day = value.day.toString().padLeft(2, '0');
+  final local = value.toLocal();
+  final month = local.month.toString().padLeft(2, '0');
+  final day = local.day.toString().padLeft(2, '0');
   return '$month.$day';
 }

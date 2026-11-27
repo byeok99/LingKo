@@ -409,7 +409,7 @@ Authorization: Bearer <access-token>
 - `page`: 기본 0, 0 이상
 - `size`: 기본 10, 범위 1~50
 
-각 `items[]`는 평가 당시 저장한 `words[]`와 그 하위 `syllables[]`를 반환합니다. `romanizedPronunciation`은 저장된 표준 발음 snapshot에서 조회 시점에 파생합니다. 신규 기록은 단어 점수를 snapshot으로 보존하며, 단어 snapshot이 없는 과거 기록은 표준 발음의 공백과 저장된 음절 순서로 점수 없는 그룹을 복원합니다.
+각 `items[]`는 평가 당시 저장한 `words[]`와 그 하위 `syllables[]`를 반환합니다. `createdAt`은 `"2026-06-26T06:00:00Z"`처럼 UTC 시점이며, 앱은 기기 시간으로 바꿔 표시합니다. `romanizedPronunciation`은 저장된 표준 발음 snapshot에서 조회 시점에 파생합니다. 신규 기록은 단어 점수를 snapshot으로 보존하며, 단어 snapshot이 없는 과거 기록은 표준 발음의 공백과 저장된 음절 순서로 점수 없는 그룹을 복원합니다.
 
 ### `GET /api/evaluations/me/weak-sounds`
 
@@ -448,7 +448,7 @@ Authorization: Bearer <access-token>
       "standardPronunciation": "날씨가 조아요.",
       "romanization": "nal-ssi-ga jo-a-yo",
       "score": 58,
-      "createdAt": "2026-06-26T09:30:00"
+      "createdAt": "2026-06-26T00:30:00Z"
     }
   ],
   "suggested": [
@@ -463,7 +463,7 @@ Authorization: Bearer <access-token>
 }
 ```
 
-`practiced[].score`는 음절이 아니라 그 음절이 속한 어절의 점수입니다. `null`이면 해당 어절에 신뢰할 수 있는 점수가 없었다는 뜻이며 0점과 구분합니다. 아직 연습한 적이 없으면 `averageScore`와 `attemptCount`는 0이고 `practiced`는 비지만, `suggested`는 채워 진입 즉시 다음 행동을 고를 수 있게 합니다.
+`practiced[].createdAt`은 UTC 시점입니다. `practiced[].score`는 음절이 아니라 그 음절이 속한 어절의 점수입니다. `null`이면 해당 어절에 신뢰할 수 있는 점수가 없었다는 뜻이며 0점과 구분합니다. 아직 연습한 적이 없으면 `averageScore`와 `attemptCount`는 0이고 `practiced`는 비지만, `suggested`는 채워 진입 즉시 다음 행동을 고를 수 있게 합니다.
 
 `suggested`는 추천 문장 **원문**에 해당 음절이 들어있고 아직 연습하지 않은 것만 고릅니다. 표준 발음으로 찾으면 원문에 없는 글자로 문장을 고르게 되어 사용자가 왜 이 문장이 나왔는지 알 수 없습니다.
 

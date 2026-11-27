@@ -14,7 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
@@ -61,7 +61,7 @@ class EvaluationHistoryControllerTest {
                                 .fluency(80)
                                 .completeness(91)
                                 .build())
-                        .createdAt(LocalDateTime.of(2026, 6, 26, 15, 0))
+                        .createdAt(Instant.parse("2026-06-26T06:00:00Z"))
                         .build()))
                 .page(0)
                 .size(10)
@@ -84,6 +84,8 @@ class EvaluationHistoryControllerTest {
                 .andExpect(jsonPath("$.items[0].romanizedPronunciation").value("ma-sit-ge-tta"))
                 .andExpect(jsonPath("$.items[0].overallScore").value(82))
                 .andExpect(jsonPath("$.items[0].scoreBreakdown.accuracy").value(84))
+                // 시간대 없는 값이면 앱이 기기 시간으로 해석해 서버(UTC)와 9시간 어긋나므로 UTC 표시(Z)까지 계약으로 본다
+                .andExpect(jsonPath("$.items[0].createdAt").value("2026-06-26T06:00:00Z"))
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.size").value(10))
                 .andExpect(jsonPath("$.totalItems").value(1))
