@@ -186,6 +186,18 @@ public final class TestSupportApi {
     }
 
     /**
+     * 남은 기회는 두고 다음 자연 충전 시각만 지금부터 {@code secondsFromNow}초 뒤로 옮긴 뒤, 충전이 반영된 서버 값을 돌려준다.
+     * 음수(-3599까지)면 "1시간이 지난" 상태가 되어 운영 충전 규칙대로 1회 충전된다. 충전 대기가 없으면(5회) 409로 실패한다.
+     * backend에 {@code PUT /test-support/quota/next-refill}(#177)이 있어야 한다.
+     */
+    public static ServerQuota moveNextRefill(int secondsFromNow) {
+        String body = send(HttpRequest.newBuilder(
+                        API_URL.resolve("/test-support/quota/next-refill?secondsFromNow=" + secondsFromNow))
+                .PUT(HttpRequest.BodyPublishers.noBody()));
+        return ServerQuota.parse(body);
+    }
+
+    /**
      * 화면 비교에 쓰는 서버 평가 기회 값.
      *
      * <p>{@code nextRefillAt}이 null이면 5회 보유라 충전 대기가 없다는 뜻이다. 남은 시간은 기기·호스트 시계 대신

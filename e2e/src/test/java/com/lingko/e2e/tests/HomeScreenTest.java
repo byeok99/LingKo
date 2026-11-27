@@ -166,6 +166,47 @@ class HomeScreenTest extends BaseTest {
         }
     }
 
+    /**
+     * 기대결과 2·3(서버 충전 1회마다 4/5, 5/5, 5/5에서는 MAX·카운트다운 없음)을 자동화한다.
+     * 기대결과 1(기기 시간만 바꿔서는 충전되지 않음)은 Appium으로 시뮬레이터 시계를 바꿀 수 없어 수동 확인으로 남긴다.
+     * "1시간 경과"는 test-support로 서버의 다음 충전 시각을 지난 시각으로 옮겨 만든다. 충전 계산은 서버 운영 규칙 그대로다.
+     */
+    @Nested
+    @DisplayName("TC-043 평가 기회가 5회 미만이면 서버 시간 기준 1시간마다 1회 충전된다")
+    class HourlyRefill {
+
+        // 다음 충전 시각을 지금보다 1초 전으로 옮겨 "1시간이 지난" 상태를 만든다
+        private static final int REFILL_DUE_SECONDS = -1;
+
+        @BeforeEach
+        void givenThreePractices() {
+            TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(3);
+        }
+
+        @Test
+        @DisplayName("충전 시각이 지날 때마다 3/5 → 4/5 → 5/5가 되고, 5/5에서는 MAX만 보이고 카운트다운이 없다")
+        void refillsOncePerElapsedHour() {
+            PracticeEnergy start = new HomePage(driver()).waitUntilLoaded().practiceEnergy();
+
+            // 앱은 시작할 때 quota를 읽으므로 서버 충전 뒤 다시 실행해 화면 값을 본다(TC 절차와 같다)
+            TestSupportApi.moveNextRefill(REFILL_DUE_SECONDS);
+            relaunchApp();
+            PracticeEnergy afterFirst = new HomePage(driver()).waitUntilLoaded().practiceEnergy();
+
+            TestSupportApi.moveNextRefill(REFILL_DUE_SECONDS);
+            relaunchApp();
+            PracticeEnergy afterSecond = new HomePage(driver()).waitUntilLoaded().practiceEnergy();
+
+            assertAll(
+                    () -> assertEquals(3, start.remaining(), "사전조건: 시작은 3/5여야 한다"),
+                    () -> assertEquals(4, afterFirst.remaining(), "첫 충전 뒤 4/5여야 한다"),
+                    () -> assertNotNull(afterFirst.untilRefill(), "4/5는 5회 미만이라 다음 충전 카운트다운이 보여야 한다"),
+                    () -> assertEquals(5, afterSecond.remaining(), "두 번째 충전 뒤 5/5여야 한다"),
+                    () -> assertNull(afterSecond.untilRefill(), "5/5에서는 카운트다운 대신 MAX가 보여야 한다"));
+        }
+    }
+
     @Nested
     @DisplayName("TC-045 평가 기회가 5회이면 광고를 시청할 수 없다")
     class MaximumPractices {
