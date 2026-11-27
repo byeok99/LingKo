@@ -2,11 +2,13 @@ package com.lingko.e2e.tests;
 
 import com.lingko.e2e.pages.AiConsentPage;
 import com.lingko.e2e.pages.HomePage;
+import com.lingko.e2e.pages.HomePage.PracticeEnergy;
 import com.lingko.e2e.pages.PracticePage;
 import com.lingko.e2e.support.BaseTest;
 import com.lingko.e2e.support.Simulator;
 import com.lingko.e2e.support.TestSupportApi;
 import java.time.Duration;
+import org.openqa.selenium.WebElement;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -255,6 +258,179 @@ class PracticeScreenTest extends BaseTest {
             assertAll(
                     () -> assertTrue(guideShown, "마이크 권한 안내가 표시되어야 한다"),
                     () -> assertFalse(recordingWhileDenied, "권한이 없으면 녹음이 시작되지 않아야 한다"));
+        }
+    }
+
+    @Nested
+    @DisplayName("TC-026 녹음 중 취소하면 녹음이 폐기되고 평가 요청이 생성되지 않는다")
+    class RecordingCancelled {
+
+        // TC Test Data: 시작 평가 기회 3회. 5회가 아니어야 '차감 없음'과 '최대치 유지'가 구분된다
+        private static final int PRACTICES = 3;
+        private static final String SENTENCE = "감사합니다";
+        // 테스트 발화 1건에 해당하는 녹음 시간
+        private static final Duration RECORD_FOR = Duration.ofSeconds(2);
+
+        private String accessToken;
+        private int historyBefore;
+
+        // AI 처리 동의는 E2E 앱이 시작할 때 다시 기록하므로 따로 맞추지 않는다(TC-024 참고)
+        @BeforeEach
+        void given() {
+            Simulator.setMicrophoneAllowed(true);
+            accessToken = TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(PRACTICES);
+            historyBefore = TestSupportApi.evaluationHistoryCount(accessToken);
+        }
+
+        @Test
+        @DisplayName("녹음 중 'Cancel'을 고르면 녹음 전 화면으로 돌아오고 기회 3회·기록 수가 그대로다")
+        void cancelDiscardsRecording() throws InterruptedException {
+            PracticePage practice = new HomePage(driver()).waitUntilLoaded()
+                    .openCustomPractice()
+                    .typeSentence(SENTENCE)
+                    .tapRecord();
+            practice.waitUntilRecording();
+            Thread.sleep(RECORD_FOR.toMillis());
+            boolean backBeforeRecording = practice.cancelRecording().isBackBeforeRecording();
+
+            // 기대결과 2·3은 화면 대신 서버 값으로 본다. 취소 경로는 서버에 아무것도 보내지 않아야 하기 때문이다
+            assertAll(
+                    () -> assertTrue(backBeforeRecording, "녹음이 남지 않은 녹음 전 화면으로 돌아와야 한다"),
+                    () -> assertEquals(PRACTICES, TestSupportApi.currentPractices(accessToken).remaining(),
+                            "평가 기회가 차감되지 않아야 한다"),
+                    () -> assertEquals(historyBefore, TestSupportApi.evaluationHistoryCount(accessToken),
+                            "새 연습 기록이 생기지 않아야 한다"));
+        }
+    }
+
+    /**
+     * 기대결과 1(Restart 후 경과 시간이 0:00부터 다시 올라간다)만 자동화한다.
+     * 기대결과 2·3(평가 결과 화면, 기록 1건)은 평가를 끝까지 마쳐야 하는데, 로컬 backend에 S3·Azure 자격증명이 없어
+     * 업로드 티켓 발급부터 실패하므로 평가 환경이 준비되면 이어서 자동화한다.
+     */
+    @Nested
+    @DisplayName("TC-027 녹음 중 'Restart'를 누르면 처음부터 다시 녹음된다")
+    class RecordingRestarted {
+
+        private static final String SENTENCE = "감사합니다";
+        // TC Test Steps: 경과 시간이 0:03 이상이 될 때까지 녹음한 뒤 Restart
+        private static final int SECONDS_BEFORE_RESTART = 3;
+
+        @BeforeEach
+        void given() {
+            Simulator.setMicrophoneAllowed(true);
+            givenPracticesAvailable();
+        }
+
+        @Test
+        @DisplayName("0:03 이상 녹음하다 'Restart'를 누르면 경과 시간이 0:00부터 다시 올라간다")
+        void restartResetsElapsedTime() {
+            PracticePage practice = new HomePage(driver()).waitUntilLoaded()
+                    .openCustomPractice()
+                    .typeSentence(SENTENCE)
+                    .tapRecord();
+            practice.waitUntilRecording();
+            int beforeRestart = practice.waitUntilRecordingSeconds(SECONDS_BEFORE_RESTART);
+            int afterRestart = practice.restartRecording().recordingSeconds();
+            // 0으로 돌아간 것만 보면 멈춘 타이머와 구분되지 않으므로 다시 올라가는 것까지 본다
+            int resumed = practice.waitUntilRecordingSeconds(afterRestart + 1);
+            // 평가를 보내지 않도록 정리한다. 남은 녹음은 평가 기회와 무관하다
+            practice.cancelRecording();
+
+            assertAll(
+                    () -> assertTrue(beforeRestart >= SECONDS_BEFORE_RESTART,
+                            "Restart 전에 0:03 이상 녹음되어야 한다: " + beforeRestart + "초"),
+                    // Restart를 누르고 값을 읽기까지 수백 ms가 걸려 0:01이 보일 수 있으므로 1초까지 허용한다
+                    () -> assertTrue(afterRestart >= 0 && afterRestart <= 1,
+                            "Restart 직후 경과 시간이 0:00부터 다시 시작해야 한다: " + afterRestart + "초"),
+                    () -> assertTrue(resumed > afterRestart, "Restart 뒤 경과 시간이 다시 올라가야 한다"));
+        }
+    }
+
+    /**
+     * 녹음 상한(10초) 자동 종료. 앱은 자동 종료 직후 평가 전송을 시작하는데, 로컬에는 S3·Azure 자격증명이 없어
+     * 업로드가 실패한다. 그래서 앱을 띄운 뒤 AI 처리 동의를 철회해 두고, 전송 전에 뜨는 동의 화면을 "녹음이 끝나 평가 요청으로
+     * 넘어갔다"는 신호로 쓴다. 동의 화면에서 거절하므로 서버에 아무것도 보내지 않고 평가 기회도 쓰지 않는다.
+     */
+    @Nested
+    @DisplayName("TC-028 녹음은 최대 10초 후 자동 종료된다")
+    class RecordingAutoStops {
+
+        private static final String SENTENCE = "감사합니다";
+        // 앱 PracticeScreen.maximumRecordingDuration
+        private static final int MAXIMUM_SECONDS = 10;
+
+        private String accessToken;
+
+        @BeforeEach
+        void given() {
+            Simulator.setMicrophoneAllowed(true);
+            accessToken = TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(5);
+        }
+
+        @Test
+        @DisplayName("0:09에는 녹음 중이고, 멈추지 않아도 0:10에 녹음이 끝나 평가 요청으로 넘어간다")
+        void stopsAtTenSeconds() {
+            HomePage home = new HomePage(driver()).waitUntilLoaded();
+            // E2E 앱이 시작할 때 AI 동의를 다시 기록하므로 앱을 띄운 뒤 철회한다(TC-024 참고)
+            TestSupportApi.withdrawAiConsent(accessToken);
+            PracticePage practice = home.openCustomPractice().typeSentence(SENTENCE).tapRecord();
+            practice.waitUntilRecording();
+            int nineSeconds = practice.waitUntilRecordingSeconds(MAXIMUM_SECONDS - 1);
+            boolean recordingAtNine = practice.isRecording();
+
+            // 여기부터 아무 버튼도 누르지 않는다
+            int lastSeen = practice.waitUntilRecordingEnds();
+            new AiConsentPage(driver()).waitUntilLoaded().declineSending();
+            boolean recordingKept = practice.showsKeptRecording();
+
+            assertAll(
+                    () -> assertEquals(MAXIMUM_SECONDS - 1, nineSeconds, "0:09 표시를 확인해야 한다"),
+                    () -> assertTrue(recordingAtNine, "0:09에는 녹음이 계속되고 있어야 한다"),
+                    () -> assertTrue(lastSeen >= MAXIMUM_SECONDS - 1 && lastSeen <= MAXIMUM_SECONDS,
+                            "녹음은 0:10에 끝나야 한다. 마지막으로 본 경과 시간: " + lastSeen + "초"),
+                    // 동의 화면이 떴다는 것은 녹음 파일이 만들어져 평가 요청 단계로 넘어갔다는 뜻이다
+                    () -> assertTrue(recordingKept, "자동 종료된 녹음이 남아 있어야 한다"));
+        }
+    }
+
+    @Nested
+    @DisplayName("TC-029 평가 기회가 0회이면 평가를 시작할 수 없고 충전 안내가 표시된다")
+    class NoPracticesLeft {
+
+        private static final String SENTENCE = "감사합니다";
+        // 비활성 버튼을 누른 뒤 녹음이 시작되지 않았음을 확인하기 전 기다리는 시간. 녹음은 누르면 1초 안에 화면이 바뀐다
+        private static final Duration AFTER_TAP = Duration.ofSeconds(2);
+
+        // 기회 0은 서버 기준값이다. 마이크 권한을 허용해 두어야 "권한 때문에 녹음이 안 된 것"과 구분된다
+        @BeforeEach
+        void given() {
+            Simulator.setMicrophoneAllowed(true);
+            TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(0);
+        }
+
+        @Test
+        @DisplayName("홈에 0/5와 충전 카운트다운이 보이고, 연습 화면 버튼은 'No practices left'로 비활성이며 눌러도 녹음되지 않는다")
+        void cannotRecordWithoutPractices() throws InterruptedException {
+            HomePage home = new HomePage(driver()).waitUntilLoaded();
+            PracticeEnergy energy = home.practiceEnergy();
+
+            PracticePage practice = home.openCustomPractice().typeSentence(SENTENCE);
+            WebElement button = practice.waitForNoPracticesLeftButton();
+            boolean enabled = button.isEnabled();
+            button.click();
+            Thread.sleep(AFTER_TAP.toMillis());
+            boolean recording = practice.isRecording();
+
+            assertAll(
+                    () -> assertEquals(0, energy.remaining(), "홈에 남은 기회 0이 보여야 한다"),
+                    () -> assertEquals(5, energy.limit(), "홈에 최대 기회 5가 보여야 한다"),
+                    () -> assertNotNull(energy.untilRefill(), "기회가 0이면 다음 충전까지 남은 시간이 보여야 한다"),
+                    () -> assertFalse(enabled, "'No practices left' 버튼은 비활성이어야 한다"),
+                    () -> assertFalse(recording, "버튼을 눌러도 녹음이 시작되지 않아야 한다"));
         }
     }
 

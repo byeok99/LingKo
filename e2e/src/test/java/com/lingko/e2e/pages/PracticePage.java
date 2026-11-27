@@ -4,6 +4,8 @@ import com.lingko.e2e.support.Ui;
 import io.appium.java_client.AppiumDriver;
 import java.time.Duration;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
@@ -17,8 +19,18 @@ public class PracticePage {
     private static final String SCREEN_TITLE = "Practice";
     // 평가 기회가 0이면 같은 버튼이 'No practices left'로 바뀌므로, 이 글자를 기다리는 테스트는 기회가 있어야 한다
     private static final String RECORD_BUTTON = "Record";
+    // 평가 기회가 0이면 Record 버튼이 이 글자로 바뀌고 비활성이 된다(앱 practice_screen.dart quotaExhausted)
+    private static final String NO_PRACTICES_LEFT = "No practices left";
     // 녹음 중 가운데 멈춤 버튼의 접근성 label. 화면 글자는 'Stop'이지만 label은 이 값이다
     private static final String STOP_AND_ANALYZE = "Stop and analyze";
+    // 녹음 중 왼쪽 취소 버튼의 접근성 label. 화면 글자는 'Cancel'이다
+    private static final String CANCEL_RECORDING = "Cancel recording";
+    // 녹음 중 오른쪽 다시 녹음 버튼. 화면 글자와 접근성 label이 같다
+    private static final String RESTART_RECORDING = "Restart";
+    // 녹음 경과 시간 원형 표시의 접근성 label 앞부분과 전체 형식(앱 _RecordingView)
+    private static final String RECORDING_DURATION = "Recording duration";
+    private static final Pattern RECORDING_DURATION_LABEL =
+            Pattern.compile("Recording duration (\\d+) minutes (\\d+) seconds");
     // 앱 practice_screen.dart의 마이크 권한 거부 안내 문구
     private static final String MICROPHONE_DENIED_MESSAGE =
             "Microphone access is required. Allow access in device settings, then retry.";
@@ -119,6 +131,16 @@ public class PracticePage {
         return this;
     }
 
+    /**
+     * 평가 기회가 0일 때 Record 자리에 보이는 'No practices left' 버튼을 기다려 돌려준다.
+     * 표준 발음이 준비된 뒤에 버튼이 그려지므로 준비를 먼저 기다리고, 키보드에 가려질 수 있어 버튼까지 스크롤한다.
+     * 기회가 남아 있으면 같은 자리에 'Record'가 보여 시간 안에 찾지 못하고 실패한다.
+     */
+    public WebElement waitForNoPracticesLeftButton() {
+        wait.until(ExpectedConditions.presenceOfElementLocated(Ui.textContaining(driver, STANDARD_PRONUNCIATION)));
+        return Ui.scrollIntoView(driver, Ui.text(NO_PRACTICES_LEFT), Ui.Scroll.TOWARD_BOTTOM);
+    }
+
     /** 길이 초과 안내가 나타나는지. 앱은 이 경우 서버에 보내지 않으므로 바로 표시된다. */
     public boolean showsLengthLimitMessage() {
         try {
@@ -216,6 +238,80 @@ public class PracticePage {
     /** 녹음 화면의 멈춤 버튼이 누를 수 있게 될 때까지 기다려 돌려준다. 시간 안에 녹음이 시작되지 않으면 실패한다. */
     public WebElement waitUntilRecording() {
         return wait.until(ExpectedConditions.elementToBeClickable(Ui.text(STOP_AND_ANALYZE)));
+    }
+
+    /** 녹음 중 오른쪽 'Restart' 버튼으로 지금까지의 녹음을 버리고 처음부터 다시 녹음한다. */
+    public PracticePage restartRecording() {
+        driver.findElement(Ui.text(RESTART_RECORDING)).click();
+        return this;
+    }
+
+    /**
+     * 녹음 화면의 경과 시간(초). 녹음 화면이 아니면 -1이다.
+     * 화면의 "0:03"은 접근성 트리에서 "Recording duration 0 minutes 03 seconds" label로 보이므로 그 값을 읽는다.
+     */
+    public int recordingSeconds() {
+        for (WebElement element : driver.findElements(Ui.textContaining(driver, RECORDING_DURATION))) {
+            Matcher matcher = RECORDING_DURATION_LABEL.matcher(Ui.labelOf(driver, element));
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1)) * 60 + Integer.parseInt(matcher.group(2));
+            }
+        }
+        return -1;
+    }
+
+    /** 경과 시간이 atLeast초 이상이 될 때까지 기다려 그 값을 돌려준다. 시간 안에 안 되면 실패한다. */
+    public int waitUntilRecordingSeconds(int atLeast) {
+        return wait.until(d -> {
+            try {
+                int seconds = recordingSeconds();
+                return seconds >= atLeast ? seconds : null;
+            } catch (StaleElementReferenceException redrawn) {
+                // 경과 시간은 0.1초마다 다시 그려지므로 읽는 사이에 요소가 바뀔 수 있다. 다음 확인에서 다시 읽는다
+                return null;
+            }
+        });
+    }
+
+    /**
+     * 사용자가 아무것도 누르지 않은 채 녹음 화면이 닫힐 때까지 기다리고, 닫히기 전 마지막으로 본 경과 시간(초)을 돌려준다.
+     * 시간 안에 닫히지 않으면 실패한다. 반환값은 표시 갱신(0.1초)보다 느린 조회 간격 때문에 실제 종료 시각보다 조금 이를 수 있다.
+     */
+    public int waitUntilRecordingEnds() {
+        int[] lastSeen = {-1};
+        wait.until(d -> {
+            try {
+                int seconds = recordingSeconds();
+                if (seconds < 0) {
+                    return true;
+                }
+                lastSeen[0] = seconds;
+                return false;
+            } catch (StaleElementReferenceException redrawn) {
+                // 0.1초마다 다시 그려지는 중이다. 다음 확인에서 다시 읽는다
+                return false;
+            }
+        });
+        return lastSeen[0];
+    }
+
+    /** 녹음 중 왼쪽 'Cancel' 버튼으로 녹음을 취소한다. 앱은 녹음 파일을 지우고 평가를 보내지 않는다. */
+    public PracticePage cancelRecording() {
+        driver.findElement(Ui.text(CANCEL_RECORDING)).click();
+        return this;
+    }
+
+    /**
+     * 녹음 시작 전 상태로 돌아왔는지. 녹음 화면이 닫히고, 녹음이 남지 않아 'Retry with this recording' 대신
+     * 'Record' 버튼이 보여야 한다. 시간 안에 Record가 안 보이면 false다.
+     */
+    public boolean isBackBeforeRecording() {
+        try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(Ui.text(RECORD_BUTTON)));
+        } catch (TimeoutException notShown) {
+            return false;
+        }
+        return !isRecording() && driver.findElements(Ui.text(RETRY_WITH_RECORDING)).isEmpty();
     }
 
     /** 지금 녹음 중인지. 녹음이 시작되지 않아야 하는 경우를 확인하므로 기다리지 않는다. */
