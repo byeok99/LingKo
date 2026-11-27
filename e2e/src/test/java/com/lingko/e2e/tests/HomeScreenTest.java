@@ -3,11 +3,14 @@ package com.lingko.e2e.tests;
 import com.lingko.e2e.pages.HomePage;
 import com.lingko.e2e.pages.HomePage.PracticeEnergy;
 import com.lingko.e2e.pages.PracticePage;
+import com.lingko.e2e.pages.SoundDetailPage;
 import com.lingko.e2e.support.BaseTest;
 import com.lingko.e2e.support.SeedSentences;
 import com.lingko.e2e.support.TestSupportApi;
+import com.lingko.e2e.support.TestSupportApi.SeedEvaluation;
 import com.lingko.e2e.support.TestSupportApi.ServerQuota;
 import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -231,6 +234,74 @@ class HomeScreenTest extends BaseTest {
                     // 화면의 'MAX'는 접근성 label에서 'maximum'으로 읽히며, 이때 카운트다운이 없다(untilRefill == null)
                     () -> assertNull(energy.untilRefill(), "최대치면 카운트다운 대신 MAX가 보여야 한다"),
                     () -> assertFalse(adButtonShown, "최대치면 'Add one practice' 버튼이 없어야 한다"));
+        }
+    }
+
+    /**
+     * TC Test Data는 '밥' 40, '물' 60, '옷' 80이다. 취약 음절은 표준 발음 어절에서 모으는데(실제 평가도 표준 발음을 기준 문장으로 씀),
+     * '옷'의 표준 발음은 '옫'이라 화면에도 '옫'으로 보인다. TC 데이터는 그대로 두고 화면 기대값을 제품 동작에 맞춘다.
+     */
+    @Nested
+    @DisplayName("TC-041 취약 음절은 평균 점수가 낮은 순으로 표시된다")
+    class WeakSoundsOrder {
+
+        @BeforeEach
+        void given() {
+            TestSupportApi.ensureE2eUser();
+            TestSupportApi.clearEvaluations();
+            // 취약 음절은 2회 이상 연습한 음절만 오르므로 단어마다 2회씩 넣는다(TC Test Data)
+            TestSupportApi.seedEvaluations(List.of(
+                    SeedEvaluation.custom("밥", 40, 40), SeedEvaluation.custom("밥", 40, 40),
+                    SeedEvaluation.custom("물", 60, 60), SeedEvaluation.custom("물", 60, 60),
+                    SeedEvaluation.custom("옷", 80, 80), SeedEvaluation.custom("옷", 80, 80)));
+        }
+
+        @Test
+        @DisplayName("왼쪽부터 '밥', '물', '옫'(옷의 표준 발음) 순서다")
+        void ordersWeakestFirst() {
+            List<String> sounds = new HomePage(driver()).waitUntilLoaded().weakSoundsInOrder();
+
+            assertEquals(List.of("밥", "물", "옫"), sounds, "평균 점수가 낮은 음절이 왼쪽에 있어야 한다");
+        }
+    }
+
+    /**
+     * TC는 '밥'을 쓰지만 로컬 시드 추천 문장 중 표준 발음에 '밥'이 들어간 문장이 없어 'Suggested'가 비므로
+     * (사전조건 2 불충족), 추천 문장 '물 한 잔 주세요'가 있는 '물'로 같은 절차를 검증한다.
+     */
+    @Nested
+    @DisplayName("TC-042 취약 음절을 누르면 평균 점수, 연습 횟수, 연습한 문장과 새 문장 탭이 표시된다")
+    class WeakSoundDetail {
+
+        private static final String SOUND = "물";
+
+        @BeforeEach
+        void given() {
+            TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(5);
+            TestSupportApi.clearEvaluations();
+            TestSupportApi.seedEvaluations(List.of(
+                    SeedEvaluation.custom(SOUND, 40, 40), SeedEvaluation.custom(SOUND, 40, 40)));
+        }
+
+        @Test
+        @DisplayName("'Average 40 across 2 tries'·Practiced 2·Suggested 문장에 '물'이 있고, 고르면 그 문장으로 연습이 열린다")
+        void showsDetailAndOpensSuggestion() {
+            SoundDetailPage detail = new HomePage(driver()).waitUntilLoaded().openWeakSound(SOUND);
+            String average = detail.averageSummary();
+            int practiced = detail.practicedCount();
+            List<String> suggested = detail.suggestedSentences();
+
+            assertAll(
+                    () -> assertEquals("Average 40 across 2 tries", average, "평균 점수와 연습 횟수"),
+                    () -> assertEquals(2, practiced, "'Practiced 2' 탭"),
+                    () -> assertFalse(suggested.isEmpty(), "사전조건: '물'이 들어간 추천 문장이 있어야 한다"),
+                    () -> assertTrue(suggested.stream().allMatch(sentence -> sentence.contains(SOUND)),
+                            "Suggested 문장에는 모두 '물'이 들어 있어야 한다: " + suggested));
+
+            String chosen = suggested.get(0);
+            PracticePage practice = detail.selectSuggested(chosen).waitUntilInputReady();
+            assertTrue(practice.showsSentence(chosen), "고른 문장으로 연습 화면이 열려야 한다: " + chosen);
         }
     }
 }

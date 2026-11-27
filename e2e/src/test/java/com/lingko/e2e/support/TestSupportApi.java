@@ -234,6 +234,51 @@ public final class TestSupportApi {
         }
     }
 
+    /**
+     * 고정 사용자의 연습 기록을 모두 지운다. 기록 화면 TC가 이전 실행이나 다른 TC가 남긴 기록에 흔들리지 않게 한다.
+     * 평가 기회는 그대로다. backend에 {@code DELETE /test-support/evaluations}가 있어야 한다.
+     */
+    public static void clearEvaluations() {
+        send(HttpRequest.newBuilder(API_URL.resolve("/test-support/evaluations")).DELETE());
+    }
+
+    /**
+     * "평가가 이미 끝난" 연습 기록을 records 순서(오래된 것부터)로 넣는다. 실제 평가는 거치지 않으므로
+     * 기록을 읽는 화면만 검증할 수 있다. 기존 기록은 지우지 않으니 필요하면 먼저 {@link #clearEvaluations()}를 부른다.
+     */
+    public static void seedEvaluations(List<SeedEvaluation> records) {
+        String body = "{\"records\":[" + String.join(",", records.stream().map(SeedEvaluation::json).toList()) + "]}";
+        send(HttpRequest.newBuilder(API_URL.resolve("/test-support/evaluations"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body)));
+    }
+
+    /**
+     * 시드할 연습 기록 하나. sentenceId가 null이면 text로 만든 자유 문장 기록이다.
+     *
+     * <p>{@code standardPronunciation}이 null이면 서버가 현재 규칙으로 계산한다. 값을 주면 그 snapshot이 저장된다.
+     * {@code wordScores}는 <b>표준 발음</b>을 공백으로 나눈 어절마다의 점수다. 실제 평가도 표준 발음을 기준 문장으로 쓰기 때문이다.
+     * null 원소는 "신뢰할 수 없는 점수"이며, 서버 저장 규칙상 하나라도 null이면 그 기록의 모든 어절이 점수 없음이 된다.</p>
+     */
+    public record SeedEvaluation(Long sentenceId, String text, String standardPronunciation,
+                                 int score, int accuracy, int fluency, int completeness, List<Integer> wordScores) {
+
+        /** 세부 점수를 모두 score로 채운 자유 문장 기록. 목록·그래프처럼 종합 점수만 보는 TC에 쓴다. */
+        public static SeedEvaluation custom(String text, int score, Integer... wordScores) {
+            return new SeedEvaluation(null, text, null, score, score, score, score, java.util.Arrays.asList(wordScores));
+        }
+
+        String json() {
+            // shortcut: 문장은 따옴표·역슬래시가 없는 한국어만 넣는다. 특수문자가 필요해지면 JSON 라이브러리로 바꾼다
+            return "{"
+                    + (sentenceId == null ? "\"text\":\"" + text + "\"" : "\"sentenceId\":" + sentenceId)
+                    + (standardPronunciation == null ? "" : ",\"standardPronunciation\":\"" + standardPronunciation + "\"")
+                    + ",\"score\":" + score + ",\"accuracy\":" + accuracy
+                    + ",\"fluency\":" + fluency + ",\"completeness\":" + completeness
+                    + ",\"wordScores\":[" + String.join(",", wordScores.stream().map(String::valueOf).toList()) + "]}";
+        }
+    }
+
     private static String send(HttpRequest.Builder builder) {
         HttpRequest request = builder.timeout(Duration.ofSeconds(10)).build();
         try {

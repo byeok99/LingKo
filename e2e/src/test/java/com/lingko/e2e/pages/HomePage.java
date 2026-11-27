@@ -30,6 +30,9 @@ public class HomePage {
     private static final String CUSTOM_PRACTICE = "Practice my own sentence";
     // 평가 기회 캡슐 옆 광고 보상 버튼의 Semantics label. 앱은 최대치(MAX)일 때 이 버튼을 그리지 않는다
     private static final String ADD_PRACTICE_BUTTON = "Add one practice";
+    // 취약 음절 칩 label(home_screen.dart): "밥, average 40 across 2 tries. Open detail."
+    private static final String WEAK_SOUND_SUFFIX = ". Open detail.";
+    private static final Pattern WEAK_SOUND_LABEL = Pattern.compile("(?:^|\\n)([^\\n,]+), average \\d+ across");
     // 앱 SentenceCard _BookmarkButton의 Semantics label과 같다
     private static final String SAVED_BOOKMARK = "Saved. Tap to remove";
     private static final List<String> BOOKMARK_LABELS = List.of("Save this sentence", SAVED_BOOKMARK);
@@ -144,6 +147,32 @@ public class HomePage {
             }
             return null;
         });
+    }
+
+    /**
+     * 'Your weakest sounds'에 보이는 취약 음절을 왼쪽부터 돌려준다. 앱은 평균 점수가 낮은 순으로 왼쪽부터 놓는다.
+     * 음절이 하나뿐이면 섹션 제목과 한 label로 합쳐져("Your weakest sounds\n물, average ...") 시작이 아니라 포함으로 찾는다.
+     * 기록을 받아 그려야 보이므로 하나 이상 보일 때까지 기다린다.
+     */
+    public List<String> weakSoundsInOrder() {
+        List<WebElement> chips = wait.until(d -> {
+            List<WebElement> found = d.findElements(Ui.textContaining(driver, WEAK_SOUND_SUFFIX));
+            return found.isEmpty() ? null : found;
+        });
+        return chips.stream()
+                .sorted(Comparator.comparingInt((WebElement chip) -> chip.getRect().getY())
+                        .thenComparingInt(chip -> chip.getRect().getX()))
+                .map(chip -> {
+                    Matcher matcher = WEAK_SOUND_LABEL.matcher(Ui.labelOf(driver, chip));
+                    return matcher.find() ? matcher.group(1) : "";
+                })
+                .toList();
+    }
+
+    /** 취약 음절을 눌러 음절 상세를 연다. */
+    public SoundDetailPage openWeakSound(String syllable) {
+        driver.findElement(Ui.textContaining(driver, syllable + ", average ")).click();
+        return new SoundDetailPage(driver).waitUntilLoaded();
     }
 
     /**
