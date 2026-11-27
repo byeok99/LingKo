@@ -1,6 +1,6 @@
 package com.lingko.lingko.api.evaluation.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -26,6 +26,7 @@ public record SoundDetailResponse(
      *
      * {@code score}는 음절이 아니라 그 음절이 속한 어절의 점수다. null이면 해당 어절에
      * 신뢰할 수 있는 점수가 없었다는 뜻이며, 0점과 구분해 화면에서 "—"로 표시한다.
+     * {@code createdAt}은 시간대가 붙은 시점(UTC)이라 앱이 기기 시간으로 바꿔 보여 준다.
      */
     public record PracticedAttempt(
             Long evaluationLogId,
@@ -33,7 +34,7 @@ public record SoundDetailResponse(
             String standardPronunciation,
             String romanization,
             Integer score,
-            LocalDateTime createdAt
+            Instant createdAt
     ) {
     }
 

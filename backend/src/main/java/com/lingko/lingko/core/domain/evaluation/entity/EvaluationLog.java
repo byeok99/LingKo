@@ -6,7 +6,9 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,6 +83,18 @@ public class EvaluationLog {
     @OneToMany(mappedBy = "evaluationLog", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<EvaluationWord> wordList = new ArrayList<>();
+
+    /**
+     * 기록 시각을 시간대가 분명한 시점(UTC 기준 {@link Instant})으로 돌려준다. 아직 저장 전이면 null이다.
+     *
+     * <p>{@code created_at}은 {@code @CreationTimestamp}가 JVM 기본 시간대의 벽시계 값으로 채우는 {@link LocalDateTime}이라
+     * 값만으로는 어느 시간대인지 알 수 없다. 이를 그대로 응답하면 앱이 시간대 없는 값을 기기 시간으로 해석해, 서버가 UTC로
+     * 돌 때 9시간 어긋난다. 저장할 때와 같은 JVM 기본 시간대로 해석해 시점으로 바꾸므로, 서버 시간대를 바꾸면 그 전 기록은
+     * 바뀐 만큼 어긋난다.</p>
+     */
+    public Instant getCreatedInstant() {
+        return createdAt == null ? null : createdAt.atZone(ZoneId.systemDefault()).toInstant();
+    }
 
     public void addSyllable(EvaluationSyllable syllable) {
         if (syllable == null) {

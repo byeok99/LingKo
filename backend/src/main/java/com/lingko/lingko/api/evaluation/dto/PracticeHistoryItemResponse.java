@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -32,5 +32,6 @@ public class PracticeHistoryItemResponse {
     private PracticeResultResponse.ScoreBreakdownResponse scoreBreakdown;
     private List<PracticeHistoryCharacterResponse> characters;
     private List<PracticeHistoryWordResponse> words;
-    private LocalDateTime createdAt;
+    /** 기록 시점(UTC). 응답에는 "2026-06-26T06:00:00Z"처럼 시간대가 붙어 앱이 기기 시간으로 바꿔 보여 준다. */
+    private Instant createdAt;
 }

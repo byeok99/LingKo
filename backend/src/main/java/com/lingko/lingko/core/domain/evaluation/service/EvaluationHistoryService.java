@@ -86,7 +86,7 @@ public class EvaluationHistoryService {
                         .map(this::toCharacter)
                         .toList())
                 .words(toWords(log))
-                .createdAt(log.getCreatedAt())
+                .createdAt(log.getCreatedInstant())
                 .build();
     }
 
