@@ -22,6 +22,11 @@ public class ProfilePage {
     private static final String ADVERTISING_PRIVACY_MENU = "Advertising privacy";
     // 앱 InlineBannerAd의 Semantics label
     private static final String BANNER_AD = "Advertisement";
+    // 앱 ProfileScreen 하단 버튼과 탈퇴 확인 창(AlertDialog) 글자
+    private static final String SIGN_OUT = "Sign out";
+    private static final String DELETE_ACCOUNT = "Delete account";
+    private static final String DELETE_DIALOG_TITLE = "Delete your account?";
+    private static final String CANCEL = "Cancel";
 
     private final AppiumDriver driver;
     private final WebDriverWait wait;
@@ -93,6 +98,31 @@ public class ProfilePage {
             throw new IllegalStateException("UMP 조회 대기가 중단됐다", e);
         }
         return driver.findElements(Ui.textStartingWith(driver, ADVERTISING_PRIVACY_MENU)).isEmpty();
+    }
+
+    /**
+     * 프로필 맨 아래 'Delete account' 버튼을 눌러 탈퇴 확인 창을 띄운다. 이 단계에서는 아직 아무것도 삭제되지 않는다.
+     * 확인 창 제목이 보일 때까지 기다리며, 안 뜨면 실패한다.
+     */
+    public ProfilePage openDeleteAccountDialog() {
+        Ui.scrollIntoView(driver, Ui.text(DELETE_ACCOUNT), Scroll.TOWARD_BOTTOM).click();
+        wait.until(ExpectedConditions.presenceOfElementLocated(Ui.text(DELETE_DIALOG_TITLE)));
+        return this;
+    }
+
+    /**
+     * 탈퇴 확인 창에서 'Cancel'을 눌러 창을 닫는다. 확인 창의 실행 버튼도 'Delete account'라 프로필 버튼과 글자가 같으므로
+     * 이 메서드는 'Cancel'만 누르고, 창이 닫힐 때까지(제목이 사라질 때까지) 기다린다.
+     */
+    public ProfilePage cancelDeleteAccount() {
+        wait.until(ExpectedConditions.elementToBeClickable(Ui.text(CANCEL))).click();
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(Ui.text(DELETE_DIALOG_TITLE)));
+        return this;
+    }
+
+    /** 로그인 상태의 프로필인지. 로그인 화면에는 없는 'Sign out' 버튼이 보이면 로그인 상태로 본다. */
+    public boolean showsSignedIn() {
+        return !driver.findElements(Ui.text(SIGN_OUT)).isEmpty();
     }
 
     /** 'AI assessment privacy'로 AI 처리 동의 관리 화면을 연다. 앱은 서버에서 현재 상태를 조회한 뒤 화면을 띄운다. */

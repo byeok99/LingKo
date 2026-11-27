@@ -195,4 +195,39 @@ class ProfileScreenTest extends BaseTest {
                             "새 연습 기록이 생기지 않아야 한다"));
         }
     }
+
+    /**
+     * 기대결과 1(창이 닫히고 로그인 유지)은 화면으로, 기대결과 2(기존 연습 기록 유지)는 서버로 확인한다.
+     * TC 사전조건은 "연습 기록이 있는 계정"인데, 로컬은 평가가 성공하지 않고 기록 시드 API도 없어 기록이 0건일 수 있다.
+     * 그래서 기록 수가 그대로인지와 함께, 탈퇴됐다면 거부될 기존 토큰으로 서버 조회가 여전히 되는지(계정 유지)를 본다.
+     */
+    @Nested
+    @DisplayName("TC-056 회원 탈퇴 확인 창에서 'Cancel'을 누르면 탈퇴되지 않는다")
+    class DeleteAccountCancelled {
+
+        private String accessToken;
+        private int historyBefore;
+
+        @BeforeEach
+        void given() {
+            accessToken = TestSupportApi.ensureE2eUser();
+            historyBefore = TestSupportApi.evaluationHistoryCount(accessToken);
+        }
+
+        @Test
+        @DisplayName("확인 창에서 'Cancel'을 누르면 창이 닫히고 로그인 상태와 계정·기록이 그대로다")
+        void cancelKeepsAccount() {
+            new HomePage(driver()).waitUntilLoaded();
+            ProfilePage profile = BottomTabs.openProfile(driver())
+                    .openDeleteAccountDialog()
+                    .cancelDeleteAccount();
+            boolean signedIn = profile.showsSignedIn();
+
+            assertAll(
+                    () -> assertTrue(signedIn, "취소 후에도 로그인 상태의 프로필이어야 한다"),
+                    // 탈퇴되면 사용자와 세션이 지워져 기존 토큰 조회가 실패(예외)한다
+                    () -> assertEquals(historyBefore, TestSupportApi.evaluationHistoryCount(accessToken),
+                            "계정이 유지되어 기존 연습 기록 수가 그대로여야 한다"));
+        }
+    }
 }
