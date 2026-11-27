@@ -6,7 +6,9 @@ import com.lingko.lingko.core.domain.quota.repository.DailyPracticeQuotaReposito
 import com.lingko.lingko.core.domain.user.entity.User;
 import com.lingko.lingko.core.domain.user.repository.UserRepository;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -60,5 +62,40 @@ public class E2eQuotaSetupService {
                 .build());
         // 직접 만든 값이 아니라 앱과 같은 조회 경로의 결과를 돌려줘야 E2E가 화면과 서버 값을 그대로 비교할 수 있다
         return practiceQuotaService.getTodayQuota(userId);
+    }
+
+    /**
+     * 남은 기회는 그대로 두고 다음 자연 충전 시각만 지금부터 {@code fromNow} 뒤로 옮긴 뒤, 앱과 같은 조회 결과를 돌려준다.
+     *
+     * <p>"1시간을 기다린 뒤" 상태를 실제로 기다리지 않고 만들기 위한 것이다. {@code fromNow}가 음수면 충전 시각이 이미
+     * 지난 상태가 되고, 돌려주는 조회에서 운영과 같은 {@code replenishAt} 규칙으로 충전이 반영된다. 충전 계산을 여기서
+     * 흉내 내지 않고 운영 경로에 맡겨야 TC가 실제 충전 규칙을 검증한다.</p>
+     *
+     * <p>충전 대기가 없으면(quota 행이 없거나 5회 보유라 {@code nextRefillAt}이 null) 옮길 시각이 없으므로 empty다.
+     * {@link #setRemaining}과 같은 이유로 행을 새로 만들기 때문에 진행 중 평가의 예약은 사라진다.</p>
+     */
+    @Transactional
+    public Optional<PracticeQuotaResponse> moveNextRefill(Long userId, Duration fromNow) {
+        // setRemaining과 같은 user → quota 잠금 순서를 지킨다
+        User user = userRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new IllegalStateException("user not found: " + userId));
+        // 충전을 반영하기 전의 저장값을 그대로 읽는다. 여기서 충전하면 옮기기 전에 이미 기회가 바뀐다
+        Optional<DailyPracticeQuota> current = quotaRepository.findCurrentByUserForUpdate(userId)
+                .filter(quota -> quota.getNextRefillAt() != null);
+        if (current.isEmpty()) {
+            return Optional.empty();
+        }
+        DailyPracticeQuota quota = current.get();
+
+        quotaRepository.deleteAllByUserId(userId);
+        quotaRepository.saveAndFlush(DailyPracticeQuota.builder()
+                .user(user)
+                .quotaDate(quota.getQuotaDate())
+                .freeLimit(quota.getFreeLimit())
+                .freeUsed(quota.getFreeUsed())
+                .rewardedAvailable(quota.getRewardedAvailable())
+                .nextRefillAt(clock.instant().plus(fromNow))
+                .build());
+        return Optional.of(practiceQuotaService.getTodayQuota(userId));
     }
 }
