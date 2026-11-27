@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -162,6 +163,33 @@ class HomeScreenTest extends BaseTest {
 
             assertTrue(practice.showsSentence(sentence),
                     "연습 화면 입력칸에 선택한 문장이 있어야 한다: " + sentence);
+        }
+    }
+
+    @Nested
+    @DisplayName("TC-045 평가 기회가 5회이면 광고를 시청할 수 없다")
+    class MaximumPractices {
+
+        @BeforeEach
+        void givenFivePractices() {
+            TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(5);
+        }
+
+        @Test
+        @DisplayName("5/5와 MAX가 보이고 'Add one practice' 버튼이 없다")
+        void hidesAdButtonAtMaximum() {
+            HomePage home = new HomePage(driver()).waitUntilLoaded();
+            // 캡슐이 그려진 뒤 버튼 유무를 봐야 "아직 안 그려짐"과 "숨김"이 구분된다
+            PracticeEnergy energy = home.practiceEnergy();
+            boolean adButtonShown = home.showsAddPracticeButton();
+
+            assertAll(
+                    () -> assertEquals(5, energy.remaining(), "남은 기회 5가 보여야 한다"),
+                    () -> assertEquals(5, energy.limit(), "최대 기회 5가 보여야 한다"),
+                    // 화면의 'MAX'는 접근성 label에서 'maximum'으로 읽히며, 이때 카운트다운이 없다(untilRefill == null)
+                    () -> assertNull(energy.untilRefill(), "최대치면 카운트다운 대신 MAX가 보여야 한다"),
+                    () -> assertFalse(adButtonShown, "최대치면 'Add one practice' 버튼이 없어야 한다"));
         }
     }
 }
