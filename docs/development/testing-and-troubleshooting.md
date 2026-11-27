@@ -187,6 +187,12 @@ E2E 테스트는 소셜 로그인 화면 대신 `e2e` 프로필 전용 `POST /te
 - `consented=false`: 동의 화면 흐름을 시험하도록 동의 기록 없는 새 사용자를 매번 만듭니다.
 - `PUT /test-support/quota?remaining=<0~5>`: 고정 테스트 사용자의 평가 기회를 지정한 값으로 맞추고 `GET /api/quota/today`와 같은 응답을 돌려줍니다. 5회 미만이면 다음 충전 시각은 지금부터 1시간 뒤이고 5회면 `null`입니다. 광고 보상 기회는 0으로 둡니다. 기존 quota 행을 새로 만들기 때문에 진행 중 평가의 예약도 사라집니다. 평가가 진행 중이지 않을 때만 호출하세요. 세션을 한 번도 발급하지 않았으면 409입니다(404는 `e2e` 프로필이 꺼져 있다는 뜻).
 - `PUT /test-support/quota/next-refill?secondsFromNow=<-3599~3600>`: 남은 기회는 그대로 두고 다음 자연 충전 시각만 지금부터 지정한 초 뒤로 옮긴 다음, 충전이 반영된 `GET /api/quota/today`와 같은 응답을 돌려줍니다. 음수면 이미 지난 시각이라 운영과 같은 충전 규칙으로 바로 1회 충전됩니다. 하한이 -3599초인 이유는 한 번 호출에 충전이 1회만 일어나게 하기 위해서입니다. 5회 보유처럼 충전 대기가 없거나 세션을 발급한 적이 없으면 409입니다. `quota`와 같은 이유로 진행 중 평가의 예약이 사라집니다.
+- `DELETE /test-support/evaluations`: 고정 테스트 사용자의 연습 기록(평가 결과와 단어·음절 행)을 모두 지우고 지운 수를 돌려줍니다. 평가 기회와 평가 작업은 그대로입니다.
+- `POST /test-support/evaluations`: "평가가 이미 끝난" 연습 기록을 넣습니다. 로컬은 S3·Azure가 없어 실제 평가로 기록을 만들 수 없기 때문에, 기록을 읽는 화면(기록 탭·상세·취약 음절·그래프)을 검증하는 용도입니다. 업로드·평가 작업·평가 기회 차감은 거치지 않으므로 평가 자체는 검증하지 않습니다. 저장은 운영 평가 완료와 같은 `EvaluationPersistenceService.saveResult`를 써서 단어 점수 저장 규칙이 그대로 적용됩니다.
+  - 본문: `{"records":[{"sentenceId":6 | "text":"음악을 들어요", "standardPronunciation":null, "score":75, "accuracy":80, "fluency":70, "completeness":90, "wordScores":[85, null]}]}`. `records`는 오래된 것부터 최신 순이며, 생성 시각은 마지막 기록을 지금으로 두고 1분씩 이르게 맞춥니다.
+  - `sentenceId`가 있으면 추천 문장 기록, 없으면 `text`의 자유 문장 기록입니다. `standardPronunciation`이 `null`이면 현재 규칙으로 계산하고, 값을 주면 과거 snapshot처럼 그대로 저장합니다.
+  - `wordScores`는 표준 발음을 공백으로 나눈 어절마다의 점수이며 개수가 같아야 합니다(다르면 400). 하나라도 `null`이면 단어 점수를 신뢰할 수 없는 결과로 저장되어 화면에 '—'로 보입니다.
+  - 기존 기록은 지우지 않으므로 정확한 상태가 필요하면 먼저 `DELETE`를 호출하세요. 세션을 발급한 적이 없으면 409입니다.
 - 로컬 Backend에서만 `SPRING_PROFILES_ACTIVE=e2e`로 켭니다. 인증 없이 세션을 발급하고 상태를 바꾸므로 운영에는 절대 설정하지 않습니다. 프로필이 없으면 test-support 경로가 모두 404임을 `TestSupportEndpointDisabledIntegrationTest`가 보장합니다.
 
 ### Appium E2E 테스트
