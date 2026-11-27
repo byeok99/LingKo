@@ -346,6 +346,54 @@ class PracticeScreenTest extends BaseTest {
     }
 
     /**
+     * 녹음 상한(10초) 자동 종료. 앱은 자동 종료 직후 평가 전송을 시작하는데, 로컬에는 S3·Azure 자격증명이 없어
+     * 업로드가 실패한다. 그래서 앱을 띄운 뒤 AI 처리 동의를 철회해 두고, 전송 전에 뜨는 동의 화면을 "녹음이 끝나 평가 요청으로
+     * 넘어갔다"는 신호로 쓴다. 동의 화면에서 거절하므로 서버에 아무것도 보내지 않고 평가 기회도 쓰지 않는다.
+     */
+    @Nested
+    @DisplayName("TC-028 녹음은 최대 10초 후 자동 종료된다")
+    class RecordingAutoStops {
+
+        private static final String SENTENCE = "감사합니다";
+        // 앱 PracticeScreen.maximumRecordingDuration
+        private static final int MAXIMUM_SECONDS = 10;
+
+        private String accessToken;
+
+        @BeforeEach
+        void given() {
+            Simulator.setMicrophoneAllowed(true);
+            accessToken = TestSupportApi.ensureE2eUser();
+            TestSupportApi.setRemainingPractices(5);
+        }
+
+        @Test
+        @DisplayName("0:09에는 녹음 중이고, 멈추지 않아도 0:10에 녹음이 끝나 평가 요청으로 넘어간다")
+        void stopsAtTenSeconds() {
+            HomePage home = new HomePage(driver()).waitUntilLoaded();
+            // E2E 앱이 시작할 때 AI 동의를 다시 기록하므로 앱을 띄운 뒤 철회한다(TC-024 참고)
+            TestSupportApi.withdrawAiConsent(accessToken);
+            PracticePage practice = home.openCustomPractice().typeSentence(SENTENCE).tapRecord();
+            practice.waitUntilRecording();
+            int nineSeconds = practice.waitUntilRecordingSeconds(MAXIMUM_SECONDS - 1);
+            boolean recordingAtNine = practice.isRecording();
+
+            // 여기부터 아무 버튼도 누르지 않는다
+            int lastSeen = practice.waitUntilRecordingEnds();
+            new AiConsentPage(driver()).waitUntilLoaded().declineSending();
+            boolean recordingKept = practice.showsKeptRecording();
+
+            assertAll(
+                    () -> assertEquals(MAXIMUM_SECONDS - 1, nineSeconds, "0:09 표시를 확인해야 한다"),
+                    () -> assertTrue(recordingAtNine, "0:09에는 녹음이 계속되고 있어야 한다"),
+                    () -> assertTrue(lastSeen >= MAXIMUM_SECONDS - 1 && lastSeen <= MAXIMUM_SECONDS,
+                            "녹음은 0:10에 끝나야 한다. 마지막으로 본 경과 시간: " + lastSeen + "초"),
+                    // 동의 화면이 떴다는 것은 녹음 파일이 만들어져 평가 요청 단계로 넘어갔다는 뜻이다
+                    () -> assertTrue(recordingKept, "자동 종료된 녹음이 남아 있어야 한다"));
+        }
+    }
+
+    /**
      * TC Test Data 조건에 맞는 정확한 길이의 한글 문장. 공백은 포함하되 연속·앞뒤 공백과 문장부호·이모지는 없다.
      * 앱과 서버는 정리(문장부호 제거·공백 정규화) 후 길이를 세므로, 정리해도 길이가 그대로인 문장을 만든다.
      */

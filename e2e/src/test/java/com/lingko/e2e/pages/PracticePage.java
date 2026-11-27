@@ -261,6 +261,28 @@ public class PracticePage {
         });
     }
 
+    /**
+     * 사용자가 아무것도 누르지 않은 채 녹음 화면이 닫힐 때까지 기다리고, 닫히기 전 마지막으로 본 경과 시간(초)을 돌려준다.
+     * 시간 안에 닫히지 않으면 실패한다. 반환값은 표시 갱신(0.1초)보다 느린 조회 간격 때문에 실제 종료 시각보다 조금 이를 수 있다.
+     */
+    public int waitUntilRecordingEnds() {
+        int[] lastSeen = {-1};
+        wait.until(d -> {
+            try {
+                int seconds = recordingSeconds();
+                if (seconds < 0) {
+                    return true;
+                }
+                lastSeen[0] = seconds;
+                return false;
+            } catch (StaleElementReferenceException redrawn) {
+                // 0.1초마다 다시 그려지는 중이다. 다음 확인에서 다시 읽는다
+                return false;
+            }
+        });
+        return lastSeen[0];
+    }
+
     /** 녹음 중 왼쪽 'Cancel' 버튼으로 녹음을 취소한다. 앱은 녹음 파일을 지우고 평가를 보내지 않는다. */
     public PracticePage cancelRecording() {
         driver.findElement(Ui.text(CANCEL_RECORDING)).click();
